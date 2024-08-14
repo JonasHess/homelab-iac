@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homelab-base-chart
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JonasHess/homelab-base-chart.git
+    targetRevision: HEAD
+    path: .
+    helm:
+      values: |
+        ---
+        nginx:
+          enabled: true
+          replicaCount: 2
+          message: "Jonas"
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}

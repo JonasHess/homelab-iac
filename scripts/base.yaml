@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homelab-iac
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JonasHess/homelab-iac.git
+    targetRevision: HEAD
+    path: environments/jonas-macbook
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}

@@ -12,8 +12,7 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 # use LoadBalancer to expose the service
 #kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
 
-# port-forward to the service
-kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+
 
 
 
@@ -27,6 +26,9 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 # apply application.yaml
 kubectl apply -f ../manifests/homelab-base-chart.yaml
 
+
+# port-forward to the service
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
 
 ## ARGOCD
 

@@ -12,7 +12,10 @@ spec:
     helm:
       values: |
         ---
-        message: "Hello from argocd!"
+        nginx:
+          enabled: true
+          replicaCount: 2
+          message: "Michael"
   destination:
     namespace: default
     server: https://kubernetes.default.svc
