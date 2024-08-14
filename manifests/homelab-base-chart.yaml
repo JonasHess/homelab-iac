@@ -10,11 +10,9 @@ spec:
     targetRevision: HEAD
     path: .
     helm:
-#       valueFiles:
-#         - values.yaml
-#       parameters:
-#         - name: enables
-#           value: "true"
+      values: |
+        ---
+        message: "Hello from argocd!"
   destination:
     namespace: default
     server: https://kubernetes.default.svc
