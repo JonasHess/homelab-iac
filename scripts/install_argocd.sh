@@ -24,7 +24,7 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 
 # apply application.yaml
-kubectl apply -f ../manifests/homelab-base-chart.yaml
+kubectl apply -f ./base.yaml
 
 
 # port-forward to the service
