@@ -35,6 +35,11 @@ done
 #sh ./scripts/validate.sh
 
 
+ mkdir -p /var/kind-homelab/tank1/apps/traefik
+ mkdir -p /var/kind-homelab/tank0
+
+
+
 if [ "$skip_cluster_create" = false ]; then
   # Delete existing Kind cluster if it exists
   if kind get clusters | grep -q "^$KIND_CLUSTER_NAME$"; then
@@ -44,7 +49,7 @@ if [ "$skip_cluster_create" = false ]; then
 
   # Create Kind cluster
   echo "Creating Kind cluster..."
-  kind create cluster --name $KIND_CLUSTER_NAME
+  kind create cluster --name $KIND_CLUSTER_NAME --config kind-config.yaml
 else
     echo "Skipping cluster creation as requested..."
 fi
@@ -54,8 +59,14 @@ fi
 echo "Waiting for Kind cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=300s
 
+
 # Show cluster info
 kubectl cluster-info --context kind-$KIND_CLUSTER_NAME
+
+kubectl create ns argocd
+
+mkdir -p ./secrets
+kubectl apply -f ./secrets
 
 echo "Cluster Setup complete!"
 

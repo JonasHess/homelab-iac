@@ -1,0 +1,9 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  extraMounts:
+  - hostPath: /var/kind-homelab/tank1
+    containerPath: /mnt/tank1
+  - hostPath: /var/kind-homelab/tank0
+    containerPath: /mnt/tank0
