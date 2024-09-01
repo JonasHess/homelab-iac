@@ -81,7 +81,7 @@ jobs:
 ```
 
 
-##Install micro k8s
+## Install micro k8s
 ```bash
 snap install microk8s --classic
 microk8s enable dns
@@ -90,7 +90,7 @@ microk8s enable metallb:192.168.1.80-192.168.1.90
 microk8s start
 ```
 
-##Create kubectl context
+## Create kubectl context
 ```bash
 mkdir /home/homeserver/.kube/
 usermod -a -G microk8s homeserver
