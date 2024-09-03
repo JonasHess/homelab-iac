@@ -10,7 +10,7 @@ spec:
     targetRevision: HEAD
     path: .
     helm:
-      valuesObjects:
+      valuesObject:
         domain: "zimmermann.lat"
         akeyless:
           path: "/zimmermann.lat"
