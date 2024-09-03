@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homelab-base-chart
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/JonasHess/homelab-base-chart.git
+    targetRevision: HEAD
+    path: .
+    helm:
+      valuesObjects:
+        domain: "zimmermann.lat"
+        akeyless:
+          path: "/kind-homelab"
+        cloudflare:
+          email: "mi.zimmermann@web.de"
+        letsencrypt:
+          email: "michael@zimmermann.lat"
+        homeassistant:
+          volumes:
+            config: "/mnt/tank1/unencrypted/apps/homeassistant/config"
+        traefik_forward_auth:
+          # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
+          oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5/.well-known/jwks.json"
+          oidc_client_id: "5vmqlfbdhdrma83s40bnrbb59i"
+  destination:
+    namespace: default
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}

@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/JonasHess/homelab-iac.git
     targetRevision: HEAD
-    path: environments/jonas-macbook
+    path: environments/michael-homeserver
   destination:
     namespace: default
     server: https://kubernetes.default.svc

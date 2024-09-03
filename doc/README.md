@@ -100,3 +100,8 @@ microk8s config > ~/.kube/config
 scp homeserver@192.168.1.3:/home/homeserver/.kube/config ~/.kube/config
 chmod 600 ~/.kube/config
 ```
+
+## Refresh certificates (e.g. after IP change)
+```bash
+sudo microk8s refresh-certs --cert ca.crt
+```
