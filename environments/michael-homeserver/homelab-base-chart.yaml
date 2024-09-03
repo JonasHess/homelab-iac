@@ -13,7 +13,7 @@ spec:
       valuesObjects:
         domain: "zimmermann.lat"
         akeyless:
-          path: "/kind-homelab"
+          path: "/zimmermann.lat"
         cloudflare:
           email: "mi.zimmermann@web.de"
         letsencrypt:
