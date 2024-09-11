@@ -27,7 +27,7 @@ spec:
           loadBalancerIP: "192.168.0.80"
         traefik_forward_auth:
           # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
-          oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5/.well-known/jwks.json"
+          oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5"
           oidc_client_id: "5vmqlfbdhdrma83s40bnrbb59i"
   destination:
     namespace: default
