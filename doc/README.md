@@ -85,7 +85,7 @@ jobs:
 ```bash
 snap install microk8s --classic
 microk8s enable dns
-microk8s enable metallb:192.168.1.80-192.168.1.90
+microk8s enable metallb:192.168.0.80-192.168.0.90
 # microk8s enable gpu
 microk8s start
 ```
