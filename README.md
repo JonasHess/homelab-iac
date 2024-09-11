@@ -22,10 +22,11 @@
 - [ ] Plex
 - [ ] Prometheus
 - [ ] Radarr
-- [ ] SAMABA
-- [ ] SFTP
+- [ ] SAMBA
+- [ ] SFTP Go?
 - [ ] Smarthome3
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower
 - [ ] Zigbee2Mqtt
+- [ ] ArgooCd Applications
