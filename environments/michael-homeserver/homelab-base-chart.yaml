@@ -39,3 +39,7 @@ spec:
               # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
               oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5"
               oidc_client_id: "5vmqlfbdhdrma83s40bnrbb59i"
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        automated: {}
