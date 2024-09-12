@@ -6,9 +6,9 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - list:
-        elements:
-          - name: homelab
+  - list:
+       elements:
+       - name: homelab
   template:
     metadata:
       name: homelab
