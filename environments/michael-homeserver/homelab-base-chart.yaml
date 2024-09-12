@@ -2,16 +2,17 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: root
+  namespace: argocd
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-  - list:
-       elements:
-       - name: homelab
+    - list:
+        elements:
+          - name: homelab-base-chart
   template:
     metadata:
-      name: homelab
+      name: {{ .name }}
       namespace: argocd
     spec:
       project: default
