@@ -12,7 +12,7 @@ spec:
           - name: homelab2
   template:
     metadata:
-      name: {{ .name }}
+      name: '{{ .name }}'
       namespace: argocd
     spec:
       project: default
