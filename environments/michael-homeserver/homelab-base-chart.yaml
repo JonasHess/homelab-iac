@@ -9,7 +9,7 @@ spec:
   generators:
     - list:
         elements:
-          - name: homelab-base-chart
+          - name: homelab2
   template:
     metadata:
       name: {{ .name }}
