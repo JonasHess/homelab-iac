@@ -2,4 +2,34 @@
 set -e
 
 # Create the directory structure for the homelab
-mkdir -p /mnt/tank1/encrypted/pictures
+unencrypted
+	apps
+		homeassistant
+
+encrypted
+	private
+		pictures
+		documents
+		others
+
+	media
+		audiobooks
+		tutorials
+		apps
+		games
+		books
+		music
+		movies
+		series
+
+	public
+
+	apps
+		plex
+		nzb
+
+	tmp
+		download
+		watchdir
+			nzb
+			paperless
