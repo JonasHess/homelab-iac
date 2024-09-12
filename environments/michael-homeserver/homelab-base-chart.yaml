@@ -12,7 +12,7 @@ spec:
           - currentAppName: akeyless
 #          - currentAppName: homeassistant
 #          - currentAppName: sftpgo
-#          - currentAppName: traefik
+          - currentAppName: traefik
   template:
     metadata:
       name: '{{ .currentAppName }}'
