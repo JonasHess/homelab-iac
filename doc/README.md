@@ -97,8 +97,8 @@ usermod -a -G microk8s homeserver
 chown -R homeserver ~/.kube
 
 microk8s config > ~/.kube/config
-scp homeserver@192.168.1.3:/home/homeserver/.kube/config ~/.kube/config
-chmod 600 ~/.kube/config
+scp homeserver@192.168.0.20:/home/homeserver/.kube/config ~/.kube/config.d/config
+chmod 600 ~/.kube/config.d/config
 ```
 
 ## Refresh certificates (e.g. after IP change)
