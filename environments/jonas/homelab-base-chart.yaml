@@ -27,7 +27,7 @@ spec:
           parameters:
             - name: '{{ .currentAppName }}.enabled'
               value: "true"
-            - name: '{{ apps.currentAppName }}.enabled'
+            - name: 'apps.{{ .currentAppName }}.enabled'
               value: "true"
           valuesObject:
             domain: "home-server.dev"
