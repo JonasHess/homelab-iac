@@ -4,7 +4,10 @@
 ## TODOs
 - [x] Home Assistant
 - [x] Login
+- [x] SFTP Go
+- [x] ArgooCd Applications
 
+- [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
 - [ ] CI/CD
@@ -23,10 +26,8 @@
 - [ ] Prometheus
 - [ ] Radarr
 - [ ] SAMBA
-- [ ] SFTP Go?
 - [ ] Smarthome3
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower
 - [ ] Zigbee2Mqtt
-- [ ] ArgooCd Applications
