@@ -13,6 +13,7 @@ spec:
           - currentAppName: homeassistant
           - currentAppName: sftpgo
           - currentAppName: traefik
+          - currentAppName: argocd
   template:
     metadata:
       name: '{{ .currentAppName }}'
@@ -25,8 +26,6 @@ spec:
         path: .
         helm:
           parameters:
-            - name: '{{ .currentAppName }}.enabled'
-              value: "true"
             - name: 'apps.{{ .currentAppName }}.enabled'
               value: "true"
           valuesObject:
