@@ -31,8 +31,6 @@ spec:
               value: "true"
           valuesObject:
             domain: "zimmermann.lat"
-            akeyless:
-              path: "/zimmermann.lat"
             cloudflare:
               email: "mi.zimmermann@web.de"
             letsencrypt:
@@ -49,6 +47,8 @@ spec:
               oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5"
               oidc_client_id: "5vmqlfbdhdrma83s40bnrbb59i"
             apps:
+              akeyless:
+                path: "/zimmermann.lat"
               sftpgo:
                 generic:
                   deployment:
