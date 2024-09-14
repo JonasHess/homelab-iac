@@ -27,6 +27,8 @@ spec:
           parameters:
             - name: '{{ .currentAppName }}.enabled'
               value: "true"
+            - name: '{{ apps.currentAppName }}.enabled'
+              value: "true"
           valuesObject:
             domain: "home-server.dev"
             akeyless:
@@ -41,7 +43,7 @@ spec:
             traefik:
               volumes:
                 data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
-              # loadBalancerIP: "192.168.0.80"
+              loadBalancerIP: "49.13.33.144"
             traefik_forward_auth:
               # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
               oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
