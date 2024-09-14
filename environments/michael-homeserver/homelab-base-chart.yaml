@@ -52,33 +52,11 @@ spec:
               sftpgo:
                 generic:
                   deployment:
-                    image: "drakkan/sftpgo:latest"
-                    ports:
-                      - containerPort: 8080
-                      - containerPort: 2022
                     pvcMounts:
                       data:
-                        mountPath: "/srv/sftpgo"
                         hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/data"
                       home:
-                        mountPath: "/var/lib/sftpgo"
                         hostPath: "/mnt/tank1/encrypted/apps/sftpgo/home"
-                  service:
-                    ports:
-                      - name: http
-                        port: 8080
-                      - name: sftp
-                        port: 2022
-                        protocol: TCP
-                  ingress:
-                    https:
-                      - subdomain: "sftpgo"
-                        port: 8080
-                        middlewares:
-                          - name: "traefik-forward-auth"
-                            namespace: "argocd"
-                    tcp:
-                      - port: 2022
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
