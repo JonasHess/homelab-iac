@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: root
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - list:
+        elements:
+          - currentAppName: akeyless
+#           - currentAppName: homeassistant
+#           - currentAppName: sftpgo
+          - currentAppName: traefik
+  template:
+    metadata:
+      name: '{{ .currentAppName }}'
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/JonasHess/homelab-base-chart.git
+        targetRevision: HEAD
+        path: .
+        helm:
+          parameters:
+            - name: '{{ .currentAppName }}.enabled'
+              value: "true"
+          valuesObject:
+            domain: "home-server.dev"
+            akeyless:
+              path: "/kind-homelab"
+            cloudflare:
+              email: "Jonas@Hess.pm"
+            letsencrypt:
+              email: "Jonas@Hess.pm"
+            homeassistant:
+              volumes:
+                config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
+            traefik:
+              volumes:
+                data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
+              # loadBalancerIP: "192.168.0.80"
+            traefik_forward_auth:
+              # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
+              oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+              oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+            sftpgo:
+              volumes:
+                data: "/mnt/HC_Volume_101306264/unencrypted/apps/sftpgo/data"
+                home: "/mnt/HC_Volume_101306264/encrypted/apps/sftpgo/home"
+      destination:
+        server: https://kubernetes.default.svc
+      syncPolicy:
+        automated: {}
