@@ -27,6 +27,8 @@ spec:
           parameters:
             - name: '{{ .currentAppName }}.enabled'
               value: "true"
+            - name: '{{ apps.currentAppName }}.enabled'
+              value: "true"
           valuesObject:
             domain: "zimmermann.lat"
             akeyless:
