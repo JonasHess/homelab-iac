@@ -10,8 +10,8 @@ spec:
     - list:
         elements:
           - currentAppName: akeyless
-          - currentAppName: homeassistant
-          - currentAppName: sftpgo
+          #- currentAppName: homeassistant
+          #- currentAppName: sftpgo
           - currentAppName: traefik
   template:
     metadata:
