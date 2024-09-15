@@ -53,9 +53,9 @@ spec:
                   deployment:
                     pvcMounts:
                       data:
-                        hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/data"
-                      home:
-                        hostPath: "/mnt/tank1/encrypted/apps/sftpgo/home"
+                        hostPath: "/mnt/tank1/encrypted/apps/sftpgo/data"
+                      config:
+                        hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/config"
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
