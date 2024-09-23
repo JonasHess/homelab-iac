@@ -40,8 +40,7 @@ spec:
             traefik:
               generic:
                 persistentVolumeClaims:
-                - name: "data"
-                  hostPath: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
+                  data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
               # loadBalancerIP: "192.168.0.80"
             traefik_forward_auth:
               # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
