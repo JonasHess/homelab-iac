@@ -41,6 +41,7 @@ spec:
               oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
             apps:
               traefik:
+                loadBalancerIP: "49.13.33.144"
                 generic:
                   persistentVolumeClaims:
                     data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
