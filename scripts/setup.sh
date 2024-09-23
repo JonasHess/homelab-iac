@@ -54,7 +54,7 @@ kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -
 
 
 # Apply the base.yaml with the environment variable substituted
-envsubst < ./base.yaml | kubectl apply -f -
+envsubst < ../environments/base.yaml | kubectl apply -f -
 
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 
