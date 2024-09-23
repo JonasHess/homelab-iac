@@ -34,21 +34,21 @@ spec:
               email: "Jonas@Hess.pm"
             letsencrypt:
               email: "Jonas@Hess.pm"
-            homeassistant:
-              volumes:
-                config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
-            traefik:
-              generic:
-                persistentVolumeClaims:
-                  data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
               # loadBalancerIP: "192.168.0.80"
             traefik_forward_auth:
               # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
               oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
               oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
             apps:
+              traefik:
+                generic:
+                  persistentVolumeClaims:
+                    data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
               akeyless:
                 path: "/kind-homelab"
+              homeassistant:
+                volumes:
+                  config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
               sftpgo:
                 generic:
                   deployment:
