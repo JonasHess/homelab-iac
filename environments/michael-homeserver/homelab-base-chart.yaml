@@ -38,8 +38,10 @@ spec:
               volumes:
                 config: "/mnt/tank1/unencrypted/apps/homeassistant/config"
             traefik:
-              volumes:
-                data: "/mnt/tank1/unencrypted/apps/traefik/data"
+              generic:
+                persistentVolumeClaims:
+                - name: "data"
+                  hostPath: "/mnt/tank1/unencrypted/apps/traefik/data"
               # loadBalancerIP: "192.168.0.80"
             traefik_forward_auth:
               # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration

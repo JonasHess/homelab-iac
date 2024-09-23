@@ -64,6 +64,6 @@ echo "Argocd setup complete!"
 
 # port-forward to the service
 echo "Port-forwarding to the argocd-server service..."
-kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+kubectl port-forward svc/argocd-server -n argocd 8081:443 &
 
 exit 0
