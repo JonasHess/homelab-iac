@@ -17,6 +17,7 @@ spec:
           - currentAppName: drone
           - currentAppName: aws
           - currentAppName: smarthome3
+          - currentAppName: mosquitto
   template:
     metadata:
       name: '{{ .currentAppName }}'
