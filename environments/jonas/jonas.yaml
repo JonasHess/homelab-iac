@@ -53,10 +53,6 @@ spec:
               homeassistant:
                 volumes:
                   config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
-              drone:
-                generic:
-                  persistentVolumeClaims:
-                    data: "/mnt/HC_Volume_101306264/unencrypted/apps/drone/data"
               sftpgo:
                 generic:
                   deployment:
@@ -65,6 +61,15 @@ spec:
                         hostPath: "/mnt/HC_Volume_101306264/encrypted/apps/sftpgo/data"
                       config:
                         hostPath: "/mnt/HC_Volume_101306264/unencrypted/apps/sftpgo/config"
+              drone:
+                generic:
+                  persistentVolumeClaims:
+                    data: "/mnt/HC_Volume_101306264/unencrypted/apps/drone/data"
+              smarthome3:
+                hueIp: "192.168.1.194"
+                mqttUrl: "tcp://mosquitto-service:1883"
+                homeAssistantIp: "homeassistant-service:8123"
+                profilesActive: "jonas"
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
