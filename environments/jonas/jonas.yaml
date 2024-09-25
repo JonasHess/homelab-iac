@@ -16,6 +16,7 @@ spec:
           - currentAppName: argocd
           - currentAppName: drone
           - currentAppName: aws
+          - currentAppName: smarthome3
   template:
     metadata:
       name: '{{ .currentAppName }}'
