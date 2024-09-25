@@ -6,28 +6,28 @@
 - [x] Login
 - [x] SFTP Go
 - [x] ArgooCd Applications
+- [x] Smarthome3
+- [x] Mosquitto
+- [x] CI/CD (Drone)
+- [x] (Nexus) AWS ECR
 
+- [ ] Zigbee2Mqtt
+- [ ] HomeMatic
 - [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
-- [ ] CI/CD
 - [ ] DDNS
 - [ ] Grafana
 - [ ] Heimdall
-- [ ] HomeMatic
 - [ ] Jackett
 - [ ] Loki
-- [ ] Mosquitto
 - [ ] Nextcloud
-- [ ] Nexus
 - [ ] Ombi
 - [ ] Paperless
 - [ ] Plex
 - [ ] Prometheus
 - [ ] Radarr
 - [ ] SAMBA
-- [ ] Smarthome3
 - [ ] Sonarr
 - [ ] Tautulli
-- [ ] Watchtower
-- [ ] Zigbee2Mqtt
+- [ ] Watchtower / Argo Image Updater
