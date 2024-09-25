@@ -15,6 +15,7 @@ spec:
           - currentAppName: traefik
           - currentAppName: argocd
           - currentAppName: drone
+          - currentAppName: smarthome3
   template:
     metadata:
       name: '{{ .currentAppName }}'
