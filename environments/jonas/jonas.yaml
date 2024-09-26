@@ -79,7 +79,7 @@ spec:
                       data:
                         hostPath: "/mnt/tank1/unencrypted/apps/zigbee2mqtt/data"
                     deviceMounts:
-                      zigbeeUsb:
+                      zigbeeusb:
                         hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
       destination:
         server: https://kubernetes.default.svc
