@@ -13,15 +13,15 @@
 
 - [ ] Zigbee2Mqtt
 - [ ] HomeMatic
+- [ ] DDNS
 - [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
-- [ ] DDNS
 - [ ] Grafana
 - [ ] Heimdall
 - [ ] Jackett
 - [ ] Loki
-- [ ] Nextcloud
+- [ ] Nextcloud / Immich
 - [ ] Ombi
 - [ ] Paperless
 - [ ] Plex

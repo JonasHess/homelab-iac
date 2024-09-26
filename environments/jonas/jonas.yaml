@@ -73,12 +73,11 @@ spec:
                 homeAssistantIp: "homeassistant-service:8123"
                 profilesActive: "jonas"
               zigbee2mqtt:
-                enabled: false
                 generic:
                   deployment:
                     pvcMounts:
                       data:
-                        hostPath: "/mnt/somewhere/unencrypted/apps/zigbee2mqtt/data"
+                        hostPath: "/mnt/tank1/unencrypted/apps/zigbee2mqtt/data"
                     deviceMounts:
                       zigbeeUsb:
                         hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
