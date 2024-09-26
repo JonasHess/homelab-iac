@@ -73,7 +73,7 @@ spec:
               smarthome3:
                 hueIp: NULL
                 mqttUrl: "tcp://mosquitto-service:1883"
-                homeAssistantIp: "homeassistant-service:8123"
+                homeAssistantIp: "10.152.183.105:8123"
                 profilesActive: "michael"
               zigbee2mqtt:
                 generic:
