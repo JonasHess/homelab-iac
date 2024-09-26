@@ -32,3 +32,4 @@
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower / Argo Image Updater
+- [ ] Netdata
