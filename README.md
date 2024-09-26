@@ -10,8 +10,9 @@
 - [x] Mosquitto
 - [x] CI/CD (Drone)
 - [x] (Nexus) AWS ECR
+- [x] Zigbee2Mqtt
 
-- [ ] Zigbee2Mqtt
+- [ ] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 - [ ] HomeMatic
 - [ ] DDNS
 - [ ] Directory structure
