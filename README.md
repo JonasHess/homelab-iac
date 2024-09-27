@@ -11,8 +11,8 @@
 - [x] CI/CD (Drone)
 - [x] (Nexus) AWS ECR
 - [x] Zigbee2Mqtt
+- [x] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 
-- [ ] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 - [ ] HomeMatic
 - [ ] DDNS
 - [ ] Directory structure
