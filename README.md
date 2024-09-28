@@ -13,8 +13,8 @@
 - [x] Zigbee2Mqtt
 - [x] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 
+- [ ] SAMBA
 - [ ] HomeMatic
-- [ ] DDNS
 - [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
@@ -28,8 +28,11 @@
 - [ ] Plex
 - [ ] Prometheus
 - [ ] Radarr
-- [ ] SAMBA
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower / Argo Image Updater
 - [ ] Netdata
+
+
+Raspi
+- [x] DDNS
