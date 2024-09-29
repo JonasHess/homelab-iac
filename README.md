@@ -13,12 +13,12 @@
 - [x] Zigbee2Mqtt
 - [x] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 
-- [ ] SAMBA
 - [ ] HomeMatic
 - [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
 - [ ] Grafana
+- [ ] Prometheus
 - [ ] Heimdall
 - [ ] Jackett
 - [ ] Loki
@@ -26,13 +26,13 @@
 - [ ] Ombi
 - [ ] Paperless
 - [ ] Plex
-- [ ] Prometheus
 - [ ] Radarr
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower / Argo Image Updater
 - [ ] Netdata
+- [ ] SAMBA
 
 
-Raspi
+  Raspi
 - [x] DDNS

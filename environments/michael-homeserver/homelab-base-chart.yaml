@@ -19,6 +19,7 @@ spec:
           - currentAppName: smarthome3
           - currentAppName: mosquitto
           - currentAppName: zigbee2mqtt
+          - currentAppName: prometheus
   template:
     metadata:
       name: '{{ .currentAppName }}'
