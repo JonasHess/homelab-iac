@@ -50,6 +50,10 @@ spec:
                 generic:
                   persistentVolumeClaims:
                     data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
+                middlewares:
+                  cloudflare:
+                    allowedCIDRs:
+                      - 192.168.1.0/24
               akeyless:
                 path: "/kind-homelab"
               homeassistant:

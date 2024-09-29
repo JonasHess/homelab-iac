@@ -56,6 +56,10 @@ spec:
                 generic:
                   persistentVolumeClaims:
                     data: "/mnt/tank1/unencrypted/apps/traefik/data"
+                middlewares:
+                  cloudflare:
+                    allowedCIDRs:
+                      - 192.168.0.0/24
               akeyless:
                 path: "/zimmermann.lat"
               sftpgo:
