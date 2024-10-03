@@ -1,0 +1,217 @@
+domain: "home-server.dev"
+cloudflare:
+  email: "Jonas@Hess.pm"
+letsencrypt:
+  email: "Jonas@Hess.pm"
+traefik_forward_auth:
+# https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
+  oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+  oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+apps:
+  test:
+    enabled: false
+#     generic:
+      #       persistentVolumeClaims:
+      #       - name: "data"
+      #         hostPath: "/mnt/somewhere/unencrypted/apps/sftpgo/data"
+      #       - name: "home"
+      #         hostPath: "/mnt/somewhere/encrypted/apps/sftpgo/home"
+  argocd:
+    enabled: false
+  akeyless:
+    enabled: false
+    path: "/kind-homelab"
+  traefik:
+    enabled: false
+    additionalExposedPorts:
+      sftpgo:
+        port: 2022
+        protocol: TCP
+    #     plex:
+    #       port: 32400
+    #       protocol: TCP
+    #     samba-548:
+    #       port: 548
+    #       protocol: TCP
+    #     samba-139:
+    #       port: 139
+    #       protocol: TCP
+    #     samba-445:
+    #       port: 445
+    #       protocol: TCP
+    loadBalancerIP: null
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/somewhere/unencrypted/apps/traefik/data"
+    middlewares:
+      cloudflare:
+        allowedCIDRs: []
+  drone:
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/somewhere/unencrypted/apps/drone/data"
+      ingress:
+        https:
+          - subdomain: "drone"
+            port: 8080
+            service: "drone-helm"
+  homeassistant:
+    enabled: false
+    generic:
+      deployment:
+        image: "lscr.io/linuxserver/homeassistant:latest"
+        ports:
+          - containerPort: 8123
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/unencrypted/apps/homeassistant/config"
+      service:
+        ports:
+          - name: http
+            port: 8123
+      ingress:
+        https:
+          - subdomain: "homeassistant"
+            port: 8123
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "homeassistant"
+            priority: 20
+            matchSuffix: "&& (PathPrefix(`/api`) || PathPrefix(`/auth`))"
+            port: 8123
+  aws:
+    enabled: false
+  smarthome3:
+    enabled: false
+    hueIp: "NOT_SET"
+    mqttUrl: "tcp://mosquitto-service:1883"
+    homeAssistantIp: "homeassistant-service:8123"
+    profilesActive: "NOT_SET"
+  mosquitto:
+    enabled: false
+  zigbee2mqtt:
+    enabled: false
+    mqttServer: "mqtt://mosquitto-service"
+    devicePath: "/dev/ttyACM0"
+    zigbeeChannel: "15"
+    homeAssistant: "true"
+    permitJoin: "false"
+    mqttBaseTopic: "zigbee2mqtt"
+    generic:
+      deployment:
+        privileged: true
+        image: "koenkk/zigbee2mqtt:latest"
+        ports:
+          - containerPort: 8080
+        pvcMounts:
+          data:
+            mountPath: "/app/data"
+            hostPath: "/mnt/somewhere/unencrypted/apps/zigbee2mqtt/data"
+        deviceMounts:
+          zigbeeusb:
+            mountPath: "/dev/ttyACM0"
+            hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
+        envFrom:
+          configMapRef: "zigbee2mqtt-config-map"
+          secretRef: "zigbee2mqtt-secret"
+      service:
+        ports:
+          - name: http
+            port: 8080
+      ingress:
+        https:
+          - subdomain: "zigbee2mqtt"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+  sftpgo:
+    enabled: false
+    generic:
+      deployment:
+        image: "drakkan/sftpgo:latest"
+        ports:
+          - containerPort: 8080
+          - containerPort: 2022
+        pvcMounts:
+          data:
+            mountPath: "/srv/sftpgo"
+            hostPath: "/mnt/somewhere/encrypted/apps/sftpgo/data"
+          config:
+            mountPath: "/var/lib/sftpgo"
+            hostPath: "/mnt/somewhere/unencrypted/apps/sftpgo/config"
+        envFrom:
+          secretRef: "sftpgo-secret"
+        configMapMounts:
+          configmap:
+            mountPath: "/etc/sftpgo/"
+            configMapName: "sftpgo-config"
+      service:
+        ports:
+          - name: http
+            port: 8080
+          - name: webdav
+            port: 8081
+          - name: sftp
+            port: 2022
+            protocol: TCP
+      ingress:
+        https:
+          - subdomain: "sftpgo"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "webdav"
+            port: 8081
+        tcp:
+          - port: 2022
+  prometheus:
+    enabled: false
+    generic:
+      ingress:
+        https:
+          - subdomain: "prometheus"
+            port: 9090
+            service: "kube-prometheus-stack-prometheus"
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+  homematic:
+    enabled: false
+#    generic:
+#      deployment:
+#        privileged: true
+#        image: "https://jens-maus.github.io/RaspberryMatic:latest"
+#        ports:
+#          - containerPort: 8080
+#        pvcMounts:
+#          data:
+#            mountPath: "/usr/local"
+#            hostPath: "/mnt/somewhere/unencrypted/apps/homematic/ccu_data"
+#          lib:
+#            mountPath: "/lib/modules"
+#            hostPath: "/lib/modules"
+#          udev:
+#            mountPath: "/run/udev/control"
+#            hostPath: "/run/udev/control"
+#        deviceMounts:
+#          zigbeeusb:
+#            mountPath: "/dev/ttyACM0"
+#            hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
+#        envFrom:
+#          configMapRef: "zigbee2mqtt-config-map"
+#          secretRef: "zigbee2mqtt-secret"
+#      service:
+#        ports:
+#          - name: http
+#            port: 80
+#      ingress:
+#        https:
+#          - subdomain: "homematic"
+#            port: 80
+#            middlewares:
+#              - name: "traefik-forward-auth"
+#                namespace: "argocd"

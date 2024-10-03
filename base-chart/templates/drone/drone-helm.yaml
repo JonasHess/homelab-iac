@@ -1,0 +1,78 @@
+{{- if .Values.apps.drone.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: drone-helm
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: drone
+    repoURL: https://charts.drone.io
+    targetRevision: 0.6.5
+    helm:
+      # Values file as block file
+      valuesObject:
+        persistentVolume:
+          ## If you are using SQLite as your DB for Drone, it is recommended to enable persistence. If
+          ## enabled, the Chart will create a PersistentVolumeClaim to store its state in. If you are
+          ## using a DB other than SQLite, set this to false to avoid allocating unused storage.
+          ## If set to false, Drone will use an emptyDir instead, which is ephemeral.
+          ##
+          enabled: true
+
+          ## If you'd like to bring your own PVC for persisting Drone state, pass the name of the
+          ## created + ready PVC here. If set, this Chart will not create the default PVC.
+          ## Requires server.persistentVolume.enabled: true
+          ##
+          existingClaim: "drone-data-pvc"
+
+          ## Drone server data Persistent Volume mount root path
+          ##
+          mountPath: /data
+
+
+
+        ## If you'd like to provide your own Kubernetes Secret object instead of passing your values
+        ## in un-encrypted, pass in the name of a created + populated Secret in the same Namespace
+        ## as the Drone server. All secrets within this configmap will be mounted as environment
+        ## variables, with each key/value mapping to a corresponding environment variable on the
+        ## Drone server.
+        ##
+        extraSecretNamesForEnvFrom:
+        - drone-secrets
+
+
+        ## The keys within the "env" map are mounted as environment variables on the Drone server pod.
+        ## See the full reference of Drone server environment variables here:
+        ## Ref: https://docs.drone.io/installation/reference/
+        ##
+        env:
+
+          ## The protocol to pair with the value in DRONE_SERVER_HOST (http or https).
+          ## Ref: https://docs.drone.io/installation/reference/drone-server-proto/
+          ##
+          DRONE_SERVER_PROTO: https
+          ## REQUIRED: Set the user-visible Drone hostname, sans protocol.
+          ## Ref: https://docs.drone.io/installation/reference/drone-server-host/
+          ##
+          DRONE_SERVER_HOST: "drone.{{ .Values.domain }}"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - allowEmpty=true
+    retry:
+      limit: 5 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+      backoff:
+        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+        factor: 2 # a factor to multiply the base duration after each failed retry
+        maxDuration: 1m # the maximum amount of time allowed for the backoff strategy
+{{- end -}}

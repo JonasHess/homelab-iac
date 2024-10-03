@@ -1,0 +1,21 @@
+{{- if .Values.apps.argocd.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  url: https://argocd.{{ .Values.domain }}
+
+  oidc.config: |
+    name: Cognito
+    issuer:  {{ .Values.traefik_forward_auth.oidc_issuer_url}}
+    clientID: {{ .Values.traefik_forward_auth.oidc_client_id}}
+    clientSecret: $oidc.auth0.clientSecret
+    requestedScopes: ["openid", "profile", "email"]
+    requestedIDTokenClaims: {"groups": {"essential": true}}
+
+{{- end -}}

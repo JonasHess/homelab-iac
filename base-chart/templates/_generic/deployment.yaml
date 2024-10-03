@@ -1,0 +1,123 @@
+{{- range $appName, $app := .Values.apps }}
+  {{- if $app.enabled }}
+    {{- if and $app.generic $app.generic.deployment }}
+      {{- $deployment := $app.generic.deployment }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $appName }}-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ $appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}
+    spec:
+      containers:
+        - name: {{ $appName }}
+          image: {{ $deployment.image }}
+          {{- if $deployment.privileged }}
+          securityContext:
+            privileged: true
+          {{- end }}
+          ports:
+            {{- range $port := $deployment.ports }}
+            - containerPort: {{ $port.containerPort }}
+            {{- end }}
+          volumeMounts:
+            {{- range $mountName, $mount := $deployment.pvcMounts }}
+            - mountPath: "{{ $mount.mountPath }}"
+              name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
+            {{- range $mountName, $mount := $deployment.deviceMounts }}
+            - mountPath: "{{ $mount.mountPath }}"
+              name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
+            {{- range $mountName, $mount := $deployment.configMapMounts }}
+            - mountPath: "{{ $mount.mountPath }}"
+              name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
+          {{- if $deployment.envFrom }}
+          envFrom:
+            {{- if $deployment.envFrom.configMapRef }}
+            - configMapRef:
+                name: {{ $deployment.envFrom.configMapRef }}
+            {{- end }}
+            {{- if $deployment.envFrom.secretRef }}
+            - secretRef:
+                name: {{ $deployment.envFrom.secretRef }}
+            {{- end }}
+          {{- end }}
+      volumes:
+        {{- range $mountName, $mount := $deployment.pvcMounts }}
+        - name: {{ $appName }}-{{ $mountName }}-volume
+          persistentVolumeClaim:
+            claimName: {{ $appName }}-{{ $mountName }}-pvc
+        {{- end }}
+        {{- range $mountName, $mount := $deployment.deviceMounts }}
+        - name: {{ $appName }}-{{ $mountName }}-volume
+          hostPath:
+            path: {{ $mount.hostPath | quote }}
+            type: CharDevice
+        {{- end }}
+        {{- range $mountName, $mount := $deployment.configMapMounts }}
+        - name: {{ $appName }}-{{ $mountName }}-volume
+          configMap:
+            name: {{ $mount.configMapName }}
+        {{- end }}
+
+{{- range $mountName, $mount := $deployment.pvcMounts }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{$appName}}-{{ $mountName }}-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: {{ $mount.hostPath }}
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "{{$appName}}-{{ $mountName }}-pvc"
+    namespace: argocd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{$appName}}-{{ $mountName }}-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+{{- end }}
+
+
+
+
+    {{- end }}
+  {{- end }}
+{{- end }}

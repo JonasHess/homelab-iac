@@ -1,0 +1,26 @@
+{{- range $appName, $app := .Values.apps }}
+  {{- if $app.enabled }}
+    {{- if and $app.generic $app.generic.service }}
+      {{- $svc := $app.generic.service }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}-service
+  namespace: argocd
+spec:
+  ports:
+    {{- range $port := $svc.ports }}
+    - name: {{ $port.name }}
+      port: {{ $port.port }}
+      {{- if $port.targetPort }}
+      targetPort: {{ $port.targetPort }}
+      {{- end }}
+      {{- if $port.protocol }}
+      protocol: {{ $port.protocol }}
+      {{- end }}
+    {{- end }}
+  selector:
+    app: {{ $appName }}
+    {{- end }}
+  {{- end }}
+{{- end }}

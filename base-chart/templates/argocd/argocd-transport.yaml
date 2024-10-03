@@ -1,0 +1,11 @@
+{{- if .Values.apps.argocd.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: insecure-transport
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  insecureSkipVerify: true
+{{- end -}}
