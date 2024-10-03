@@ -127,6 +127,33 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  plex:
+    enabled: false
+    generic:
+      deployment:
+        image: "ghcr.io/linuxserver/plex:latest"
+        ports:
+          - containerPort: 32400
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/encrypted/apps/plex/config"
+          media:
+            mountPath: "/mnt/media"
+            hostPath: "/mnt/somewhere/encrypted/media"
+        envFrom:
+          secretRef: "plex-secret"
+          configMapRef: "plex-config"
+      service:
+        ports:
+          - name: http
+            port: 32400
+      ingress:
+        https:
+          - subdomain: "plex"
+            port: 32400
+        tcp:
+          - port: 32400
   sftpgo:
     enabled: false
     generic:
