@@ -15,9 +15,12 @@ spec:
           - currentAppName: traefik
           - currentAppName: argocd
           - currentAppName: drone
+          - currentAppName: aws
           - currentAppName: smarthome3
           - currentAppName: mosquitto
           - currentAppName: zigbee2mqtt
+          - currentAppName: prometheus
+          - currentAppName: homematic
   template:
     metadata:
       name: '{{ .currentAppName }}'
@@ -55,6 +58,10 @@ spec:
                 generic:
                   persistentVolumeClaims:
                     data: "/mnt/tank1/unencrypted/apps/traefik/data"
+                middlewares:
+                  cloudflare:
+                    allowedCIDRs:
+                      - 192.168.0.0/24
               akeyless:
                 path: "/zimmermann.lat"
               sftpgo:
@@ -65,6 +72,9 @@ spec:
                         hostPath: "/mnt/tank1/encrypted/apps/sftpgo/data"
                       config:
                         hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/config"
+                      tank1:
+                        mountPath: "/mnt/tank1"
+                        hostPath: "/mnt/tank1"
               drone:
                 generic:
                   persistentVolumeClaims:
@@ -72,18 +82,17 @@ spec:
               smarthome3:
                 hueIp: NULL
                 mqttUrl: "tcp://mosquitto-service:1883"
-                homeAssistantIp: "homeassistant-service:8123"
+                homeAssistantIp: "ws://homeassistant-service:8123"
                 profilesActive: "michael"
               zigbee2mqtt:
-                enabled: false
                 generic:
                   deployment:
                     pvcMounts:
                       data:
-                        hostPath: "/mnt/somewhere/unencrypted/apps/zigbee2mqtt/data"
+                        hostPath: "/mnt/tank1/unencrypted/apps/zigbee2mqtt/data"
                     deviceMounts:
-                      zigbeeUsb:
-                        hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
+                      zigbeeusb:
+                        hostPath: "/dev/serial/by-id/usb-ITEAD_SONOFF_Zigbee_3.0_USB_Dongle_Plus_V2_20231101104222-if00"
 
       destination:
         server: https://kubernetes.default.svc

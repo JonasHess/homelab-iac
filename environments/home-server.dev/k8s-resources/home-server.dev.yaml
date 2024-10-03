@@ -19,6 +19,7 @@ spec:
 #           - currentAppName: smarthome3
 #           - currentAppName: mosquitto
 #           - currentAppName: zigbee2mqtt
+#          - currentAppName: homematic
   template:
     metadata:
       name: 'app-{{ .currentAppName }}'
@@ -52,6 +53,10 @@ spec:
                 generic:
                   persistentVolumeClaims:
                     data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
+                middlewares:
+                  cloudflare:
+                    allowedCIDRs:
+                      - 192.168.1.0/24
               akeyless:
                 path: "/kind-homelab"
               homeassistant:
@@ -72,17 +77,16 @@ spec:
               smarthome3:
                 hueIp: "192.168.1.194"
                 mqttUrl: "tcp://mosquitto-service:1883"
-                homeAssistantIp: "homeassistant-service:8123"
+                homeAssistantIp: "ws://homeassistant-service:8123"
                 profilesActive: "jonas"
               zigbee2mqtt:
-                enabled: false
                 generic:
                   deployment:
                     pvcMounts:
                       data:
-                        hostPath: "/mnt/somewhere/unencrypted/apps/zigbee2mqtt/data"
+                        hostPath: "/mnt/tank1/unencrypted/apps/zigbee2mqtt/data"
                     deviceMounts:
-                      zigbeeUsb:
+                      zigbeeusb:
                         hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
       destination:
         server: https://kubernetes.default.svc

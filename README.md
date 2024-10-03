@@ -10,24 +10,29 @@
 - [x] Mosquitto
 - [x] CI/CD (Drone)
 - [x] (Nexus) AWS ECR
+- [x] Zigbee2Mqtt
+- [x] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 
-- [ ] Zigbee2Mqtt
 - [ ] HomeMatic
 - [ ] Directory structure
 - [ ] Backup / Duplicati
 - [ ] Bittorrent
-- [ ] DDNS
 - [ ] Grafana
+- [ ] Prometheus
 - [ ] Heimdall
 - [ ] Jackett
 - [ ] Loki
-- [ ] Nextcloud
+- [ ] Nextcloud / Immich
 - [ ] Ombi
 - [ ] Paperless
 - [ ] Plex
-- [ ] Prometheus
 - [ ] Radarr
-- [ ] SAMBA
 - [ ] Sonarr
 - [ ] Tautulli
 - [ ] Watchtower / Argo Image Updater
+- [ ] Netdata
+- [ ] SAMBA
+
+
+  Raspi
+- [x] DDNS
