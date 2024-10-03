@@ -26,6 +26,22 @@ spec:
           securityContext:
             privileged: true
           {{- end }}
+          {{ with $deployment.resources }}
+          resources:
+            {{- if .limits }}
+            limits:
+              {{- range $key, $value := .limits }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if .requests }}
+            requests:
+              {{- range $key, $value := .requests }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+            {{- end }}
+          {{ end }}
+
           ports:
             {{- range $port := $deployment.ports }}
             - containerPort: {{ $port.containerPort }}
