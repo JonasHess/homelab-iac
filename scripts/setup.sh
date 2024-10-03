@@ -56,15 +56,6 @@ kubectl config use-context "$CLUSTER_NAME"
 kubectl create namespace argocd 2>/dev/null || true
 
 
-# Check if the akeyless-apikey.yaml file exists
-if [ ! -f ./secrets/akeyless-apikey.yaml ]; then
-  echo "Error: ./secrets/akeyless-apikey.yaml file not found!"
-  exit 1
-fi
-
-kubectl apply -f ./secrets/akeyless-apikey.yaml
-
-
 # Install Argocd on the cluster
 
 #kubectl create namespace argocd
