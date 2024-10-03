@@ -16,7 +16,7 @@ spec:
           - currentAppName: smarthome3
           - currentAppName: mosquitto
           - currentAppName: zigbee2mqtt
-#           - currentAppName: homeassistant
+          - currentAppName: homeassistant
 #           - currentAppName: sftpgo
 #           - currentAppName: drone
   template:
@@ -59,8 +59,11 @@ spec:
               akeyless:
                 path: "/hess.pm"
               homeassistant:
-                volumes:
-                  config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
+                generic:
+                  deployment:
+                    pvcMounts:
+                      config:
+                        hostPath: "/mnt/tank1/unencrypted/apps/homeassistant/config"
               sftpgo:
                 generic:
                   deployment:
