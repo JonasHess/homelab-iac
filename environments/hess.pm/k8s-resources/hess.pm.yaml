@@ -10,10 +10,10 @@ spec:
     - list:
         elements:
           - currentAppName: akeyless
+          - currentAppName: traefik
+          - currentAppName: argocd
 #           - currentAppName: homeassistant
 #           - currentAppName: sftpgo
-#           - currentAppName: traefik
-#           - currentAppName: argocd
 #           - currentAppName: drone
 #           - currentAppName: aws
 #           - currentAppName: smarthome3
@@ -36,7 +36,7 @@ spec:
             - name: 'apps.{{ .currentAppName }}.enabled'
               value: "true"
           valuesObject:
-            domain: "home-server.dev"
+            domain: "hess.pm"
             cloudflare:
               email: "Jonas@Hess.pm"
             letsencrypt:
@@ -48,12 +48,12 @@ spec:
               oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
             apps:
               traefik:
-                loadBalancerIP: "49.13.33.144"
+                loadBalancerIP: "192.168.1.80"
                 generic:
                   persistentVolumeClaims:
-                    data: "/mnt/HC_Volume_101306264/unencrypted/apps/traefik/data"
+                    data: "/mnt/tank1/unencrypted/apps/traefik"
               akeyless:
-                path: "/kind-homelab"
+                path: "/hess.pm"
               homeassistant:
                 volumes:
                   config: "/mnt/HC_Volume_101306264/unencrypted/apps/homeassistant/config"
