@@ -14,7 +14,7 @@ spec:
           - path: 'environments/hess.pm/apps/*'
   template:
     metadata:
-      name: 'app-{{ path.basename }}'  # Use the folder name as the app name
+      name: 'app-{{.path.basename}}'  # Use the folder name as the app name
       namespace: argocd
       finalizers:
         - resources-finalizer.argocd.argoproj.io
@@ -26,11 +26,14 @@ spec:
           path: .
           helm:
             parameters:
-              - name: 'apps.{{ path.basename }}.enabled'
+              - name: 'apps.{{.path.basename}}.enabled'
                 value: "true"
             valueFiles:
               - $homelab-iac/environments/hess.pm/apps/common-values.yaml
-              - $homelab-iac/environments/hess.pm/apps/{{ path.basename }}/values.yaml
+              - $homelab-iac/environments/hess.pm/apps/{{.path.basename}}/values.yaml
+        - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
+          targetRevision: feature/setup2
+          ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
