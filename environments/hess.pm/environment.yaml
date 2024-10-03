@@ -2,3 +2,15 @@ server-ip: 192.168.1.3
 username: jonas
 cluster-name: hess.pm
 ip-range: 192.168.1.80-192.168.1.90
+
+domain: "hess.pm"
+cloudflare:
+  email: "Jonas@Hess.pm"
+letsencrypt:
+  email: "Jonas@Hess.pm"
+traefik_forward_auth:
+  oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+  oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+apps:
+  akeyless:
+    path: "/hess.pm"

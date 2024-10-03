@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: root
+  name: apps
   namespace: argocd
 spec:
   goTemplate: true
@@ -29,7 +29,7 @@ spec:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
                 value: "true"
             valueFiles:
-              - $homelab-iac/environments/hess.pm/apps/common-values.yaml
+              - $homelab-iac/environments/hess.pm/environment.yaml
               - $homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
           targetRevision: feature/setup2
