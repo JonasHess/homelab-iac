@@ -10,21 +10,19 @@ spec:
     - list:
         elements:
           - currentAppName: akeyless
-          - currentAppName: traefik
           - currentAppName: argocd
           - currentAppName: aws
-          - currentAppName: smarthome3
-          - currentAppName: mosquitto
-          - currentAppName: zigbee2mqtt
           - currentAppName: homeassistant
-#           - currentAppName: sftpgo
-#           - currentAppName: drone
+          - currentAppName: mosquitto
+          - currentAppName: smarthome3
+          - currentAppName: traefik
+          - currentAppName: zigbee2mqtt
   template:
     metadata:
       name: 'app-{{ .currentAppName }}'
       namespace: argocd
       finalizers:
-          - resources-finalizer.argocd.argoproj.io
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: default
       source:
@@ -35,61 +33,9 @@ spec:
           parameters:
             - name: 'apps.{{ .currentAppName }}.enabled'
               value: "true"
-          valuesObject:
-            domain: "hess.pm"
-            cloudflare:
-              email: "Jonas@Hess.pm"
-            letsencrypt:
-              email: "Jonas@Hess.pm"
-              # loadBalancerIP: "192.168.0.80"
-            traefik_forward_auth:
-              # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
-              oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
-              oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
-            apps:
-              traefik:
-                loadBalancerIP: "192.168.1.80"
-                generic:
-                  persistentVolumeClaims:
-                    data: "/mnt/tank1/unencrypted/apps/traefik"
-                middlewares:
-                  cloudflare:
-                    allowedCIDRs:
-                      - 192.168.1.0/24
-              akeyless:
-                path: "/hess.pm"
-              homeassistant:
-                generic:
-                  deployment:
-                    pvcMounts:
-                      config:
-                        hostPath: "/mnt/tank1/unencrypted/apps/homeassistant/config"
-              sftpgo:
-                generic:
-                  deployment:
-                    pvcMounts:
-                      data:
-                        hostPath: "/mnt/HC_Volume_101306264/encrypted/apps/sftpgo/data"
-                      config:
-                        hostPath: "/mnt/HC_Volume_101306264/unencrypted/apps/sftpgo/config"
-              drone:
-                generic:
-                  persistentVolumeClaims:
-                    data: "/mnt/HC_Volume_101306264/unencrypted/apps/drone/data"
-              smarthome3:
-                hueIp: "192.168.1.194"
-                mqttUrl: "tcp://mosquitto-service:1883"
-                homeAssistantIp: "ws://homeassistant-service:8123"
-                profilesActive: "jonas"
-              zigbee2mqtt:
-                generic:
-                  deployment:
-                    pvcMounts:
-                      data:
-                        hostPath: "/mnt/tank1/unencrypted/apps/zigbee2mqtt/data"
-                    deviceMounts:
-                      zigbeeusb:
-                        hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
+          valueFiles:
+            - environments/hess.pm/common-values.yaml
+            - environments/hess.pm/apps/{{ .currentAppName }}/values.yaml
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:

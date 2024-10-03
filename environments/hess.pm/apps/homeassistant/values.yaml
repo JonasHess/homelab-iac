@@ -1,0 +1,7 @@
+apps:
+  homeassistant:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/homeassistant/config"

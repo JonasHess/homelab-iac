@@ -1,0 +1,3 @@
+apps:
+  akeyless:
+    path: "/hess.pm"
