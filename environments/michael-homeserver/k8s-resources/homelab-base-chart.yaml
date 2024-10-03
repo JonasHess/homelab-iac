@@ -23,8 +23,10 @@ spec:
           - currentAppName: homematic
   template:
     metadata:
-      name: '{{ .currentAppName }}'
+      name: 'app-{{ .currentAppName }}'
       namespace: argocd
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
     spec:
       project: default
       source:
