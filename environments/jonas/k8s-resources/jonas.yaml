@@ -29,7 +29,7 @@ spec:
       project: default
       source:
         repoURL: https://github.com/JonasHess/homelab-base-chart.git
-        targetRevision: HEAD
+        targetRevision: feature/setup2
         path: .
         helm:
           parameters:

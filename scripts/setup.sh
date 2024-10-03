@@ -68,10 +68,12 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/st
 #kubectl apply -n argocd -f argocd-nodeport.yaml
 
 # use nodeport to expose the service
+echo "Using NodePort to expose the argocd-server service..."
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
 
 # wait for the argocd-server to be ready
+echo "Waiting for argocd-server to be ready..."
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
 
 
