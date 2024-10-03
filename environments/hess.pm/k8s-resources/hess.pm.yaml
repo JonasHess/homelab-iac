@@ -14,7 +14,7 @@ spec:
           - currentAppName: aws
           - currentAppName: homeassistant
           - currentAppName: mosquitto
-#           - currentAppName: smarthome3
+          - currentAppName: smarthome3
           - currentAppName: traefik
           - currentAppName: zigbee2mqtt
   template:
