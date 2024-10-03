@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: akeyless-secret-creds
+  namespace: argocd
+type: Opaque
+stringData:
+  accessId: "${AKEYLESS_ACCESS_ID}"
+  accessType:  "${AKEYLESS_ACCESS_TYPE}"
+  accessTypeParam:  "${AKEYLESS_ACCESS_TYPE_PARAM}"
+---
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

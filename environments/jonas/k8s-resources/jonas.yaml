@@ -12,13 +12,13 @@ spec:
           - currentAppName: akeyless
 #           - currentAppName: homeassistant
 #           - currentAppName: sftpgo
-          - currentAppName: traefik
-          - currentAppName: argocd
-          - currentAppName: drone
-          - currentAppName: aws
-          - currentAppName: smarthome3
-          - currentAppName: mosquitto
-          - currentAppName: zigbee2mqtt
+#           - currentAppName: traefik
+#           - currentAppName: argocd
+#           - currentAppName: drone
+#           - currentAppName: aws
+#           - currentAppName: smarthome3
+#           - currentAppName: mosquitto
+#           - currentAppName: zigbee2mqtt
   template:
     metadata:
       name: '{{ .currentAppName }}'

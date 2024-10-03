@@ -21,6 +21,37 @@ fi
 ENVIRONMENT=$1
 export ENVIRONMENT
 
+# Load parameters from the environment.yaml file
+ENV_FILE="../environments/${ENVIRONMENT}/environment.yaml"
+if [ ! -f "$ENV_FILE" ]; then
+  echo "Error: Environment file $ENV_FILE not found!"
+  exit 1
+fi
+
+CLUSTER_NAME=$(yq e '.cluster-name' "$ENV_FILE")
+
+
+
+ENV_SECRET_FILE="../environments/${ENVIRONMENT}/environment-secrets.yaml"
+if [ ! -f "$ENV_SECRET_FILE" ]; then
+  echo "Error: Environment file $ENV_SECRET_FILE not found!"
+  exit 1
+fi
+
+# Load the environment secrets
+AKEYLESS_ACCESS_ID=$(yq e '.akeyless.accessId' "$ENV_SECRET_FILE")
+AKEYLESS_ACCESS_TYPE=$(yq e '.akeyless.accessType' "$ENV_SECRET_FILE")
+AKEYLESS_ACCESS_TYPE_PARAM=$(yq e '.akeyless.accessTypeParam' "$ENV_SECRET_FILE")
+
+export AKEYLESS_ACCESS_ID
+export AKEYLESS_ACCESS_TYPE
+export AKEYLESS_ACCESS_TYPE_PARAM
+
+
+# Switch context to the target environment
+kubectl config use-context "$CLUSTER_NAME"
+
+
 # Create the argocd namespace if it does not exist
 kubectl create namespace argocd 2>/dev/null || true
 
