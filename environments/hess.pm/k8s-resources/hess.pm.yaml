@@ -25,8 +25,11 @@ spec:
         - resources-finalizer.argocd.argoproj.io
     spec:
       project: default
-      source:
-        repoURL: https://github.com/JonasHess/homelab-base-chart.git
+     sources:
+      - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
+        targetRevision: feature/setup2
+        ref: homelab-iac
+      - repoURL: 'https://github.com/JonasHess/homelab-base-chart.git'
         targetRevision: feature/setup2
         path: .
         helm:
@@ -34,8 +37,8 @@ spec:
             - name: 'apps.{{ .currentAppName }}.enabled'
               value: "true"
           valueFiles:
-            - environments/hess.pm/common-values.yaml
-            - environments/hess.pm/apps/{{ .currentAppName }}/values.yaml
+          - $homelab-iac/environments/hess.pm/common-values.yaml
+          - $homelab-iac/environments/hess.pm/apps/{{ .currentAppName }}/values.yaml
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
