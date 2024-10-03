@@ -21,7 +21,7 @@ spec:
 #           - currentAppName: zigbee2mqtt
   template:
     metadata:
-      name: '{{ .currentAppName }}'
+      name: 'app-{{ .currentAppName }}'
       namespace: argocd
     spec:
       project: default
