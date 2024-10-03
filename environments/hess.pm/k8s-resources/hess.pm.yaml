@@ -21,9 +21,9 @@ spec:
     spec:
       project: default
       sources:
-        - repoURL: 'https://github.com/JonasHess/homelab-base-chart.git'
+        - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
           targetRevision: feature/setup2
-          path: .
+          path: base-chart
           helm:
             parameters:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
