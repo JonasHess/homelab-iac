@@ -7,8 +7,8 @@ spec:
   project: default
   source:
     repoURL: https://github.com/JonasHess/homelab-iac.git
-    targetRevision: HEAD
-    path: environments/${ENVIRONMENT}
+    targetRevision: feature/setup2
+    path: environments/${ENVIRONMENT}/k8s-resources
   destination:
     namespace: default
     server: https://kubernetes.default.svc
