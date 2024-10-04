@@ -25,7 +25,7 @@ apps:
     enabled: false
     additionalExposedPorts:
       sftpgo:
-        port: 2022
+        port: 2222
         protocol: TCP
     #     plex:
     #       port: 32400
@@ -199,7 +199,7 @@ apps:
         image: "drakkan/sftpgo:latest"
         ports:
           - containerPort: 8080
-          - containerPort: 2022
+          - containerPort: 2222
         pvcMounts:
           data:
             mountPath: "/srv/sftpgo"
@@ -220,7 +220,7 @@ apps:
           - name: webdav
             port: 8081
           - name: sftp
-            port: 2022
+            port: 2222
             protocol: TCP
       ingress:
         https:
@@ -232,7 +232,7 @@ apps:
           - subdomain: "webdav"
             port: 8081
         tcp:
-          - port: 2022
+          - port: 2222
   prometheus:
     enabled: false
     generic:

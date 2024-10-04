@@ -7,6 +7,13 @@ metadata:
   namespace: argocd
 data:
   sftpgo.json: |
+    "sftpd": {
+      "bindings": [
+        {
+          "port": 2222
+        }
+      ]
+    },
     {
      "data_provider": {
         "users_base_dir": "/srv/sftpgo"
