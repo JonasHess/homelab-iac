@@ -125,7 +125,10 @@ chmod 600 "$KUBE_CONFIG_PATH"
 
 # Clean up the remote server
 echo "Cleaning up the remote server..."
-ssh ${USERNAME}@${SERVER_IP} "rm -f ${REMOTE_TMP_DIR}/remote-microk8s-setup.sh ${REMOTE_TMP_DIR}/kube-config && rm ${REMOTE_TMP_DIR}/nohup.out && rmdir ${REMOTE_TMP_DIR}"
+ssh ${USERNAME}@${SERVER_IP} \
+  "rm -f ${REMOTE_TMP_DIR}/remote-microk8s-setup.sh ${REMOTE_TMP_DIR}/kube-config && \
+  rm ${REMOTE_TMP_DIR}/nohup.out && \
+  rmdir ${REMOTE_TMP_DIR}" || true
 
 echo "Checking the cluster nodes..."
 kubectl --kubeconfig="$KUBE_CONFIG_PATH" get nodes -o wide

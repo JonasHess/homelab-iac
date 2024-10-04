@@ -72,11 +72,15 @@ echo "Using NodePort to expose the argocd-server service..."
 kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
 
-echo "Waiting for argocd-server to be ready..."
-until kubectl get pod -l app.kubernetes.io/name=argocd-server -n argocd > /dev/null 2>&1; do
+echo "Waiting for argocd-server pod to be created..."
+while true; do
+  if kubectl get pod -l app.kubernetes.io/name=argocd-server -n argocd > /dev/null 2>&1; then
+    break
+  fi
   sleep 1
   echo -n "."
 done
+echo "argocd-server pod found. Waiting for it to be ready..."
 kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
 
 
