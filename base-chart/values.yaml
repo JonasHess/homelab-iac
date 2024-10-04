@@ -159,7 +159,7 @@ apps:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
           - subdomain: "sabnzbd"
-            matchSuffix: "&& Path(`/sabnzbd/api`)"
+            matchSuffix: "&& ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))"
             priority: 20
             port: 8080
   plex:
