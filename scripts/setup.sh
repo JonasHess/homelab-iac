@@ -74,14 +74,13 @@ kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
 
 echo "Waiting for argocd-server pod to be created..."
 while true; do
-  if kubectl get pod -l app.kubernetes.io/name=argocd-server -n argocd > /dev/null 2>&1; then
+  if kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s > /dev/null 2>&1; then
+    echo "argocd-server is now ready"
     break
   fi
   sleep 1
   echo -n "."
 done
-echo "argocd-server pod found. Waiting for it to be ready..."
-kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
 
 
 # Apply the base.yaml with the environment variable substituted
@@ -95,6 +94,6 @@ echo "Argocd setup complete!"
 
 # port-forward to the service
 echo "Port-forwarding to the argocd-server service..."
-kubectl port-forward svc/argocd-server -n argocd 8081:443 &
+kubectl port-forward svc/argocd-server -n argocd 8081:443
 
 exit 0
