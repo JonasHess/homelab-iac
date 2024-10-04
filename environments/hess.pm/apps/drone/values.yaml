@@ -1,0 +1,5 @@
+apps:
+  drone:
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/tank1/unencrypted/apps/drone"
