@@ -84,6 +84,29 @@ apps:
             priority: 20
             matchSuffix: "&& PathPrefix(`/api`)"
             port: 9696
+  tautulli:
+    enabled: false
+    generic:
+      deployment:
+        image: "tautulli/tautulli:latest"
+        ports:
+          - containerPort: 8181
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/unencrypted/apps/tautulli/config"
+      service:
+        ports:
+          - name: http
+            port: 8181
+      ingress:
+        https:
+          - subdomain: "tautulli"
+            port: 8181
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+
   radarr:
     enabled: false
     generic:
