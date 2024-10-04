@@ -8,6 +8,9 @@ metadata:
 data:
   sftpgo.json: |
     {
+     "data_provider": {
+        "users_base_dir": "/srv/sftpgo"
+      },
       "httpd": {
         "bindings": [
           {
