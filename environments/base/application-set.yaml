@@ -40,4 +40,4 @@ spec:
         automated: {}
 
 revision: feature/setup2
-environmentPath: environments/hess.pm
+environmentPath: hess.pm
