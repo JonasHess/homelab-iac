@@ -6,7 +6,6 @@ metadata:
 spec:
   generators:
     - git:
-        repoURL: 'https://github.com/JonasHess/homelab-iac.git'
         revision: feature/setup2
         directories:
           - path: 'environments/hess.pm/apps/*'
