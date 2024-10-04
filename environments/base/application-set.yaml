@@ -7,17 +7,11 @@ spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
   generators:
-    - matrix:
-        generators:
-          - git:
-              repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-              revision: 'feature/setup2'
-              directories:
-                - path: 'environments/hess.pm/apps/*'
-          - list:
-              elements:
-                - revision: "feature/setup2"
-                  environmentPath: "environments/hess.pm"
+    - git:
+        repoURL: 'https://github.com/JonasHess/homelab-iac.git'
+        revision: feature/setup2
+        directories:
+          - path: 'environments/hess.pm/apps/*'
   template:
     metadata:
       name: 'app-{{.path.basenameNormalized}}'
@@ -28,17 +22,17 @@ spec:
       project: default
       sources:
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: '{{ .revision }}'
+          targetRevision: feature/setup2
           path: base-chart
           helm:
             parameters:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
                 value: "true"
             valueFiles:
-              - $homelab-iac/{{ .environmentPath }}/environment.yaml
-              - $homelab-iac/{{ .environmentPath }}/apps/{{.path.basenameNormalized}}/values.yaml
+              - $homelab-iac/environments/hess.pm/environment.yaml
+              - $homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: '{{ .revision }}'
+          targetRevision: feature/setup2
           ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
