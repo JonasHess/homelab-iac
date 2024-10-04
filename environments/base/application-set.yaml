@@ -11,7 +11,7 @@ spec:
         generators:
           - git:
               repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-              revision: '{{ .revision }}'
+              revision: 'feature/setup2'
               directories:
                 - path: '{{ .environmentPath }}/apps/*'
           - list:
