@@ -96,7 +96,7 @@ metadata:
   name: "{{$appName}}-{{ $mountName }}-pv"
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-options: Prune=true,Replace=true
+    argocd.argoproj.io/sync-options: Prune=true
 spec:
   capacity:
     storage: 10Gi
