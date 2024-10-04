@@ -1,0 +1,12 @@
+apps:
+  sftpgo:
+    generic:
+      deployment:
+        pvcMounts:
+          data:
+            hostPath: "/mnt/tank1/encrypted/apps/sftpgo/data"
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/config"
+          media:
+            mountPath: "/mnt/tank0/encrypted/media"
+            hostPath: "/mnt/tank0/encrypted/media"
