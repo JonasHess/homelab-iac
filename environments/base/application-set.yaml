@@ -9,9 +9,9 @@ spec:
   generators:
     - git:
         repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-        revision: feature/setup2
+        revision: '{{ .revision }}'
         directories:
-          - path: 'environments/hess.pm/apps/*'
+          - path: 'environments/{{ .environmentPath }}/apps/*'
   template:
     metadata:
       name: 'app-{{.path.basenameNormalized}}'  # Use the folder name as the app name
@@ -22,19 +22,22 @@ spec:
       project: default
       sources:
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: feature/setup2
+          targetRevision: '{{ .revision }}'
           path: base-chart
           helm:
             parameters:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
                 value: "true"
             valueFiles:
-              - $homelab-iac/environments/hess.pm/environment.yaml
-              - $homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml
+              - $homelab-iac/environments/{{ .environmentPath }}/environment.yaml
+              - $homelab-iac/environments/{{ .environmentPath }}/apps/{{.path.basenameNormalized}}/values.yaml
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: feature/setup2
+          targetRevision: '{{ .revision }}'  # Using the same revision generator for the second source
           ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
         automated: {}
+
+revision: feature/setup2
+environmentPath: environments/hess.pm

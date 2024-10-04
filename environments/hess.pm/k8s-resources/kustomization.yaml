@@ -1,38 +1,38 @@
 resources:
   - ../../base
 
-patches:
-  - target:
-      kind: ApplicationSet
-      name: application-set
-      namespace: argocd
-    patch: |-
-      [
-        {
-          "op": "replace",
-          "path": "/spec/generators/0/git/revision",
-          "value": "feature/setup2"
-        },
-        {
-          "op": "replace",
-          "path": "/spec/generators/0/git/directories",
-          "value": [
-            {
-              "path": "environments/hess.pm/apps/*"
-            }
-          ]
-        },
-        {
-          "op": "replace",
-          "path": "/spec/template/spec/sources/0/targetRevision",
-          "value": "feature/setup2"
-        },
-        {
-          "op": "replace",
-          "path": "/spec/template/spec/sources/0/helm/valueFiles",
-          "value": [
-            "$homelab-iac/environments/hess.pm/environment.yaml",
-            "$homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml"
-          ]
-        }
-      ]
+# patches:
+#   - target:
+#       kind: ApplicationSet
+#       name: application-set
+#       namespace: argocd
+#     patch: |-
+#       [
+#         {
+#           "op": "replace",
+#           "path": "/spec/generators/0/git/revision",
+#           "value": "feature/setup2"
+#         },
+#         {
+#           "op": "replace",
+#           "path": "/spec/generators/0/git/directories",
+#           "value": [
+#             {
+#               "path": "environments/hess.pm/apps/*"
+#             }
+#           ]
+#         },
+#         {
+#           "op": "replace",
+#           "path": "/spec/template/spec/sources/0/targetRevision",
+#           "value": "feature/setup2"
+#         },
+#         {
+#           "op": "replace",
+#           "path": "/spec/template/spec/sources/0/helm/valueFiles",
+#           "value": [
+#             "$homelab-iac/environments/hess.pm/environment.yaml",
+#             "$homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml"
+#           ]
+#         }
+#       ]
