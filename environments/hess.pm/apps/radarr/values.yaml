@@ -1,0 +1,9 @@
+apps:
+  radarr:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/radarr/config"
+          media:
+            hostPath: "/mnt/tank0/encrypted/media"
