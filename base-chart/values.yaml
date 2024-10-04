@@ -127,6 +127,37 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  sabnzbd:
+    enabled: false
+    generic:
+      deployment:
+        image: "lscr.io/linuxserver/sabnzbd:latest"
+        ports:
+          - containerPort: 8080
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/tank1/unencrypted/apps/sabnzbd/config"
+          media:
+            mountPath: "/mnt/media"
+            hostPath: "/mnt/somewhere/encrypted/media"
+          downloads:
+            mountPath: "/mnt/downloads"
+            hostPath: "/data/volumes/sabnzbd-downloads"
+          watchdir:
+            mountPath: "/mnt/watchdir"
+            hostPath: "/mnt/tank1/unencrypted/apps/watchdir"
+      service:
+        ports:
+          - name: http
+            port: 8080
+      ingress:
+        https:
+          - subdomain: "sabnzbd"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
   plex:
     enabled: false
     generic:
