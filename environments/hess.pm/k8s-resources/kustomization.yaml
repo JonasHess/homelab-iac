@@ -1,0 +1,5 @@
+resources:
+  - ../../base
+
+patchesStrategicMerge:
+  - application-set-patch.yaml
