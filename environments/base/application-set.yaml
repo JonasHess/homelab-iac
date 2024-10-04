@@ -11,9 +11,9 @@ spec:
         generators:
           - git:
               repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-              revision: '{{ revision }}'
+              revision: '{{ .revision }}'
               directories:
-                - path: '{{ environmentPath }}/apps/*'
+                - path: '{{ .environmentPath }}/apps/*'
           - list:
               elements:
                 - revision: "feature/setup2"
@@ -28,17 +28,17 @@ spec:
       project: default
       sources:
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: '{{ revision }}'
+          targetRevision: '{{ .revision }}'
           path: base-chart
           helm:
             parameters:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
                 value: "true"
             valueFiles:
-              - $homelab-iac/{{ environmentPath }}/environment.yaml
-              - $homelab-iac/{{ environmentPath }}/apps/{{.path.basenameNormalized}}/values.yaml
+              - $homelab-iac/{{ .environmentPath }}/environment.yaml
+              - $homelab-iac/{{ .environmentPath }}/apps/{{.path.basenameNormalized}}/values.yaml
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-          targetRevision: '{{ revision }}'
+          targetRevision: '{{ .revision }}'
           ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
