@@ -1,5 +1,5 @@
 resources:
-  - ../../base
+  - ../../../base
 
 patches:
   - target:
@@ -15,17 +15,17 @@ patches:
         },
         {
           "op": "replace",
+          "path": "/spec/template/spec/sources/0/targetRevision",
+          "value": "feature/setup2"
+        },
+        {
+          "op": "replace",
           "path": "/spec/generators/0/git/directories",
           "value": [
             {
               "path": "environments/hess.pm/apps/*"
             }
           ]
-        },
-        {
-          "op": "replace",
-          "path": "/spec/template/spec/sources/0/targetRevision",
-          "value": "feature/setup2"
         },
         {
           "op": "replace",
