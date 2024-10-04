@@ -13,7 +13,7 @@ spec:
               repoURL: 'https://github.com/JonasHess/homelab-iac.git'
               revision: 'feature/setup2'
               directories:
-                - path: '{{ .environmentPath }}/apps/*'
+                - path: 'environments/hess.pm/apps/*'
           - list:
               elements:
                 - revision: "feature/setup2"
