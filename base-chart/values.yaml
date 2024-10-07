@@ -84,6 +84,35 @@ apps:
             priority: 20
             matchSuffix: "&& PathPrefix(`/api`)"
             port: 9696
+  readarr:
+    enabled: false
+    generic:
+      deployment:
+        image: "lscr.io/linuxserver/readarr:develop"
+        ports:
+          - containerPort: 8787
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/unencrypted/apps/readarr/config"
+          media:
+            mountPath: "/mnt/media"
+            hostPath: "/mnt/somewhere/encrypted/media"
+      service:
+        ports:
+          - name: http
+            port: 8787
+      ingress:
+        https:
+          - subdomain: "readarr"
+            port: 8787
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "readarr"
+            priority: 20
+            matchSuffix: "&& PathPrefix(`/api`)"
+            port: 8787
   tautulli:
     enabled: false
     generic:
