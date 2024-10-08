@@ -40,6 +40,11 @@ fi
 
 IP_RANGE=$1
 
+if ! command -v kubectl &> /dev/null; then
+  echo "kubectl could not be found. Please install kubectl on the remote server and try again."
+  exit 1
+fi
+
 
 ensure_microk8s_installed() {
   echo "Checking if microk8s is already installed..."
