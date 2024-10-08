@@ -19,7 +19,7 @@ spec:
   project: default
   source:
     repoURL: https://github.com/JonasHess/homelab-iac.git
-    targetRevision: feature/setup2
+    targetRevision: main
     path: environments/${ENVIRONMENT}/k8s-resources
   destination:
     namespace: default
