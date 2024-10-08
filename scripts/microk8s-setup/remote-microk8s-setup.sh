@@ -85,7 +85,7 @@ set_kubectl_config() {
   echo "Setting up kubeconfig..."
   mkdir -p ~/.kube
   if [ -f ~/.kube/config ]; then
-    if confirm "On the remote machine, fhe file ~/.kube/config already exists. Do you want to replace it? [y/N]"; then
+    if confirm "On the remote machine, the file ~/.kube/config already exists. Do you want to replace it? [y/N]"; then
       microk8s config > ~/.kube/config
     else
       echo "Cannot proceed with the installation. Can not replace  ~/.kube/config."
