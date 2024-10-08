@@ -1,0 +1,13 @@
+apps:
+  sabnzbd:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/sabnzbd/config"
+          media:
+            hostPath: "/mnt/tank0/encrypted/media"
+          downloads:
+            hostPath: "/data/volumes/sabnzbd-downloads"
+          watchdir:
+            hostPath: "/mnt/tank1/unencrypted/apps/watchdir"

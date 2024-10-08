@@ -1,0 +1,16 @@
+{{- if .Values.apps.mosquitto.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+  namespace: argocd
+spec:
+  ports:
+  - name: tcp1883
+    port: 1883
+  - name: tcp9001
+    port: 9001
+  selector:
+    app: mosquitto
+  type: NodePort
+{{- end -}}

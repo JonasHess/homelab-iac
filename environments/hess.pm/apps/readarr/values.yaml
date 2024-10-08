@@ -1,0 +1,9 @@
+apps:
+  readarr:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/readarr/config"
+          media:
+            hostPath: "/mnt/tank0/encrypted/media"

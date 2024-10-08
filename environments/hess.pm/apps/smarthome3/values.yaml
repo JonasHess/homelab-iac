@@ -1,0 +1,6 @@
+apps:
+  smarthome3:
+    hueIp: "192.168.1.194"
+    mqttUrl: "tcp://mosquitto-service:1883"
+    homeAssistantIp: "ws://homeassistant-service:8123"
+    profilesActive: "jonas"

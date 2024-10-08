@@ -1,0 +1,9 @@
+apps:
+  plex:
+      generic:
+        deployment:
+          pvcMounts:
+            config:
+              hostPath: "/mnt/tank1/encrypted/apps/plex/config"
+            media:
+              hostPath: "/mnt/tank0/encrypted/media"

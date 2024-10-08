@@ -1,0 +1,108 @@
+{{- if .Values.apps.aws.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecr-registry-helper-cm
+  namespace: argocd
+data:
+  AWS_REGION: "eu-central-1" # Replace with your ECR region
+  DOCKER_SECRET_NAME: regcred # Replace with your desired ECR token secret name
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sa-argocd
+  namespace: argocd
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: argocd
+  name: role-full-access-to-secrets
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["regcred"] # Replace with your desired ECR token secret name
+  verbs: ["delete"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: argocd-role-binding
+  namespace: argocd
+subjects:
+- kind: ServiceAccount
+  name: sa-argocd # Replace with your service account name if different
+  namespace: argocd
+  apiGroup: ""
+roleRef:
+  kind: Role
+  name: role-full-access-to-secrets # Replace with your role name if different
+  apiGroup: ""
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ecr-registry-helper
+  namespace: argocd
+spec:
+  schedule: "0 */10 * * *"
+  successfulJobsHistoryLimit: 2
+  suspend: false
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: sa-argocd # Replace with your service account name if different
+          containers:
+          - name: ecr-registry-helper
+            image: omarxs/awskctl:v1.0
+            imagePullPolicy: IfNotPresent
+            envFrom:
+              - secretRef:
+                  name: ecr-registry-helper-secrets # Replace with your secret name if different
+              - configMapRef:
+                  name: ecr-registry-helper-cm # Replace with your configmap name if different
+            command:
+              - /bin/bash
+              - -c
+              - |-
+                ECR_TOKEN="$(aws ecr get-login-password --region ${AWS_REGION})"
+                NAMESPACE_NAME=argocd # Replace with your desired namespace
+                kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
+                kubectl create secret docker-registry $DOCKER_SECRET_NAME --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com --docker-username=AWS --docker-password=${ECR_TOKEN} --namespace=$NAMESPACE_NAME
+                echo "Secret was successfully updated at $(date)"
+          restartPolicy: Never
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ecr-registry-helper-immediate
+  namespace: argocd
+spec:
+  template:
+    spec:
+      serviceAccountName: sa-argocd # Replace with your service account name if different
+      containers:
+      - name: ecr-registry-helper
+        image: omarxs/awskctl:v1.0
+        imagePullPolicy: IfNotPresent
+        envFrom:
+          - secretRef:
+              name: ecr-registry-helper-secrets # Replace with your secret name if different
+          - configMapRef:
+              name: ecr-registry-helper-cm # Replace with your configmap name if different
+        command:
+          - /bin/bash
+          - -c
+          - |-
+            ECR_TOKEN="$(aws ecr get-login-password --region ${AWS_REGION})"
+            NAMESPACE_NAME=argocd # Replace with your desired namespace
+            kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
+            kubectl create secret docker-registry $DOCKER_SECRET_NAME --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com --docker-username=AWS --docker-password=${ECR_TOKEN} --namespace=$NAMESPACE_NAME
+            echo "Secret was successfully updated at $(date)"
+      restartPolicy: Never
+{{- end -}}

@@ -1,0 +1,37 @@
+{{- range $appName, $app := .Values.apps }}
+  {{- if $app.enabled }}
+    {{- if and $app.generic $app.generic.ingress }}
+       {{- if $app.generic.ingress.https }}
+         {{- range $index, $ingress := $app.generic.ingress.https }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ $ingress.subdomain }}.{{ $.Values.domain}}`) {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
+      kind: Rule
+      priority: {{ default 10 $ingress.priority }}
+      services:
+        - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
+          port: {{ $ingress.port }}
+      {{- if $ingress.middlewares }}
+      middlewares:
+        {{- range $middleware := $ingress.middlewares }}
+        - name: {{ $middleware.name }}
+          namespace: {{ $middleware.namespace }}
+        {{- end }}
+      {{- end }}
+  tls:
+    certResolver: cloudflare
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

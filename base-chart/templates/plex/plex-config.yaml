@@ -1,0 +1,14 @@
+{{- if .Values.apps.plex.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: plex-config
+  namespace: argocd
+data:
+  PUID: "1000"
+  PGID: "997"
+  TZ: "Europe/Berlin"
+  HOSTNAME: "nudelkiste"
+  VERSION: "docker"
+{{- end -}}

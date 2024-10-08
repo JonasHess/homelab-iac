@@ -1,0 +1,12 @@
+{{- if .Values.apps.smarthome3.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smarthome3-config-map
+  namespace: argocd
+data:
+  HUE_IP: {{ .Values.apps.smarthome3.hueIp | quote }}
+  MQTT_URL: {{ .Values.apps.smarthome3.mqttUrl | quote }}
+  HOME_ASSISTANT_IP: {{ .Values.apps.smarthome3.homeAssistantIp | quote }}
+  spring.profiles.active: {{ .Values.apps.smarthome3.profilesActive | quote }}
+{{- end -}}
