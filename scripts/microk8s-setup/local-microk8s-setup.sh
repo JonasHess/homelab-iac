@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-set -e
+set -e  # Exit on first error
+set -o pipefail  # Fail if any command in a pipe fails
+set -u  # Treat unset variables as an error
+
 cd "$(dirname "$0")"
 
 list_environments() {
@@ -34,6 +37,9 @@ if [ ! -f "$ENV_FILE" ]; then
   exit 1
 fi
 
+# Install yq https://github.com/mikefarah/yq
+# wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
+#    chmod +x /usr/bin/yq
 SERVER_IP=$(yq e '.server-ip' "$ENV_FILE")
 USERNAME=$(yq e '.username' "$ENV_FILE")
 IP_RANGE=$(yq e '.ip-range' "$ENV_FILE")
