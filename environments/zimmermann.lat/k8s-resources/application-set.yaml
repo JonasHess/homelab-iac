@@ -11,7 +11,7 @@ spec:
         repoURL: 'https://github.com/JonasHess/homelab-iac.git'
         revision: main
         directories:
-          - path: 'environments/zimmermann.lat/apps/*'
+          - path: 'environments/hess.pm/apps/*'
   template:
     metadata:
       name: 'app-{{.path.basenameNormalized}}'
@@ -29,8 +29,8 @@ spec:
               - name: 'apps.{{.path.basenameNormalized}}.enabled'
                 value: "true"
             valueFiles:
-              - $homelab-iac/environments/zimmermann.lat/environment.yaml
-              - $homelab-iac/environments/zimmermann.lat/apps/{{.path.basenameNormalized}}/values.yaml
+              - $homelab-iac/environments/hess.pm/environment.yaml
+              - $homelab-iac/environments/hess.pm/apps/{{.path.basenameNormalized}}/values.yaml
         - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
           targetRevision: main
           ref: homelab-iac
