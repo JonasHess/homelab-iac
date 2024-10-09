@@ -386,6 +386,9 @@ apps:
                 namespace: "argocd"
   homematic:
     enabled: false
+    persistence:
+      data:
+        mountPath: "/mnt/somewhere/unencrypted/apps/homematic/ccu_data"
     generic:
       ingress:
         https:

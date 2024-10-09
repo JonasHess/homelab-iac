@@ -20,8 +20,8 @@ spec:
         persistence:
           data:
             # -- enabling persistent data. See options at https://bjw-s.github.io/helm-charts/docs/common-library/common-library-storage/
-            enabled: false
-            mountPath: /usr/local
+            enabled: true
+            mountPath: {{ .Values.apps.homematic.persistence.data.mountPath }}
           sys:
             enabled: true
             type: hostPath
