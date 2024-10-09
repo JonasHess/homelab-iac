@@ -23,7 +23,6 @@ spec:
             enabled: true
             type: hostPath
             hostPath: {{ .Values.apps.homematic.persistence.data.mountPath }}
-            mountPath: /usr/local
           sys:
             enabled: true
             type: hostPath
