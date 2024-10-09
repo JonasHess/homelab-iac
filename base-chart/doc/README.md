@@ -73,7 +73,7 @@ Try the following (adapt the kernel version to your version):
 
 ```bash
 uname -a
-sudo apt reinstall linux-headers-6.8.0-45-generic
+sudo apt reinstall linux-headers-$(uname -r)
 sudo apt reinstall pivccu-modules-dkms
 sudo service pivccu-dkms start
 sudo modprobe eq3_char_loop
