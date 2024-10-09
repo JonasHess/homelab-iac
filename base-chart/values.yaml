@@ -387,36 +387,11 @@ apps:
   homematic:
     enabled: false
     generic:
-#      deployment:
-#        privileged: true
-#        image: "https://jens-maus.github.io/RaspberryMatic:latest"
-#        ports:
-#          - containerPort: 8080
-#        pvcMounts:
-#          data:
-#            mountPath: "/usr/local"
-#            hostPath: "/mnt/somewhere/unencrypted/apps/homematic/ccu_data"
-#          lib:
-#            mountPath: "/lib/modules"
-#            hostPath: "/lib/modules"
-#          udev:
-#            mountPath: "/run/udev/control"
-#            hostPath: "/run/udev/control"
-#        deviceMounts:
-#          zigbeeusb:
-#            mountPath: "/dev/ttyACM0"
-#            hostPath: "/dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0"
-#        envFrom:
-#          configMapRef: "zigbee2mqtt-config-map"
-#          secretRef: "zigbee2mqtt-secret"
-#      service:
-#        ports:
-#          - name: http
-#            port: 80
       ingress:
         http:
           - subdomain: "homematic"
             port: 80
+            service: "homematic-raspberrymatic"
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"

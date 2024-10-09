@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: homematic2
+  name: homematic
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
