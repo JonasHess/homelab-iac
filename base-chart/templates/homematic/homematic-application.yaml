@@ -22,14 +22,14 @@ spec:
           # -- enabling persistent data. See options at https://bjw-s.github.io/helm-charts/docs/common-library/common-library-storage/
           enabled: false
           mountPath: /usr/local
-          sys:
-            enabled: true
-            type: hostPath
-            hostPath: /sys
-          modules:
-            enabled: true
-            type: hostPath
-            hostPath: /lib/modules
+        sys:
+          enabled: true
+          type: hostPath
+          hostPath: /sys
+        modules:
+          enabled: true
+          type: hostPath
+          hostPath: /lib/modules
 
         securityContext:
           # -- Use privileged to access the Homematic HW
