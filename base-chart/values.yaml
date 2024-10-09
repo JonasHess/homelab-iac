@@ -388,7 +388,7 @@ apps:
     enabled: false
     generic:
       ingress:
-        http:
+        https:
           - subdomain: "homematic"
             port: 80
             service: "homematic-raspberrymatic"
