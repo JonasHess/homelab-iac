@@ -386,7 +386,7 @@ apps:
                 namespace: "argocd"
   homematic:
     enabled: false
-#    generic:
+    generic:
 #      deployment:
 #        privileged: true
 #        image: "https://jens-maus.github.io/RaspberryMatic:latest"
@@ -413,10 +413,10 @@ apps:
 #        ports:
 #          - name: http
 #            port: 80
-#      ingress:
-#        https:
-#          - subdomain: "homematic"
-#            port: 80
-#            middlewares:
-#              - name: "traefik-forward-auth"
-#                namespace: "argocd"
+      ingress:
+        http:
+          - subdomain: "homematic"
+            port: 80
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
