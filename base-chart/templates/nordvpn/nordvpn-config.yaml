@@ -15,5 +15,5 @@ data:
   TINY_LOGLEVEL: "Info"
   DANTE_LOGLEVEL: "info"
   DEBUG: "1"
-  OPENVPN_LOGLEVEL: "3"
+  OPENVPN_LOGLEVEL: "1"
 {{- end -}}
