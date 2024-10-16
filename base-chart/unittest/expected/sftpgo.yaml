@@ -164,8 +164,6 @@ spec:
       containers:
         - name: sftpgo
           image: drakkan/sftpgo:latest
-          
-
           ports:
             - containerPort: 8080
             - containerPort: 2222

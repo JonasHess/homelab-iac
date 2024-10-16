@@ -74,8 +74,6 @@ spec:
       containers:
         - name: tautulli
           image: tautulli/tautulli:latest
-          
-
           ports:
             - containerPort: 8181
           volumeMounts:

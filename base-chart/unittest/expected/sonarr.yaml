@@ -116,8 +116,6 @@ spec:
       containers:
         - name: sonarr
           image: lscr.io/linuxserver/sonarr:latest
-          
-
           ports:
             - containerPort: 8989
           volumeMounts:

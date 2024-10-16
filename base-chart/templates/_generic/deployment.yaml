@@ -24,9 +24,9 @@ spec:
           image: {{ $deployment.image }}
           {{- if $deployment.securityContext }}
           securityContext:
-            {{- toYaml $deployment.securityContext | nindent 4 }}
+          {{- toYaml $deployment.securityContext | nindent 12 }}
           {{- end }}
-          {{ with $deployment.resources }}
+          {{- with $deployment.resources }}
           resources:
             {{- if .limits }}
             limits:
@@ -40,8 +40,7 @@ spec:
               {{ $key }}: {{ $value | quote }}
               {{- end }}
             {{- end }}
-          {{ end }}
-
+          {{- end }}
           ports:
             {{- range $port := $deployment.ports }}
             - containerPort: {{ $port.containerPort }}

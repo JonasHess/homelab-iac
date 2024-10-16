@@ -95,8 +95,6 @@ spec:
           image: koenkk/zigbee2mqtt:latest
           securityContext:
             privileged: true
-          
-
           ports:
             - containerPort: 8080
           volumeMounts:

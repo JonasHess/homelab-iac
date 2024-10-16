@@ -200,8 +200,6 @@ spec:
       containers:
         - name: sabnzbd
           image: lscr.io/linuxserver/sabnzbd:latest
-          
-
           ports:
             - containerPort: 8080
           volumeMounts:

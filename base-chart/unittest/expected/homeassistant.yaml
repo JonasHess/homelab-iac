@@ -74,8 +74,6 @@ spec:
       containers:
         - name: homeassistant
           image: lscr.io/linuxserver/homeassistant:latest
-          
-
           ports:
             - containerPort: 8123
           volumeMounts:
