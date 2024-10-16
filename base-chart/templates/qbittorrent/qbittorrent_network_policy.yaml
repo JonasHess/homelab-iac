@@ -11,10 +11,21 @@ spec:
   policyTypes:
     - Egress
   egress:
+    # Allow egress to the specific IP address
     - to:
         - ipBlock:
             cidr: 213.152.176.251/32
       ports:
         - protocol: TCP
         - protocol: UDP
+    # Allow DNS traffic (UDP and TCP on port 53)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
 {{- end -}}
