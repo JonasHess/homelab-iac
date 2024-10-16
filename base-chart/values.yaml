@@ -402,6 +402,11 @@ apps:
   nordvpn:
     enabled: false
     generic:
+      service:
+        ports:
+          - name: socks5
+            port: 1080
+            protocol: TCP
       deployment:
         securityContext:
           privileged: true
