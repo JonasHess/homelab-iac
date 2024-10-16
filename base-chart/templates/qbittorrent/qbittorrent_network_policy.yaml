@@ -11,10 +11,12 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Allow all egress traffic to the SOCKS proxy IP (213.152.176.251)
+    # Allow all egress traffic, but only to port 1080 for all protocols
     - to:
         - ipBlock:
-            cidr: 213.152.176.251/32
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 1080
     # Allow DNS traffic to any external DNS server (UDP/TCP port 53)
     - to:
         - ipBlock:
