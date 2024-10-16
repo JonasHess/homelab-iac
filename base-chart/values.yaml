@@ -399,30 +399,6 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
-  nordvpn:
-    enabled: false
-    generic:
-      service:
-        ports:
-          - name: socks5
-            port: 1080
-            protocol: TCP
-      deployment:
-        securityContext:
-          privileged: true
-          sysctls:
-            - name: "net.ipv4.conf.all.rp_filter"
-              value: "2"
-          capabilities:
-            add:
-              - "NET_ADMIN"
-        image: "edgd1er/nordvpn-proxy:latest"
-        ports:
-          - containerPort: 8888
-          - containerPort: 1080
-        envFrom:
-          configMapRef: nordvpn-config
-          secretRef: nordvpn-secret
   qbittorrent:
     enabled: false
     generic:
