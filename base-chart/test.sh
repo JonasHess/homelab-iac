@@ -63,6 +63,7 @@ test_app() {
         return 1
     else
         print_success "App ${app}"
+        rm -f "./unittest/actual/${app}.yaml"
         return 0
     fi
 }
