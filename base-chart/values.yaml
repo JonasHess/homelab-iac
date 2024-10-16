@@ -450,6 +450,6 @@ apps:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
           - subdomain: "qbittorrent"
-            matchSuffix: "&& ( Path(`/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))"
+            matchSuffix: "&& PathPrefix(`/api`)"
             priority: 20
             port: 8080
