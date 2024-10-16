@@ -49,9 +49,19 @@ while getopts "hfa:" opt; do
     esac
 done
 
+# Function to validate YAML using yq
+validate_yaml() {
+    local file=$1
+    if ! yq e . "$file" > /dev/null 2>&1; then
+        print_error "Invalid YAML in file $file"
+        return 1
+    fi
+    return 0
+}
+
 # Function to render and compare templates
 test_app() {
-  echo "------------------------------"
+    echo "------------------------------"
     local app=$1
     echo "${app}"
 
@@ -62,6 +72,11 @@ test_app() {
     # Render the template
     helm template values.yaml . --set apps.${app}.enabled=true > ./unittest/actual/${app}.yaml
 
+    # Validate the rendered YAML
+    if ! validate_yaml "./unittest/actual/${app}.yaml"; then
+        return 1
+    fi
+
     # Compare the actual result with the expected result
     if ! diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml > /dev/null; then
         if [ "$fix_tests" = true ]; then
@@ -70,8 +85,6 @@ test_app() {
             return 0
         else
             print_error "Template for app ${app} does not match the expected result."
-#            echo "Differences:"
-#            diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml
             return 1
         fi
     else
