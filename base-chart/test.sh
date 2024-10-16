@@ -70,7 +70,10 @@ test_app() {
     mkdir -p ./unittest/actual
 
     # Render the template
-    helm template values.yaml . --set apps.${app}.enabled=true > ./unittest/actual/${app}.yaml
+    if ! helm template values.yaml . --set apps.${app}.enabled=true > ./unittest/actual/${app}.yaml; then
+        print_error "Helm template command failed for app ${app}"
+        return 1
+    fi
 
     # Validate the rendered YAML
     if ! validate_yaml "./unittest/actual/${app}.yaml"; then
