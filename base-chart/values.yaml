@@ -398,3 +398,14 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  nordvpn:
+    enabled: false
+    generic:
+      deployment:
+        image: "edgd1er/nordvpn-proxy:latest"
+        ports:
+          - containerPort: 8888
+          - containerPort: 1080
+        envFrom:
+          configMapRef: nordvpn-config
+          secretRef: nordvpn-secret
