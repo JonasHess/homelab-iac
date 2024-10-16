@@ -10,10 +10,11 @@ echo "Running Helm template tests..."
 
 # Function to display help message
 show_help() {
-    echo "Usage: $0 [-a <appname>]"
+    echo "Usage: $0 [-a <appname>] [-f]"
     echo
     echo "Options:"
     echo "  -a <appname>  Test a specific app only"
+    echo "  -f            Fix failing tests by replacing expected files with actual files"
     echo "  -h            Show this help message"
 }
 
@@ -28,7 +29,8 @@ print_success() {
 }
 
 # Parse command-line arguments
-while getopts "ha:" opt; do
+fix_tests=false
+while getopts "hfa:" opt; do
     case ${opt} in
         h )
             show_help
@@ -36,6 +38,9 @@ while getopts "ha:" opt; do
             ;;
         a )
             specific_app=$OPTARG
+            ;;
+        f )
+            fix_tests=true
             ;;
         \? )
             show_help
@@ -46,7 +51,9 @@ done
 
 # Function to render and compare templates
 test_app() {
+  echo "------------------------------"
     local app=$1
+    echo "${app}"
 
     # Create directories if they don't exist
     mkdir -p ./unittest/expected
@@ -57,12 +64,18 @@ test_app() {
 
     # Compare the actual result with the expected result
     if ! diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml > /dev/null; then
-        print_error "Template for app ${app} does not match the expected result."
-        echo "Differences:"
-        diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml
-        return 1
+        if [ "$fix_tests" = true ]; then
+            cp ./unittest/actual/${app}.yaml ./unittest/expected/${app}.yaml
+            print_success "Fixed template for app ${app} by replacing the expected result."
+            return 0
+        else
+            print_error "Template for app ${app} does not match the expected result."
+#            echo "Differences:"
+#            diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml
+            return 1
+        fi
     else
-        print_success "App ${app}"
+        print_success "Successful test for app ${app}."
         rm -f "./unittest/actual/${app}.yaml"
         return 0
     fi
@@ -91,14 +104,26 @@ fi
 # List the apps found
 echo "Apps found: $apps"
 
-# Initialize error count
+# Initialize counters
 error_count=0
+success_count=0
 
 # Test each app
 echo "Running tests..."
 for app in $apps; do
-    test_app $app || error_count=$((error_count + 1))
+    if test_app $app; then
+        success_count=$((success_count + 1))
+    else
+        error_count=$((error_count + 1))
+    fi
 done
+
+# Show summary
+if [ $error_count -eq 0 ]; then
+    print_success "Summary: Successful tests: $success_count, Failed tests: $error_count"
+else
+    print_error "Summary: Successful tests: $success_count, Failed tests: $error_count"
+fi
 
 # Check if no app is enabled
 if [ $error_count -eq ${#apps[@]} ]; then
