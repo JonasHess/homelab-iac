@@ -11,14 +11,14 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Allow egress to the specific IP address
+    # Allow egress to the SOCKS proxy IP (213.152.176.251)
     - to:
         - ipBlock:
             cidr: 213.152.176.251/32
       ports:
         - protocol: TCP
         - protocol: UDP
-    # Allow DNS traffic (UDP and TCP on port 53)
+    # Allow DNS traffic to any external DNS server (port 53 for UDP/TCP)
     - to:
         - ipBlock:
             cidr: 0.0.0.0/0
@@ -27,5 +27,12 @@ spec:
           port: 53
         - protocol: TCP
           port: 53
-
+    # Allow all traffic to local IP ranges
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
 {{- end -}}
