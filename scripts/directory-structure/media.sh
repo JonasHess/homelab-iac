@@ -1,4 +1,9 @@
 #!/bin/bash
+set -e  # Exit on first error
+set -o pipefail  # Fail if any command in a pipe fails
+set -u  # Treat unset variables as an error
+cd "$(dirname "$0")" # Change to the script directory
+
 
 BASE_DIR="/mnt/tank0/encrypted/media"
 
