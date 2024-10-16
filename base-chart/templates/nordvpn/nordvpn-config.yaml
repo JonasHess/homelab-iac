@@ -6,11 +6,11 @@ metadata:
   namespace: argocd
 data:
   TZ: "Europe/Berlin"
-  DNS: "1.1.1.1@853#cloudflare-dns.com 1.0.0.1@853#cloudflare-dns.com"
+  DNS: "1.1.1.1 1.0.0.1"
   NORDVPN_COUNTRY: "germany"
   NORDVPN_PROTOCOL: "udp"
   NORDVPN_CATEGORY: "p2p"
-  LOCAL_NETWORK: "192.168.1.0/24"
+#   LOCAL_NETWORK: "192.168.1.0/24"
   TINYPORT: "8888"
   TINY_LOGLEVEL: "Info"
   DANTE_LOGLEVEL: "info"
