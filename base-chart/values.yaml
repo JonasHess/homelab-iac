@@ -402,6 +402,7 @@ apps:
     enabled: false
     generic:
       deployment:
+        privileged: true
         image: "edgd1er/nordvpn-proxy:latest"
         ports:
           - containerPort: 8888
