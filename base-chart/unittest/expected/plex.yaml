@@ -1,0 +1,222 @@
+---
+# Source: homelab-base-chart/templates/plex/plex-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: plex-config
+  namespace: argocd
+data:
+  PUID: "1000"
+  PGID: "997"
+  TZ: "Europe/Berlin"
+  HOSTNAME: "nudelkiste"
+  VERSION: "docker"
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "plex-config-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/plex/config
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "plex-config-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "plex-media-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/media
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "plex-media-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "plex-config-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "plex-media-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: plex-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 32400
+  selector:
+    app: plex
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: plex-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: plex
+  template:
+    metadata:
+      labels:
+        app: plex
+    spec:
+      containers:
+        - name: plex
+          image: ghcr.io/linuxserver/plex:latest
+          
+          resources:
+            limits:
+              nvidia.com/gpu: "1"
+          
+
+          ports:
+            - containerPort: 32400
+          volumeMounts:
+            - mountPath: "/config"
+              name: plex-config-volume
+            - mountPath: "/mnt/media"
+              name: plex-media-volume
+          envFrom:
+            - configMapRef:
+                name: plex-config
+            - secretRef:
+                name: plex-secret
+      volumes:
+        - name: plex-config-volume
+          persistentVolumeClaim:
+            claimName: plex-config-pvc
+        - name: plex-media-volume
+          persistentVolumeClaim:
+            claimName: plex-media-pvc
+---
+# Source: homelab-base-chart/templates/plex/plex-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: plex-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+
+  target:
+    name: plex-secret
+    creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
+
+  data:
+    - secretKey: "PLEX_CLAIM"
+      remoteRef:
+        key: "/kind-homelab/plex/PLEX_CLAIM"
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: plex-https-32400-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`plex.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: plex-service
+          port: 32400
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-tcp.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: plex-tcp-32400
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - plex
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: plex-service
+          port: 32400

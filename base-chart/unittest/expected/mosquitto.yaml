@@ -1,0 +1,118 @@
+---
+# Source: homelab-base-chart/templates/mosquitto/mosquitto-config-cm.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config-cm
+  namespace: argocd
+data:
+  mosquitto.conf: |-
+    allow_anonymous true
+    listener 1883
+    password_file /mosquitto/config/auth.txt
+---
+# Source: homelab-base-chart/templates/mosquitto/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-service
+  namespace: argocd
+spec:
+  ports:
+  - name: tcp1883
+    port: 1883
+  - name: tcp9001
+    port: 9001
+  selector:
+    app: mosquitto
+  type: NodePort
+---
+# Source: homelab-base-chart/templates/mosquitto/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto-deployment
+  namespace: argocd
+  labels:
+    app: mosquitto
+    name: mosquitto-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      initContainers:
+        - name: init-permissions
+          image: eclipse-mosquitto:latest
+          command:
+            - sh
+            - -c
+            - |
+              cp /mosquitto-config/auth.txt /mosquitto/config/auth.txt && \
+              cp /mosquitto-config/mosquitto.conf /mosquitto/config/mosquitto.conf && \
+              chown mosquitto:mosquitto /mosquitto/config/auth.txt && \
+              chmod 0700 /mosquitto/config/auth.txt && \
+              chown mosquitto:mosquitto /mosquitto/config/mosquitto.conf
+          volumeMounts:
+            - mountPath: "/mosquitto/config"  # Writable volume
+              name: writable-config
+            - mountPath: "/mosquitto-config/auth.txt"
+              subPath: "auth.txt"
+              name: mosquitto-secret-volume
+              readOnly: true
+            - mountPath: "/mosquitto-config/mosquitto.conf"
+              subPath: "mosquitto.conf"
+              name: mosquitto-config-volume
+              readOnly: true
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:latest
+          ports:
+            - containerPort: 1883
+              name: "tcp1883"
+            - containerPort: 9001
+              name: "tcp9001"
+          volumeMounts:
+            - mountPath: "/mosquitto/config"
+              name: writable-config  # Mount writable directory
+      volumes:
+        - name: mosquitto-config-volume
+          configMap:
+            name: mosquitto-config-cm
+        - name: mosquitto-secret-volume
+          secret:
+            secretName: mosquitto-secret
+        - name: writable-config
+          emptyDir: {}  # Temporary writable volume
+---
+# Source: homelab-base-chart/templates/mosquitto/mosquitto-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: mosquitto-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+
+  target:
+    name: mosquitto-secret
+    creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
+
+  data:
+    - secretKey: "auth.txt"
+      remoteRef:
+        key: "/kind-homelab/mosquitto/auth.txt"

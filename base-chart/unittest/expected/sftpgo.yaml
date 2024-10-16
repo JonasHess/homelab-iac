@@ -1,0 +1,280 @@
+---
+# Source: homelab-base-chart/templates/sftpgo/sftpgo-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: sftpgo-config
+  namespace: argocd
+data:
+  sftpgo.json: |
+    {
+      "sftpd": {
+        "bindings": [
+          {
+            "port": 2222
+          }
+        ]
+      },
+     "data_provider": {
+        "users_base_dir": "/srv/sftpgo"
+      },
+      "httpd": {
+        "bindings": [
+          {
+            "enabled_login_methods": 0,
+            "oidc": {
+              "config_url": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX",
+              "client_id": "6e1bl5i55ao7bhhcufk85ussm",
+              "redirect_base_url": "https://sftpgo.home-server.dev",
+              "username_field": "name",
+              "role_field": "custom:sftpgo_role"
+            }
+          }
+        ]
+      },
+      "webdavd": {
+        "bindings": [
+          {
+            "port": 8081
+          }
+        ]
+      }
+    }
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "sftpgo-config-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/unencrypted/apps/sftpgo/config
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "sftpgo-config-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "sftpgo-data-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/sftpgo/data
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "sftpgo-data-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "sftpgo-config-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "sftpgo-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: sftpgo-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 8080
+    - name: webdav
+      port: 8081
+    - name: sftp
+      port: 2222
+      protocol: TCP
+  selector:
+    app: sftpgo
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sftpgo-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sftpgo
+  template:
+    metadata:
+      labels:
+        app: sftpgo
+    spec:
+      containers:
+        - name: sftpgo
+          image: drakkan/sftpgo:latest
+          
+
+          ports:
+            - containerPort: 8080
+            - containerPort: 2222
+          volumeMounts:
+            - mountPath: "/var/lib/sftpgo"
+              name: sftpgo-config-volume
+            - mountPath: "/srv/sftpgo"
+              name: sftpgo-data-volume
+            - mountPath: "/etc/sftpgo/"
+              name: sftpgo-configmap-volume
+          envFrom:
+            - secretRef:
+                name: sftpgo-secret
+      volumes:
+        - name: sftpgo-config-volume
+          persistentVolumeClaim:
+            claimName: sftpgo-config-pvc
+        - name: sftpgo-data-volume
+          persistentVolumeClaim:
+            claimName: sftpgo-data-pvc
+        - name: sftpgo-configmap-volume
+          configMap:
+            name: sftpgo-config
+---
+# Source: homelab-base-chart/templates/sftpgo/sftpgo-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: sftpgo-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+
+  target:
+    name: sftpgo-secret
+    creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
+
+  data:
+    - secretKey: "SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_SECRET"
+      remoteRef:
+        key: "/kind-homelab/oidc/traefik-forward-auth/client_secret"
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sftpgo-https-8080-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`sftpgo.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: sftpgo-service
+          port: 8080
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sftpgo-https-8081-1
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`webdav.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: sftpgo-service
+          port: 8081
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-tcp.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: sftpgo-tcp-2222
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - sftpgo
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: sftpgo-service
+          port: 2222

@@ -1,0 +1,453 @@
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-forward-auth
+  namespace: argocd
+data:
+  INSECURE_COOKIE: 'true'
+  COOKIE_DOMAIN: home-server.dev
+  DOMAINS: home-server.dev
+  AUTH_HOST: auth.home-server.dev
+  URL_PATH: /_oauth
+  DEFAULT_PROVIDER: oidc
+  PROVIDERS_OIDC_ISSUER_URL: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+  PROVIDERS_OIDC_CLIENT_ID:  "6e1bl5i55ao7bhhcufk85ussm"
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "traefik-data-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/unencrypted/apps/traefik/data
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "traefik-data-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "traefik-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-forward-auth
+  namespace: argocd
+
+spec:
+  selector:
+    app: traefik-forward-auth
+  ports:
+    - name: http
+      port: 80
+      targetPort: 4181
+      protocol: TCP
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: argocd
+  name: traefik-forward-auth
+  labels:
+    app: traefik-forward-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik-forward-auth
+  template:
+    metadata:
+      labels:
+        app: traefik-forward-auth
+    spec:
+      containers:
+        - name: traefik-forward-auth
+          image: thomseddon/traefik-forward-auth:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            tcpSocket:
+              port: 4181
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          ports:
+            - name: http
+              containerPort: 4181
+          env:
+            - name: PROVIDERS_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: traefik-forward-auth
+                  key: PROVIDERS_OIDC_CLIENT_SECRET
+            - name: SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: traefik-forward-auth
+                  key: SECRET
+            - name: DEFAULT_PROVIDER
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: DEFAULT_PROVIDER
+            - name: PROVIDERS_OIDC_ISSUER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: PROVIDERS_OIDC_ISSUER_URL
+            - name: PROVIDERS_OIDC_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: PROVIDERS_OIDC_CLIENT_ID
+            - name: INSECURE_COOKIE
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: INSECURE_COOKIE
+            - name: COOKIE_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: COOKIE_DOMAIN
+            - name: DOMAINS
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: DOMAINS
+            - name: AUTH_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: AUTH_HOST
+            - name: URL_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: traefik-forward-auth
+                  key: URL_PATH
+            - name: LOG_LEVEL
+              value: debug
+---
+# Source: homelab-base-chart/templates/traefik/traefik-ingress-controller.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik-ingress-controller
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: traefik
+    repoURL: https://helm.traefik.io/traefik
+    targetRevision: 30.1.0
+    helm:
+      # Values file as block file
+      valuesObject:
+        # traefik/values.yaml
+
+        # Enabling Traefik as an Ingress Controller
+        deployment:
+          enabled: true
+
+        experimental:
+          plugins:
+            traefik-plugin-cloudflare:
+              moduleName: "github.com/agence-gaya/traefik-plugin-cloudflare"
+              version: "v1.2.0"
+
+        # Configure the ports exposed by Traefik
+        ports:
+          web:
+            port: 80
+            nodePort: 32080
+            expose:
+              default: true
+            middlewares:
+              - "argocd-cloudflare@kubernetescrd"
+          websecure:
+            port: 443
+            nodePort: 32443
+            expose:
+              default: true
+            middlewares:
+              - "argocd-cloudflare@kubernetescrd"
+          # Additional custom ports
+          sftpgo:
+            port: 2222
+            expose:
+              default: true
+            exposedPort: 2222
+            protocol: TCP
+
+        # Enabling Traefik's access logs for monitoring traffic
+        accessLogs:
+          enabled: true
+
+        additionalArguments:
+          - --entrypoints.websecure.http.tls.certresolver=cloudflare
+          - --entrypoints.websecure.http.tls.domains[0].main=home-server.dev
+          - --entrypoints.websecure.http.tls.domains[0].sans=*.home-server.dev
+          - --entryPoints.web.proxyProtocol.insecure
+          - --entryPoints.web.forwardedHeaders.insecure
+          - --entrypoints.web.http.redirections.entrypoint.to=websecure
+          - --entrypoints.web.http.redirections.entrypoint.scheme=https
+          - --entrypoints.web.http.redirections.entrypoint.permanent=true
+          - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+          - --certificatesresolvers.cloudflare.acme.email=Jonas@Hess.pm
+          - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1
+          - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
+
+        # Traefik logs settings
+        logs:
+          general:
+            level: DEBUG
+          access:
+            enabled: true
+            fields:
+              defaultMode: keep
+
+        ingressRoute:
+          dashboard:
+            enabled: true
+            insecure: true
+
+        tls:
+          enabled: true
+          # this is the name of a TLSOption definition
+          options: ""
+          certResolver: "cloudflare"
+
+        persistence:
+          enabled: true
+          name: traefik-data
+          existingClaim: "traefik-data-pvc"
+          path: /data
+
+        service:
+          enabled: true
+          type: LoadBalancer
+          spec:
+            externalTrafficPolicy: Local
+
+        # Configure SSL settings
+        ssl:
+          insecureSkipVerify: true
+
+        # Configure Server Transport settings
+        serversTransport:
+          insecureSkipVerify: true
+
+        # Environment variables for the Cloudflare API token
+        env:
+          - name: CF_API_EMAIL
+            valueFrom:
+              secretKeyRef:
+                key: email
+                name: cloudflare-api-credentials
+          - name: CF_DNS_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                key: apiKey
+                name: cloudflare-api-credentials
+            # use CF_DNS_API_TOKEN instead if CF_API_KEY
+            # with the following permissions:
+            # Zone.DNS:Edit
+            # Zone.Zone:Read
+            # Include: All zones for the account
+
+        podSecurityContext:
+          fsGroup: 65532
+          fsGroupChangePolicy: "OnRootMismatch"
+
+        securityContext:
+          capabilities:
+            drop: [ALL]
+            add: [NET_BIND_SERVICE]
+          readOnlyRootFilesystem: true
+          runAsGroup: 0
+          runAsNonRoot: false
+          runAsUser: 0
+
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - allowEmpty=true
+    retry:
+      limit: 5 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+      backoff:
+        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+        factor: 2 # a factor to multiply the base duration after each failed retry
+        maxDuration: 1m # the maximum amount of time allowed for the backoff strategy
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: traefik-forward-auth-es
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+
+  target:
+    name: traefik-forward-auth
+    creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
+
+  data:
+    - secretKey: "PROVIDERS_OIDC_CLIENT_SECRET"
+      remoteRef:
+        key: "/kind-homelab/oidc/traefik-forward-auth/client_secret"
+    - secretKey: "SECRET"
+      remoteRef:
+        key: "/kind-homelab/oidc/traefik-forward-auth/secret"
+---
+# Source: homelab-base-chart/templates/traefik/cloudflare-api-credentials-es.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-credentials-es
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store # Must match SecretStore on the cluster
+
+  target:
+    name: cloudflare-api-credentials # Name for the secret to be created on the cluster
+    creationPolicy: Owner
+
+  data:
+    - secretKey: "email"
+      remoteRef:
+        key: "/kind-homelab/acme/cloudflare-api-credentials_email"
+    - secretKey: "apiKey"
+      remoteRef:
+        key: "/kind-homelab/acme/cloudflare-api-credentials_apiKey"
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-ingress.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-forward-auth
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`auth.home-server.dev`)
+      services:
+        - name: traefik-forward-auth
+          port: 80
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/traefik/traefik-traefik-dashboard.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: traefik-dashboard
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+
+  routes:
+    - match: Host(`traefik.home-server.dev`)
+      kind: Rule
+      services:
+        - name: api@internal
+          kind: TraefikService
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/traefik/auth/auth-middleware.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: traefik-forward-auth
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+spec:
+  forwardAuth:
+    address: http://traefik-forward-auth
+    trustForwardHeader: true
+    authResponseHeaders:
+      - X-Forwarded-User
+---
+# Source: homelab-base-chart/templates/traefik/cloudflare/traefik-plugin-cloudflare.yaml
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: cloudflare
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+
+spec:
+  plugin:
+    traefik-plugin-cloudflare:
+      overwriteRequestHeader: true

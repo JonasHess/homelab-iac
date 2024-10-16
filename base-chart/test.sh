@@ -17,6 +17,16 @@ show_help() {
     echo "  -h            Show this help message"
 }
 
+# Function to print error messages in red
+print_error() {
+    echo -e "\033[31m✗ $1\033[0m"
+}
+
+# Function to print success messages in green
+print_success() {
+    echo -e "\033[32m✔ $1\033[0m"
+}
+
 # Parse command-line arguments
 while getopts "ha:" opt; do
     case ${opt} in
@@ -37,7 +47,6 @@ done
 # Function to render and compare templates
 test_app() {
     local app=$1
-    echo "Testing app: $app"
 
     # Create directories if they don't exist
     mkdir -p ./unittest/expected
@@ -48,15 +57,18 @@ test_app() {
 
     # Compare the actual result with the expected result
     if ! diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml > /dev/null; then
-        echo "Error: Template for app ${app} does not match the expected result."
+        print_error "Template for app ${app} does not match the expected result."
         echo "Differences:"
         diff -u ./unittest/expected/${app}.yaml ./unittest/actual/${app}.yaml
         return 1
     else
-        echo "App ${app} rendered correctly."
+        print_success "App ${app}"
         return 0
     fi
 }
+
+# Initialize apps variable
+apps=""
 
 # Read all apps from values.yaml using yq
 echo "Reading apps from values.yaml..."
@@ -71,7 +83,7 @@ fi
 
 # Fail if no apps are found
 if [ -z "$apps" ]; then
-    echo "Error: No apps found to test."
+    print_error "No apps found to test."
     exit 1
 fi
 
@@ -87,11 +99,16 @@ for app in $apps; do
     test_app $app || error_count=$((error_count + 1))
 done
 
-# Show summary
-if [ $error_count -eq 0 ]; then
-    echo "All apps rendered correctly."
+# Check if no app is enabled
+if [ $error_count -eq ${#apps[@]} ]; then
+    print_success "No app is enabled. The result is empty as expected."
 else
-    echo "$error_count app(s) failed to render correctly."
+    # Show summary
+    if [ $error_count -eq 0 ]; then
+        print_success "All apps rendered correctly."
+    else
+        print_error "$error_count app(s) failed to render correctly."
+    fi
 fi
 
 echo "Helm template tests completed."

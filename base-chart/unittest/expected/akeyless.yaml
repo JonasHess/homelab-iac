@@ -1,0 +1,48 @@
+---
+# Source: homelab-base-chart/templates/akeyless/akeyless-helm.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-secrets
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://charts.external-secrets.io
+    targetRevision: 0.10.2
+    chart: external-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated: {}
+    syncOptions:
+    - CreateNamespace=true
+---
+# Source: homelab-base-chart/templates/akeyless/akeyless-secret-store.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: akeyless-secret-store
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  provider:
+    akeyless:
+      # URL of your akeyless API
+      akeylessGWApiURL: "https://api.akeyless.io"
+      authSecretRef:
+        secretRef:
+          accessID:
+            name: akeyless-secret-creds
+            key: accessId
+          accessType:
+            name: akeyless-secret-creds
+            key: accessType
+          accessTypeParam:
+            name: akeyless-secret-creds
+            key: accessTypeParam
