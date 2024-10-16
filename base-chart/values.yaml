@@ -418,3 +418,38 @@ apps:
         envFrom:
           configMapRef: nordvpn-config
           secretRef: nordvpn-secret
+  qbittorrent:
+    enabled: false
+    generic:
+      deployment:
+        image: "lscr.io/linuxserver/qbittorrent:latest"
+        ports:
+          - containerPort: 8080
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/unencrypted/apps/qbittorrent/config"
+          media:
+            mountPath: "/mnt/media"
+            hostPath: "/mnt/somewhere/encrypted/media"
+          downloads:
+            mountPath: "/mnt/downloads"
+            hostPath: "/mnt/somewhere/unencrypted/apps/qbittorrent/downloads"
+          watchdir:
+            mountPath: "/mnt/watchdir"
+            hostPath: "/mnt/somewhere/unencrypted/apps/qbittorrent/watchdir"
+      service:
+        ports:
+          - name: http
+            port: 8080
+      ingress:
+        https:
+          - subdomain: "qbittorrent"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "qbittorrent"
+            matchSuffix: "&& ( Path(`/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))"
+            priority: 20
+            port: 8080

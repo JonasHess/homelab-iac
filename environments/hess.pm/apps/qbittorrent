@@ -1,0 +1,13 @@
+apps:
+  qbittorrent:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/tank1/unencrypted/apps/qbittorrent/config"
+          media:
+            hostPath: "/mnt/tank0/encrypted/media"
+          downloads:
+            hostPath: "/data/volumes/qbittorrent-downloads"
+          watchdir:
+            hostPath: "/mnt/tank1/unencrypted/apps/watchdir"
