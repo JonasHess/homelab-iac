@@ -1,4 +1,41 @@
 ---
+# Source: homelab-base-chart/templates/qbittorrent/qbittorrent_network_policy.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qbittorrent-restrict-egress
+  namespace: argocd
+spec:
+  podSelector:
+    matchLabels:
+      app: qbittorrent
+  policyTypes:
+    - Egress
+  egress:
+    # Allow all egress traffic, but only to port 1080 for all protocols
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - port: 1080
+    # Allow DNS traffic to any external DNS server (UDP/TCP port 53)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow all egress traffic to local IP ranges (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+        - ipBlock:
+            cidr: 172.16.0.0/12
+        - ipBlock:
+            cidr: 192.168.0.0/16
+---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -17,7 +54,7 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: /mnt/tank1/unencrypted/apps/qbittorrent/config
+    path: /mnt/somewhere/unencrypted/apps/qbittorrent/config
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
@@ -261,7 +298,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`qbittorrent.home-server.dev`) && ( Path(`/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))
+    - match: Host(`qbittorrent.home-server.dev`) && PathPrefix(`/api`)
       kind: Rule
       priority: 20
       services:
