@@ -241,7 +241,8 @@ apps:
     mqttBaseTopic: "zigbee2mqtt"
     generic:
       deployment:
-        privileged: true
+        securityContext:
+          privileged: true
         image: "koenkk/zigbee2mqtt:latest"
         ports:
           - containerPort: 8080
@@ -402,7 +403,14 @@ apps:
     enabled: false
     generic:
       deployment:
-        privileged: true
+        securityContext:
+          privileged: true
+          sysctls:
+            - name: "net.ipv4.conf.all.rp_filter"
+              value: "2"
+          capabilities:
+            add:
+              - "NET_ADMIN"
         image: "edgd1er/nordvpn-proxy:latest"
         ports:
           - containerPort: 8888

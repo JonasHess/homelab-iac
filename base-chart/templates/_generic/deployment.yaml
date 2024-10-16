@@ -22,9 +22,9 @@ spec:
       containers:
         - name: {{ $appName }}
           image: {{ $deployment.image }}
-          {{- if $deployment.privileged }}
+          {{- if $deployment.securityContext }}
           securityContext:
-            privileged: true
+            {{- toYaml $deployment.securityContext | nindent 4 }}
           {{- end }}
           {{ with $deployment.resources }}
           resources:
