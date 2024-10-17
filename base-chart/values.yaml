@@ -458,6 +458,9 @@ apps:
             port: 5432
   paperlessngx:
     enabled: false
+    admin:
+      username: "admin"
+      email: ~
     generic:
       deployment:
         image: "ghcr.io/paperless-ngx/paperless-ngx:latest"

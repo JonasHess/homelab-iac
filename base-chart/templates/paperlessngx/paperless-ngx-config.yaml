@@ -9,4 +9,7 @@ data:
   PAPERLESS_DBHOST: "postgres-service"
   PAPERLESS_DBNAME: "paperless"
   PAPERLESS_DBUSER: "paperless"
+  PAPERLESS_ADMIN_USER: {{ .Values.apps.paperlessngx.admin.username | quote }}
+  PAPERLESS_ADMIN_MAIL: {{ .Values.apps.paperlessngx.admin.email | quote }}
+
 {{- end -}}
