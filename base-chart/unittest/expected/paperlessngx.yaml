@@ -269,23 +269,21 @@ spec:
               echo "Environment Variables:"
               echo "POSTGRES_USER: $POSTGRES_USER"
               echo "POSTGRES_DB: $POSTGRES_DB"
-              echo "PAPERLESS_DBPASSWORD: $PAPERLESS_DBPASSWORD"
-              echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
 
               echo "Checking if user 'paperless' exists..."
               if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
                 echo "User 'paperless' already exists."
               else
                 echo "Creating user 'paperless'..."
-                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASSWORD';"
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASS';"
               fi
 
               echo "Checking if database 'paperless' exists..."
-              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
                 echo "Database 'paperless' already exists."
               else
                 echo "Creating database 'paperless'..."
-                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -c "CREATE DATABASE paperless;"
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE paperless;"
               fi
 
               echo "Granting all privileges on database 'paperless' to user 'paperless'..."
@@ -309,7 +307,7 @@ spec:
     name: paperlessngx-secret
     creationPolicy: Owner
   data:
-    - secretKey: "PAPERLESS_DBPASSWORD"
+    - secretKey: "PAPERLESS_DBPASS"
       remoteRef:
         key: "/kind-homelab/paperlessngx/POSTGRES_PASSWORD"
 ---

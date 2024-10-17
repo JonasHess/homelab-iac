@@ -25,8 +25,6 @@ spec:
               echo "Environment Variables:"
               echo "POSTGRES_USER: $POSTGRES_USER"
               echo "POSTGRES_DB: $POSTGRES_DB"
-#               echo "PAPERLESS_DBPASS: $PAPERLESS_DBPASS"
-#               echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
 
               echo "Checking if user 'paperless' exists..."
               if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
