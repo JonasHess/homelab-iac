@@ -473,6 +473,7 @@ apps:
             mountPath: "/usr/src/paperless/consume"
             hostPath: "/mnt/somewhere/encrypted/apps/paperlessngx/consume"
         envFrom:
+          configMapRef: "paperlessngx-config"
           secretRef: "paperlessngx-secret"
       service:
         ports:
