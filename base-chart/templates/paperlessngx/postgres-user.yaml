@@ -42,8 +42,12 @@ spec:
                 PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE paperless;"
               fi
 
-              echo "Granting all privileges on database 'paperless' to user 'paperless'..."
-              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "GRANT ALL PRIVILEGES ON DATABASE paperless TO paperless;"
+              echo "Granting ownership of the database 'paperless' to user 'paperless'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "ALTER DATABASE paperless OWNER TO paperless;"
+
+              echo "Granting ownership and full privileges on schema 'public' to user 'paperless'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "GRANT ALL PRIVILEGES ON SCHEMA public TO paperless;"
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "ALTER SCHEMA public OWNER TO paperless;"
 
               echo "Database initialization script completed."
       restartPolicy: OnFailure
