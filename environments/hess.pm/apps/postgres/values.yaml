@@ -1,0 +1,7 @@
+apps:
+  postgres:
+    generic:
+      deployment:
+        pvcMounts:
+          data:
+            hostPath: "/mnt/tank1/encrypted/apps/postgres/data"

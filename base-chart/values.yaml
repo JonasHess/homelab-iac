@@ -434,3 +434,21 @@ apps:
             matchSuffix: "&& PathPrefix(`/api`)"
             priority: 20
             port: 8080
+  postgres:
+    enabled: false
+    generic:
+      deployment:
+        image: "postgres:17"
+        ports:
+          - containerPort: 5432
+        pvcMounts:
+          data:
+            mountPath: "/var/lib/postgresql/data"
+            hostPath: "/mnt/somewhere/encrypted/apps/postgres/data"
+        envFrom:
+          secretRef: "postgres-secret"
+          configMapRef: "postgres-config"
+      service:
+        ports:
+          - name: postgres
+            port: 5432
