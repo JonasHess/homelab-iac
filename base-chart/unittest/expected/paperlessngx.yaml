@@ -224,6 +224,8 @@ spec:
             - mountPath: "/usr/src/paperless/media"
               name: paperlessngx-media-volume
           envFrom:
+            - configMapRef:
+                name: paperlessngx-config
             - secretRef:
                 name: paperlessngx-secret
       volumes:
@@ -239,6 +241,35 @@ spec:
         - name: paperlessngx-media-volume
           persistentVolumeClaim:
             claimName: paperlessngx-media-pvc
+---
+# Source: homelab-base-chart/templates/paperlessngx/postgres-user.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: paperless-db-init
+  namespace: argocd
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-paperless-db
+          image: "postgres:16"
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+            - secretRef:
+                name: paperlessngx-secret
+            - configMapRef:
+                name: postgres-config
+          command: ["sh", "-c"]
+          args:
+            - |
+              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1 || \
+              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASSWORD';"
+              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1 || \
+              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -c "CREATE DATABASE paperless;"
+              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "GRANT ALL PRIVILEGES ON DATABASE paperless TO paperless;"
+      restartPolicy: OnFailure
 ---
 # Source: homelab-base-chart/templates/paperlessngx/ paperless-ngx-external-secret.yaml
 apiVersion: external-secrets.io/v1beta1

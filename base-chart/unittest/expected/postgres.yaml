@@ -6,7 +6,7 @@ metadata:
   name: postgres-config
   namespace: argocd
 data:
-  POSTGRES_DB: "test"
+  POSTGRES_DB: "postgres"
   POSTGRES_USER: "admin"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
