@@ -1,4 +1,15 @@
 ---
+# Source: homelab-base-chart/templates/postgres/postgres-config-file.yaml
+apiVersion: v1
+data:
+  postgresql.conf: |
+    listen_addresses = '*'
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: postgres-config-file
+  namespace: argocd
+---
 # Source: homelab-base-chart/templates/postgres/postgres-config.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -7,7 +18,7 @@ metadata:
   namespace: argocd
 data:
   POSTGRES_DB: "postgres"
-  POSTGRES_USER: "admin"
+  POSTGRES_USER: "db_admin"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
@@ -89,6 +100,8 @@ spec:
           volumeMounts:
             - mountPath: "/var/lib/postgresql/data"
               name: postgres-data-volume
+            - mountPath: "/etc/postgresql"
+              name: postgres-postgresqlconf-volume
           envFrom:
             - configMapRef:
                 name: postgres-config
@@ -98,6 +111,9 @@ spec:
         - name: postgres-data-volume
           persistentVolumeClaim:
             claimName: postgres-data-pvc
+        - name: postgres-postgresqlconf-volume
+          configMap:
+            name: postgres-config-file
 ---
 # Source: homelab-base-chart/templates/postgres/postgres-external-secret.yaml
 apiVersion: external-secrets.io/v1beta1
