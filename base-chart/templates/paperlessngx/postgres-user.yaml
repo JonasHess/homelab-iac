@@ -37,11 +37,11 @@ spec:
               fi
 
               echo "Checking if database 'paperless' exists..."
-              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
                 echo "Database 'paperless' already exists."
               else
                 echo "Creating database 'paperless'..."
-                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -c "CREATE DATABASE paperless;"
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE paperless;"
               fi
 
               echo "Granting all privileges on database 'paperless' to user 'paperless'..."
