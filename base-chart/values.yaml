@@ -448,6 +448,10 @@ apps:
         envFrom:
           secretRef: "postgres-secret"
           configMapRef: "postgres-config"
+        configMapMounts:
+          postgresqlconf:
+            mountPath: "/etc/postgresql"
+            configMapName: "postgres-config-file"
       service:
         ports:
           - name: postgres
