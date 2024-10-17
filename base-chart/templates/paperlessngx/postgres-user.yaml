@@ -25,29 +25,26 @@ spec:
               echo "POSTGRES_USER: $POSTGRES_USER"
               echo "POSTGRES_DB: $POSTGRES_DB"
               echo "PAPERLESS_DBPASSWORD: $PAPERLESS_DBPASSWORD"
-              echo "PAPERLESS_DBUSER: $PAPERLESS_DBUSER"
-              echo "PAPERLESS_DBNAME: $PAPERLESS_DBNAME"
-              echo "PAPERLESS_DBHOST: $PAPERLESS_DBHOST"
-              echo "PAPERLESS_REDIS: $PAPERLESS_REDIS"
+              echo "POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
 
               echo "Checking if user 'paperless' exists..."
-              if PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
                 echo "User 'paperless' already exists."
               else
                 echo "Creating user 'paperless'..."
-                PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASSWORD';"
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASSWORD';"
               fi
 
               echo "Checking if database 'paperless' exists..."
-              if PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
                 echo "Database 'paperless' already exists."
               else
                 echo "Creating database 'paperless'..."
-                PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -c "CREATE DATABASE paperless;"
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -c "CREATE DATABASE paperless;"
               fi
 
               echo "Granting all privileges on database 'paperless' to user 'paperless'..."
-              PGPASSWORD=$PAPERLESS_DBPASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "GRANT ALL PRIVILEGES ON DATABASE paperless TO paperless;"
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "GRANT ALL PRIVILEGES ON DATABASE paperless TO paperless;"
 
               echo "Database initialization script completed."
       restartPolicy: OnFailure
