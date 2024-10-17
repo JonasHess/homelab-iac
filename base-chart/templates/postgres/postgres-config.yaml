@@ -6,5 +6,5 @@ metadata:
   namespace: argocd
 data:
   POSTGRES_DB: "postgres"
-  POSTGRES_USER: "admin"
+  POSTGRES_USER: "db_admin"
 {{- end -}}
