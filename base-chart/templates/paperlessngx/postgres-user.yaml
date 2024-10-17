@@ -20,6 +20,7 @@ spec:
           command: ["sh", "-c"]
           args:
             - |
+              set -e
               echo "Starting database initialization script..."
               echo "Environment Variables:"
               echo "POSTGRES_USER: $POSTGRES_USER"
