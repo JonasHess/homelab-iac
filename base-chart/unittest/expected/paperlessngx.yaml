@@ -1,9 +1,21 @@
 ---
+# Source: homelab-base-chart/templates/paperlessngx/paperless-ngx-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessngx-config
+  namespace: argocd
+data:
+  PAPERLESS_REDIS: "redis://redis-service:6379"
+  PAPERLESS_DBHOST: "postgres-service"
+  PAPERLESS_DBNAME: "paperless"
+  PAPERLESS_DBUSER: "paperless"
+---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "sabnzbd-config-pv"
+  name: "paperlessngx-consume-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -17,11 +29,11 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: /mnt/somewhere/unencrypted/apps/sabnzbd/config
+    path: /mnt/somewhere/encrypted/apps/paperlessngx/consume
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "sabnzbd-config-pvc"
+    name: "paperlessngx-consume-pvc"
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
@@ -29,7 +41,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "sabnzbd-downloads-pv"
+  name: "paperlessngx-data-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -43,11 +55,11 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: /data/volumes/sabnzbd-downloads
+    path: /mnt/somewhere/encrypted/apps/paperlessngx/data
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "sabnzbd-downloads-pvc"
+    name: "paperlessngx-data-pvc"
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
@@ -55,7 +67,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "sabnzbd-media-pv"
+  name: "paperlessngx-export-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -69,11 +81,11 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: /mnt/somewhere/encrypted/media
+    path: /mnt/somewhere/encrypted/apps/paperlessngx/export
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "sabnzbd-media-pvc"
+    name: "paperlessngx-export-pvc"
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
@@ -81,7 +93,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "sabnzbd-watchdir-pv"
+  name: "paperlessngx-media-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -95,18 +107,18 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: /mnt/somewhere/unencrypted/apps/watchdir
+    path: /mnt/somewhere/encrypted/apps/paperlessngx/media
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "sabnzbd-watchdir-pvc"
+    name: "paperlessngx-media-pvc"
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "sabnzbd-config-pvc"
+  name: "paperlessngx-consume-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -122,7 +134,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "sabnzbd-downloads-pvc"
+  name: "paperlessngx-data-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -138,7 +150,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "sabnzbd-media-pvc"
+  name: "paperlessngx-export-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -154,7 +166,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "sabnzbd-watchdir-pvc"
+  name: "paperlessngx-media-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -170,20 +182,20 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sabnzbd-service
+  name: paperlessngx-service
   namespace: argocd
 spec:
   ports:
     - name: http
-      port: 8080
+      port: 8000
   selector:
-    app: sabnzbd
+    app: paperlessngx
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sabnzbd-deployment
+  name: paperlessngx-deployment
   namespace: argocd
 spec:
   replicas: 1
@@ -191,45 +203,67 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: sabnzbd
+      app: paperlessngx
   template:
     metadata:
       labels:
-        app: sabnzbd
+        app: paperlessngx
     spec:
       containers:
-        - name: sabnzbd
-          image: lscr.io/linuxserver/sabnzbd:latest
+        - name: paperlessngx
+          image: ghcr.io/paperless-ngx/paperless-ngx:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
           volumeMounts:
-            - mountPath: "/config"
-              name: sabnzbd-config-volume
-            - mountPath: "/mnt/downloads"
-              name: sabnzbd-downloads-volume
-            - mountPath: "/mnt/media"
-              name: sabnzbd-media-volume
-            - mountPath: "/mnt/watchdir"
-              name: sabnzbd-watchdir-volume
+            - mountPath: "/usr/src/paperless/consume"
+              name: paperlessngx-consume-volume
+            - mountPath: "/usr/src/paperless/data"
+              name: paperlessngx-data-volume
+            - mountPath: "/usr/src/paperless/export"
+              name: paperlessngx-export-volume
+            - mountPath: "/usr/src/paperless/media"
+              name: paperlessngx-media-volume
+          envFrom:
+            - secretRef:
+                name: paperlessngx-secret
       volumes:
-        - name: sabnzbd-config-volume
+        - name: paperlessngx-consume-volume
           persistentVolumeClaim:
-            claimName: sabnzbd-config-pvc
-        - name: sabnzbd-downloads-volume
+            claimName: paperlessngx-consume-pvc
+        - name: paperlessngx-data-volume
           persistentVolumeClaim:
-            claimName: sabnzbd-downloads-pvc
-        - name: sabnzbd-media-volume
+            claimName: paperlessngx-data-pvc
+        - name: paperlessngx-export-volume
           persistentVolumeClaim:
-            claimName: sabnzbd-media-pvc
-        - name: sabnzbd-watchdir-volume
+            claimName: paperlessngx-export-pvc
+        - name: paperlessngx-media-volume
           persistentVolumeClaim:
-            claimName: sabnzbd-watchdir-pvc
+            claimName: paperlessngx-media-pvc
+---
+# Source: homelab-base-chart/templates/paperlessngx/ paperless-ngx-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: paperlessngx-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+  target:
+    name: paperlessngx-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: "PAPERLESS_DBPASSWORD"
+      remoteRef:
+        key: "/kind-homelab/paperlessngx/POSTGRES_PASSWORD"
 ---
 # Source: homelab-base-chart/templates/_generic/ingress-https.yaml
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: sabnzbd-https-8080-0
+  name: paperlessngx-https-8000-0
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
@@ -237,35 +271,14 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`sabnzbd.home-server.dev`) 
+    - match: Host(`paperlessngx.home-server.dev`) 
       kind: Rule
       priority: 10
       services:
-        - name: sabnzbd-service
-          port: 8080
+        - name: paperlessngx-service
+          port: 8000
       middlewares:
         - name: traefik-forward-auth
           namespace: argocd
-  tls:
-    certResolver: cloudflare
----
-# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: sabnzbd-https-8080-1
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`sabnzbd.home-server.dev`) && ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))
-      kind: Rule
-      priority: 20
-      services:
-        - name: sabnzbd-service
-          port: 8080
   tls:
     certResolver: cloudflare

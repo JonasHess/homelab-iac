@@ -1,0 +1,98 @@
+---
+# Source: homelab-base-chart/templates/redis/redis-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: argocd
+data:
+  REDIS_MAXMEMORY: "2gb"
+  REDIS_MAXMEMORY_POLICY: "allkeys-lru"
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "redis-data-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/redis/data
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "redis-data-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "redis-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: argocd
+spec:
+  ports:
+    - name: redis
+      port: 6379
+  selector:
+    app: redis
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: docker.io/library/redis:7
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - mountPath: "/data"
+              name: redis-data-volume
+          envFrom:
+            - configMapRef:
+                name: redis-config
+      volumes:
+        - name: redis-data-volume
+          persistentVolumeClaim:
+            claimName: redis-data-pvc

@@ -1,0 +1,13 @@
+apps:
+  paperlessngx:
+      generic:
+        deployment:
+          pvcMounts:
+            data:
+              hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/data"
+            media:
+              hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/media"
+            export:
+              hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/export"
+            consume:
+              hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/consume"

@@ -1,0 +1,119 @@
+---
+# Source: homelab-base-chart/templates/postgres/postgres-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: argocd
+data:
+  POSTGRES_DB: "test"
+  POSTGRES_USER: "admin"
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "postgres-data-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/postgres/data
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "postgres-data-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "postgres-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: argocd
+spec:
+  ports:
+    - name: postgres
+      port: 5432
+  selector:
+    app: postgres
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: "/var/lib/postgresql/data"
+              name: postgres-data-volume
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+            - secretRef:
+                name: postgres-secret
+      volumes:
+        - name: postgres-data-volume
+          persistentVolumeClaim:
+            claimName: postgres-data-pvc
+---
+# Source: homelab-base-chart/templates/postgres/postgres-external-secret.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: postgres-external-secret
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store
+  target:
+    name: postgres-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: "POSTGRES_PASSWORD"
+      remoteRef:
+        key: "/kind-homelab/postgres/POSTGRES_PASSWORD"

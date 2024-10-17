@@ -1,0 +1,12 @@
+{{- if .Values.apps.paperlessngx.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessngx-config
+  namespace: argocd
+data:
+  PAPERLESS_REDIS: "redis://redis-service:6379"
+  PAPERLESS_DBHOST: "postgres-service"
+  PAPERLESS_DBNAME: "paperless"
+  PAPERLESS_DBUSER: "paperless"
+{{- end -}}
