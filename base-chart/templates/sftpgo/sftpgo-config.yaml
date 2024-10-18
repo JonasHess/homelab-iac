@@ -42,7 +42,7 @@ data:
        "ftpd": {
          "bindings": [
            {
-             "port": 21,
+             "port": 2121,
              "tls_mode": 0,
              "debug": true
            }
