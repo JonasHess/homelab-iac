@@ -336,6 +336,7 @@ apps:
             port: 32400
         tcp:
           - port: 32400
+             traefikEntryPoint: plex
   sftpgo:
     enabled: false
     generic:
@@ -381,7 +382,9 @@ apps:
             port: 8081
         tcp:
           - port: 2222
+            traefikEntryPoint: sftpgo
           - port: 2121
+            traefikEntryPoint: ftp
   prometheus:
     enabled: false
     generic:
