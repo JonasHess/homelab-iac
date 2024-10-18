@@ -539,8 +539,8 @@ apps:
           data:
             mountPath: "/app/backend/data"
             hostPath: "/mnt/somewhere/encrypted/apps/openwebui/data"
-        env:
-          OLLAMA_BASE_URLS: "http://ollama-service:11434"
+        envFrom:
+          configMapRef: "openwebui-config"
       service:
         ports:
           - name: http
@@ -569,13 +569,8 @@ apps:
             mountPath: "/app/prompts"
             hostPath: "/mnt/somewhere/encrypted/apps/paperless-gpt/prompts"
         envFrom:
-          secretRef: "paperless-gpt-secret"
-        env:
-          PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
-          LLM_PROVIDER: "ollama" # or 'ollama'
-          LLM_MODEL: "llama3.2:3b"     # or 'llama2'
-          LLM_LANGUAGE: "German" # Optional, default is 'English'
-          OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
+          secretRef: "paperlessgpt-secret"
+          configMapRef: "paperlessgpt-config"
       service:
         ports:
           - name: http

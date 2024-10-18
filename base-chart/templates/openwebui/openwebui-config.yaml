@@ -1,0 +1,9 @@
+{{- if .Values.apps.openwebui.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openwebui-config
+  namespace: argocd
+data:
+  OLLAMA_BASE_URLS: "http://ollama-service:11434"
+{{- end -}}

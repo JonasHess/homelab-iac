@@ -1,4 +1,17 @@
 ---
+# Source: homelab-base-chart/templates/paperlessgpt/paperlessgpt-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessgpt-config
+  namespace: argocd
+data:
+  PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
+  LLM_PROVIDER: "ollama" # or 'ollama'
+  LLM_MODEL: "llama3.2:3b"     # or 'llama2'
+  LLM_LANGUAGE: "German" # Optional, default is 'English'
+  OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
+---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -80,8 +93,10 @@ spec:
             - mountPath: "/app/prompts"
               name: paperlessgpt-prompts-volume
           envFrom:
+            - configMapRef:
+                name: paperlessgpt-config
             - secretRef:
-                name: paperless-gpt-secret
+                name: paperlessgpt-secret
       volumes:
         - name: paperlessgpt-prompts-volume
           persistentVolumeClaim:
@@ -99,7 +114,7 @@ spec:
     kind: SecretStore
     name: akeyless-secret-store
   target:
-    name: paperless-gpt-secret
+    name: paperlessgpt-secret
     creationPolicy: Owner
   data:
     - secretKey: "PAPERLESS_API_TOKEN"

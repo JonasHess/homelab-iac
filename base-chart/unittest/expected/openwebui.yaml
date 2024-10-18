@@ -1,4 +1,13 @@
 ---
+# Source: homelab-base-chart/templates/openwebui/openwebui-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openwebui-config
+  namespace: argocd
+data:
+  OLLAMA_BASE_URLS: "http://ollama-service:11434"
+---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -79,6 +88,9 @@ spec:
           volumeMounts:
             - mountPath: "/app/backend/data"
               name: openwebui-data-volume
+          envFrom:
+            - configMapRef:
+                name: openwebui-config
       volumes:
         - name: openwebui-data-volume
           persistentVolumeClaim:

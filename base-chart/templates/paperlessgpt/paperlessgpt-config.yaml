@@ -1,0 +1,13 @@
+{{- if .Values.apps.paperlessgpt.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessgpt-config
+  namespace: argocd
+data:
+  PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
+  LLM_PROVIDER: "ollama" # or 'ollama'
+  LLM_MODEL: "llama3.2:3b"     # or 'llama2'
+  LLM_LANGUAGE: "German" # Optional, default is 'English'
+  OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
+{{- end -}}
