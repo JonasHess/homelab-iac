@@ -39,14 +39,15 @@ data:
           }
         ]
       },
-      "ftpd": {
-        "bindings": [
-          {
-            "tls_mode": 0,
-            "port": 21,
-            "debug": true
-          }
-        ]
-      },
+       "ftpd": {
+         "bindings": [
+           {
+             "port": 21,
+             "tls_mode": 0,
+             "debug": true
+           }
+         ],
+         "banner": "SFTPGO FTP Server",
+       }
     }
 {{- end -}}
