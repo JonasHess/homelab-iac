@@ -1,0 +1,7 @@
+apps:
+  paperlessgpt:
+    generic:
+      deployment:
+        pvcMounts:
+          prompts:
+            hostPath: "/mnt/tank1/encrypted/apps/paperless-gpt/prompts"

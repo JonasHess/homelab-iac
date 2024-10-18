@@ -1,0 +1,133 @@
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "openwebui-data-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/openwebui/data
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "openwebui-data-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "openwebui-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: openwebui-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 8080
+  selector:
+    app: openwebui
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openwebui-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openwebui
+  template:
+    metadata:
+      labels:
+        app: openwebui
+    spec:
+      containers:
+        - name: openwebui
+          image: ghcr.io/open-webui/open-webui:main
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: "/app/backend/data"
+              name: openwebui-data-volume
+      volumes:
+        - name: openwebui-data-volume
+          persistentVolumeClaim:
+            claimName: openwebui-data-pvc
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: openwebui-https-8080-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`openwebui.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: openwebui-service
+          port: 8080
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: openwebui-https-8080-1
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`chat.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: openwebui-service
+          port: 8080
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
