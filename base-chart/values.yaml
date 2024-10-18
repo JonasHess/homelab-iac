@@ -310,7 +310,7 @@ apps:
         image: "ghcr.io/linuxserver/plex:latest"
         resources:
           limits:
-            nvidia.com/gpu: 1
+            nvidia.com/gpu: 0.5
         ports:
           - containerPort: 32400
         pvcMounts:
@@ -517,7 +517,7 @@ apps:
         image: "ollama/ollama:latest"
         resources:
           limits:
-            nvidia.com/gpu: 1
+            nvidia.com/gpu: 0.5
         ports:
           - containerPort: 11434
         pvcMounts:
