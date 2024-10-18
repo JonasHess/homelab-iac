@@ -205,6 +205,12 @@ spec:
             middlewares:
               - "argocd-cloudflare@kubernetescrd"
           # Additional custom ports
+          ftp:
+            port: 2121
+            expose:
+              default: true
+            exposedPort: 2121
+            protocol: TCP
           sftpgo:
             port: 2222
             expose:

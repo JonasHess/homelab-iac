@@ -336,7 +336,7 @@ apps:
             port: 32400
         tcp:
           - port: 32400
-             traefikEntryPoint: plex
+            traefikEntryPoint: plex
   sftpgo:
     enabled: false
     generic:
