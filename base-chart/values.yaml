@@ -27,6 +27,9 @@ apps:
       sftpgo:
         port: 2222
         protocol: TCP
+      ftp:
+        port: 21
+        protocol: TCP
     #     plex:
     #       port: 32400
     #       protocol: TCP
@@ -341,6 +344,7 @@ apps:
         ports:
           - containerPort: 8080
           - containerPort: 2222
+          - containerPort: 21
         pvcMounts:
           data:
             mountPath: "/srv/sftpgo"
@@ -363,6 +367,9 @@ apps:
           - name: sftp
             port: 2222
             protocol: TCP
+          - name: ftp
+            port: 21
+            protocol: TCP
       ingress:
         https:
           - subdomain: "sftpgo"
@@ -374,6 +381,7 @@ apps:
             port: 8081
         tcp:
           - port: 2222
+          - port: 21
   prometheus:
     enabled: false
     generic:

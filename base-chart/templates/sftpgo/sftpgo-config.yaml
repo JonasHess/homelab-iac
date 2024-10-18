@@ -38,6 +38,15 @@ data:
             "port": 8081
           }
         ]
-      }
+      },
+      "ftpd": {
+        "bindings": [
+          {
+            "tls_mode": 0,
+            "port": 21
+            "debug": true
+          }
+        ]
+      },
     }
 {{- end -}}
