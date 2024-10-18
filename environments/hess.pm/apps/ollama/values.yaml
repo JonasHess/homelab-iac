@@ -1,0 +1,7 @@
+apps:
+  ollama:
+    generic:
+      deployment:
+        pvcMounts:
+          data:
+            hostPath: "/mnt/tank1/encrypted/apps/ollama/data"

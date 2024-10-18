@@ -510,3 +510,47 @@ apps:
         ports:
           - name: redis
             port: 6379
+  ollama:
+    enabled: false
+    generic:
+      deployment:
+        image: "ollama/ollama:latest"
+        ports:
+          - containerPort: 11434
+        pvcMounts:
+          data:
+            mountPath: "/root/.ollama"
+            hostPath: "/mnt/somewhere/encrypted/apps/ollama/data"
+      service:
+        ports:
+          - name: http
+            port: 11434
+  openwebui:
+    enabled: false
+    generic:
+      deployment:
+        image: "ghcr.io/open-webui/open-webui:main"
+        ports:
+          - containerPort: 8080
+        pvcMounts:
+          data:
+            mountPath: "/app/backend/data"
+            hostPath: "/mnt/somewhere/encrypted/apps/openwebui/data"
+        env:
+          OLLAMA_BASE_URLS: "http://ollama-service:11434"
+      service:
+        ports:
+          - name: http
+            port: 8080
+      ingress:
+        https:
+          - subdomain: "openwebui"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "chat"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"

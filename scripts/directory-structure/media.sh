@@ -17,7 +17,7 @@ DIRS_SUBDIRS=(
   ["music"]=""
   ["nzb"]=""
   ["torrent"]=""
-  ["_unknown"]="sonar radarr prowlarr manual readarr qbittorrent"
+  ["_unknown"]="sonar radarr prowlarr manual readarr qbittorrent sabnzbd"
   ["tv-shows"]=""
   ["tutorials"]=""
 )
