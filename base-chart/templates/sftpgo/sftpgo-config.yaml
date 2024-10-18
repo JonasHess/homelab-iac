@@ -46,8 +46,7 @@ data:
              "tls_mode": 0,
              "debug": true
            }
-         ],
-         "banner": "SFTPGO FTP Server"
+         ]
        }
     }
 {{- end -}}
