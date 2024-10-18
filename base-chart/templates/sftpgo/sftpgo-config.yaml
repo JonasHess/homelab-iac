@@ -47,7 +47,7 @@ data:
              "debug": true
            }
          ],
-         "banner": "SFTPGO FTP Server",
+         "banner": "SFTPGO FTP Server"
        }
     }
 {{- end -}}
