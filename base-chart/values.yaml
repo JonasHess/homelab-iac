@@ -515,9 +515,9 @@ apps:
     generic:
       deployment:
         image: "ollama/ollama:latest"
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+#         resources:
+#           limits:
+#             nvidia.com/gpu: 1
         ports:
           - containerPort: 11434
         pvcMounts:
