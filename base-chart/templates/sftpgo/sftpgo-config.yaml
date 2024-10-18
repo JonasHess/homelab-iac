@@ -43,7 +43,7 @@ data:
         "bindings": [
           {
             "tls_mode": 0,
-            "port": 21
+            "port": 21,
             "debug": true
           }
         ]
