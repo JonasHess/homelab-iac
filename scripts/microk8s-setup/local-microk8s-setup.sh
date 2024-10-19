@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -e  # Exit on first error
 set -o pipefail  # Fail if any command in a pipe fails
-set -u  # Treat unset variables as an error
 
 cd "$(dirname "$0")"
 
@@ -20,9 +19,8 @@ if [ -z "$1" ]; then
 fi
 
 if [ -z "$2" ]; then
-  echo "You are missing the kube-config-path argument!"
+  echo "You are missing the kube-config-path argument (e.g., ~/.kube/config.d/config)!"
   echo "Correct usage: $0 <environment> <kube-config-path>"
-  list_environments
   exit 1
 fi
 
@@ -50,7 +48,7 @@ show_help() {
   echo
   echo "Arguments:"
   echo "  <environment>       The environment name."
-  echo "  <kube-config-path>  The path to the kube-config file."
+  echo "  <kube-config-path>  The path to the kube-config file (e.g., ~/.kube/config.d/config)."."
   echo "  --help              Display this help message."
   exit 0
 }
