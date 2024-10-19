@@ -31,10 +31,11 @@ spec:
             valueFiles:
               - $homelab-iac/environments/zimmermann.lat/environment.yaml
               - $homelab-iac/environments/zimmermann.lat/apps/{{.path.basenameNormalized}}/values.yaml
-#        - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
-#          targetRevision: main
-#          ref: homelab-iac
+        - repoURL: 'https://github.com/JonasHess/homelab-iac.git'
+          targetRevision: main
+          ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
       syncPolicy:
-        automated: {}
+        selfHeal: false
+#        automated: {}
