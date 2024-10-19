@@ -1,8 +1,8 @@
 apps:
   paperlessngx:
     admin:
-      username: "jonas"
-      email: Jonas@Hess.pm
+      username: "michael"
+      email: michael@zimmermann.lat
     generic:
       deployment:
         pvcMounts:
