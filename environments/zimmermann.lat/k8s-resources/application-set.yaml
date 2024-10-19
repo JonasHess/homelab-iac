@@ -36,5 +36,5 @@ spec:
           ref: homelab-iac
       destination:
         server: https://kubernetes.default.svc
-      syncPolicy:
-        automated: {}
+#      syncPolicy:
+#        automated: {}
