@@ -7,9 +7,9 @@ apps:
             hostPath: "/mnt/tank1/encrypted/apps/sftpgo/data"
           config:
             hostPath: "/mnt/tank1/unencrypted/apps/sftpgo/config"
-          media:
-            mountPath: "/mnt/tank0/encrypted/media"
-            hostPath: "/mnt/tank0/encrypted/media"
+          tank0:
+            mountPath: "/mnt/tank0"
+            hostPath: "/mnt/tank0"
           tank1:
             mountPath: "/mnt/tank1"
             hostPath: "/mnt/tank1"
