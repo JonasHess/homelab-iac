@@ -13,6 +13,8 @@
 - [x] Zigbee2Mqtt
 - [x] Smarthome drone secrets (https://docs.drone.io/secret/external/kubernetes/)
 
+- [ ]  Paperless config via API
+- [ ] OICD Paperless
 - [ ] Apps in own namespace (think of drone)
 - [ ] HomeMatic
 - [ ] Directory structure
