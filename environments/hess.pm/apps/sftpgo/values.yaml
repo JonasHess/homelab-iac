@@ -10,3 +10,6 @@ apps:
           media:
             mountPath: "/mnt/tank0/encrypted/media"
             hostPath: "/mnt/tank0/encrypted/media"
+          tank1:
+            mountPath: "/mnt/tank1"
+            hostPath: "/mnt/tank1"
