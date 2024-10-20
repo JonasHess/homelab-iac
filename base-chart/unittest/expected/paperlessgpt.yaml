@@ -7,8 +7,8 @@ metadata:
   namespace: argocd
 data:
   PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
-  LLM_PROVIDER: "ollama" # or 'ollama'
-  LLM_MODEL: "llama3.2:3b"     # or 'llama2'
+  LLM_PROVIDER: "openai" # 'openai' or 'ollama'
+  LLM_MODEL: "gpt-4o"     # gpt-4o or 'llama2'
   LLM_LANGUAGE: "German" # Optional, default is 'English'
   OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
 ---
@@ -116,10 +116,18 @@ spec:
   target:
     name: paperlessgpt-secret
     creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
   data:
     - secretKey: "PAPERLESS_API_TOKEN"
       remoteRef:
         key: "/kind-homelab/paperlessgpt/PAPERLESS_API_TOKEN"
+    - secretKey: "OPENAI_API_KEY"
+      remoteRef:
+        key: "/kind-homelab/paperlessgpt/OPENAI_API_KEY"
 ---
 # Source: homelab-base-chart/templates/_generic/ingress-https.yaml
 apiVersion: traefik.io/v1alpha1

@@ -129,6 +129,11 @@ spec:
   target:
     name: postgres-secret
     creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
   data:
     - secretKey: "POSTGRES_PASSWORD"
       remoteRef:

@@ -245,7 +245,7 @@ spec:
           persistentVolumeClaim:
             claimName: paperlessngx-media-pvc
 ---
-# Source: homelab-base-chart/templates/paperlessngx/postgres-user.yaml
+# Source: homelab-base-chart/templates/paperlessngx/postgres-user-job.yaml
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -313,6 +313,11 @@ spec:
   target:
     name: paperlessngx-secret
     creationPolicy: Owner
+    template:
+      metadata:
+        annotations:
+          X-Drone-Events: access-forbidden
+          X-Drone-Repos: access-forbidden
   data:
     - secretKey: "PAPERLESS_DBPASS"
       remoteRef:
