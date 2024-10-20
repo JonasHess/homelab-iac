@@ -6,8 +6,8 @@ metadata:
   namespace: argocd
 data:
   PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
-  LLM_PROVIDER: "ollama" # or 'ollama'
-  LLM_MODEL: "llama3.2:3b"     # or 'llama2'
+  LLM_PROVIDER: "openai" # 'openai' or 'ollama'
+  LLM_MODEL: "gpt-4o"     # gpt-4o or 'llama2'
   LLM_LANGUAGE: "German" # Optional, default is 'English'
   OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
 {{- end -}}
