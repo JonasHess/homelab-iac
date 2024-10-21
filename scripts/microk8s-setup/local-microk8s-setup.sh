@@ -48,7 +48,7 @@ show_help() {
   echo
   echo "Arguments:"
   echo "  <environment>       The environment name."
-  echo "  <kube-config-path>  The path to the kube-config file (e.g., ~/.kube/config.d/config)."."
+  echo "  <kube-config-path>  The path to the kube-config file (e.g., ~/.kube/config.d/config)."
   echo "  --help              Display this help message."
   exit 0
 }
