@@ -24,7 +24,6 @@ spec:
             enabled: true
             type: hostPath
             hostPath: /mnt/somewhere/unencrypted/apps/homematic/ccu_data
-            mountPath: /usr/local
           sys:
             enabled: true
             type: hostPath

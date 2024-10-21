@@ -593,3 +593,27 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  duplicati:
+    enabled: false
+    generic:
+      deployment:
+        image: "lscr.io/linuxserver/duplicati:latest"
+        ports:
+          - containerPort: 8200
+        pvcMounts:
+          config:
+            mountPath: "/config"
+            hostPath: "/mnt/somewhere/encrypted/apps/duplicati/config"
+#           somewhere:
+#             mountPath: "/mnt/somewhere"
+#             hostPath: "/mnt/somewehere"
+      service:
+        ports:
+          - port: 8200
+      ingress:
+        https:
+          - subdomain: "duplicati"
+            port: 8200
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"

@@ -1,15 +1,3 @@
-# Creating Raidz1
-```bash
-sudo zpool create -m /mnt/tank1 tank1 raidz /dev/disk/by-id/ata-Samsung_SSD_870_EVO_1TB_S75CNX0X413321T /dev/disk/by-id/ata-Samsung_SSD_870_EVO_1TB_S75CNX0X413330N /dev/disk/by-id/ata-Samsung_SSD_870_EVO_1TB_S75CNX0X413331K /dev/disk/by-id/ata-Samsung_SSD_870_EVO_1TB_S75CNX0X413334T
-```
-
-## Creating datasets
-```bash
-zfs create -o dedup=on -o compression=on -o atime=off -o encryption=aes-256-gcm -o keyformat=passphrase tank1/encrypted
-zfs create -o dedup=on -o compression=on -o atime=off tank1/unencrypted
-zfs create -o dedup=on -o compression=zstd-3 -o atime=off tank0/unencrypted
-
-```
 
 ## Creating snapshots
 Install zrepl
@@ -80,35 +68,4 @@ jobs:
     - type: regex
       negate: true
       regex: "^zrepl_.*"
-```
-
-
-## Install micro k8s
-```bash
-snap install microk8s --classic
-microk8s enable dns
-microk8s enable metallb:192.168.0.80-192.168.0.90
-# microk8s enable gpu
-microk8s start
-```
-
-## Create kubectl context
-```bash
-mkdir /home/homeserver/.kube/
-usermod -a -G microk8s homeserver
-chown -R homeserver ~/.kube
-
-microk8s config > ~/.kube/config
-scp homeserver@192.168.0.20:/home/homeserver/.kube/config ~/.kube/config.d/config
-chmod 600 ~/.kube/config.d/config
-```
-
-## Install k9s on WSL
-https://gist.github.com/bplasmeijer/a4845a4858f1c0b0a22848984475322d
-
-curl -s -L https://github.com/derailed/k9s/releases/download/v0.32.5/k9s_Linux_amd64.tar.gz -o k9s && tar -xvf k9s && chmod 755 k9s && rm LICENSE README.md  && sudo mv k9s /usr/local/bin
-
-## Refresh certificates (e.g. after IP change)
-```bash
-sudo microk8s refresh-certs --cert ca.crt
 ```
