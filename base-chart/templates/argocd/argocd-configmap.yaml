@@ -17,5 +17,5 @@ data:
     clientSecret: $oidc.auth0.clientSecret
     requestedScopes: ["openid", "profile", "email"]
     requestedIDTokenClaims: {"groups": {"essential": true}}
-
+    bla: true
 {{- end -}}
