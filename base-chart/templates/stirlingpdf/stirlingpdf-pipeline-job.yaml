@@ -12,6 +12,7 @@ spec:
     spec:
       template:
         spec:
+          restartPolicy: OnFailure
           volumes:
             - name: config-map-volume
               configMap:
@@ -21,7 +22,6 @@ spec:
                 claimName: stirlingpdf-scanner-pvc
           containers:
             - name: stirlingpdf-pipeline-job
-              restartPolicy: OnFailure
               image: "busybox:latest"
               command: ["sh", "-c"]
               volumeMounts:

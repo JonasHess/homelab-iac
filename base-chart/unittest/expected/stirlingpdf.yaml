@@ -109,9 +109,9 @@ spec:
   schedule: "*/1 * * * *" # every 1 minute
   jobTemplate:
     spec:
-      restartPolicy: OnFailure
       template:
         spec:
+          restartPolicy: OnFailure
           volumes:
             - name: config-map-volume
               configMap:
