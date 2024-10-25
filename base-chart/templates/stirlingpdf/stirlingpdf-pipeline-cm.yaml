@@ -1,0 +1,11 @@
+apiVersion: v1
+data:
+  pipeline.json: |-
+    {
+
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: stirlingpdf-pipeline-cm
+  namespace: argocd
