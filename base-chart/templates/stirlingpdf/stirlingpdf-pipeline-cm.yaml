@@ -1,3 +1,4 @@
+{{- if .Values.apps.stirlingpdf.enabled -}}
 apiVersion: v1
 data:
   pipeline.json: |-
@@ -9,3 +10,4 @@ metadata:
   creationTimestamp: null
   name: stirlingpdf-pipeline-cm
   namespace: argocd
+{{- end -}}
