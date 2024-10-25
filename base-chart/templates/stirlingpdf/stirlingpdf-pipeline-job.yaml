@@ -4,6 +4,8 @@ kind: Job
 metadata:
   name: stirlingpdf-pipeline-job
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   schedule: "*/1 * * * *" # every 1 minute
     jobTemplate:
