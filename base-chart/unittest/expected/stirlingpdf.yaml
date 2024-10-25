@@ -1,15 +1,16 @@
 ---
 # Source: homelab-base-chart/templates/stirlingpdf/stirlingpdf-pipeline-cm.yaml
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: stirlingpdf-pipeline-cm
+  namespace: argocd
 data:
   pipeline.json: |-
     
-    "{\n \"hello\": \"world\"\n}"
-kind: ConfigMap
-metadata:
-  creationTimestamp: null
-  name: stirlingpdf-pipeline-cm
-  namespace: argocd
+    {
+     "hello": "world"
+    }
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1

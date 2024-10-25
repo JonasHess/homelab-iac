@@ -1,11 +1,10 @@
 {{- if .Values.apps.stirlingpdf.enabled -}}
 apiVersion: v1
-data:
-  pipeline.json: |-
-    {{ .Files.Get "pipeline.json" | quote | nindent 4 }}
 kind: ConfigMap
 metadata:
-  creationTimestamp: null
   name: stirlingpdf-pipeline-cm
   namespace: argocd
+data:
+  pipeline.json: |-
+    {{ .Files.Get "pipeline.json" | nindent 4 }}
 {{- end -}}
