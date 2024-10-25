@@ -6,5 +6,5 @@ metadata:
   namespace: argocd
 data:
   pipeline.json: |-
-    {{ .Files.Get "pipeline.json" | nindent 4 }}
+    {{ .Files.Get "assets/stirlingpdf/pipelines/pipeline.json" | nindent 4 }}
 {{- end -}}
