@@ -1,0 +1,7 @@
+apps:
+  stirlingpdf:
+    generic:
+      deployment:
+        pvcMounts:
+          scanner:
+            hostPath: "/mnt/tank1/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"

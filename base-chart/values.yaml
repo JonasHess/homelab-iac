@@ -627,6 +627,9 @@ apps:
         ports:
           - containerPort: 8080
         pvcMounts:
+          scanner:
+            mountPath: "/pipeline/watchedFolders"
+            hostPath: "/mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"
 #           trainingData:
 #             mountPath: "/usr/share/tessdata"
 #             hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/trainingData"
