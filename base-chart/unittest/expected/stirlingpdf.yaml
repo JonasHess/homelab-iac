@@ -1,0 +1,186 @@
+---
+# Source: homelab-base-chart/templates/stirlingpdf/stirlingpdf-pipeline-cm.yaml
+apiVersion: v1
+data:
+  pipeline.json: |-
+    {
+
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: stirlingpdf-pipeline-cm
+  namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "stirlingpdf-scanner-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "stirlingpdf-scanner-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "stirlingpdf-scanner-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: stirlingpdf-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 8080
+  selector:
+    app: stirlingpdf
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stirlingpdf-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: stirlingpdf
+  template:
+    metadata:
+      labels:
+        app: stirlingpdf
+    spec:
+      containers:
+        - name: stirlingpdf
+          image: frooodle/s-pdf:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - mountPath: "/pipeline/watchedFolders"
+              name: stirlingpdf-scanner-volume
+      volumes:
+        - name: stirlingpdf-scanner-volume
+          persistentVolumeClaim:
+            claimName: stirlingpdf-scanner-pvc
+---
+# Source: homelab-base-chart/templates/stirlingpdf/stirlingpdf-pipeline-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: stirlingpdf-pipeline-job
+  namespace: argocd
+spec:
+  template:
+    spec:
+      volumes:
+        - name: config-map-volume
+          configMap:
+            name: stirlingpdf-pipeline-cm
+        - name: scanner
+          persistentVolumeClaim:
+            claimName: stirlingpdf-scanner-pvc
+      containers:
+        - name: stirlingpdf-pipeline-job
+          image: "busybox:latest"
+          command: ["sh", "-c"]
+          volumeMounts:
+          - name: scanner
+            mountPath: /pipeline/watchedFolders/scanner
+          - name: config-map-volume
+            mountPath: /mnt/config-map-volume/
+          args:
+            - |
+              set -e
+              set -x
+              echo "Starting stirlingpdf-pipeline-job..."
+
+              ls -l /mnt/config-map-volume/
+
+              cat /mnt/config-map-volume/pipeline.json > /pipeline/watchedFolders/scanner/pipeline.json
+
+              echo "stirlingpdf-pipeline-job completed."
+
+
+      restartPolicy: OnFailure
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: stirlingpdf-https-8080-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`stirling-pdf.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: stirlingpdf-service
+          port: 8080
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: stirlingpdf-https-8080-1
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`pdf.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: stirlingpdf-service
+          port: 8080
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+  tls:
+    certResolver: cloudflare

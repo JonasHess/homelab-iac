@@ -5,36 +5,39 @@ metadata:
   name: stirlingpdf-pipeline-job
   namespace: argocd
 spec:
-  template:
-    spec:
-      volumes:
-        - name: config-map-volume
-          configMap:
-            name: stirlingpdf-pipeline-cm
-        - name: scanner
-          persistentVolumeClaim:
-            claimName: stirlingpdf-scanner-pvc
-      containers:
-        - name: stirlingpdf-pipeline-job
-          image: "busybox:latest"
-          command: ["sh", "-c"]
-          volumeMounts:
-          - name: scanner
-            mountPath: /pipeline/watchedFolders/scanner
-          - name: config-map-volume
-            mountPath: /mnt/config-map-volume/
-          args:
-            - |
-              set -e
-              set -x
-              echo "Starting stirlingpdf-pipeline-job..."
+  schedule: "*/1 * * * *" # every 1 minute
+    jobTemplate:
+      spec:
+        template:
+          spec:
+            volumes:
+              - name: config-map-volume
+                configMap:
+                  name: stirlingpdf-pipeline-cm
+              - name: scanner
+                persistentVolumeClaim:
+                  claimName: stirlingpdf-scanner-pvc
+            containers:
+              - name: stirlingpdf-pipeline-job
+                image: "busybox:latest"
+                command: ["sh", "-c"]
+                volumeMounts:
+                - name: scanner
+                  mountPath: /pipeline/watchedFolders/scanner
+                - name: config-map-volume
+                  mountPath: /mnt/config-map-volume/
+                args:
+                  - |
+                    set -e
+                    set -x
+                    echo "Starting stirlingpdf-pipeline-job..."
 
-              ls -l /mnt/config-map-volume/
+                    ls -l /mnt/config-map-volume/
 
-              cat /mnt/config-map-volume/pipeline.json > /pipeline/watchedFolders/scanner/pipeline.json
+                    cat /mnt/config-map-volume/pipeline.json > /pipeline/watchedFolders/scanner/pipeline.json
 
-              echo "stirlingpdf-pipeline-job completed."
+                    echo "stirlingpdf-pipeline-job completed."
 
 
-      restartPolicy: OnFailure
+            restartPolicy: OnFailure
 {{- end -}}
