@@ -104,6 +104,32 @@ spec:
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "sftpgo-stirlingpdf-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "sftpgo-stirlingpdf-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -124,6 +150,22 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "sftpgo-data-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "sftpgo-stirlingpdf-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -186,6 +228,8 @@ spec:
               name: sftpgo-config-volume
             - mountPath: "/srv/sftpgo"
               name: sftpgo-data-volume
+            - mountPath: "/mnt/stirlingpdf/pipeline/"
+              name: sftpgo-stirlingpdf-volume
             - mountPath: "/etc/sftpgo/"
               name: sftpgo-configmap-volume
           envFrom:
@@ -198,6 +242,9 @@ spec:
         - name: sftpgo-data-volume
           persistentVolumeClaim:
             claimName: sftpgo-data-pvc
+        - name: sftpgo-stirlingpdf-volume
+          persistentVolumeClaim:
+            claimName: sftpgo-stirlingpdf-pvc
         - name: sftpgo-configmap-volume
           configMap:
             name: sftpgo-config

@@ -353,6 +353,9 @@ apps:
           config:
             mountPath: "/var/lib/sftpgo"
             hostPath: "/mnt/somewhere/unencrypted/apps/sftpgo/config"
+          stirlingpdf:
+            mountPath: "/mnt/stirlingpdf/pipeline/"
+            hostPath: "/mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/"
         envFrom:
           secretRef: "sftpgo-secret"
         configMapMounts:
@@ -628,8 +631,11 @@ apps:
           - containerPort: 8080
         pvcMounts:
           scanner:
-            mountPath: "/pipeline/watchedFolders"
+            mountPath: "/pipeline/watchedFolders/scanner"
             hostPath: "/mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"
+          paperlessconsume:
+            mountPath: "/pipeline/finishedFolders"
+            hostPath: "/mnt/somewhere/encrypted/apps/paperlessngx/consume"
 #           trainingData:
 #             mountPath: "/usr/share/tessdata"
 #             hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/trainingData"

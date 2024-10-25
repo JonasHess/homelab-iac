@@ -1,5 +1,4 @@
 
-base-chart/templates/stirlingpdf/pipeline.json
 
 # Patterns to ignore when building packages.
 # This supports shell glob matching, relative path matching, and
