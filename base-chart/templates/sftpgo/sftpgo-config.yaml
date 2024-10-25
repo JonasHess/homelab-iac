@@ -26,7 +26,7 @@ data:
               "config_url": {{ .Values.traefik_forward_auth.oidc_issuer_url | quote }},
               "client_id": {{ .Values.traefik_forward_auth.oidc_client_id | quote }},
               "redirect_base_url": "https://sftpgo.{{ .Values.domain}}",
-              "username_field": "name",
+              "username_field": "custom:sftpgo_username",
               "role_field": "custom:sftpgo_role"
             }
           }

@@ -27,7 +27,7 @@ data:
               "config_url": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX",
               "client_id": "6e1bl5i55ao7bhhcufk85ussm",
               "redirect_base_url": "https://sftpgo.home-server.dev",
-              "username_field": "name",
+              "username_field": "custom:sftpgo_username",
               "role_field": "custom:sftpgo_role"
             }
           }

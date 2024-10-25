@@ -619,3 +619,42 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  stirlingpdf:
+    enabled: false
+    generic:
+      deployment:
+        image: "frooodle/s-pdf:latest"
+        ports:
+          - containerPort: 8080
+        pvcMounts:
+          scanner:
+            mountPath: "/pipeline/watchedFolders"
+            hostPath: "/mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"
+#           trainingData:
+#             mountPath: "/usr/share/tessdata"
+#             hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/trainingData"
+#           extraConfigs:
+#             mountPath: "/configs"
+#             hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/extraConfigs"
+  #       customFiles:
+  #         mountPath: "/customFiles"
+  #         hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/customFiles"
+  #       logs:
+  #         mountPath: "/logs"
+  #         hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/logs"
+      service:
+        ports:
+          - name: http
+            port: 8080
+      ingress:
+        https:
+          - subdomain: "stirling-pdf"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
+          - subdomain: "pdf"
+            port: 8080
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
