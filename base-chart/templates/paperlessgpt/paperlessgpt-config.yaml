@@ -6,8 +6,8 @@ metadata:
   namespace: argocd
 data:
   PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
-  LLM_PROVIDER: {{ .Values.traefik_forward_auth.oidc_issuer_url | quote }}
-  LLM_MODEL: {{ .Values.traefik_forward_auth.oidc_issuer_url | quote }}
+  LLM_PROVIDER: {{ .Values.apps.paperlessgpt.LLM_PROVIDER | quote }}
+  LLM_MODEL: {{ .Values.apps.paperlessgpt.LLM_MODEL | quote }}
   LLM_LANGUAGE: "German" # Optional, default is 'English'
   OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
 {{- end -}}
