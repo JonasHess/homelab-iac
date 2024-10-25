@@ -2,9 +2,10 @@
   "name": "Scanner",
   "pipeline": [
     {
-      "operation": "/api/v1/general/rotate-pdf",
+      "operation": "/api/v1/misc/remove-blanks",
       "parameters": {
-        "angle": 90,
+        "threshold": 10,
+        "whitePercent": 99,
         "fileInput": "automated"
       }
     }
