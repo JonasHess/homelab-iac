@@ -105,7 +105,7 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
-            - mountPath: "/pipeline/watchedFolders"
+            - mountPath: "/pipeline/watchedFolders/scanner"
               name: stirlingpdf-scanner-volume
       volumes:
         - name: stirlingpdf-scanner-volume
