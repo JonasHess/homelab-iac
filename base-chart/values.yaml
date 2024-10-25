@@ -633,6 +633,9 @@ apps:
           scanner:
             mountPath: "/pipeline/watchedFolders/scanner"
             hostPath: "/mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"
+          paperlessconsume:
+            mountPath: "/pipeline/finishedFolders"
+            hostPath: "/mnt/somewhere/encrypted/apps/paperlessngx/consume"
 #           trainingData:
 #             mountPath: "/usr/share/tessdata"
 #             hostPath: "/mnt/somewhere/unencrypted/apps/stirling-pdf/trainingData"

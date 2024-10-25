@@ -31,6 +31,32 @@ data:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  name: "stirlingpdf-paperlessconsume-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/paperlessngx/consume
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "stirlingpdf-paperlessconsume-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
   name: "stirlingpdf-scanner-pv"
   namespace: argocd
   annotations:
@@ -51,6 +77,22 @@ spec:
     kind: PersistentVolumeClaim
     name: "stirlingpdf-scanner-pvc"
     namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "stirlingpdf-paperlessconsume-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
@@ -105,9 +147,14 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
+            - mountPath: "/pipeline/finishedFolders"
+              name: stirlingpdf-paperlessconsume-volume
             - mountPath: "/pipeline/watchedFolders/scanner"
               name: stirlingpdf-scanner-volume
       volumes:
+        - name: stirlingpdf-paperlessconsume-volume
+          persistentVolumeClaim:
+            claimName: stirlingpdf-paperlessconsume-pvc
         - name: stirlingpdf-scanner-volume
           persistentVolumeClaim:
             claimName: stirlingpdf-scanner-pvc
