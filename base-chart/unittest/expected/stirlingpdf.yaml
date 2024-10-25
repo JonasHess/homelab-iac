@@ -9,7 +9,22 @@ data:
   pipeline.json: |-
     
     {
-     "hello": "world"
+      "name": "Scanner",
+      "pipeline": [
+        {
+          "operation": "/api/v1/general/rotate-pdf",
+          "parameters": {
+            "angle": 90,
+            "fileInput": "automated"
+          }
+        }
+      ],
+      "_examples": {
+        "outputDir": "{outputFolder}/{folderName}",
+        "outputFileName": "{filename}-{pipelineName}-{date}-{time}"
+      },
+      "outputDir": "{outputFolder}",
+      "outputFileName": "{filename}"
     }
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
