@@ -3,9 +3,8 @@
 apiVersion: v1
 data:
   pipeline.json: |-
-    {
-
-    }
+    
+    "{\n \"hello\": \"world\"\n}"
 kind: ConfigMap
 metadata:
   creationTimestamp: null
@@ -106,7 +105,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
-  schedule: "*/10 * * * *"  # Every 10 minutes
+  schedule: "*/3 * * * *"  # Every 10 minutes
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
       template:
