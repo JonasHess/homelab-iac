@@ -13,3 +13,6 @@ apps:
           tank1:
             mountPath: "/mnt/tank1"
             hostPath: "/mnt/tank1"
+          stirlingpdf:
+            mountPath: "/mnt/stirlingpdf/pipeline/"
+            hostPath: "/mnt/tank1/encrypted/apps/stirlingpdf/pipeline/"
