@@ -39,7 +39,7 @@ metadata:
   labels:
     app: asn
 data:
-  redirect.php: |
+  index.php: |
     <?php
     // Capture the request URI and extract the ASN part
     $requestUri = $_SERVER['REQUEST_URI'];
