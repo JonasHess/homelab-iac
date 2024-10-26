@@ -25,6 +25,9 @@ spec:
             - name: app-volume
               mountPath: /usr/src/app
           command: ["node", "/usr/src/app/app.js"]
+          env:
+            - name: PAPERLESS_URL
+              value: "https://paperlessngx.{{ .Values.domain }}"
       volumes:
         - name: app-volume
           configMap:
@@ -42,11 +45,16 @@ data:
   app.js: |
     const http = require('http');
 
+    const paperlessUrl = process.env.PAPERLESS_URL;
+    if (!paperlessUrl) {
+        throw new Error('PAPERLESS_URL environment variable is not set');
+    }
+
     const server = http.createServer((req, res) => {
         const matches = req.url.match(/^\/(\d+)$/);
         if (matches) {
             const asn = matches[1];
-            res.writeHead(302, { Location: `https://paperlessngx.hess.pm/documents?archive_serial_number=${asn}` });
+            res.writeHead(302, { Location: `${paperlessUrl}/documents?archive_serial_number=${asn}` });
             res.end();
         } else {
             res.writeHead(404, { 'Content-Type': 'text/plain' });
