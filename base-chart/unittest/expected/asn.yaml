@@ -1,0 +1,90 @@
+---
+# Source: homelab-base-chart/templates/asn/asn-deployment.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: php-redirect-config
+  labels:
+    app: asn
+data:
+  redirect.php: |
+    <?php
+    // Capture the request URI and extract the ASN part
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $matches = [];
+
+    // Use regex to match /{ASN}
+    if (preg_match('#^/(\d+)$#', $requestUri, $matches)) {
+        $asn = $matches[1];
+        // Redirect to the target URL with ASN
+        header("Location: https://paperlessngx.hess.pm/documents?archive_serial_number=$asn", true, 302);
+        exit();
+    } else {
+        // Return 404 if URL format is incorrect
+        http_response_code(404);
+        echo "404 Not Found";
+    }
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: asn-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 80
+  selector:
+    app: asn
+---
+# Source: homelab-base-chart/templates/asn/asn-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-redirect-deployment
+  labels:
+    app: asn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asn
+  template:
+    metadata:
+      labels:
+        app: asn
+    spec:
+      containers:
+        - name: asn-php-redirect-container
+          image: php:apache
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: php-script-volume
+              mountPath: /var/www/html/
+      volumes:
+        - name: php-script-volume
+          configMap:
+            name: php-redirect-config
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: asn-https-80-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`asn.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: asn-service
+          port: 80
+  tls:
+    certResolver: cloudflare
