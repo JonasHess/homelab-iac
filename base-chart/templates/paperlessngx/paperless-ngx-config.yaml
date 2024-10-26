@@ -12,5 +12,7 @@ data:
   PAPERLESS_ADMIN_USER: {{ .Values.apps.paperlessngx.admin.username | quote }}
   PAPERLESS_ADMIN_MAIL: {{ .Values.apps.paperlessngx.admin.email | quote }}
   PAPERLESS_URL: https://paperlessngx.{{ .Values.domain }}
+  PAPERLESS_CONSUMER_ENABLE_ASN_BARCODES: "true"
+  PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.domain }}/"
 
 {{- end -}}
