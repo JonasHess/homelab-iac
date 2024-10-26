@@ -664,3 +664,14 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+  asn:
+    enabled: false
+    generic:
+      service:
+        ports:
+          - name: http
+            port: 80
+      ingress:
+        https:
+          - subdomain: "asn"
+            port: 80
