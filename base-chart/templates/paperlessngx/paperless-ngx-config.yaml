@@ -14,5 +14,6 @@ data:
   PAPERLESS_URL: https://paperlessngx.{{ .Values.domain }}
   PAPERLESS_CONSUMER_ENABLE_ASN_BARCODES: "true"
   PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.domain }}/"
+  PAPERLESS_CONSUMER_BARCODE_UPSCALE: "1.5"
 
 {{- end -}}
