@@ -25,6 +25,7 @@ spec:
           volumeMounts:
             - name: php-script-volume
               mountPath: /var/www/html/
+          command: ["/bin/bash", "-c", "a2enmod rewrite && apache2-foreground"]
       volumes:
         - name: php-script-volume
           configMap:
