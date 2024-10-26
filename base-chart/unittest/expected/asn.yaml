@@ -3,27 +3,34 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: php-redirect-config
+  name: node-redirect-config
+  namespace: argocd
   labels:
     app: asn
 data:
-  redirect.php: |
-    <?php
-    // Capture the request URI and extract the ASN part
-    $requestUri = $_SERVER['REQUEST_URI'];
-    $matches = [];
+  app.js: |
+    const http = require('http');
 
-    // Use regex to match /{ASN}
-    if (preg_match('#^/(\d+)$#', $requestUri, $matches)) {
-        $asn = $matches[1];
-        // Redirect to the target URL with ASN
-        header("Location: https://paperlessngx.hess.pm/documents?archive_serial_number=$asn", true, 302);
-        exit();
-    } else {
-        // Return 404 if URL format is incorrect
-        http_response_code(404);
-        echo "404 Not Found";
+    const paperlessUrl = process.env.PAPERLESS_URL;
+    if (!paperlessUrl) {
+        throw new Error('PAPERLESS_URL environment variable is not set');
     }
+
+    const server = http.createServer((req, res) => {
+        const matches = req.url.match(/^\/(\d+)$/);
+        if (matches) {
+            const asn = matches[1];
+            res.writeHead(302, { Location: `${paperlessUrl}/documents?archive_serial_number=${asn}` });
+            res.end();
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('404 Not Found');
+        }
+    });
+
+    server.listen(80, () => {
+        console.log('Server is running on port 80');
+    });
 ---
 # Source: homelab-base-chart/templates/_generic/service.yaml
 apiVersion: v1
@@ -42,7 +49,8 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-redirect-deployment
+  name: node-redirect-deployment
+  namespace: argocd
   labels:
     app: asn
 spec:
@@ -56,17 +64,21 @@ spec:
         app: asn
     spec:
       containers:
-        - name: asn-php-redirect-container
-          image: php:apache
+        - name: asn-node-redirect-container
+          image: node:alpine
           ports:
             - containerPort: 80
           volumeMounts:
-            - name: php-script-volume
-              mountPath: /var/www/html/
+            - name: app-volume
+              mountPath: /usr/src/app
+          command: ["node", "/usr/src/app/app.js"]
+          env:
+            - name: PAPERLESS_URL
+              value: "https://paperlessngx.home-server.dev"
       volumes:
-        - name: php-script-volume
+        - name: app-volume
           configMap:
-            name: php-redirect-config
+            name: node-redirect-config
 ---
 # Source: homelab-base-chart/templates/_generic/ingress-https.yaml
 apiVersion: traefik.io/v1alpha1

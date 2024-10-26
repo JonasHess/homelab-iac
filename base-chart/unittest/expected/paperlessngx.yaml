@@ -13,6 +13,10 @@ data:
   PAPERLESS_ADMIN_USER: "admin"
   PAPERLESS_ADMIN_MAIL: 
   PAPERLESS_URL: https://paperlessngx.home-server.dev
+  PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
+  PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
+  PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.home-server.dev/"
+  PAPERLESS_CONSUMER_BARCODE_UPSCALE: "1.5"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
