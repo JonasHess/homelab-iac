@@ -8,6 +8,7 @@ spec:
   destination:
     namespace: argocd
     server: https://kubernetes.default.svc
+  project: default
   source:
     repoURL: ghcr.io/actions/actions-runner-controller-charts
     targetRevision: "0.9.3"
