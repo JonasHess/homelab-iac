@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: github-arc-systems
+  name: gha-runner-scale-set-controller
   namespace: argocd
 spec:
   destination:
