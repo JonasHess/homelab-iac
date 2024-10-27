@@ -675,3 +675,5 @@ apps:
         https:
           - subdomain: "asn"
             port: 80
+  githubarc:
+    enabled: false
