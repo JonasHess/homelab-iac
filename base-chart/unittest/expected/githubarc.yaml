@@ -1,9 +1,37 @@
 ---
-# Source: homelab-base-chart/templates/githubarc/arc-helm.yaml
+# Source: homelab-base-chart/templates/githubarc/ gha-runner-scale-set.yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: github-arc-systems
+  name: gha-runner-scale-set
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/actions/actions-runner-controller-charts
+    targetRevision: "0.9.3"
+    chart: gha-runner-scale-set
+    helm:
+      releaseName: arc-runner-set
+      valuesObject:
+        githubConfigUrl: "https://github.com/Hess-IT-Beratung"
+        githubConfigSecret: github-arc-secret
+        controllerServiceAccount:
+          name: arc-gha-rs-controller  # Explicitly set your service account name here
+          namespace: argocd  # Ensure this matches the namespace of the service account
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: arc-runners
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+---
+# Source: homelab-base-chart/templates/githubarc/gha-runner-scale-set-controller.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gha-runner-scale-set-controller
   namespace: argocd
 spec:
   destination:
