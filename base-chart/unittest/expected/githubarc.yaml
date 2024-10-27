@@ -21,7 +21,7 @@ spec:
           namespace: argocd  # Ensure this matches the namespace of the service account
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: arc-runners
+    namespace: argocd
   syncPolicy:
     automated:
       selfHeal: true
