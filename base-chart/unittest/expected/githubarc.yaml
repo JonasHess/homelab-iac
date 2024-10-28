@@ -1,14 +1,14 @@
 ---
 # Source: homelab-base-chart/templates/githubarc/github-storageclass.yaml
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: github-hostpath
-provisioner: microk8s.io/hostpath
-reclaimPolicy: Delete
-parameters:
-  pvDir: /mnt/somewhere/unencrypted/apps/githubarc/storage/standard
-volumeBindingMode: WaitForFirstConsumer
+# kind: StorageClass
+# apiVersion: storage.k8s.io/v1
+# metadata:
+#   name: github-hostpath
+# provisioner: microk8s.io/hostpath
+# reclaimPolicy: Delete
+# parameters:
+#   pvDir: /mnt/somewhere/unencrypted/apps/githubarc/storage/standard
+# volumeBindingMode: WaitForFirstConsumer
 ---
 # Source: homelab-base-chart/templates/githubarc/ gha-runner-scale-set.yaml
 apiVersion: argoproj.io/v1alpha1
@@ -34,35 +34,43 @@ spec:
         ## calculated as a sum of minRunners and the number of jobs assigned to the scale set.
         minRunners: 2
         containerMode:
-          type: "kubernetes"
-          kubernetesModeWorkVolumeClaim:
-            accessModes: ["ReadWriteOnce"]
-            storageClassName: "github-hostpath"
-            resources:
-              requests:
-                storage: 2Gi
-
+          type: dind
         template:
           spec:
-            securityContext:
-              fsGroup: 1000 ## needed to resolve permission issues with mounted volume. https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller-errors#error-access-to-the-path-homerunner_work_tool-is-denied
             containers:
               - name: runner
                 image: ghcr.io/actions/actions-runner:latest
                 command: ["/home/runner/run.sh"]
-                env:
-                - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
-                  value: "false"  ## To allow jobs without a job container to run, set ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER to false on your runner container. This instructs the runner to disable this check.
-            volumes:
-              - name: work
-                ephemeral:
-                  volumeClaimTemplate:
-                    spec:
-                      accessModes: [ "ReadWriteOnce" ]
-                      storageClassName: "github-hostpath" # for AKS
-                      resources:
-                        requests:
-                          storage: 2Gi
+#         containerMode:
+#           type: "kubernetes"
+#           kubernetesModeWorkVolumeClaim:
+#             accessModes: ["ReadWriteOnce"]
+#             storageClassName: "github-hostpath"
+#             resources:
+#               requests:
+#                 storage: 2Gi
+#
+#         template:
+#           spec:
+#             securityContext:
+#               fsGroup: 1000 ## needed to resolve permission issues with mounted volume. https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners-with-actions-runner-controller/troubleshooting-actions-runner-controller-errors#error-access-to-the-path-homerunner_work_tool-is-denied
+#             containers:
+#               - name: runner
+#                 image: ghcr.io/actions/actions-runner:latest
+#                 command: ["/home/runner/run.sh"]
+#                 env:
+#                 - name: ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER
+#                   value: "false"  ## To allow jobs without a job container to run, set ACTIONS_RUNNER_REQUIRE_JOB_CONTAINER to false on your runner container. This instructs the runner to disable this check.
+#             volumes:
+#               - name: work
+#                 ephemeral:
+#                   volumeClaimTemplate:
+#                     spec:
+#                       accessModes: [ "ReadWriteOnce" ]
+#                       storageClassName: "github-hostpath" # for AKS
+#                       resources:
+#                         requests:
+#                           storage: 2Gi
         controllerServiceAccount:
           name: arc-gha-rs-controller  # Explicitly set your service account name here
           namespace: argocd  # Ensure this matches the namespace of the service account
