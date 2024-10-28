@@ -677,3 +677,6 @@ apps:
             port: 80
   githubarc:
     enabled: false
+    storageclasses:
+      standard:
+        hostPath: "/mnt/somewhere/unencrypted/apps/githubarc/storage/standard"

@@ -23,6 +23,12 @@ spec:
         minRunners: 2
         containerMode:
           type: "kubernetes"
+          kubernetesModeWorkVolumeClaim:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "github-hostpath"
+            resources:
+              requests:
+                storage: 2Gi
         controllerServiceAccount:
           name: arc-gha-rs-controller  # Explicitly set your service account name here
           namespace: argocd  # Ensure this matches the namespace of the service account

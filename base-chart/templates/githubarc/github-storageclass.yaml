@@ -1,0 +1,11 @@
+{{- if .Values.apps.githubarc.enabled -}}
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: github-hostpath
+provisioner: microk8s.io/hostpath
+reclaimPolicy: Delete
+parameters:
+  pvDir: {{ .Values.apps.githubarc.storageclasses.standard.hostPath }}
+volumeBindingMode: WaitForFirstConsumer
+{{- end -}}
