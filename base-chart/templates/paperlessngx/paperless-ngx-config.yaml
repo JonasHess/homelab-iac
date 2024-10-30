@@ -17,5 +17,5 @@ data:
   PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.domain }}/"
   PAPERLESS_CONSUMER_BARCODE_UPSCALE: "1.5"
   PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"
-
+  PAPERLESS_OCR_USER_ARGS: "{\"invalidate_digital_signatures\": true}"
 {{- end -}}
