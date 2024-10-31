@@ -19,6 +19,6 @@ data:
   PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"
   PAPERLESS_OCR_USER_ARGS: "{\"invalidate_digital_signatures\": true}"
   PAPERLESS_TIKA_ENABLED: "1"
-  PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg-service"
-  PAPERLESS_TIKA_ENDPOINT: "http://tika-service"
+  PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "https://gotenberg-service"
+  PAPERLESS_TIKA_ENDPOINT: "https://tika-service"
 {{- end -}}
