@@ -524,6 +524,28 @@ apps:
         ports:
           - name: redis
             port: 6379
+  gotenberg:
+    enabled: false
+    generic:
+      deployment:
+        image: docker.io/gotenberg/gotenberg:8.7
+        ports:
+          - containerPort: 3000
+      service:
+        ports:
+          - name: gotenberg
+            port: 3000
+  tika:
+    enabled: false
+    generic:
+      deployment:
+        image: docker.io/apache/tika:latest
+        ports:
+          - containerPort: 9998
+      service:
+        ports:
+          - name: tika
+            port: 9998
   ollama:
     enabled: false
     generic:
