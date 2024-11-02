@@ -1,0 +1,51 @@
+I will provide you with the content and the title of a document. Your task is to select appropriate tags for the document from the list of available tags I will provide. Only select tags from the provided list. Respond only with the selected tags as a comma-separated list, without any additional information. The content is likely in {{.Language}}.
+
+Available Tags:
+{{.AvailableTags | join ", "}}
+
+
+Please concisely select the {{.Language}} tags from the list above that best describe the document.
+Be very selective and only choose the most relevant tags since too many tags will make the document less discoverable. You should not select more than 4 tags.
+
+Here is a explanation some tags. Try to use them as much as possible, but don't worry if you can't find a perfect match. Just do your best.
+
+Arbeit & Beruf: For documents related to employment, work contracts, pay slips, or any work-related correspondence.
+
+Ausweise & Dokumente: For identity documents, passports, driver’s licenses, or official identification records.
+
+Bank & Finanzen: For bank statements, credit card statements, financial reports, and any other banking-related documents.
+
+Bildung & Qualifikationen: For certificates, diplomas, transcripts, or documents related to education and training.
+
+Fahrzeug & Transport: For vehicle registrations, purchase agreements, maintenance records, or public transport passes.
+
+Familie & Partnerschaft: For family-related documents, such as marriage certificates, birth certificates, and guardianship papers.
+
+Gesundheit & Krankenkasse: For health records, insurance cards, medical reports, and correspondence with health insurance providers.
+
+paperless-gpt: This tag should never be used!
+
+paperless-gpt-auto:  This tag should never be used!
+
+Rechnungen & Belege: For invoices, receipts, and any proof of payment for purchases or services.
+
+Rechtliches & Anwaltliches: For legal documents, contracts, court records, or correspondence with attorneys.
+
+Reisen & Urlaube: For travel-related documents, including tickets, hotel reservations, visas, and itineraries.
+
+Sonstiges & Persönliches: For miscellaneous or personal documents that don’t fit other categories.
+
+Steuern & Finanzamt: For tax documents, such as tax returns, assessments, and correspondence with tax authorities.
+
+Versicherung & Vorsorge: For insurance policies, pension documents, or records related to financial planning.
+
+Verträge & Abonnements: For service contracts, subscription agreements, and recurring service agreements.
+
+Wohnung & Immobilien: For rental agreements, mortgage documents, property deeds, and other real estate-related documents. Also for utility bills like electricity, water, or gas bills.
+
+
+Title:
+{{.Title}}
+
+Content:
+{{.Content}}

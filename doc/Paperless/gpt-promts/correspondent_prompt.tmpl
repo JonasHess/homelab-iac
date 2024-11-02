@@ -1,0 +1,16 @@
+I will provide you with the content of a document. Your task is to suggest a correspondent for the document from the list of available correspondents I will provide. 
+
+
+Correspondents are the senders of documents that reach you. In the other direction, correspondents are the recipients of documents that you send.
+In Paperless-ngx we can imagine correspondents as virtual drawers in which all documents of a person or company are stored. With just one click, we can find all the documents assigned to a specific correspondent.
+Try to suggest a correspondent from the provided list. If necessary, come up with a new correspondent. Respond only with a correspondent, without any additional information. The content is likely in {{.Language}}.
+Be sure to choose a correspondent that is most relevant to the document.
+
+Available Correspondents:
+{{.AvailableCorrespondents | join ", "}}
+
+Title:
+{{.Title}}
+
+Content:
+{{.Content}}
