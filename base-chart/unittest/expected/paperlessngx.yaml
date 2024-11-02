@@ -22,7 +22,7 @@ data:
   PAPERLESS_TIKA_ENABLED: "1"
   PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg-service:3000"
   PAPERLESS_TIKA_ENDPOINT: "http://tika-service:9998"
-  PAPERLESS_FILENAME_FORMAT: "{{ created_year }}/{{ created_year }}_{{ created_month }}_{{ created_day }}_{{ correspondent }}_{{ title }}"
+  PAPERLESS_FILENAME_FORMAT: "{{ created_year }}/{{ correspondent }}/{{ created_year }}_{{ created_month }}_{{ created_day }}_{{ correspondent }}_{{ title }}"
   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: "true"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
