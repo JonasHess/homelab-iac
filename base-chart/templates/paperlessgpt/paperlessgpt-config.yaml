@@ -10,4 +10,15 @@ data:
   LLM_MODEL: {{ .Values.apps.paperlessgpt.LLM_MODEL | quote }}
   LLM_LANGUAGE: "German" # Optional, default is 'English'
   OLLAMA_HOST: "http://ollama-service:11434" # If using Ollama
+  LOG_LEVEL: {{ .Values.apps.paperlessgpt.LOG_LEVEL | quote }}
+  CORRESPONDENT_BLACK_LIST: {{ .Values.apps.paperlessgpt.CORRESPONDENT_BLACK_LIST | quote }}
+  AWS_REGION: "eu-central-1"
+  AWS_OCR_BUCKET_NAME: {{ .Values.apps.paperlessgpt.AWS_OCR_BUCKET_NAME | quote }}
+  PROMPT_PREAMBLE: {{.Values.apps.paperlessgpt.PROMPT_PREAMBLE | quote }}
+  PROMPT_TITLE_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_TITLE_EXPLANATION | quote }}
+  PROMPT_TAGS_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_TAGS_EXPLANATION | quote }}
+  PROMPT_DOCUMENT_TYPE_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_DOCUMENT_TYPE_EXPLANATION | quote }}
+  PROMPT_CORRESPONDENT_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_CORRESPONDENT_EXPLANATION | quote }}
+  PROMPT_POSTAMBLE: {{.Values.apps.paperlessgpt.PROMPT_POSTAMBLE | quote }}
+
 {{- end -}}

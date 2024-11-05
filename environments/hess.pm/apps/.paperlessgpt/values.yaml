@@ -1,9 +1,0 @@
-apps:
-  paperlessgpt:
-    LLM_PROVIDER: "openai" # 'openai' or 'ollama'
-    LLM_MODEL: "gpt-4o"      # gpt-4o or 'llama2'
-    generic:
-      deployment:
-        pvcMounts:
-          prompts:
-            hostPath: "/mnt/tank1/encrypted/apps/paperless-gpt/prompts"
