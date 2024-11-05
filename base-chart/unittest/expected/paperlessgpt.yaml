@@ -96,7 +96,7 @@ spec:
     spec:
       containers:
         - name: paperlessgpt
-          image: jonashess/paperless-gpt:latest
+          image: jonashess/paperless-gpt:unreleased
           ports:
             - containerPort: 8080
           volumeMounts:
