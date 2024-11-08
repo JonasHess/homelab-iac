@@ -1,7 +1,7 @@
 apps:
   paperlessgpt:
-    LLM_PROVIDER: "ollama" # 'openai' or 'ollama'
-    LLM_MODEL: "llama2"      # gpt-4o or 'llama2'
+    LLM_PROVIDER: "openai" # 'openai' or 'ollama'
+    LLM_MODEL: "gpt-4o"      # gpt-4o or 'llama2'
     generic:
       deployment:
         pvcMounts:
