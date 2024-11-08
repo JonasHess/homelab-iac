@@ -4,7 +4,6 @@ apps:
     LLM_MODEL: "gpt-4o"      # gpt-4o or 'llama2'
     AWS_OCR_BUCKET_NAME: "zimmermann.lat-paperless-ocr"
     PROMPT_TITLE_EXPLANATION: ""
-    PROMPT_TAGS_EXPLANATION: ""
     PROMPT_DOCUMENT_TYPE_EXPLANATION: ""
     PROMPT_CORRESPONDENT_EXPLANATION: ""
     PROMPT_POSTAMBLE: ""

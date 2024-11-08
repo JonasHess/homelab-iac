@@ -14,7 +14,6 @@ data:
   AWS_REGION: "eu-central-1"
   AWS_OCR_BUCKET_NAME: {{ .Values.apps.paperlessgpt.AWS_OCR_BUCKET_NAME | quote }}
   PROMPT_TITLE_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_TITLE_EXPLANATION | quote }}
-  PROMPT_TAGS_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_TAGS_EXPLANATION | quote }}
   PROMPT_DOCUMENT_TYPE_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_DOCUMENT_TYPE_EXPLANATION | quote }}
   PROMPT_CORRESPONDENT_EXPLANATION: {{.Values.apps.paperlessgpt.PROMPT_CORRESPONDENT_EXPLANATION | quote }}
   PROMPT_POSTAMBLE: {{.Values.apps.paperlessgpt.PROMPT_POSTAMBLE | quote }}
