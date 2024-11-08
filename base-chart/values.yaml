@@ -598,9 +598,7 @@ apps:
     LLM_PROVIDER: "openai" # 'openai' or 'ollama'
     LLM_MODEL: "gpt-4o"      # gpt-4o or 'llama2'
     LOG_LEVEL: "INFO"
-    CORRESPONDENT_BLACK_LIST: "John Smith, Jane Doe"
     AWS_OCR_BUCKET_NAME: "paperless-ocr"
-    PROMPT_PREAMBLE: ""
     PROMPT_TITLE_EXPLANATION: ""
     PROMPT_TAGS_EXPLANATION: ""
     PROMPT_DOCUMENT_TYPE_EXPLANATION: ""
