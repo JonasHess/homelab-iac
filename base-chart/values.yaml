@@ -507,6 +507,10 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+          - subdomain: "paperlessngx"
+            priority: 20
+            matchSuffix: "&& PathPrefix(`/api`)"
+            port: 8000
   redis:
     enabled: false
     generic:
