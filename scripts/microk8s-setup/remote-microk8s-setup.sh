@@ -68,6 +68,9 @@ install_microk8s() {
   microk8s enable dns
   microk8s enable metallb:$IP_RANGE
 
+  metrics-server enable metrics-server
+  microk8s enable hostpath-storage
+
   if confirm "Do you want to enable Nvidia GPU support? [y/N]"; then
    microk8s enable nvidia
   else
