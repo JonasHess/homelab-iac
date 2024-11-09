@@ -41,8 +41,8 @@ fi
 IP_RANGE=$1
 
 if ! command -v kubectl &> /dev/null; then
-  echo "kubectl could not be found. Please install kubectl on the remote server and try again."
-  exit 1
+  echo "kubectl could not be found. Installing kubectl..."
+  snap install kubectl --classic
 fi
 
 
@@ -97,7 +97,7 @@ set_kubectl_config() {
 
 
   echo "Waiting for microk8s to be ready..."
-  kubectl wait --for=condition=Ready nodes --all --timeout=600s
+  until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do echo "Retrying kubectl wait command..."; sleep 10; done
 
   echo "copying kubeconfig to current directory"
   cp ~/.kube/config ./kube-config

@@ -92,6 +92,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 echo "Argocd setup complete!"
 
 
+echo ">>>>>>>>>  DONT FORGET TO  RESTART ARGO  ONCE <<<<<<<<<<"
+
 # port-forward to the service
 echo "Port-forwarding to the argocd-server service..."
 kubectl port-forward svc/argocd-server -n argocd 8081:443
