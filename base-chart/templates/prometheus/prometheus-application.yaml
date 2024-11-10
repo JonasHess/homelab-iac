@@ -37,6 +37,6 @@ spec:
     namespace: argocd
   syncPolicy:
     syncOptions:
-{{/*      - ServerSideApply=true*/}}
+      - ServerSideApply=true
       - Prune=true
 {{- end }}

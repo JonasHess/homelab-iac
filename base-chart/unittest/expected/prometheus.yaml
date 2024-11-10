@@ -38,7 +38,7 @@ spec:
     namespace: argocd
   syncPolicy:
     syncOptions:
-
+      - ServerSideApply=true
       - Prune=true
 ---
 # Source: homelab-base-chart/templates/prometheus/prometheus-external-secret.yaml
