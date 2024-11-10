@@ -50,6 +50,7 @@ apps:
       cloudflare:
         allowedCIDRs: []
   drone:
+    enabled: false
     generic:
       persistentVolumeClaims:
         data: "/mnt/somewhere/unencrypted/apps/drone/data"

@@ -22,6 +22,14 @@ spec:
         ## Provide a name in place of kube-prometheus-stack for `app:` labels
         ##
         nameOverride: ""
+        grafana:
+          defaultDashboardsTimezone: Europe/Berlin
+          adminPassword: ""
+          adminUser: admin
+          admin:
+            existingSecret: grafana-admin-credentials
+            userKey: admin-user
+            passwordKey: admin-password
 
 
   destination:
