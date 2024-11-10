@@ -24,6 +24,8 @@ data:
   PAPERLESS_TIKA_ENDPOINT: "http://tika-service:9998"
   PAPERLESS_FILENAME_FORMAT: "{{ created_year }}/{{ correspondent }}/{{ created_year }}_{{ created_month }}_{{ created_day }}_{{ correspondent }}_{{ title }}"
   PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: "true"
+  PAPERLESS_CONSUMER_RECURSIVE: "1"
+  PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "1"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
@@ -358,5 +360,26 @@ spec:
       middlewares:
         - name: traefik-forward-auth
           namespace: argocd
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: paperlessngx-https-8000-1
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`paperlessngx.home-server.dev`) && PathPrefix(`/api`)
+      kind: Rule
+      priority: 20
+      services:
+        - name: paperlessngx-service
+          port: 8000
   tls:
     certResolver: cloudflare
