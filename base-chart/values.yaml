@@ -400,6 +400,12 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+          - subdomain: "grafana"
+            port: 3000
+            service: "kube-prometheus-stack-grafana"
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
   homematic:
     enabled: false
     persistence:
