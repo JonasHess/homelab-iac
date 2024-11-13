@@ -401,7 +401,7 @@ apps:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
           - subdomain: "grafana"
-            port: 3000
+            port: 80
             service: "kube-prometheus-stack-grafana"
             middlewares:
               - name: "traefik-forward-auth"
