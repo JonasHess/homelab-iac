@@ -424,7 +424,7 @@ apps:
     enabled: false
     generic:
       deployment:
-        image: "lscr.io/linuxserver/qbittorrent:4.6.7"
+        image: "lscr.io/linuxserver/qbittorrent:latest"
         ports:
           - containerPort: 8080
         pvcMounts:
