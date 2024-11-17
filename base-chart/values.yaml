@@ -654,7 +654,6 @@ apps:
         securityContext:
           privileged: true
           runAsUser: 0
-          allowPrivilegeEscalation: false
       service:
         ports:
           - port: 8200
