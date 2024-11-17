@@ -20,6 +20,7 @@
 - [x] Radarr
 - [x] Sonarr
 
+- [ ] duplicati mails
 - [ ] Restart Pod argocd-server because of raise condition (login via cognito won't work because of missing external akeyless secret)
 - [ ] Paperless config via API
 - [ ] OICD Paperless
