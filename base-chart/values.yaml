@@ -652,8 +652,9 @@ apps:
 #             mountPath: "/mnt/somewhere"
 #             hostPath: "/mnt/somewehere"
         securityContext:
-          # -- Use privileged to access the Homematic HW
           privileged: true
+          runAsUser: 0
+          allowPrivilegeEscalation: false
       service:
         ports:
           - port: 8200
