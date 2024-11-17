@@ -654,6 +654,8 @@ apps:
         securityContext:
           privileged: true
           runAsUser: 0
+        envFrom:
+          configMapRef: "duplicati-cm"
       service:
         ports:
           - port: 8200
