@@ -1,1 +1,0 @@
-# homelab-base-chart
