@@ -17,7 +17,7 @@ spec:
       # Values file as block file
       valuesObject:
         env:
-          IMMICH_LOG_LEVEL: "debug"
+          IMMICH_LOG_LEVEL: 'verbose'
         immich:
           persistence:
             library:
