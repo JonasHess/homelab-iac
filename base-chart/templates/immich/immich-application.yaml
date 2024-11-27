@@ -16,6 +16,8 @@ spec:
     helm:
       # Values file as block file
       valuesObject:
+        image:
+          tag: v1.121.0
         env:
           IMMICH_LOG_LEVEL: 'verbose'
         immich:
