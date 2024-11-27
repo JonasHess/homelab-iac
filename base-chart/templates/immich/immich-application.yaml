@@ -27,6 +27,9 @@ spec:
               existingClaim: immich-postgresql-pvc
         redis:
           enabled: true
+          master:
+            persistence:
+              existingClaim: immich-redis-pvc
 
   destination:
     server: "https://kubernetes.default.svc"

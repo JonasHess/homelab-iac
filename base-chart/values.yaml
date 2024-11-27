@@ -730,3 +730,4 @@ apps:
       persistentVolumeClaims:
         library: "/mnt/somewhere/encrypted/apps/immich/library"
         postgresql: "/mnt/somewhere/encrypted/apps/immich/postgresql"
+        redis: "/mnt/somewhere/encrypted/apps/immich/redis"
