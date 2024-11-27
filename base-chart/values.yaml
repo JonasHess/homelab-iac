@@ -731,3 +731,11 @@ apps:
         library: "/mnt/somewhere/encrypted/apps/immich/library"
         postgresql: "/mnt/somewhere/encrypted/apps/immich/postgresql"
         redis: "/mnt/somewhere/encrypted/apps/immich/redis"
+      ingress:
+        https:
+          - subdomain: "immich"
+            port: 2283
+            service: "immich-server"
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
