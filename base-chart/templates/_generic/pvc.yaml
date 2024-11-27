@@ -2,6 +2,7 @@
   {{- if $app.enabled }}
     {{- if and $app.generic $app.generic.persistentVolumeClaims }}
       {{- range $pvcName, $pvcPath := $app.generic.persistentVolumeClaims }}
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -41,6 +42,7 @@ spec:
   resources:
     requests:
       storage: 10Gi
+---
       {{- end }}
     {{- end }}
   {{- end }}
