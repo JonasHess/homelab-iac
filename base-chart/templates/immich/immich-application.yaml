@@ -29,6 +29,8 @@ spec:
           enabled: true
           auth:
             enabled: false
+          networkPolicy:
+            enabled: false
           master:
             persistence:
               existingClaim: immich-redis-pvc
