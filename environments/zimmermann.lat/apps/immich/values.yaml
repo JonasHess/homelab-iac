@@ -1,0 +1,5 @@
+apps:
+  immich:
+    generic:
+      persistentVolumeClaims:
+        library: "/mnt/tank1/encrypted/apps/immich/library"

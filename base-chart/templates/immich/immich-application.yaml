@@ -1,0 +1,28 @@
+{{- if .Values.apps.immich.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: immich
+    repoURL: https://immich-app.github.io/immich-charts
+    targetRevision: 0.8.4
+    helm:
+      # Values file as block file
+      valuesObject:
+        immich:
+          persistence:
+            library:
+              existingClaim: immich-library-pvc
+        postgresql:
+          enabled: true
+        redis:
+          enabled: false
+
+{{- end -}}

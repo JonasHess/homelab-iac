@@ -724,3 +724,8 @@ apps:
     storageclasses:
       standard:
         hostPath: "/mnt/somewhere/unencrypted/apps/githubarc/storage/standard"
+  immich:
+    enabled: false
+    generic:
+      persistentVolumeClaims:
+        library: "/mnt/somewhere/encrypted/apps/immich/library"
