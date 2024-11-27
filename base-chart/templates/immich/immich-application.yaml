@@ -16,6 +16,8 @@ spec:
     helm:
       # Values file as block file
       valuesObject:
+        env:
+          IMMICH_LOG_LEVEL: "debug"
         immich:
           persistence:
             library:
