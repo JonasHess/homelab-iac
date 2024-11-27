@@ -16,10 +16,7 @@ spec:
     helm:
       # Values file as block file
       valuesObject:
-
         immich:
-          metrics:
-            enabled: true
           persistence:
             library:
               existingClaim: immich-library-pvc
