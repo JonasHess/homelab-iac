@@ -22,6 +22,9 @@ spec:
               existingClaim: immich-library-pvc
         postgresql:
           enabled: true
+          primary:
+            persistence:
+              existingClaim: immich-postgresql-pvc
         redis:
           enabled: false
 
