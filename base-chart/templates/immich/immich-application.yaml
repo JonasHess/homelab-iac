@@ -34,8 +34,6 @@ spec:
           master:
             persistence:
               existingClaim: immich-redis-pvc
-        env:
-
 
   destination:
     server: "https://kubernetes.default.svc"
