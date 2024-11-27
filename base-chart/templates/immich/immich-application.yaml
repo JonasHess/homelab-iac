@@ -29,6 +29,11 @@ spec:
           primary:
             persistence:
               existingClaim: immich-postgresql-pvc
+            resources:
+              requests:
+                memory: 512Mi
+              limits:
+                memory: 6Gi
         redis:
           enabled: true
           auth:
