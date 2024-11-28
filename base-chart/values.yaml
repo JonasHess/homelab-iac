@@ -617,8 +617,6 @@ apps:
     generic:
       deployment:
         image: "jonashess/paperless-gpt:unreleased"
-        ports:
-          - containerPort: 8080
         pvcMounts:
           prompts:
             mountPath: "/app/prompts"
@@ -626,17 +624,6 @@ apps:
         envFrom:
           secretRef: "paperlessgpt-secret"
           configMapRef: "paperlessgpt-config"
-      service:
-        ports:
-          - name: http
-            port: 8080
-      ingress:
-        https:
-          - subdomain: "paperless-gpt"
-            port: 8080
-            middlewares:
-              - name: "traefik-forward-auth"
-                namespace: "argocd"
   duplicati:
     enabled: false
     generic:
