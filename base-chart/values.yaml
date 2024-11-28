@@ -729,4 +729,4 @@ apps:
           - subdomain: "immich"
             priority: 20
             matchSuffix: "&& PathPrefix(`/api`)"
-            port: 8000
+            port: 2283
