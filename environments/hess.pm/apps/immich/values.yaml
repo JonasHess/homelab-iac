@@ -1,0 +1,7 @@
+apps:
+  immich:
+    generic:
+      persistentVolumeClaims:
+        library: "/mnt/tank1/encrypted/apps/immich/library"
+        postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
+        redis: "/mnt/tank1/encrypted/apps/immich/redis"
