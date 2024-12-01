@@ -1,4 +1,15 @@
 ---
+# Source: homelab-base-chart/templates/duplicati/duplicati-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: duplicati-cm
+  namespace: argocd
+data:
+  PUID: "0"
+  PGID: "0"
+  TZ: "Europe/Berlin"
+---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -74,11 +85,17 @@ spec:
       containers:
         - name: duplicati
           image: lscr.io/linuxserver/duplicati:latest
+          securityContext:
+            privileged: true
+            runAsUser: 0
           ports:
             - containerPort: 8200
           volumeMounts:
             - mountPath: "/config"
               name: duplicati-config-volume
+          envFrom:
+            - configMapRef:
+                name: duplicati-cm
       volumes:
         - name: duplicati-config-volume
           persistentVolumeClaim:

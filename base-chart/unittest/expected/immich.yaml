@@ -1,0 +1,172 @@
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "immich-library-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/immich/library
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "immich-library-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "immich-library-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "immich-postgresql-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/immich/postgresql
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "immich-postgresql-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "immich-postgresql-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "immich-redis-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/immich/redis
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "immich-redis-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "immich-redis-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/immich/immich-application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: immich
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: immich
+    repoURL: https://immich-app.github.io/immich-charts
+    targetRevision: 0.8.4
+    helm:
+      # Values file as block file
+      valuesObject:
+        immich:
+          persistence:
+            library:
+              existingClaim: immich-library-pvc
+        postgresql:
+          enabled: true
+          primary:
+            persistence:
+              existingClaim: immich-postgresql-pvc
+        redis:
+          enabled: true
+          master:
+            persistence:
+              existingClaim: immich-redis-pvc
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - allowEmpty=true
+    retry:
+      limit: 5 # number of failed sync attempt retries; unlimited number of attempts if less than 0
+      backoff:
+        duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
+        factor: 2 # a factor to multiply the base duration after each failed retry
+        maxDuration: 1m # the maximum amount of time allowed for the backoff strategy
