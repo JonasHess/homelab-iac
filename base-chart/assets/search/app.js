@@ -52,7 +52,9 @@ app.get('/', (req, res) => {
           { name: 'dict.cc', key: 'd', url: 'https://www.dict.cc/?s=', id: 'dictBtn' },
           { name: 'Amazon.de', key: 'a', url: 'https://www.amazon.de/s?k=', id: 'amazonBtn' },
           { name: 'ChatGPT', key: 'c', url: 'https://chat.openai.com/chat?q=', id: 'chatgptBtn' },
-          { name: 'YouTube', key: 'y', url: 'https://www.youtube.de/results?search_query=', id: 'youtubeBtn' }
+          { name: 'YouTube', key: 'y', url: 'https://www.youtube.de/results?search_query=', id: 'youtubeBtn' },
+          { name: 'Google Maps', key: 'm', url: 'https://www.google.com/maps/search/', id: 'googleMapsBtn' },
+          { name: 'Makerworld', key: 'w', url: 'https://www.makerworld.com/search?q=', id: 'makerworldBtn' }
         ];
 
         // DOM Elements
