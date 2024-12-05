@@ -20,9 +20,11 @@ spec:
         - name: search-app
           image: node:18-alpine
           command: [ "sh", "-c" ]
-          args: [
-            "npm install express && node /app/app.js"
-          ]
+          args:
+            - >
+              npm cache clean --force &&
+              npm install --legacy-peer-deps &&
+              node /app/app.js;
           ports:
             - containerPort: 3000
           volumeMounts:
