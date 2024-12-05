@@ -10,11 +10,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: search-app
+      app: search
   template:
     metadata:
       labels:
-        app: search-app
+        app: search
     spec:
       containers:
         - name: search-app
