@@ -157,10 +157,16 @@ app.get('/', (req, res) => {
 
         // Handle keyboard shortcuts for provider selection
         function handleShortcuts(e) {
-          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+          if (e.key === 'ArrowRight'){
             cycleProvider(1); // Cycle to the next provider
-          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+          }
+            else if (e.key === 'ArrowDown'){
+            cycleProvider(3); // Cycle to the next provider
+          } else if (e.key === 'ArrowLeft'){
             cycleProvider(-1); // Cycle to the previous provider
+          }
+            else if (e.key === 'ArrowUp'){
+            cycleProvider(-3); // Cycle to the previous provider
           } else {
             const provider = searchProviders.find(p => p.key === e.key.toLowerCase());
             if (provider) {
