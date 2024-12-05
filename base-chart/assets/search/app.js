@@ -120,7 +120,10 @@ app.get('/', (req, res) => {
               isSearchBarFocused = false;
             } else {
               // Redirect to selected provider
-              window.open(document.getElementById(selectedProvider.id).href, '_blank');
+              // In new tab
+              // window.open(document.getElementById(selectedProvider.id).href, '_blank');
+              // In same tab
+              window.location.href = document.getElementById(selectedProvider.id).href;
             }
           } else if (e.key === 'Escape') {
             searchBar.focus(); // Focus search bar
