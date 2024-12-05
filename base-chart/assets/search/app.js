@@ -4,6 +4,25 @@ const port = 3000;
 
 app.use(express.static('public')); // Serve static files if needed
 
+// Serve the OpenSearch XML file
+app.get('/opensearch.xml', (req, res) => {
+    res.set('Content-Type', 'application/opensearchdescription+xml');
+    res.send(`
+    <?xml version="1.0" encoding="UTF-8"?>
+    <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+        <ShortName>Multi Search</ShortName>
+        <Description>Search multiple providers like Google, YouTube, and more.</Description>
+        <Tags>search multi search</Tags>
+        <Contact>jonas@hess.pm</Contact>
+        <Url type="text/html" method="get" template="https://search.hess.pm/?q={searchTerms}"/>
+        <LongName>MultiProvider Search Interface</LongName>
+        <Image height="16" width="16" type="image/x-icon">https://search.hess.pm/favicon.ico</Image>
+        <InputEncoding>UTF-8</InputEncoding>
+        <OutputEncoding>UTF-8</OutputEncoding>
+    </OpenSearchDescription>
+    `);
+});
+
 app.get('/', (req, res) => {
     const query = req.query.q || '';
     res.send(`
@@ -15,6 +34,7 @@ app.get('/', (req, res) => {
       <title>Search</title>
       <!-- Bootstrap 5.0.2 CDN -->
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+      <link rel="search" type="application/opensearchdescription+xml" title="MultiProvider Search" href="/opensearch.xml" />
       <style>
         /* Styling for the selected button */
         .selected {
