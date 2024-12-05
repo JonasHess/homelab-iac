@@ -6,17 +6,16 @@ app.use(express.static('public')); // Serve static files if needed
 
 // Serve the OpenSearch XML file
 app.get('/opensearch.xml', (req, res) => {
-    res.set('Content-Type', 'application/opensearchdescription+xml');
+    res.set({
+        'Content-Type': 'application/opensearchdescription+xml',
+        'Content-Disposition': 'inline; filename="opensearch.xml"'
+    });
     res.send(`
     <?xml version="1.0" encoding="UTF-8"?>
     <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
         <ShortName>Multi Search</ShortName>
-        <Description>Search multiple providers like Google, YouTube, and more.</Description>
-        <Tags>search multi search</Tags>
-        <Contact>jonas@hess.pm</Contact>
+        <Description>Search across multiple providers.</Description>
         <Url type="text/html" method="get" template="https://search.hess.pm/?q={searchTerms}"/>
-        <LongName>MultiProvider Search Interface</LongName>
-        <Image height="16" width="16" type="image/x-icon">https://search.hess.pm/favicon.ico</Image>
         <InputEncoding>UTF-8</InputEncoding>
         <OutputEncoding>UTF-8</OutputEncoding>
     </OpenSearchDescription>
