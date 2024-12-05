@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: search-app
-          image: node:18-alpine
+          image: node:lts-alpine
           command: [ "sh", "-c" ]
           args:
             - >
