@@ -731,3 +731,14 @@ apps:
             priority: 20
             matchSuffix: "&& PathPrefix(`/api`)"
             port: 2283
+  search:
+    enabled: false
+    generic:
+      service:
+        ports:
+          - name: http
+            port: 3000
+      ingress:
+        https:
+          - subdomain: "search"
+            port: 3000
