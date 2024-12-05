@@ -22,6 +22,7 @@ spec:
           command: [ "sh", "-c" ]
           args:
             - >
+              npm install express &&
               npm cache clean --force &&
               npm install --legacy-peer-deps &&
               node /app/app.js;
