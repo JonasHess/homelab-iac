@@ -10,16 +10,14 @@ app.get('/opensearch.xml', (req, res) => {
         'Content-Type': 'application/opensearchdescription+xml',
         'Content-Disposition': 'inline; filename="opensearch.xml"'
     });
-    res.send(`
-    <?xml version="1.0" encoding="UTF-8"?>
-    <OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
-        <ShortName>Multi Search</ShortName>
-        <Description>Search across multiple providers.</Description>
-        <Url type="text/html" method="get" template="https://search.hess.pm/?q={searchTerms}"/>
-        <InputEncoding>UTF-8</InputEncoding>
-        <OutputEncoding>UTF-8</OutputEncoding>
-    </OpenSearchDescription>
-    `);
+res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+<ShortName>Multi Search</ShortName>
+<Description>Search across multiple providers.</Description>
+<Url type="text/html" method="get" template="https://search.hess.pm/?q={searchTerms}"/>
+<InputEncoding>UTF-8</InputEncoding>
+<OutputEncoding>UTF-8</OutputEncoding>
+</OpenSearchDescription>`);
 });
 
 app.get('/', (req, res) => {
