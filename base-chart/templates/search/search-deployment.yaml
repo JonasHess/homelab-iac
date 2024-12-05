@@ -22,14 +22,14 @@ spec:
           command: [ "sh", "-c" ]
           args:
             - >
-              rm -rf node_modules package-lock.json || true &&
+              cd /usr/app &&
               npm install express &&
-              node /app/app.js;
+              node ./app.js
           ports:
             - containerPort: 3000
           volumeMounts:
             - name: search-config
-              mountPath: /app/app.js
+              mountPath: /usr/app/app.js
               subPath: app.js
       volumes:
         - name: search-config
