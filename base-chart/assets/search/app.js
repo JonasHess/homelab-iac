@@ -54,7 +54,7 @@ app.get('/', (req, res) => {
           { name: 'ChatGPT', key: 'c', url: 'https://chat.openai.com/chat?q=', id: 'chatgptBtn' },
           { name: 'YouTube', key: 'y', url: 'https://www.youtube.de/results?search_query=', id: 'youtubeBtn' },
           { name: 'Google Maps', key: 'm', url: 'https://www.google.com/maps/search/', id: 'googleMapsBtn' },
-          { name: 'Makerworld', key: 'w', url: 'https://www.makerworld.com/search?q=', id: 'makerworldBtn' }
+          { name: 'Makerworld', key: 'w', url: 'https://www.makerworld.com/search?keyword=', id: 'makerworldBtn' }
         ];
 
         // DOM Elements
