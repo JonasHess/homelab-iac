@@ -37,6 +37,11 @@ spec:
               default: true
             middlewares:
               - "argocd-cloudflare@kubernetescrd"
+            transport:
+              respondingTimeouts:
+                readTimeout: 30m
+                writeTimeout: 30m
+                idleTimeout: 30m
           websecure:
             port: 443
             nodePort: 32443
@@ -44,6 +49,11 @@ spec:
               default: true
             middlewares:
               - "argocd-cloudflare@kubernetescrd"
+            transport:
+              respondingTimeouts:
+                readTimeout: 30m
+                writeTimeout: 30m
+                idleTimeout: 30m
           # Additional custom ports
           {{- range $key, $value := .Values.apps.traefik.additionalExposedPorts }}
           {{ $key }}:
@@ -115,9 +125,8 @@ spec:
         # Configure Server Transport settings
         serversTransport:
           insecureSkipVerify: true
-          readTimeout: 10m
-          writeTimeout: 10m
-          idleTimeout: 10m
+
+
 
         # Environment variables for the Cloudflare API token
         env:
