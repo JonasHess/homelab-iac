@@ -19,7 +19,7 @@ spec:
         image:
           tag: v1.122.1
         env:
-          IMMICH_LOG_LEVEL: 'verbose'
+          IMMICH_LOG_LEVEL: 'log'
         immich:
           persistence:
             library:
