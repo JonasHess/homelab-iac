@@ -17,7 +17,7 @@ spec:
       # Values file as block file
       valuesObject:
         image:
-          tag: v1.122.0
+          tag: v1.122.1
         env:
           IMMICH_LOG_LEVEL: 'verbose'
         immich:
