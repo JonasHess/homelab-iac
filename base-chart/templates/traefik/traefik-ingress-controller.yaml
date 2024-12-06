@@ -115,6 +115,9 @@ spec:
         # Configure Server Transport settings
         serversTransport:
           insecureSkipVerify: true
+          readTimeout: 10m
+          writeTimeout: 10m
+          idleTimeout: 10m
 
         # Environment variables for the Cloudflare API token
         env:
