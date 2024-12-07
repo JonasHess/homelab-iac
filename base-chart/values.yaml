@@ -742,3 +742,11 @@ apps:
         https:
           - subdomain: "search"
             port: 3000
+  cloudflare:
+    enabled: false
+    generic:
+      deployment:
+        image: "zimmermq/cloudflare-ddns:main"
+        envFrom:
+            secretRef: "cloudflare-ddns-api-credentials"
+            configMapRef: "cloudflare-ddns-config-map"
