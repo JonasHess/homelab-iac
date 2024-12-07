@@ -9,7 +9,7 @@ data:
   AUTH_METHOD: global
   RECORD_NAME: {{ .Values.domain }}
   RECORD_TYPE: 'A'
-  TTL: 60
+  TTL: '60'
   PROXY: 'false'
   SITENAME: {{ .Values.domain }}
   NOTIFICATION_LEVEL: on_success_or_error
