@@ -742,7 +742,7 @@ apps:
         https:
           - subdomain: "search"
             port: 3000
-  cloudflare:
+  cloudflareddns:
     enabled: false
     generic:
       deployment:
