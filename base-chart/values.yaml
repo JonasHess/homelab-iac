@@ -30,6 +30,9 @@ apps:
       ftp:
         port: 2121
         protocol: TCP
+      dns:
+        port: 53
+        protocol: UDP
     #     plex:
     #       port: 32400
     #       protocol: TCP
@@ -785,3 +788,6 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+        udp:
+          - port: 53
+            traefikEntryPoint: dns
