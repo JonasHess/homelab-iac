@@ -723,14 +723,6 @@ apps:
           - subdomain: "immich"
             port: 2283
             service: "immich-server"
-            middlewares:
-              - name: "traefik-forward-auth"
-                namespace: "argocd"
-          - subdomain: "immich"
-            service: "immich-server"
-            priority: 20
-            matchSuffix: "&& (PathPrefix(`/api`) || PathPrefix(`/share`))"
-            port: 2283
   search:
     enabled: false
     generic:
