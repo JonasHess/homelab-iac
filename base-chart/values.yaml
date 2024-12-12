@@ -746,3 +746,37 @@ apps:
         envFrom:
             secretRef: "cloudflare-ddns-api-credentials"
             configMapRef: "cloudflare-ddns-config-map"
+  adguard:
+    enabled: false
+    generic:
+      deployment:
+        image: "adguard/adguardhome:latest"
+        ports:
+          - containerPort: 3000
+          - containerPort: 53
+          - containerPort: 80
+          - containerPort: 443
+        pvcMounts:
+          config:
+            mountPath: "/opt/adguardhome/conf"
+            hostPath: "/mnt/somewhere/unencrypted/apps/adguard/config"
+          data:
+            mountPath: "/opt/adguardhome/work"
+            hostPath: "/mnt/somewhere/encrypted/apps/adguard/data"
+      service:
+        ports:
+          - name: http
+            port: 80
+          - name: https
+            port: 443
+          - name: dns
+            port: 53
+          - name: admin
+            port: 3000
+      ingress:
+        https:
+          - subdomain: "adguard"
+            port: 3000
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
