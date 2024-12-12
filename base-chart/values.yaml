@@ -729,7 +729,7 @@ apps:
           - subdomain: "immich"
             service: "immich-server"
             priority: 20
-            matchSuffix: "&& PathPrefix(`/api`)"
+            matchSuffix: "&& (PathPrefix(`/api`) || PathPrefix(`/share`))"
             port: 2283
   search:
     enabled: false

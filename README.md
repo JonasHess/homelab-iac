@@ -37,6 +37,7 @@
 - [ ] Watchtower / Argo Image Updater
 - [ ] Netdata
 - [ ] SAMBA
+- [ ] OIDC Immich
 
 
   Raspi
