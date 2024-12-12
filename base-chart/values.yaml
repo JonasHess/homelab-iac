@@ -776,7 +776,7 @@ apps:
       ingress:
         https:
           - subdomain: "adguard"
-            port: 3000
+            port: 80
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
