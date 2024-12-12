@@ -382,6 +382,10 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+          - subdomain: "sftpgo"
+            port: 8080
+            matchSuffix: "&& PathPrefix(`/web/client/pubshares/`)"
+            priority: 20
           - subdomain: "webdav"
             port: 8081
         tcp:
