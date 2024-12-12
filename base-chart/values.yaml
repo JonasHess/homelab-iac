@@ -780,3 +780,8 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+          - subdomain: "adguard-admin"
+            port: 3000
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
