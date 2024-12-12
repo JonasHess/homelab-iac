@@ -19,6 +19,7 @@
 - [x] Plex
 - [x] Radarr
 - [x] Sonarr
+- [x] Nextcloud / Immich
 
 - [ ] duplicati mails
 - [ ] Restart Pod argocd-server because of raise condition (login via cognito won't work because of missing external akeyless secret)
@@ -31,13 +32,14 @@
 - [ ] Heimdall
 - [ ] Jackett
 - [ ] Loki
-- [ ] Nextcloud / Immich
 - [ ] Ombi
 - [ ] Tautulli
 - [ ] Watchtower / Argo Image Updater
 - [ ] Netdata
 - [ ] SAMBA
 - [ ] OIDC Immich
+- [ ] Paperless DB Backup
+- [ ] Adguard
 
 
   Raspi
