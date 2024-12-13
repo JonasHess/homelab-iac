@@ -765,7 +765,7 @@ apps:
             hostPath: "/mnt/somewhere/unencrypted/apps/adguard/config"
           data:
             mountPath: "/opt/adguardhome/work"
-            hostPath: "/mnt/somewhere/encrypted/apps/adguard/data"
+            hostPath: "/mnt/somewhere/unencrypted/apps/adguard/data"
       service:
         ports:
           - name: http
