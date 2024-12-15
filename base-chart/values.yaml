@@ -799,3 +799,7 @@ apps:
         envFrom:
           secretRef: "tgtg-credentials"
           configMapRef: "tgtg-config-map"
+        pvcMounts:
+          tokens:
+            mountPath: "/tokens"
+            hostPath: "/mnt/somewhere/unencrypted/apps/tgtg/tokens"
