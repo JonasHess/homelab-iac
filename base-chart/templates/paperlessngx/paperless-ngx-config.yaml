@@ -28,8 +28,8 @@ data:
   PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "1"
   PAPERLESS_CONSUMER_DELETE_DUPLICATES: "1"
   PAPERLESS_SOCIALACCOUNT_PROVIDERS: "{
-    'amazon_cognito': {
-      'DOMAIN': 'https://login-zimmermann-lat.auth.eu-central-1.amazoncognito.com',
+    `amazon_cognito`: {
+      `DOMAIN`: `https://login-zimmermann-lat.auth.eu-central-1.amazoncognito.com`,
     }
   }"
   PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
