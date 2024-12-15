@@ -33,7 +33,7 @@ data:
       \"DOMAIN\": \"https://login-zimmermann-lat.auth.eu-central-1.amazoncognito.com\"
     }
   }"
-  PAPERLESS_SOCIAL_AUTO_SIGNUP: "true"
+  PAPERLESS_SOCIAL_AUTO_SIGNUP: "false"
   PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
   PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
 {{- end -}}
