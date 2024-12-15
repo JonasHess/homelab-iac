@@ -791,3 +791,11 @@ apps:
         udp:
           - port: 53
             traefikEntryPoint: dns
+  tgtg:
+    enabled: false
+    generic:
+      deployment:
+        image: "derhenning/tgtg:latest-alpine"
+        envFrom:
+          secretRef: "tgtg-credentials"
+          configMapRef: "tgtg-config-map"

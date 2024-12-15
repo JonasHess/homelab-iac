@@ -1,0 +1,12 @@
+{{- if .Values.apps.tgtg.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tgtg-config-map
+  namespace: argocd
+data:
+  SLEEP_TIME: "60"
+  TZ: "Europe/Berlin"
+  LOCALE: "de_DE"
+  NTFY: "true"
+{{- end -}}
