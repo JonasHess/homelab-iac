@@ -27,7 +27,7 @@ data:
   PAPERLESS_CONSUMER_RECURSIVE: "1"
   PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "1"
   PAPERLESS_CONSUMER_DELETE_DUPLICATES: "1"
-{{/*  PAPERLESS_APPS: "allauth.socialaccount.provider.amazon_cognito"*/}}
+  PAPERLESS_APPS: "allauth.socialaccount.providers.amazon_cognito"
   PAPERLESS_SOCIALACCOUNT_PROVIDERS: "{
     \"amazon_cognito\": {
       \"DOMAIN\": \"https://login-zimmermann-lat.auth.eu-central-1.amazoncognito.com\"
