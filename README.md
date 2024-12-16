@@ -20,11 +20,12 @@
 - [x] Radarr
 - [x] Sonarr
 - [x] Nextcloud / Immich
+- [x] OIDC Immich
+- [x] OICD Paperless
 
 - [ ] duplicati mails
 - [ ] Restart Pod argocd-server because of raise condition (login via cognito won't work because of missing external akeyless secret)
 - [ ] Paperless config via API
-- [ ] OICD Paperless
 - [ ] Apps in own namespace (think of drone)
 - [ ] Directory structure
 - [ ] Grafana
@@ -37,7 +38,6 @@
 - [ ] Watchtower / Argo Image Updater
 - [ ] Netdata
 - [ ] SAMBA
-- [ ] OIDC Immich
 - [ ] Paperless DB Backup
 - [ ] Adguard
 
