@@ -22,6 +22,8 @@
 - [x] Nextcloud / Immich
 - [x] OIDC Immich
 - [x] OICD Paperless
+- [x] DDNS
+- [x] TGTG
 
 - [ ] duplicati mails
 - [ ] Restart Pod argocd-server because of raise condition (login via cognito won't work because of missing external akeyless secret)
@@ -40,7 +42,3 @@
 - [ ] SAMBA
 - [ ] Paperless DB Backup
 - [ ] Adguard
-
-
-  Raspi
-- [x] DDNS
