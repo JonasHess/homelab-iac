@@ -22,16 +22,16 @@ spec:
         ## Provide a name in place of kube-prometheus-stack for `app:` labels
         ##
         nameOverride: ""
-        #server:
-        #  scrapeConfigFiles:
-        #    - configmapName: prometheus-scrape-config
-        #      filename: scrape-config.yaml
-        extraScrapeConfigs: |
-          - job_name: 'duplicati_backup'
-            honor_labels: true
-            static_configs:
-              - targets:
-                  - 'duplicati-prometheus-exporter-service:5000'
+        server:
+          scrapeConfigFiles:
+            - configmapName: prometheus-scrape-config
+              filename: scrape-config.yaml
+#        extraScrapeConfigs: |
+  #        - job_name: 'duplicati_backup'
+    #        honor_labels: true
+      #      static_configs:
+        #      - targets:
+          #        - 'duplicati-prometheus-exporter-service:5000'
 
         grafana:
           defaultDashboardsTimezone: Europe/Berlin
