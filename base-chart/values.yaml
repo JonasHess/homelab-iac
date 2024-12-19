@@ -803,3 +803,8 @@ apps:
           tokens:
             mountPath: "/tokens"
             hostPath: "/mnt/somewhere/unencrypted/apps/tgtg/tokens"
+  duplicati-prometheus-exporter:
+    enabled: false
+    generic:
+      deployment:
+        image: "aleixolucas/duplicati-prometheus-exporter"

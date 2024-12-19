@@ -22,6 +22,11 @@ spec:
         ## Provide a name in place of kube-prometheus-stack for `app:` labels
         ##
         nameOverride: ""
+        server:
+          scrapeConfigFiles:
+            - configmapName: prometheus-scrape-config
+              filename: my-scrape-config.yaml
+
         grafana:
           defaultDashboardsTimezone: Europe/Berlin
           adminPassword: ""
