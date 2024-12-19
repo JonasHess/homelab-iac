@@ -25,7 +25,7 @@ spec:
         server:
           scrapeConfigFiles:
             - configmapName: prometheus-scrape-config
-              filename: my-scrape-config.yaml
+              filename: scrape-config.yaml
 
         grafana:
           defaultDashboardsTimezone: Europe/Berlin

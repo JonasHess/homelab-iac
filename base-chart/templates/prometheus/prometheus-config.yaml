@@ -11,5 +11,5 @@ data:
       - job_name: duplicati_backup
         honor_labels: true
         static_configs:
-          - targets: ['duplicati-prometheus-exporter:5000']
+          - targets: ['duplicati-prometheus-exporter-service:5000']
 {{- end -}}
