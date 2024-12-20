@@ -36,7 +36,6 @@ spec:
                   selector:
                     matchLabels:
                       app: prometheus-prometheus
-              retention: 15d
             additionalScrapeConfigsSecret:
               enabled: true
               name: prometheus-scrape-secret
