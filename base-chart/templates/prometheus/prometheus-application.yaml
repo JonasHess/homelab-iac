@@ -28,7 +28,14 @@ spec:
             storageSpec:
               volumeClaimTemplate:
                 spec:
-                  existingClaim: existing-prometheus-pvc
+                  storageClassName: ""
+                  accessModes: [ "ReadWriteMany" ]
+                  resources:
+                    requests:
+                      storage: 10Gi
+                  selector:
+                    matchLabels:
+                      app: prometheus-prometheus
               retention: 15d
               resources:
                 requests:
