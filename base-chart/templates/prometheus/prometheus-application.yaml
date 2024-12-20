@@ -25,11 +25,12 @@ spec:
 
         prometheus:
           prometheusSpec:
+            replicas: 1
             storageSpec:
               volumeClaimTemplate:
                 spec:
                   storageClassName: ""
-                  accessModes: [ "ReadWriteMany" ]
+                  accessModes: [ "ReadWriteOnce" ]
                   resources:
                     requests:
                       storage: 10Gi

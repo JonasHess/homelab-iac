@@ -17,7 +17,7 @@ spec:
     storage: 10Gi
   volumeMode: Filesystem
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ''
