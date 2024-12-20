@@ -25,6 +25,205 @@
 		{
 			"datasource": {
 				"type": "prometheus",
+				"uid": "prometheus"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"custom": {
+						"fillOpacity": 70,
+						"hideFrom": {
+							"legend": false,
+							"tooltip": false,
+							"viz": false
+						},
+						"lineWidth": 1
+					},
+					"mappings": [
+						{
+							"options": {
+								"0": {
+									"color": "dark-green",
+									"index": 0,
+									"text": "Success"
+								},
+								"1": {
+									"color": "dark-yellow",
+									"index": 1,
+									"text": "Warning"
+								},
+								"2": {
+									"color": "dark-red",
+									"index": 2,
+									"text": "Fail"
+								}
+							},
+							"type": "value"
+						}
+					],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 0,
+				"y": 0
+			},
+			"id": 12,
+			"options": {
+				"colWidth": 0.9,
+				"legend": {
+					"displayMode": "list",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"rowHeight": 0.9,
+				"showValue": "auto",
+				"tooltip": {
+					"mode": "none",
+					"sort": "none"
+				}
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "duplicati_ops_result{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
+					"interval": "",
+					"legendFormat": " ",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Backup Success",
+			"type": "status-history"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "palette-classic"
+					},
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"barWidthFactor": 0.6,
+						"drawStyle": "line",
+						"fillOpacity": 0,
+						"gradientMode": "none",
+						"hideFrom": {
+							"legend": false,
+							"tooltip": false,
+							"viz": false
+						},
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 1,
+						"pointSize": 5,
+						"scaleDistribution": {
+							"type": "linear"
+						},
+						"showPoints": "auto",
+						"spanNulls": false,
+						"stacking": {
+							"group": "A",
+							"mode": "none"
+						},
+						"thresholdsStyle": {
+							"mode": "off"
+						}
+					},
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							},
+							{
+								"color": "red",
+								"value": 80
+							}
+						]
+					},
+					"unit": "bytes"
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 12,
+				"y": 0
+			},
+			"id": 4,
+			"options": {
+				"legend": {
+					"calcs": [],
+					"displayMode": "table",
+					"placement": "right",
+					"showLegend": true
+				},
+				"tooltip": {
+					"mode": "single",
+					"sort": "none"
+				}
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"expr": "duplicati_bytes_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"instant": false,
+					"legendFormat": "Bytes upload",
+					"range": true,
+					"refId": "A"
+				},
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"expr": "duplicati_bytes_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"hide": false,
+					"instant": false,
+					"legendFormat": "Bytes download",
+					"range": true,
+					"refId": "B"
+				}
+			],
+			"title": "$backup_name bytes I/O over time",
+			"type": "timeseries"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
 				"uid": "${datasource}"
 			},
 			"fieldConfig": {
