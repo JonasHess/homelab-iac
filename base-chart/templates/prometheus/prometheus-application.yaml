@@ -37,10 +37,6 @@ spec:
                     matchLabels:
                       app: prometheus-prometheus
               retention: 15d
-              resources:
-                requests:
-                  memory: 2Gi
-                  cpu: 1
             additionalScrapeConfigsSecret:
               enabled: true
               name: prometheus-scrape-secret
