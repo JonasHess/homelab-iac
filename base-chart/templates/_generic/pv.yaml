@@ -9,7 +9,7 @@ metadata:
   name: "{{$appName}}-{{ $pvName }}-pv"
   namespace: argocd
   labels:
-    app: "{{$appName}}-{{ $pvName }}""
+    app: "{{$appName}}-{{ $pvName }}"
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
