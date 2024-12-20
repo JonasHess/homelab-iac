@@ -25,6 +25,15 @@ spec:
 
         prometheus:
           prometheusSpec:
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  existingClaim: existing-prometheus-pvc
+              retention: 15d
+              resources:
+                requests:
+                  memory: 2Gi
+                  cpu: 1
             additionalScrapeConfigsSecret:
               enabled: true
               name: prometheus-scrape-secret
