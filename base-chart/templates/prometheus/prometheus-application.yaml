@@ -37,7 +37,7 @@ spec:
           prometheusSpec:
             additionalScrapeConfigsSecret:
               enabled: true
-              name: prometheus-scrape-config
+              name: prometheus-scrape-secret
               key: scrape-config.yaml
 #            additionalScrapeConfigs: |
   #            - job_name: 'duplicati_backup'
