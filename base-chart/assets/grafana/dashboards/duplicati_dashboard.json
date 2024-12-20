@@ -198,7 +198,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_bytes_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_bytes_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "Bytes upload",
 					"range": true,
@@ -210,7 +210,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_bytes_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_bytes_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"hide": false,
 					"instant": false,
 					"legendFormat": "Bytes download",
@@ -514,7 +514,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "__auto",
 					"range": true,
@@ -611,7 +611,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_bytes_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_bytes_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "Bytes upload",
 					"range": true,
@@ -623,7 +623,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_bytes_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_bytes_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"hide": false,
 					"instant": false,
 					"legendFormat": "Bytes download",
@@ -926,7 +926,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_folders_created{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_folders_created{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "Folders Created",
 					"range": true,
@@ -1023,7 +1023,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_files_deleted{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_files_deleted{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "Files deleted",
 					"range": true,
@@ -1120,7 +1120,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_files_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_files_uploaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"instant": false,
 					"legendFormat": "Files upload",
 					"range": true,
@@ -1132,7 +1132,7 @@
 						"uid": "${datasource}"
 					},
 					"editorMode": "code",
-					"expr": "duplicati_files_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"expr": "duplicati_files_downloaded{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
 					"hide": false,
 					"instant": false,
 					"legendFormat": "Files download",
