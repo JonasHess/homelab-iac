@@ -35,12 +35,16 @@ spec:
           #        - 'duplicati-prometheus-exporter-service:5000'
         prometheus:
           prometheusSpec:
-            additionalScrapeConfigs: |
-              - job_name: 'duplicati_backup'
-                honor_labels: true
-                static_configs:
-                  - targets:
-                      - 'duplicati-prometheus-exporter-service:5000'
+            additionalScrapeConfigsSecret:
+              enabled: true
+              name: prometheus-scrape-config
+              key: scrape-config.yaml
+#            additionalScrapeConfigs: |
+  #            - job_name: 'duplicati_backup'
+    #            honor_labels: true
+      #          static_configs:
+        #          - targets:
+          #            - 'duplicati-prometheus-exporter-service:5000'
 
         grafana:
           defaultDashboardsTimezone: Europe/Berlin
