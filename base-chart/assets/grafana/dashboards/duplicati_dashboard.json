@@ -82,6 +82,7 @@
 				"y": 0
 			},
 			"id": 12,
+			"interval": "1h",
 			"options": {
 				"colWidth": 0.9,
 				"legend": {
