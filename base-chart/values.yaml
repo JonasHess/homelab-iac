@@ -413,6 +413,10 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+      persistentVolumeClaims:
+        prometheus: "/mnt/somewhere/unencrypted/apps/prometheus/data"
+        grafana: "/mnt/somewhere/unencrypted/apps/prometheus/grafana/data"
+        alertmanager: "/mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data"
   homematic:
     enabled: false
     persistence:

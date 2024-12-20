@@ -29,6 +29,8 @@ spec:
               enabled: true
               name: prometheus-scrape-secret
               key: scrape-config.yaml
+          persistentVolumeClaim:
+            existingClaim: prometheus-prometheus-pvc
 
         grafana:
           defaultDashboardsTimezone: Europe/Berlin
@@ -42,6 +44,13 @@ spec:
             dashboards:
               enabled: true
               label: grafana_dashboard
+          persistence:
+            enabled: true
+            existingClaim: prometheus-grafana-pvc
+
+#        alertmanager:
+  #        persistentVolumeClaim:
+    #        existingClaim: prometheus-alertmanager-pvc
 
   destination:
     server: "https://kubernetes.default.svc"
