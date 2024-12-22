@@ -1,0 +1,77 @@
+---
+# Source: homelab-base-chart/templates/cloudflareddns/cloudflare-ddns-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflare-ddns-config-map
+  namespace: argocd
+data:
+  CRON_JOB: '* * * * *'
+  AUTH_METHOD: global
+  RECORD_NAME: home-server.dev
+  RECORD_TYPE: 'A'
+  TTL: '60'
+  PROXY: 'false'
+  SITENAME: home-server.dev
+  NOTIFICATION_LEVEL: on_success_or_error
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflareddns-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: cloudflareddns
+  template:
+    metadata:
+      labels:
+        app: cloudflareddns
+    spec:
+      containers:
+        - name: cloudflareddns
+          image: zimmermq/cloudflare-ddns:main
+          ports:
+          volumeMounts:
+          envFrom:
+            - configMapRef:
+                name: cloudflare-ddns-config-map
+            - secretRef:
+                name: cloudflare-ddns-api-credentials
+      volumes:
+---
+# Source: homelab-base-chart/templates/cloudflareddns/cloudflare-api-ddns-credentials-es.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-ddns-api-credentials-es
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store # Must match SecretStore on the cluster
+
+  target:
+    name: cloudflare-ddns-api-credentials # Name for the secret to be created on the cluster
+    creationPolicy: Owner
+
+  data:
+    - secretKey: "AUTH_EMAIL"
+      remoteRef:
+        key: "/kind-homelab/ddns/cloudflare-api-credentials_email"
+    - secretKey: "AUTH_KEY"
+      remoteRef:
+        key: "/kind-homelab/ddns/cloudflare-api-credentials_globalApiKey"
+    - secretKey: "ZONE_IDENTIFIER"
+      remoteRef:
+        key: "/kind-homelab/ddns/cloudflare-api-credentials_zoneId"
+    - secretKey: "NTFYURI"
+      remoteRef:
+        key: "/kind-homelab/ddns/ddns-ntfy-topic"

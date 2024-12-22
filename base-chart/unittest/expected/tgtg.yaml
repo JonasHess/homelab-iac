@@ -1,0 +1,113 @@
+---
+# Source: homelab-base-chart/templates/tgtg/tgtg-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tgtg-config-map
+  namespace: argocd
+data:
+  SLEEP_TIME: "60"
+  TZ: "Europe/Berlin"
+  LOCALE: "de_DE"
+  NTFY: "true"
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "tgtg-tokens-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/unencrypted/apps/tgtg/tokens
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "tgtg-tokens-pvc"
+    namespace: argocd
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "tgtg-tokens-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tgtg-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: tgtg
+  template:
+    metadata:
+      labels:
+        app: tgtg
+    spec:
+      containers:
+        - name: tgtg
+          image: derhenning/tgtg:latest-alpine
+          ports:
+          volumeMounts:
+            - mountPath: "/tokens"
+              name: tgtg-tokens-volume
+          envFrom:
+            - configMapRef:
+                name: tgtg-config-map
+            - secretRef:
+                name: tgtg-credentials
+      volumes:
+        - name: tgtg-tokens-volume
+          persistentVolumeClaim:
+            claimName: tgtg-tokens-pvc
+---
+# Source: homelab-base-chart/templates/tgtg/tgtg-credentials-es.yaml
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: tgtg-credentials-es
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+
+  secretStoreRef:
+    kind: SecretStore
+    name: akeyless-secret-store # Must match SecretStore on the cluster
+
+  target:
+    name: tgtg-credentials # Name for the secret to be created on the cluster
+    creationPolicy: Owner
+
+  data:
+    - secretKey: "NTFY_TOPIC"
+      remoteRef:
+        key: "/kind-homelab/tgtg/ntfy_topic"
+    - secretKey: "TGTG_USERNAME"
+      remoteRef:
+        key: "/kind-homelab/tgtg/username"

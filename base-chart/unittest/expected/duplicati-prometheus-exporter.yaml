@@ -1,0 +1,38 @@
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: duplicati-prometheus-exporter-service
+  namespace: argocd
+spec:
+  ports:
+    - name: http
+      port: 5000
+  selector:
+    app: duplicati-prometheus-exporter
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: duplicati-prometheus-exporter-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: duplicati-prometheus-exporter
+  template:
+    metadata:
+      labels:
+        app: duplicati-prometheus-exporter
+    spec:
+      containers:
+        - name: duplicati-prometheus-exporter
+          image: aleixolucas/duplicati-prometheus-exporter
+          ports:
+          volumeMounts:
+      volumes:
