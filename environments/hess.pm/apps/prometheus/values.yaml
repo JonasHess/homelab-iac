@@ -1,0 +1,8 @@
+apps:
+  prometheus:
+    generic:
+      persistentVolume:
+        prometheus: "/mnt/tank1/unencrypted/apps/prometheus/data"
+      persistentVolumeClaims:
+        grafana: "/mnt/tank1/unencrypted/apps/prometheus/grafana/data"
+        alertmanager: "/mnt/tank1/unencrypted/apps/prometheus/alertmanager/data"
