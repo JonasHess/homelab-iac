@@ -38,7 +38,7 @@ fi
 # Install yq https://github.com/mikefarah/yq
 # wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
 #    chmod +x /usr/bin/yq
-SERVER_IP=$(yq e '.server-ip' "$ENV_FILE")
+SERVER_IP=$(yq e '.serverip' "$ENV_FILE")
 USERNAME=$(yq e '.username' "$ENV_FILE")
 IP_RANGE=$(yq e '.ip-range' "$ENV_FILE")
 CLUSTER_NAME=$(yq e '.cluster-name' "$ENV_FILE")

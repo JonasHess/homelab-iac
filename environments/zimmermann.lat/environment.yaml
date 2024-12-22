@@ -1,4 +1,4 @@
-server-ip: 192.168.0.20
+serverip: 192.168.0.20
 username: homeserver
 cluster-name: zimmermann.lat
 ip-range: 192.168.0.80-192.168.0.90
