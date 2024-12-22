@@ -106,8 +106,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 24,
         "x": 0,
         "y": 0
       },
@@ -141,12 +141,337 @@
       "type": "status-history"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 0,
+        "y": 9
+      },
+      "id": 53,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "zfs_pool_free_bytes",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "zfs_dataset_available_bytes",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "B",
+          "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "zfs_pool_size_bytes",
+          "fullMetaSearch": false,
+          "hide": false,
+          "includeNullMetadata": true,
+          "instant": false,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "C",
+          "useBackend": false
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 14,
+        "x": 10,
+        "y": 9
+      },
+      "id": 54,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "zfs_dataset_used_bytes",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "{{name}}",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "binBps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 19
+      },
+      "id": 55,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "disableTextWrap": false,
+          "editorMode": "builder",
+          "expr": "node_zfs_zpool_dataset_writes",
+          "fullMetaSearch": false,
+          "includeNullMetadata": true,
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "useBackend": false
+        }
+      ],
+      "title": "Panel Title",
+      "type": "timeseries"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 27
       },
       "id": 48,
       "panels": [],
@@ -201,7 +526,7 @@
         "h": 8,
         "w": 5,
         "x": 0,
-        "y": 9
+        "y": 28
       },
       "id": 50,
       "maxDataPoints": 100,
@@ -288,7 +613,7 @@
         "h": 8,
         "w": 5,
         "x": 5,
-        "y": 9
+        "y": 28
       },
       "id": 51,
       "maxDataPoints": 100,
@@ -332,7 +657,1599 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 36
+      },
+      "id": 46,
+      "panels": [
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 11
+          },
+          "id": 32,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_delay{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "delay",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_delay{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "dirty_delay",
+              "refId": "C",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_over_max{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "dirty_over_max",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_throttle{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "dirty_throttle",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_error{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "error",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_group{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "group",
+              "refId": "G",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_memory_reclaim{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "memory_reclaim",
+              "refId": "H",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_memory_reserve{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "memory_reserve",
+              "refId": "I",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_quota{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "quota",
+              "refId": "J",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_dmu_tx_dmu_tx_suspended{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "suspended",
+              "refId": "K",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "dmu_tx_dmu_tx - 1",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 18
+          },
+          "id": 33,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_dmu_tx_dmu_tx_assigned{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "assigned",
+              "refId": "B",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "dmu_tx_dmu_tx - 2",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 25
+          },
+          "id": 34,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_fm_erpt_dropped{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "erpt_dropped",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_fm_erpt_set_failed{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "erpt_set_failed",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_fm_fmri_set_failed{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "fmri_set_failed",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_fm_payload_set_failed{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "intervalFactor": 2,
+              "legendFormat": "payload_set_failed",
+              "refId": "B",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "fm",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 32
+          },
+          "id": 35,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_vdev_cache_delegations{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "cache_delegations",
+              "refId": "B",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_vdev_cache_hits{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "cache_hits",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_vdev_cache_misses{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "cache_misses",
+              "refId": "C",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "vdev",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 39
+          },
+          "id": 37,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_onloan_read_buf{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "onloan_read_buf",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_onloan_write_buf{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "onloan_write_buf",
+              "refId": "C",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_read_buf_copied{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "read_buf_copied",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_read_buf_nocopy{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "read_buf_nocopy",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_write_buf_copied{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "write_buf_copied",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "node_zfs_xuio_write_buf_nocopy{instance=\"$Host\"}",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "write_buf_nocopy",
+              "refId": "G",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "xuio",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 46
+          },
+          "id": 38,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zfetch_hits{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "hits",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zfetch_misses{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "misses",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zfetch_max_streams{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "max_streams",
+              "refId": "I",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "zfetch",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 53
+          },
+          "id": 39,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_copied_bytes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_copied_bytes",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_indirect_bytes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_indirect_bytes",
+              "refId": "C",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_metaslab_normal_bytes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_metaslab_normal_bytes",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_metaslab_slog_bytes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_metaslab_slog_bytes",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_needcopy_bytes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_needcopy_bytes",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "zil - bytes",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 60
+          },
+          "id": 40,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_commit_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "commit_count",
+              "refId": "A",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_commit_writer_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "commit_writer_count",
+              "refId": "C",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_copied_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_copied_count",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_count",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_indirect_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_indirect_count",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_metaslab_normal_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_metaslab_normal_count",
+              "refId": "B",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_metaslab_slog_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_metaslab_slog_count",
+              "refId": "G",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zil_zil_itx_needcopy_count{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "itx_needcopy_count",
+              "refId": "H",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "zil - count",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "none"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 67
+          },
+          "id": 41,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_rcnt{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - rcnt",
+              "refId": "D",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_reads{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - reads",
+              "refId": "E",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_wcnt{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - wcnt",
+              "refId": "H",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_writes{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - writes",
+              "refId": "J",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "ZPOOL",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "uid": "$Prometheus_server"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "barWidthFactor": 0.6,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green"
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "ns"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 7,
+            "w": 24,
+            "x": 0,
+            "y": 74
+          },
+          "id": 42,
+          "options": {
+            "legend": {
+              "calcs": [
+                "mean",
+                "lastNotNull",
+                "max",
+                "min"
+              ],
+              "displayMode": "table",
+              "placement": "right",
+              "showLegend": true,
+              "width": 400
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "desc"
+            }
+          },
+          "pluginVersion": "11.4.0",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_rlentime{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - rlentime",
+              "refId": "F",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_rupdate{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - rupdate",
+              "refId": "G",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_wlentime{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - wlentime",
+              "refId": "I",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_wtime{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - wtime",
+              "refId": "K",
+              "step": 2,
+              "target": ""
+            },
+            {
+              "datasource": {
+                "uid": "$Prometheus_server"
+              },
+              "expr": "rate(node_zfs_zpool_wupdate{instance=\"$Host\"}[5m])",
+              "format": "time_series",
+              "hide": false,
+              "interval": "",
+              "intervalFactor": 2,
+              "legendFormat": "{{zpool}} - wupdate",
+              "refId": "L",
+              "step": 2,
+              "target": ""
+            }
+          ],
+          "title": "ZPOOL - Time",
+          "type": "timeseries"
+        }
+      ],
+      "title": "Misc Stats",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 37
       },
       "id": 44,
       "panels": [
@@ -3903,1598 +5820,6 @@
       ],
       "title": "Arc Stats",
       "type": "row"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 18
-      },
-      "id": 46,
-      "panels": [
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "bytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 11
-          },
-          "id": 32,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_delay{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "delay",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_delay{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "dirty_delay",
-              "refId": "C",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_over_max{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "dirty_over_max",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_dirty_throttle{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "dirty_throttle",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_error{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "error",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_group{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "group",
-              "refId": "G",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_memory_reclaim{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "memory_reclaim",
-              "refId": "H",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_memory_reserve{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "memory_reserve",
-              "refId": "I",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_quota{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "quota",
-              "refId": "J",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_dmu_tx_dmu_tx_suspended{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "suspended",
-              "refId": "K",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "dmu_tx_dmu_tx - 1",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 18
-          },
-          "id": 33,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_dmu_tx_dmu_tx_assigned{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "assigned",
-              "refId": "B",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "dmu_tx_dmu_tx - 2",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 25
-          },
-          "id": 34,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_fm_erpt_dropped{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "erpt_dropped",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_fm_erpt_set_failed{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "erpt_set_failed",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_fm_fmri_set_failed{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "fmri_set_failed",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_fm_payload_set_failed{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "intervalFactor": 2,
-              "legendFormat": "payload_set_failed",
-              "refId": "B",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "fm",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 32
-          },
-          "id": 35,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_vdev_cache_delegations{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "cache_delegations",
-              "refId": "B",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_vdev_cache_hits{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "cache_hits",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_vdev_cache_misses{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "cache_misses",
-              "refId": "C",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "vdev",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "bytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 39
-          },
-          "id": 37,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_onloan_read_buf{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "onloan_read_buf",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_onloan_write_buf{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "onloan_write_buf",
-              "refId": "C",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_read_buf_copied{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "read_buf_copied",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_read_buf_nocopy{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "read_buf_nocopy",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_write_buf_copied{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "write_buf_copied",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "node_zfs_xuio_write_buf_nocopy{instance=\"$Host\"}",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "write_buf_nocopy",
-              "refId": "G",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "xuio",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 46
-          },
-          "id": 38,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zfetch_hits{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "hits",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zfetch_misses{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "misses",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zfetch_max_streams{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "max_streams",
-              "refId": "I",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "zfetch",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "bytes"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 53
-          },
-          "id": 39,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_copied_bytes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_copied_bytes",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_indirect_bytes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_indirect_bytes",
-              "refId": "C",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_metaslab_normal_bytes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_metaslab_normal_bytes",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_metaslab_slog_bytes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_metaslab_slog_bytes",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_needcopy_bytes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_needcopy_bytes",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "zil - bytes",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 60
-          },
-          "id": 40,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_commit_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "commit_count",
-              "refId": "A",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_commit_writer_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "commit_writer_count",
-              "refId": "C",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_copied_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_copied_count",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_count",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_indirect_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_indirect_count",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_metaslab_normal_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_metaslab_normal_count",
-              "refId": "B",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_metaslab_slog_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_metaslab_slog_count",
-              "refId": "G",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zil_zil_itx_needcopy_count{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "itx_needcopy_count",
-              "refId": "H",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "zil - count",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 67
-          },
-          "id": 41,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_rcnt{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - rcnt",
-              "refId": "D",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_reads{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - reads",
-              "refId": "E",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_wcnt{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - wcnt",
-              "refId": "H",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_writes{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - writes",
-              "refId": "J",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "ZPOOL",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "uid": "$Prometheus_server"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisBorderShow": false,
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "barWidthFactor": 0.6,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "insertNulls": false,
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "ns"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 7,
-            "w": 24,
-            "x": 0,
-            "y": 74
-          },
-          "id": 42,
-          "options": {
-            "legend": {
-              "calcs": [
-                "mean",
-                "lastNotNull",
-                "max",
-                "min"
-              ],
-              "displayMode": "table",
-              "placement": "right",
-              "showLegend": true,
-              "width": 400
-            },
-            "tooltip": {
-              "mode": "multi",
-              "sort": "desc"
-            }
-          },
-          "pluginVersion": "11.4.0",
-          "targets": [
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_rlentime{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - rlentime",
-              "refId": "F",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_rupdate{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - rupdate",
-              "refId": "G",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_wlentime{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - wlentime",
-              "refId": "I",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_wtime{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - wtime",
-              "refId": "K",
-              "step": 2,
-              "target": ""
-            },
-            {
-              "datasource": {
-                "uid": "$Prometheus_server"
-              },
-              "expr": "rate(node_zfs_zpool_wupdate{instance=\"$Host\"}[5m])",
-              "format": "time_series",
-              "hide": false,
-              "interval": "",
-              "intervalFactor": 2,
-              "legendFormat": "{{zpool}} - wupdate",
-              "refId": "L",
-              "step": 2,
-              "target": ""
-            }
-          ],
-          "title": "ZPOOL - Time",
-          "type": "timeseries"
-        }
-      ],
-      "title": "Misc Stats",
-      "type": "row"
     }
   ],
   "preload": false,
@@ -5546,6 +5871,6 @@
   "timezone": "browser",
   "title": "Node - ZFS Stats",
   "uid": "i5y0zfoiz",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
