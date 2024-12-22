@@ -15,7 +15,7 @@ spec:
     - ReadWriteMany
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
+  storageClassName: ''
   hostPath:
     type: Directory
     path: /mnt/somewhere/unencrypted/apps/drone/data
@@ -34,7 +34,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
-  storageClassName: manual
+  storageClassName: ''
   accessModes:
     - ReadWriteMany
   resources:

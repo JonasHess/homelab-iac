@@ -31,7 +31,7 @@ spec:
     - ReadWriteMany
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
+  storageClassName: ''
   hostPath:
     type: Directory
     path: /mnt/somewhere/unencrypted/apps/traefik/data
@@ -50,7 +50,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
-  storageClassName: manual
+  storageClassName: ''
   accessModes:
     - ReadWriteMany
   resources:
@@ -172,7 +172,7 @@ spec:
   source:
     chart: traefik
     repoURL: https://helm.traefik.io/traefik
-    targetRevision: 30.1.0
+    targetRevision: 33.1.0
     helm:
       # Values file as block file
       valuesObject:
@@ -197,6 +197,11 @@ spec:
               default: true
             middlewares:
               - "argocd-cloudflare@kubernetescrd"
+            transport:
+              respondingTimeouts:
+                readTimeout: 30m
+                writeTimeout: 30m
+                idleTimeout: 30m
           websecure:
             port: 443
             nodePort: 32443
@@ -204,7 +209,18 @@ spec:
               default: true
             middlewares:
               - "argocd-cloudflare@kubernetescrd"
+            transport:
+              respondingTimeouts:
+                readTimeout: 30m
+                writeTimeout: 30m
+                idleTimeout: 30m
           # Additional custom ports
+          dns:
+            port: 53
+            expose:
+              default: true
+            exposedPort: 53
+            protocol: UDP
           ftp:
             port: 2121
             expose:
@@ -275,6 +291,8 @@ spec:
         # Configure Server Transport settings
         serversTransport:
           insecureSkipVerify: true
+
+
 
         # Environment variables for the Cloudflare API token
         env:

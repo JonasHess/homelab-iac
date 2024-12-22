@@ -15,7 +15,7 @@ spec:
     - ReadWriteMany
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
+  storageClassName: ''
   hostPath:
     type: Directory
     path: /mnt/somewhere/encrypted/apps/immich/library
@@ -26,20 +26,7 @@ spec:
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: "immich-library-pvc"
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -55,7 +42,7 @@ spec:
     - ReadWriteMany
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
+  storageClassName: ''
   hostPath:
     type: Directory
     path: /mnt/somewhere/encrypted/apps/immich/postgresql
@@ -66,20 +53,7 @@ spec:
     namespace: argocd
 ---
 # Source: homelab-base-chart/templates/_generic/pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: "immich-postgresql-pvc"
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true
-spec:
-  storageClassName: manual
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 10Gi
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -95,7 +69,7 @@ spec:
     - ReadWriteMany
 # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: manual
+  storageClassName: ''
   hostPath:
     type: Directory
     path: /mnt/somewhere/encrypted/apps/immich/redis
@@ -109,12 +83,44 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
+  name: "immich-library-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: ''
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "immich-postgresql-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: ''
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
   name: "immich-redis-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
-  storageClassName: manual
+  storageClassName: ''
   accessModes:
     - ReadWriteMany
   resources:
@@ -135,10 +141,14 @@ spec:
   source:
     chart: immich
     repoURL: https://immich-app.github.io/immich-charts
-    targetRevision: 0.8.4
+    targetRevision: 0.8.5
     helm:
       # Values file as block file
       valuesObject:
+        image:
+          tag: v1.122.3
+        env:
+          IMMICH_LOG_LEVEL: 'log'
         immich:
           persistence:
             library:
@@ -148,8 +158,17 @@ spec:
           primary:
             persistence:
               existingClaim: immich-postgresql-pvc
+            resources:
+              requests:
+                memory: 512Mi
+              limits:
+                memory: 6Gi
         redis:
           enabled: true
+          auth:
+            enabled: false
+          networkPolicy:
+            enabled: true
           master:
             persistence:
               existingClaim: immich-redis-pvc
@@ -170,3 +189,24 @@ spec:
         duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
         factor: 2 # a factor to multiply the base duration after each failed retry
         maxDuration: 1m # the maximum amount of time allowed for the backoff strategy
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: immich-https-2283-0
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`immich.home-server.dev`) 
+      kind: Rule
+      priority: 10
+      services:
+        - name: immich-server
+          port: 2283
+  tls:
+    certResolver: cloudflare

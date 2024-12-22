@@ -304,7 +304,28 @@ spec:
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: sftpgo-https-8081-1
+  name: sftpgo-https-8080-1
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`sftpgo.home-server.dev`) && PathPrefix(`/web/client/pubshares/`)
+      kind: Rule
+      priority: 20
+      services:
+        - name: sftpgo-service
+          port: 8080
+  tls:
+    certResolver: cloudflare
+---
+# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sftpgo-https-8081-2
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true

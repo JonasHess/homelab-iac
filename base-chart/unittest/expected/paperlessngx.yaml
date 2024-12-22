@@ -16,8 +16,9 @@ data:
   PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
   PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
   PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.home-server.dev/"
-  PAPERLESS_CONSUMER_BARCODE_UPSCALE: "1.5"
-  PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"
+  PAPERLESS_CONSUMER_BARCODE_UPSCALE: "2.0"
+  PAPERLESS_CONSUMER_BARCODE_DPI: "600"
+#  PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"*
   PAPERLESS_OCR_USER_ARGS: "{\"invalidate_digital_signatures\": true}"
   PAPERLESS_TIKA_ENABLED: "1"
   PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg-service:3000"
@@ -27,6 +28,10 @@ data:
   PAPERLESS_CONSUMER_RECURSIVE: "1"
   PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "1"
   PAPERLESS_CONSUMER_DELETE_DUPLICATES: "1"
+  PAPERLESS_APPS: "allauth.socialaccount.providers.amazon_cognito"
+  PAPERLESS_SOCIAL_AUTO_SIGNUP: "false"
+  PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
+  PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
@@ -339,6 +344,9 @@ spec:
     - secretKey: "PAPERLESS_ADMIN_PASSWORD"
       remoteRef:
         key: "/kind-homelab/paperlessngx/PAPERLESS_ADMIN_PASSWORD"
+    - secretKey: "PAPERLESS_SOCIALACCOUNT_PROVIDERS"
+      remoteRef:
+        key: "/kind-homelab/paperlessngx/PAPERLESS_SOCIALACCOUNT_PROVIDERS"
 ---
 # Source: homelab-base-chart/templates/_generic/ingress-https.yaml
 apiVersion: traefik.io/v1alpha1

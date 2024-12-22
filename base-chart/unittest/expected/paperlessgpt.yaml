@@ -60,19 +60,6 @@ spec:
     requests:
       storage: 10Gi
 ---
-# Source: homelab-base-chart/templates/_generic/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: paperlessgpt-service
-  namespace: argocd
-spec:
-  ports:
-    - name: http
-      port: 8080
-  selector:
-    app: paperlessgpt
----
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -95,7 +82,6 @@ spec:
         - name: paperlessgpt
           image: jonashess/paperless-gpt:unreleased
           ports:
-            - containerPort: 8080
           volumeMounts:
             - mountPath: "/app/prompts"
               name: paperlessgpt-prompts-volume
@@ -156,27 +142,3 @@ spec:
     - secretKey: "PROMPT_TAGS_EXPLANATION"
       remoteRef:
         key: "/kind-homelab/paperlessgpt/PROMPT_TAGS_EXPLANATION"
----
-# Source: homelab-base-chart/templates/_generic/ingress-https.yaml
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
-metadata:
-  name: paperlessgpt-https-8080-0
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`paperless-gpt.home-server.dev`) 
-      kind: Rule
-      priority: 10
-      services:
-        - name: paperlessgpt-service
-          port: 8080
-      middlewares:
-        - name: traefik-forward-auth
-          namespace: argocd
-  tls:
-    certResolver: cloudflare
