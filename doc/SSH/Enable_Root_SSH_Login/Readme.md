@@ -5,6 +5,10 @@
 ssh-copy-id root@<server_ip>
 ```
 
+or
+
+curl -fsSL https://raw.githubusercontent.com/JonasHess/SSH_Public_Key/master/setup.sh -o installKeys.sh && sh installKeys.sh
+
 ## Login to the server
 ```bash
 ssh root@<server_ip>

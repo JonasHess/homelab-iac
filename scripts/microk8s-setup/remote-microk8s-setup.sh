@@ -71,19 +71,22 @@ install_microk8s() {
   microk8s enable metrics-server
   microk8s enable hostpath-storage
 
-  if confirm "Do you want to enable Nvidia GPU support? [y/N]"; then
-#   microk8s enable nvidia
-    echo "Adding Nvidia repository..."
-    distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-    wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.1-1_all.deb
-    sudo dpkg -i cuda-keyring_1.1-1_all.deb
-    echo "Updating package list..."
-    sudo apt-get update
-    echo "Installing Nvidia drivers..."
-    sudo apt-get install nvidia-headless-565-server nvidia-utils-565-server
-    echo "Installing CUDA drivers..."
-    sudo apt-get install cuda-drivers
+  if confirm "Do you want to install Nvidia GPU drivers? [y/N]"; then
+
     echo "Installing Nvidia GPU Operator..."
+    microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+    microk8s helm repo update
+    microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
+    echo "Nvidia GPU support enabled."
+  else
+    echo "Skipping GPU support."
+  fi
+
+  if confirm "Do you want to enable microk8s Nvidia GPU support? [y/N]"; then
+    #   microk8s enable nvidia
+    echo "Installing Nvidia GPU Operator..."
+    microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+    microk8s helm repo update
     microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
     echo "Nvidia GPU support enabled."
   else
@@ -92,7 +95,21 @@ install_microk8s() {
 
   microk8s start
   echo "microk8s installation complete!"
+
+
+  if confirm "Do you want to create local download directories? [y/N]"; then
+    echo "Creating local download directories..."
+    mkdir -p /data/volumes/sabnzbd-downloads
+    chmod 777 -R /data/volumes/sabnzbd-downloads
+    mkdir -p /data/volumes/qbittorrent-downloads
+    chmod 777 -R /data/volumes/qbittorrent-downloads
+    echo "Local download directories created."
+  else
+    echo "Skipping local download directories creation."
+  fi
 }
+
+
 
 set_kubectl_config() {
   echo "Refreshing certificates..."
