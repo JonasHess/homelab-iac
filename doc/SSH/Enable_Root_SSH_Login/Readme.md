@@ -1,17 +1,26 @@
-# Change to no to disable tunnelled clear text passwords
+# SSH - Disable clear text passwords & Enable root login
+
+## Copy the public key to the server
+```bash
+ssh-copy-id root@<server_ip>
+```
+
+## Login to the server
+```bash
+ssh root@<server_ip>
+```  
+
 
 ## Open the sshd_config file
 ```bash
 vim /etc/ssh/sshd_config
 ```
 
-## Set the following line to no
+## Set the following values:
 ```text
 
 
 PermitRootLogin prohibit-password
-
-# Change to no to disable tunnelled clear text passwords
 PasswordAuthentication no
 ```
 
