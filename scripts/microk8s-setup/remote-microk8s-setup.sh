@@ -92,16 +92,27 @@ install_microk8s() {
     echo "Skipping GPU support."
   fi
 
-  if confirm "Do you want to enable microk8s Nvidia GPU support? [y/N]"; then
+  if confirm "Do you want to install Nvidia GPU Operator? [y/N]"; then
     #   microk8s enable nvidia
     echo "Installing Nvidia GPU Operator..."
     microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
     microk8s helm repo update
     microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set driver.version=565 --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
-    echo "Nvidia GPU support enabled."
+    echo "Nvidia GPU Operator installed."
   else
-    echo "Skipping GPU support."
+    echo "Skipping Nvidia GPU Operator installation."
   fi
+
+  if confirm "Do you want to enable microk8s NVIDIA addon? [y/N]"; then
+      #   microk8s enable nvidia
+      echo "Enabling microk8s GPU addon..."
+      microk8s enable nvidia
+      echo "Nvidia GPU addon enabled."
+  else
+      echo "Skipping Nvidia GPU addon installation."
+  fi
+
+
 
   microk8s start
   echo "microk8s installation complete!"

@@ -315,9 +315,9 @@ apps:
     generic:
       deployment:
         image: "ghcr.io/linuxserver/plex:latest"
-        resources:
-          limits:
-            nvidia.com/gpu: 1
+#        resources:
+#          limits:
+#            nvidia.com/gpu: 1
         ports:
           - containerPort: 32400
         pvcMounts:
