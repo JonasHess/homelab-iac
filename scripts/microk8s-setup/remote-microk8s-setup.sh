@@ -73,11 +73,21 @@ install_microk8s() {
 
   if confirm "Do you want to install Nvidia GPU drivers? [y/N]"; then
 
-    echo "Installing Nvidia GPU Operator..."
-    microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-    microk8s helm repo update
-    microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
-    echo "Nvidia GPU support enabled."
+    echo "Adding Nvidia repository..."
+    distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
+    wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.1-1_all.deb
+    sudo dpkg -i cuda-keyring_1.1-1_all.deb
+    echo "Updating package list..."
+    sudo apt-get update
+    echo "Installing Nvidia drivers..."
+    sudo apt-get install nvidia-headless-565-server nvidia-utils-565-server
+    echo "Installing CUDA drivers..."
+    sudo apt-get install cuda-drivers
+
+    sudo apt-get install nvidia-container-toolkit
+    sudo nvidia-ctk runtime configure --runtime=containerd
+
+    echo "Nvidia GPU drivers installed."
   else
     echo "Skipping GPU support."
   fi
@@ -87,7 +97,7 @@ install_microk8s() {
     echo "Installing Nvidia GPU Operator..."
     microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
     microk8s helm repo update
-    microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
+    microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set driver.version=565 --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
     echo "Nvidia GPU support enabled."
   else
     echo "Skipping GPU support."
