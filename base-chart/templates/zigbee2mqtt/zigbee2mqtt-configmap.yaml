@@ -5,7 +5,7 @@ metadata:
   name: zigbee2mqtt-config-map
   namespace: argocd
 data:
-  ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: {{ .Values.apps.zigbee2mqtt.homeAssistant | quote }}
+  ZIGBEE2MQTT_CONFIG_HOMEASSISTANT: {{ .Values.apps.zigbee2mqtt.homeAssistant | quote }}
   ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: {{ .Values.apps.zigbee2mqtt.permitJoin | quote }}
   ZIGBEE2MQTT_CONFIG_MQTT_BASE_TOPIC: {{ .Values.apps.zigbee2mqtt.mqttBaseTopic | quote }}
   ZIGBEE2MQTT_CONFIG_MQTT_SERVER: {{ .Values.apps.zigbee2mqtt.mqttServer | quote }}
