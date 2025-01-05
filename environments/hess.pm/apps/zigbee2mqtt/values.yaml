@@ -1,5 +1,6 @@
 apps:
   zigbee2mqtt:
+    serialAdapter: "zstack"
     generic:
       deployment:
         pvcMounts:

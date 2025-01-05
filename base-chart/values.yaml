@@ -242,6 +242,7 @@ apps:
     enabled: false
     mqttServer: "mqtt://mosquitto-service"
     devicePath: "/dev/ttyACM0"
+    serialAdapter: "ember"
     zigbeeChannel: "15"
     homeAssistant: "true"
     permitJoin: "false"
