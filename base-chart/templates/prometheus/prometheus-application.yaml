@@ -79,7 +79,7 @@ spec:
               - name: "null"  # Add this to your config as well
               - name: 'pagerduty'
                 pagerduty_configs:
-                  - service_key: '{{`{{ pagerduty_service_key }}`}}'
+                  - service_key: "{{"{{"}} pagerduty_service_key {{"}}"}}"
 
   destination:
     server: "https://kubernetes.default.svc"
