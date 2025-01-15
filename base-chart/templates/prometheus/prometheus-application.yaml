@@ -80,7 +80,7 @@ spec:
               - name: "null"  # Add this to your config as well
               - name: 'pagerduty'
                 pagerduty_configs:
-                  - service_key: "/etc/alertmanager/secrets/pagerduty-secret/pagerduty_service_key"
+                  - service_key_file: "/etc/alertmanager/secrets/pagerduty-secret/pagerduty_service_key"
 
   destination:
     server: "https://kubernetes.default.svc"
