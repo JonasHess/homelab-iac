@@ -66,20 +66,19 @@ spec:
           alertmanagerSpec:
             secrets:
               - pagerduty-secret
-          config:
-            global:
-              resolve_timeout: 5m
-            route:
-              group_by: [ 'alertname' ]
-              group_wait: 30s
-              group_interval: 5m
-              repeat_interval: 12h
-              receiver: 'pagerduty'
-            receivers:
-              - name: "null"  # Add this to your config as well
-              - name: 'pagerduty'
-                pagerduty_configs:
-                  - service_key: '{{`{{ pagerduty_service_key }}`}}'
+            config:
+              global:
+                resolve_timeout: 5m
+              route:
+                group_by: [ 'alertname' ]
+                group_wait: 30s
+                group_interval: 5m
+                repeat_interval: 12h
+                receiver: 'pagerduty'
+              receivers:
+                - name: 'pagerduty'
+                  pagerduty_configs:
+                    - service_key: '{{`{{ pagerduty_service_key }}`}}'
 
   destination:
     server: "https://kubernetes.default.svc"
