@@ -64,6 +64,7 @@ spec:
 {{/*            existingClaim: prometheus-alertmanager-pvc*/}}
         alertmanager:
           alertmanagerSpec:
+            logLevel: debug
             secrets:
               - pagerduty-secret
           config:
