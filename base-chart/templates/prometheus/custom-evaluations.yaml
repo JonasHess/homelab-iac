@@ -1,0 +1,32 @@
+{{- if .Values.apps.prometheus.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: custom-evaluations
+  namespace: argocd
+  labels:
+    app: custom-alerts
+spec:
+  groups:
+  - name: custom-evaluations
+    interval: 1m
+    rules:
+    - alert: DuplicatiBackupNotSuccessful
+      annotations:
+        summary: "Duplicati backup failed"
+        description: "The Duplicati backup has not been successful in the last 10 minutes."
+      expr: |
+        last_over_time(duplicati_ops_result[10m]) == 0
+      for: 1m
+      labels:
+        severity: critical
+    - alert: ZFSPoolUnhealthy
+      annotations:
+        summary: "ZFS pool is unhealthy"
+        description: "A ZFS pool is reporting unhealthy status."
+      expr: |
+        avg_over_time(zfs_pool_health[10m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+  {{- end -}}
