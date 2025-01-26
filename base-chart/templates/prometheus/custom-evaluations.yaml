@@ -18,7 +18,7 @@ spec:
         summary: "Duplicati backup failed"
         description: "The Duplicati backup has not been successful in the last 10 minutes."
       expr: |
-        last_over_time(duplicati_ops_result[10m]) == 0
+        last_over_time(duplicati_ops_result[10m]) > 0
       for: 1m
       labels:
         severity: critical
