@@ -5,7 +5,8 @@ metadata:
   name: custom-evaluations
   namespace: argocd
   labels:
-    app: custom-alerts
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
 spec:
   groups:
   - name: custom-evaluations
