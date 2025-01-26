@@ -31,4 +31,22 @@ spec:
       for: 1m
       labels:
         severity: critical
-  {{- end -}}
+    - alert: NoDuplicatiMetrics
+      annotations:
+        summary: "No Duplicati metrics found"
+        description: "No Duplicati metrics have been found in the last 10 minutes."
+      expr: |
+        absent(duplicati_ops_result)
+      for: 10m
+      labels:
+        severity: warning
+    - alert: NoZFSMetrics
+      annotations:
+        summary: "No ZFS metrics found"
+        description: "No ZFS metrics have been found in the last 10 minutes."
+      expr: |
+        absent(zfs_pool_health)
+      for: 10m
+      labels:
+        severity: warning
+{{- end -}}
