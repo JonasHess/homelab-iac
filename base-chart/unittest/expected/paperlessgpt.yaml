@@ -81,6 +81,7 @@ spec:
       containers:
         - name: paperlessgpt
           image: jonashess/paperless-gpt:unreleased
+          imagePullPolicy: Always
           ports:
           volumeMounts:
             - mountPath: "/app/prompts"

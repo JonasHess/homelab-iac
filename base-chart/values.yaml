@@ -636,6 +636,7 @@ apps:
     generic:
       deployment:
         image: "jonashess/paperless-gpt:unreleased"
+        imagePullPolicy: "Always"
         pvcMounts:
           prompts:
             mountPath: "/app/prompts"

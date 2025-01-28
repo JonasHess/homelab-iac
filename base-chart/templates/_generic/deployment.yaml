@@ -22,6 +22,9 @@ spec:
       containers:
         - name: {{ $appName }}
           image: {{ $deployment.image }}
+          {{- if $deployment.imagePullPolicy }}
+          imagePullPolicy: {{ $deployment.imagePullPolicy }}
+          {{- end }}
           {{- if $deployment.securityContext }}
           securityContext:
           {{- toYaml $deployment.securityContext | nindent 12 }}
