@@ -16,7 +16,17 @@ spec:
       # Values file as block file
       valuesObject: {}
 
-  destination:
-    server: "https://kubernetes.default.svc"
-    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - Validate=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: -1 # unlimited
+      backoff:
+        maxDuration: 20m
 {{- end }}
