@@ -825,3 +825,5 @@ apps:
         ports:
           - name: http
             port: 5000
+  cnpg:
+    enabled: false
