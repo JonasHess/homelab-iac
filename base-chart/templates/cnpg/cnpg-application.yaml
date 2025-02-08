@@ -29,4 +29,8 @@ spec:
       limit: -1 # unlimited
       backoff:
         maxDuration: 20m
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
 {{- end }}
