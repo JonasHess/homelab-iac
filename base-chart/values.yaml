@@ -738,6 +738,8 @@ apps:
         library: "/mnt/somewhere/encrypted/apps/immich/library"
         postgresql: "/mnt/somewhere/encrypted/apps/immich/postgresql"
         redis: "/mnt/somewhere/encrypted/apps/immich/redis"
+      persistentVolume:
+        cnpg: "/mnt/somewhere/encrypted/apps/immich/cnpg"
       ingress:
         https:
           - subdomain: "immich"

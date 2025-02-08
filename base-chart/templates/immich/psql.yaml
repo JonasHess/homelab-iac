@@ -31,6 +31,15 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
 
   storage:
-    size: 4Gi
+    size: 10Gi
+    pvcTemplate:
+      storageClassName: ""
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+      selector:
+        matchLabels:
+          app: immich-cnpg
 {{/*    storageClass: immich-postgres*/}}
 {{- end -}}
