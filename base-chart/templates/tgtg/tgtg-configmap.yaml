@@ -5,8 +5,10 @@ metadata:
   name: tgtg-config-map
   namespace: argocd
 data:
-  SLEEP_TIME: "60"
+  SLEEP_TIME: "15"
   TZ: "Europe/Berlin"
   LOCALE: "de_DE"
   NTFY: "true"
+  TELEGRAM: "true"
+  TELEGRAM_ONLY_RESERVATIONS: "true"
 {{- end -}}
