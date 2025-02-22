@@ -11,4 +11,5 @@ data:
   NTFY: "true"
   TELEGRAM: "true"
   TELEGRAM_ONLY_RESERVATIONS: "true"
+  METRICS: "true"
 {{- end -}}

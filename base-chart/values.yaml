@@ -818,6 +818,10 @@ apps:
           tokens:
             mountPath: "/tokens"
             hostPath: "/mnt/somewhere/unencrypted/apps/tgtg/tokens"
+      service:
+        ports:
+          - name: http
+            port: 8000
   duplicati-prometheus-exporter:
     enabled: false
     generic:
