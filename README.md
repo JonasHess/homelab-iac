@@ -1,4 +1,4 @@
-# homelab-iac: Infrastructure as Code for My Home Lab
+# Infrastructure as Code for Home Lab
 
 This repository contains the Infrastructure as Code configuration for a home lab environment. It leverages Kubernetes, Helm, and other tools to automate the deployment and management of various services and applications.
 

@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
-set -e
 
+# Summary: This script automates the setup of Argo CD in a Kubernetes cluster.
+# It takes an environment name as input, loads configuration from environment-specific YAML files,
+# switches the kubectl context to the target cluster, installs Argo CD, configures the service type (NodePort),
+# waits for the Argo CD server to be ready, applies a base configuration, and retrieves the initial admin password.
+# It also sets up port-forwarding to the Argo CD server. The script uses environment variables for Akeyless credentials.
+# It supports multiple environments defined in `../environments/` directory.
+#
+# Usage: ./setup.sh <environment_name>
+
+
+
+set -e
 
 # Function to list all available environment directories
 list_environments() {

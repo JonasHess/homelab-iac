@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Summary: This script automates the installation and configuration of the ZFS Exporter, a tool
+# used to export ZFS metrics for Prometheus.
+
+
 # Variables
 TARGET_DIR="/etc/zfsexporter"
 SERVICE_NAME="zfs_exporter"

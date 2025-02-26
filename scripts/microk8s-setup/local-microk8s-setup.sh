@@ -1,4 +1,17 @@
 #!/usr/bin/env bash
+
+# Summary: This script automates the setup of a MicroK8s cluster on a remote server.
+# It takes the environment name and a local path for the kube-config file as input.
+# It connects to the remote server via SSH, installs MicroK8s, enables necessary addons,
+# configures MetalLB with a provided IP range, handles optional GPU driver and operator installation,
+# retrieves the kube-config file, updates it with the correct cluster, user, and context names,
+# and cleans up temporary files on the remote server. It also includes interactive prompts for user confirmation
+# and error handling for missing arguments and existing files. The script uses environment variables defined in
+# the environment directory.
+#
+# Usage: ./local-microk8s-setup.sh <environment> <kube-config-path>
+
+
 set -e  # Exit on first error
 set -o pipefail  # Fail if any command in a pipe fails
 

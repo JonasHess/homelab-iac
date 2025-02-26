@@ -4,6 +4,8 @@ set -o pipefail  # Fail if any command in a pipe fails
 set -u  # Treat unset variables as an error
 cd "$(dirname "$0")" # Change to the script directory
 
+# Summary: This script creates a directory structure for media storage with specific permissions.
+
 
 BASE_DIR="/mnt/tank0/encrypted/media"
 
