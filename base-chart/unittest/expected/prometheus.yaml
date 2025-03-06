@@ -1,16 +1,4 @@
 ---
-# Source: homelab-base-chart/templates/prometheus/prometheus-config-secret.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: prometheus-scrape-secret
-  namespace: argocd
-  labels:
-    app: prometheus
-type: Opaque
-data:
-  scrape-config.yaml: "LSBqb2JfbmFtZTogZHVwbGljYXRpX2JhY2t1cAogIGhvbm9yX2xhYmVsczogdHJ1ZQogIHN0YXRpY19jb25maWdzOgogICAgLSB0YXJnZXRzOiBbJ2R1cGxpY2F0aS1wcm9tZXRoZXVzLWV4cG9ydGVyLXNlcnZpY2U6NTAwMCddCi0gam9iX25hbWU6IHpmc19zdGF0dXMKICBob25vcl9sYWJlbHM6IHRydWUKICBzdGF0aWNfY29uZmlnczoKICAgIC0gdGFyZ2V0czogWyclIXMoPG5pbD4pOjkxMzQnXQo="
----
 # Source: homelab-base-chart/templates/prometheus/grafana-dashboard-config-map.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -7284,10 +7272,10 @@ spec:
                   selector:
                     matchLabels:
                       app: prometheus-prometheus
-            additionalScrapeConfigsSecret:
-              enabled: true
-              name: prometheus-scrape-secret
-              key: scrape-config.yaml
+            # additionalScrapeConfigsSecret:
+            #   enabled: true
+            #   name: prometheus-scrape-secret
+            #   key: scrape-config.yaml
           persistentVolumeClaim:
             existingClaim: prometheus-prometheus-pvc
 

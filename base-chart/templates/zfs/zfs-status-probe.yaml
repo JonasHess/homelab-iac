@@ -1,0 +1,20 @@
+{{- if .Values.apps.zfs.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: zfs-status-probe
+  namespace: argocd
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  interval: 30s
+  module: http_2xx
+  targets:
+    staticConfig:
+      static:
+      - {{ .Values.serverip }}:9134
+  metricRelabelings:
+  - action: keep
+    regex: .*
+    sourceLabels: [__name__]
+{{- end }}

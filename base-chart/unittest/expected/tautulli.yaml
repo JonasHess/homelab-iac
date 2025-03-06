@@ -46,6 +46,8 @@ kind: Service
 metadata:
   name: tautulli-service
   namespace: argocd
+  labels:
+    app: tautulli
 spec:
   ports:
     - name: http

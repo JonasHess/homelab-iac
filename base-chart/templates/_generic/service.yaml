@@ -7,6 +7,8 @@ kind: Service
 metadata:
   name: {{ $appName }}-service
   namespace: argocd
+  labels:
+    app: {{ $appName }}
 spec:
   ports:
     {{- range $port := $svc.ports }}

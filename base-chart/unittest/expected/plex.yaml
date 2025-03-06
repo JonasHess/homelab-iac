@@ -102,6 +102,8 @@ kind: Service
 metadata:
   name: plex-service
   namespace: argocd
+  labels:
+    app: plex
 spec:
   ports:
     - name: http

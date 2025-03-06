@@ -1,0 +1,60 @@
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: duplicatiprometheusexporter-service
+  namespace: argocd
+  labels:
+    app: duplicatiprometheusexporter
+spec:
+  ports:
+    - name: http
+      port: 5000
+  selector:
+    app: duplicatiprometheusexporter
+---
+# Source: homelab-base-chart/templates/_generic/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: duplicatiprometheusexporter-deployment
+  namespace: argocd
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: duplicatiprometheusexporter
+  template:
+    metadata:
+      labels:
+        app: duplicatiprometheusexporter
+    spec:
+      containers:
+        - name: duplicatiprometheusexporter
+          image: aleixolucas/duplicati-prometheus-exporter
+          ports:
+          volumeMounts:
+      volumes:
+---
+# Source: homelab-base-chart/templates/duplicatiprometheusexporter/duplicati-backup-monitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: duplicati-backup-monitor
+  namespace: argocd
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: duplicatiprometheusexporter
+  endpoints:
+  - port: 5000
+    interval: 30s
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - argocd

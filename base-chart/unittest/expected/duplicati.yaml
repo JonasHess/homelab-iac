@@ -57,6 +57,8 @@ kind: Service
 metadata:
   name: duplicati-service
   namespace: argocd
+  labels:
+    app: duplicati
 spec:
   ports:
     - name: 

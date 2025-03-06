@@ -88,6 +88,8 @@ kind: Service
 metadata:
   name: adguard-service
   namespace: argocd
+  labels:
+    app: adguard
 spec:
   ports:
     - name: http

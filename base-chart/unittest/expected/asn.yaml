@@ -38,6 +38,8 @@ kind: Service
 metadata:
   name: asn-service
   namespace: argocd
+  labels:
+    app: asn
 spec:
   ports:
     - name: http

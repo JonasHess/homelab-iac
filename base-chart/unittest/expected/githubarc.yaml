@@ -305,6 +305,8 @@ spec:
         #   namespace: arc-system
         #   name: test-arc-gha-runner-scale-set-controller
   syncPolicy:
+    syncOptions:
+      - ServerSideApply=true
     automated:
       selfHeal: true
 ---

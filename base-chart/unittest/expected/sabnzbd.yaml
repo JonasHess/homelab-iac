@@ -172,6 +172,8 @@ kind: Service
 metadata:
   name: sabnzbd-service
   namespace: argocd
+  labels:
+    app: sabnzbd
 spec:
   ports:
     - name: http

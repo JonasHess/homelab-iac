@@ -88,6 +88,8 @@ kind: Service
 metadata:
   name: prowlarr-service
   namespace: argocd
+  labels:
+    app: prowlarr
 spec:
   ports:
     - name: http

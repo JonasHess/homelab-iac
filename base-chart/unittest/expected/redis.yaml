@@ -56,6 +56,8 @@ kind: Service
 metadata:
   name: redis-service
   namespace: argocd
+  labels:
+    app: redis
 spec:
   ports:
     - name: redis

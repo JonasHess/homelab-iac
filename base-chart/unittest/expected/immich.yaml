@@ -1,4 +1,27 @@
 ---
+# Source: homelab-base-chart/templates/_generic/pv.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "immich-cnpg-pv"
+  namespace: argocd
+  labels:
+    app: "immich-cnpg"
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  hostPath:
+    type: Directory
+    path: /mnt/somewhere/encrypted/apps/immich/cnpg
+---
 # Source: homelab-base-chart/templates/_generic/pvc.yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -146,7 +169,7 @@ spec:
       # Values file as block file
       valuesObject:
         image:
-          tag: v1.125.6
+          tag: v1.125.7
         env:
           IMMICH_LOG_LEVEL: 'log'
         immich:
@@ -189,6 +212,48 @@ spec:
         duration: 5s # the amount to back off. Default unit is seconds, but could also be a duration (e.g. "2m", "1h")
         factor: 2 # a factor to multiply the base duration after each failed retry
         maxDuration: 1m # the maximum amount of time allowed for the backoff strategy
+---
+# Source: homelab-base-chart/templates/immich/psql.yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: immich-postgres
+  namespace: argocd
+spec:
+  # At the time of writing, immich is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
+  imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba
+  instances: 1
+
+  postgresql:
+    shared_preload_libraries:
+      - "vectors.so"
+
+  managed:
+    roles:
+      - name: immich
+        superuser: true
+        login: true
+
+
+
+
+
+
+
+
+
+
+  storage:
+    size: 10Gi
+    pvcTemplate:
+      storageClassName: ""
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+      selector:
+        matchLabels:
+          app: immich-cnpg
 ---
 # Source: homelab-base-chart/templates/_generic/ingress-https.yaml
 apiVersion: traefik.io/v1alpha1

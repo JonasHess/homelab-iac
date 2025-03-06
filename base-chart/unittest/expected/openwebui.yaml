@@ -55,6 +55,8 @@ kind: Service
 metadata:
   name: openwebui-service
   namespace: argocd
+  labels:
+    app: openwebui
 spec:
   ports:
     - name: http

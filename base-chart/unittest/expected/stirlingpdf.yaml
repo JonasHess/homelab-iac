@@ -117,6 +117,8 @@ kind: Service
 metadata:
   name: stirlingpdf-service
   namespace: argocd
+  labels:
+    app: stirlingpdf
 spec:
   ports:
     - name: http

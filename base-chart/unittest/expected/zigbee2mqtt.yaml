@@ -70,6 +70,8 @@ kind: Service
 metadata:
   name: zigbee2mqtt-service
   namespace: argocd
+  labels:
+    app: zigbee2mqtt
 spec:
   ports:
     - name: http

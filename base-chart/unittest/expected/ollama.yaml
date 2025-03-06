@@ -46,6 +46,8 @@ kind: Service
 metadata:
   name: ollama-service
   namespace: argocd
+  labels:
+    app: ollama
 spec:
   ports:
     - name: http

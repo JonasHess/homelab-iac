@@ -6,10 +6,13 @@ metadata:
   name: tgtg-config-map
   namespace: argocd
 data:
-  SLEEP_TIME: "60"
+  SLEEP_TIME: "15"
   TZ: "Europe/Berlin"
   LOCALE: "de_DE"
   NTFY: "true"
+  TELEGRAM: "true"
+  TELEGRAM_ONLY_RESERVATIONS: "true"
+  METRICS: "true"
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: v1
@@ -51,6 +54,21 @@ spec:
   resources:
     requests:
       storage: 10Gi
+---
+# Source: homelab-base-chart/templates/_generic/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: tgtg-service
+  namespace: argocd
+  labels:
+    app: tgtg
+spec:
+  ports:
+    - name: http
+      port: 8000
+  selector:
+    app: tgtg
 ---
 # Source: homelab-base-chart/templates/_generic/deployment.yaml
 apiVersion: apps/v1
@@ -111,3 +129,29 @@ spec:
     - secretKey: "TGTG_USERNAME"
       remoteRef:
         key: "/kind-homelab/tgtg/username"
+    - secretKey: "TELEGRAM_TOKEN"
+      remoteRef:
+        key: "/kind-homelab/tgtg/telegram_bot_token"
+    - secretKey: "TELEGRAM_CHAT_IDS"
+      remoteRef:
+        key: "/kind-homelab/tgtg/TELEGRAM_CHAT_IDS"
+---
+# Source: homelab-base-chart/templates/tgtg/serviceMonitor.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tgtg-monitor
+  namespace: argocd
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: tgtg
+  endpoints:
+  - port: 8000
+    interval: 30s
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - argocd

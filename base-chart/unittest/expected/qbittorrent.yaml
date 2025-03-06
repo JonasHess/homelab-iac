@@ -215,6 +215,8 @@ kind: Service
 metadata:
   name: qbittorrent-service
   namespace: argocd
+  labels:
+    app: qbittorrent
 spec:
   ports:
     - name: http

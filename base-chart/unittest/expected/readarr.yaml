@@ -88,6 +88,8 @@ kind: Service
 metadata:
   name: readarr-service
   namespace: argocd
+  labels:
+    app: readarr
 spec:
   ports:
     - name: http

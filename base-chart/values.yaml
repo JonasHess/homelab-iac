@@ -822,7 +822,7 @@ apps:
         ports:
           - name: http
             port: 8000
-  duplicati-prometheus-exporter:
+  duplicatiprometheusexporter:
     enabled: false
     generic:
       deployment:
@@ -832,4 +832,6 @@ apps:
           - name: http
             port: 5000
   cnpg:
+    enabled: false
+  zfs:
     enabled: false
