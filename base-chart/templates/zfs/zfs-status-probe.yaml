@@ -13,7 +13,7 @@ spec:
   targets:
     staticConfig:
       static:
-      - {{ .Values.serverip }}:9134
+      - http://{{ .Values.serverip }}:9134
   metricRelabelings:
   - action: keep
     regex: .*

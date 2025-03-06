@@ -14,7 +14,7 @@ spec:
   targets:
     staticConfig:
       static:
-      - :9134
+      - http://:9134
   metricRelabelings:
   - action: keep
     regex: .*
