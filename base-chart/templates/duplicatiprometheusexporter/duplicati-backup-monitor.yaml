@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: duplicati-backup-monitor
+  name: duplicatiprometheusexporter-monitor
   namespace: argocd
   labels:
     prometheus: kube-prometheus-stack-prometheus
@@ -11,7 +11,7 @@ spec:
     matchLabels:
       app: duplicatiprometheusexporter
   endpoints:
-  - port: "5000"
+  - port: http
     interval: 30s
     honorLabels: true
   namespaceSelector:
