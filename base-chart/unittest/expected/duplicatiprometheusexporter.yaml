@@ -52,7 +52,7 @@ spec:
     matchLabels:
       app: duplicatiprometheusexporter
   endpoints:
-  - port: 5000
+  - port: "5000"
     interval: 30s
     honorLabels: true
   namespaceSelector:
