@@ -37,10 +37,10 @@ spec:
                   selector:
                     matchLabels:
                       app: prometheus-prometheus
-            # additionalScrapeConfigsSecret:
-            #   enabled: true
-            #   name: prometheus-scrape-secret
-            #   key: scrape-config.yaml
+            additionalScrapeConfigsSecret:
+              enabled: true
+              name: prometheus-scrape-secret
+              key: scrape-config.yaml
           persistentVolumeClaim:
             existingClaim: prometheus-prometheus-pvc
 

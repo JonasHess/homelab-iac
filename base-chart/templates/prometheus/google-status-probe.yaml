@@ -1,0 +1,23 @@
+{{- if .Values.apps.prometheus.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: google-status-probe
+  namespace: argocd
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
+spec:
+  interval: 30s
+  module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter:9115
+  targets:
+    staticConfig:
+      static:
+      - https://google.de
+  metricRelabelings:
+  - action: keep
+    regex: .*
+    sourceLabels: [__name__]
+{{- end }}
