@@ -7320,11 +7320,7 @@ spec:
             kubeControllerManager: false
             kubeProxy: false
             kubeSchedulerAlerting: false
-        
-        prometheus-blackbox-exporter:
-          enabled: true
-          serviceMonitor:
-            enabled: true
+
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd
@@ -7356,6 +7352,7 @@ spec:
           enabled: true
           labels:
             prometheus: kube-prometheus-stack-prometheus
+            release: kube-prometheus-stack
         config:
           modules:
             http_2xx:
