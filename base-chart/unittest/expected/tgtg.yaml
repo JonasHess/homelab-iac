@@ -144,12 +144,13 @@ metadata:
   namespace: argocd
   labels:
     prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
       app: tgtg
   endpoints:
-  - port: 8000
+  - port: "8000"
     interval: 30s
     honorLabels: true
   namespaceSelector:
