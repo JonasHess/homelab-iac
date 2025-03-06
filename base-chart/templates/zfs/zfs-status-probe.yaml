@@ -10,6 +10,8 @@ metadata:
 spec:
   interval: 30s
   module: http_2xx
+  prober:
+    url: prometheus-blackbox-exporter:9115
   targets:
     staticConfig:
       static:

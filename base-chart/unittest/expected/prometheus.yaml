@@ -7352,20 +7352,17 @@ spec:
     targetRevision: 9.3.0
     helm:
       values: |
+        serviceMonitor:
+          enabled: true
+          labels:
+            prometheus: kube-prometheus-stack-prometheus
         config:
           modules:
             http_2xx:
               prober: http
               timeout: 5s
               http:
-                valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-                method: GET
                 preferred_ip_protocol: "ip4"
-                no_follow_redirects: false
-                fail_if_ssl: false
-                fail_if_not_ssl: false
-                tls_config:
-                  insecure_skip_verify: tru
 
   destination:
     server: "https://kubernetes.default.svc"
