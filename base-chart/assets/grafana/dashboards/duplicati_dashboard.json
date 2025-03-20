@@ -18,9 +18,8 @@
 	"editable": true,
 	"fiscalYearStartMonth": 0,
 	"graphTooltip": 0,
-	"id": null,
+	"id": 334,
 	"links": [],
-	"liveNow": false,
 	"panels": [
 		{
 			"datasource": {
@@ -132,398 +131,6 @@
 		{
 			"datasource": {
 				"type": "prometheus",
-				"uid": "prometheus"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"custom": {
-						"fillOpacity": 70,
-						"hideFrom": {
-							"legend": false,
-							"tooltip": false,
-							"viz": false
-						},
-						"lineWidth": 1
-					},
-					"mappings": [
-						{
-							"options": {
-								"0": {
-									"color": "dark-green",
-									"index": 0,
-									"text": "Success"
-								},
-								"1": {
-									"color": "dark-yellow",
-									"index": 1,
-									"text": "Warning"
-								},
-								"2": {
-									"color": "dark-red",
-									"index": 2,
-									"text": "Fail"
-								}
-							},
-							"type": "value"
-						}
-					],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
-							}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 8,
-				"w": 12,
-				"x": 0,
-				"y": 0
-			},
-			"id": 12,
-			"interval": "1h",
-			"options": {
-				"colWidth": 0.9,
-				"legend": {
-					"displayMode": "list",
-					"placement": "bottom",
-					"showLegend": true
-				},
-				"rowHeight": 0.9,
-				"showValue": "auto",
-				"tooltip": {
-					"mode": "none",
-					"sort": "none"
-				}
-			},
-			"pluginVersion": "11.4.0",
-			"targets": [
-				{
-					"editorMode": "code",
-					"expr": "duplicati_ops_result{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
-					"interval": "",
-					"legendFormat": " ",
-					"range": true,
-					"refId": "A"
-				}
-			],
-			"title": "Backup Success",
-			"type": "status-history"
-		},
-		{
-			"datasource": {
-				"type": "prometheus",
-				"uid": "${datasource}"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"mappings": [],
-					"max": 100,
-					"min": 0,
-					"noValue": "0",
-					"thresholds": {
-						"mode": "percentage",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
-							},
-							{
-								"color": "#EAB839",
-								"value": 80
-							},
-							{
-								"color": "red",
-								"value": 90
-							}
-						]
-					},
-					"unit": "percent"
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 4,
-				"w": 2,
-				"x": 0,
-				"y": 0
-			},
-			"id": 1,
-			"options": {
-				"minVizHeight": 75,
-				"minVizWidth": 75,
-				"orientation": "auto",
-				"reduceOptions": {
-					"calcs": [
-						"lastNotNull"
-					],
-					"fields": "",
-					"values": false
-				},
-				"showThresholdLabels": false,
-				"showThresholdMarkers": true,
-				"sizing": "auto"
-			},
-			"pluginVersion": "11.2.0",
-			"targets": [
-				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "${datasource}"
-					},
-					"editorMode": "code",
-					"exemplar": false,
-					"expr": "topk(1, duplicati_free_quota_space{backup_name=\"$backup_name\", operation_name=\"$operation\"}) / topk(1, duplicati_total_quota_space{backup_name=\"$backup_name\", operation_name=\"$operation\"})  * 100",
-					"instant": false,
-					"legendFormat": "__auto",
-					"range": true,
-					"refId": "A"
-				}
-			],
-			"title": "Storage usage",
-			"type": "gauge"
-		},
-		{
-			"datasource": {
-				"default": false,
-				"type": "prometheus",
-				"uid": "${datasource}"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"mappings": [
-						{
-							"options": {
-								"0": {
-									"color": "green",
-									"index": 0,
-									"text": "Success"
-								},
-								"1": {
-									"color": "yellow",
-									"index": 1,
-									"text": "Warning"
-								},
-								"2": {
-									"color": "red",
-									"index": 2,
-									"text": "Fail"
-								}
-							},
-							"type": "value"
-						}
-					],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
-							},
-							{
-								"color": "red",
-								"value": 80
-							}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 4,
-				"w": 2,
-				"x": 2,
-				"y": 0
-			},
-			"id": 11,
-			"options": {
-				"colorMode": "value",
-				"graphMode": "area",
-				"justifyMode": "auto",
-				"orientation": "auto",
-				"percentChangeColorMode": "standard",
-				"reduceOptions": {
-					"calcs": [
-						"lastNotNull"
-					],
-					"fields": "",
-					"values": false
-				},
-				"showPercentChange": false,
-				"textMode": "auto",
-				"wideLayout": true
-			},
-			"pluginVersion": "11.2.0",
-			"targets": [
-				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "${datasource}"
-					},
-					"editorMode": "code",
-					"exemplar": false,
-					"expr": "topk(1, duplicati_ops_result{backup_name=\"$backup_name\", operation_name=\"$operation\"})",
-					"instant": true,
-					"legendFormat": "__auto",
-					"range": false,
-					"refId": "A"
-				}
-			],
-			"title": "Last Result",
-			"type": "stat"
-		},
-		{
-			"datasource": {
-				"type": "prometheus",
-				"uid": "${datasource}"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"mappings": [],
-					"noValue": "0",
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "red",
-								"value": null
-							}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 4,
-				"w": 4,
-				"x": 4,
-				"y": 0
-			},
-			"id": 10,
-			"options": {
-				"colorMode": "value",
-				"graphMode": "area",
-				"justifyMode": "auto",
-				"orientation": "auto",
-				"percentChangeColorMode": "standard",
-				"reduceOptions": {
-					"calcs": [
-						"lastNotNull"
-					],
-					"fields": "",
-					"values": false
-				},
-				"showPercentChange": false,
-				"textMode": "auto",
-				"wideLayout": true
-			},
-			"pluginVersion": "11.2.0",
-			"targets": [
-				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "${datasource}"
-					},
-					"editorMode": "code",
-					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", result=\"Fail\", operation_name=\"$operation\"}",
-					"instant": false,
-					"legendFormat": "__auto",
-					"range": true,
-					"refId": "A"
-				}
-			],
-			"title": "Total $operation Failed [$backup_name]",
-			"type": "stat"
-		},
-		{
-			"datasource": {
-				"type": "prometheus",
-				"uid": "${datasource}"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "thresholds"
-					},
-					"mappings": [],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
-							},
-							{
-								"color": "red",
-								"value": 80
-							}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 4,
-				"w": 4,
-				"x": 8,
-				"y": 0
-			},
-			"id": 9,
-			"options": {
-				"colorMode": "value",
-				"graphMode": "area",
-				"justifyMode": "auto",
-				"orientation": "auto",
-				"percentChangeColorMode": "standard",
-				"reduceOptions": {
-					"calcs": [
-						"lastNotNull"
-					],
-					"fields": "",
-					"values": false
-				},
-				"showPercentChange": false,
-				"textMode": "auto",
-				"wideLayout": true
-			},
-			"pluginVersion": "11.2.0",
-			"targets": [
-				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "${datasource}"
-					},
-					"editorMode": "code",
-					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
-					"instant": false,
-					"legendFormat": "__auto",
-					"range": true,
-					"refId": "A"
-				}
-			],
-			"title": "Total $operation Success [$backup_name]",
-			"type": "stat"
-		},
-		{
-			"datasource": {
-				"type": "prometheus",
 				"uid": "${datasource}"
 			},
 			"fieldConfig": {
@@ -601,6 +208,7 @@
 					"sort": "none"
 				}
 			},
+			"pluginVersion": "11.4.0",
 			"targets": [
 				{
 					"datasource": {
@@ -634,6 +242,495 @@
 		{
 			"datasource": {
 				"type": "prometheus",
+				"uid": "prometheus"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"custom": {
+						"fillOpacity": 70,
+						"hideFrom": {
+							"legend": false,
+							"tooltip": false,
+							"viz": false
+						},
+						"lineWidth": 1
+					},
+					"mappings": [
+						{
+							"options": {
+								"0": {
+									"color": "dark-green",
+									"index": 0,
+									"text": "Success"
+								},
+								"1": {
+									"color": "dark-yellow",
+									"index": 1,
+									"text": "Warning"
+								},
+								"2": {
+									"color": "dark-red",
+									"index": 2,
+									"text": "Fail"
+								}
+							},
+							"type": "value"
+						}
+					],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 8,
+				"w": 12,
+				"x": 0,
+				"y": 8
+			},
+			"id": 12,
+			"interval": "1h",
+			"options": {
+				"colWidth": 0.9,
+				"legend": {
+					"displayMode": "list",
+					"placement": "bottom",
+					"showLegend": true
+				},
+				"rowHeight": 0.9,
+				"showValue": "auto",
+				"tooltip": {
+					"mode": "none",
+					"sort": "none"
+				}
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"editorMode": "code",
+					"expr": "max_over_time(duplicati_ops_result{backup_name=\"$backup_name\", operation_name=\"$operation\"}[$__interval])",
+					"interval": "",
+					"legendFormat": " ",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Backup Success",
+			"type": "status-history"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "palette-classic"
+					},
+					"custom": {
+						"axisBorderShow": false,
+						"axisCenteredZero": false,
+						"axisColorMode": "text",
+						"axisLabel": "",
+						"axisPlacement": "auto",
+						"barAlignment": 0,
+						"barWidthFactor": 0.6,
+						"drawStyle": "line",
+						"fillOpacity": 0,
+						"gradientMode": "none",
+						"hideFrom": {
+							"legend": false,
+							"tooltip": false,
+							"viz": false
+						},
+						"insertNulls": false,
+						"lineInterpolation": "linear",
+						"lineWidth": 1,
+						"pointSize": 5,
+						"scaleDistribution": {
+							"type": "linear"
+						},
+						"showPoints": "auto",
+						"spanNulls": false,
+						"stacking": {
+							"group": "A",
+							"mode": "none"
+						},
+						"thresholdsStyle": {
+							"mode": "off"
+						}
+					},
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							},
+							{
+								"color": "red",
+								"value": 80
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 6,
+				"w": 12,
+				"x": 12,
+				"y": 8
+			},
+			"id": 6,
+			"options": {
+				"legend": {
+					"calcs": [],
+					"displayMode": "table",
+					"placement": "right",
+					"showLegend": true
+				},
+				"tooltip": {
+					"mode": "single",
+					"sort": "none"
+				}
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"expr": "duplicati_files_deleted{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
+					"instant": false,
+					"legendFormat": "Files deleted",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "$backup_name files deleted over time",
+			"type": "timeseries"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"mappings": [],
+					"max": 100,
+					"min": 0,
+					"noValue": "0",
+					"thresholds": {
+						"mode": "percentage",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							},
+							{
+								"color": "#EAB839",
+								"value": 80
+							},
+							{
+								"color": "red",
+								"value": 90
+							}
+						]
+					},
+					"unit": "percent"
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 4,
+				"w": 2,
+				"x": 0,
+				"y": 16
+			},
+			"id": 1,
+			"options": {
+				"minVizHeight": 75,
+				"minVizWidth": 75,
+				"orientation": "auto",
+				"reduceOptions": {
+					"calcs": [
+						"lastNotNull"
+					],
+					"fields": "",
+					"values": false
+				},
+				"showThresholdLabels": false,
+				"showThresholdMarkers": true,
+				"sizing": "auto"
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"exemplar": false,
+					"expr": "topk(1, duplicati_free_quota_space{backup_name=\"$backup_name\", operation_name=\"$operation\"}) / topk(1, duplicati_total_quota_space{backup_name=\"$backup_name\", operation_name=\"$operation\"})  * 100",
+					"instant": false,
+					"legendFormat": "__auto",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Storage usage",
+			"type": "gauge"
+		},
+		{
+			"datasource": {
+				"default": false,
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"mappings": [
+						{
+							"options": {
+								"0": {
+									"color": "green",
+									"index": 0,
+									"text": "Success"
+								},
+								"1": {
+									"color": "yellow",
+									"index": 1,
+									"text": "Warning"
+								},
+								"2": {
+									"color": "red",
+									"index": 2,
+									"text": "Fail"
+								}
+							},
+							"type": "value"
+						}
+					],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							},
+							{
+								"color": "red",
+								"value": 80
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 4,
+				"w": 2,
+				"x": 2,
+				"y": 16
+			},
+			"id": 11,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"percentChangeColorMode": "standard",
+				"reduceOptions": {
+					"calcs": [
+						"lastNotNull"
+					],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"exemplar": false,
+					"expr": "topk(1, duplicati_ops_result{backup_name=\"$backup_name\", operation_name=\"$operation\"})",
+					"instant": true,
+					"legendFormat": "__auto",
+					"range": false,
+					"refId": "A"
+				}
+			],
+			"title": "Last Result",
+			"type": "stat"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"mappings": [],
+					"noValue": "0",
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "red",
+								"value": null
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 4,
+				"w": 4,
+				"x": 4,
+				"y": 16
+			},
+			"id": 10,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"percentChangeColorMode": "standard",
+				"reduceOptions": {
+					"calcs": [
+						"lastNotNull"
+					],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", result=\"Fail\", operation_name=\"$operation\"}",
+					"instant": false,
+					"legendFormat": "__auto",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Total $operation Failed [$backup_name]",
+			"type": "stat"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
+				"uid": "${datasource}"
+			},
+			"fieldConfig": {
+				"defaults": {
+					"color": {
+						"mode": "thresholds"
+					},
+					"mappings": [],
+					"thresholds": {
+						"mode": "absolute",
+						"steps": [
+							{
+								"color": "green",
+								"value": null
+							},
+							{
+								"color": "red",
+								"value": 80
+							}
+						]
+					}
+				},
+				"overrides": []
+			},
+			"gridPos": {
+				"h": 4,
+				"w": 4,
+				"x": 8,
+				"y": 16
+			},
+			"id": 9,
+			"options": {
+				"colorMode": "value",
+				"graphMode": "area",
+				"justifyMode": "auto",
+				"orientation": "auto",
+				"percentChangeColorMode": "standard",
+				"reduceOptions": {
+					"calcs": [
+						"lastNotNull"
+					],
+					"fields": "",
+					"values": false
+				},
+				"showPercentChange": false,
+				"textMode": "auto",
+				"wideLayout": true
+			},
+			"pluginVersion": "11.4.0",
+			"targets": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "${datasource}"
+					},
+					"editorMode": "code",
+					"expr": "duplicati_backup_ops_total{backup_name=\"$backup_name\", operation_name=\"$operation\", result=\"Success\"}",
+					"instant": false,
+					"legendFormat": "__auto",
+					"range": true,
+					"refId": "A"
+				}
+			],
+			"title": "Total $operation Success [$backup_name]",
+			"type": "stat"
+		},
+		{
+			"datasource": {
+				"type": "prometheus",
 				"uid": "${datasource}"
 			},
 			"description": "Backups and restore",
@@ -663,7 +760,7 @@
 				"h": 4,
 				"w": 4,
 				"x": 0,
-				"y": 4
+				"y": 20
 			},
 			"id": 8,
 			"options": {
@@ -683,7 +780,7 @@
 				"textMode": "auto",
 				"wideLayout": true
 			},
-			"pluginVersion": "11.2.0",
+			"pluginVersion": "11.4.0",
 			"targets": [
 				{
 					"datasource": {
@@ -732,7 +829,7 @@
 				"h": 4,
 				"w": 4,
 				"x": 4,
-				"y": 4
+				"y": 20
 			},
 			"id": 3,
 			"options": {
@@ -752,7 +849,7 @@
 				"textMode": "auto",
 				"wideLayout": true
 			},
-			"pluginVersion": "11.2.0",
+			"pluginVersion": "11.4.0",
 			"targets": [
 				{
 					"datasource": {
@@ -798,7 +895,7 @@
 				"h": 4,
 				"w": 4,
 				"x": 8,
-				"y": 4
+				"y": 20
 			},
 			"id": 2,
 			"options": {
@@ -818,7 +915,7 @@
 				"textMode": "auto",
 				"wideLayout": true
 			},
-			"pluginVersion": "11.2.0",
+			"pluginVersion": "11.4.0",
 			"targets": [
 				{
 					"datasource": {
@@ -900,7 +997,7 @@
 				"h": 6,
 				"w": 12,
 				"x": 0,
-				"y": 8
+				"y": 24
 			},
 			"id": 7,
 			"options": {
@@ -915,7 +1012,7 @@
 					"sort": "none"
 				}
 			},
-			"pluginVersion": "10.4.3",
+			"pluginVersion": "11.4.0",
 			"targets": [
 				{
 					"datasource": {
@@ -981,105 +1078,7 @@
 						"mode": "absolute",
 						"steps": [
 							{
-								"color": "green",
-								"value": null
-							},
-							{
-								"color": "red",
-								"value": 80
-							}
-						]
-					}
-				},
-				"overrides": []
-			},
-			"gridPos": {
-				"h": 6,
-				"w": 12,
-				"x": 12,
-				"y": 8
-			},
-			"id": 6,
-			"options": {
-				"legend": {
-					"calcs": [],
-					"displayMode": "table",
-					"placement": "right",
-					"showLegend": true
-				},
-				"tooltip": {
-					"mode": "single",
-					"sort": "none"
-				}
-			},
-			"pluginVersion": "10.4.3",
-			"targets": [
-				{
-					"datasource": {
-						"type": "prometheus",
-						"uid": "${datasource}"
-					},
-					"editorMode": "code",
-					"expr": "duplicati_files_deleted{backup_name=\"$backup_name\", operation_name=\"$operation\"}",
-					"instant": false,
-					"legendFormat": "Files deleted",
-					"range": true,
-					"refId": "A"
-				}
-			],
-			"title": "$backup_name files deleted over time",
-			"type": "timeseries"
-		},
-		{
-			"datasource": {
-				"type": "prometheus",
-				"uid": "${datasource}"
-			},
-			"fieldConfig": {
-				"defaults": {
-					"color": {
-						"mode": "palette-classic"
-					},
-					"custom": {
-						"axisBorderShow": false,
-						"axisCenteredZero": false,
-						"axisColorMode": "text",
-						"axisLabel": "",
-						"axisPlacement": "auto",
-						"barAlignment": 0,
-						"barWidthFactor": 0.6,
-						"drawStyle": "line",
-						"fillOpacity": 0,
-						"gradientMode": "none",
-						"hideFrom": {
-							"legend": false,
-							"tooltip": false,
-							"viz": false
-						},
-						"insertNulls": false,
-						"lineInterpolation": "linear",
-						"lineWidth": 1,
-						"pointSize": 5,
-						"scaleDistribution": {
-							"type": "linear"
-						},
-						"showPoints": "auto",
-						"spanNulls": false,
-						"stacking": {
-							"group": "A",
-							"mode": "none"
-						},
-						"thresholdsStyle": {
-							"mode": "off"
-						}
-					},
-					"mappings": [],
-					"thresholds": {
-						"mode": "absolute",
-						"steps": [
-							{
-								"color": "green",
-								"value": null
+								"color": "green"
 							},
 							{
 								"color": "red",
@@ -1094,7 +1093,7 @@
 				"h": 7,
 				"w": 24,
 				"x": 0,
-				"y": 14
+				"y": 30
 			},
 			"id": 5,
 			"options": {
@@ -1141,8 +1140,9 @@
 			"type": "timeseries"
 		}
 	],
+	"preload": false,
 	"refresh": "1m",
-	"schemaVersion": 39,
+	"schemaVersion": 40,
 	"tags": [
 		"Backup",
 		"Duplicati"
@@ -1151,7 +1151,6 @@
 		"list": [
 			{
 				"current": {
-					"selected": false,
 					"text": "test-duplicati",
 					"value": "test-duplicati"
 				},
@@ -1160,9 +1159,7 @@
 					"uid": "${datasource}"
 				},
 				"definition": "label_values(backup_name)",
-				"hide": 0,
 				"includeAll": false,
-				"multi": false,
 				"name": "backup_name",
 				"options": [],
 				"query": {
@@ -1171,13 +1168,10 @@
 				},
 				"refresh": 1,
 				"regex": "",
-				"skipUrlSync": false,
-				"sort": 0,
 				"type": "query"
 			},
 			{
 				"current": {
-					"selected": true,
 					"text": "Backup",
 					"value": "Backup"
 				},
@@ -1186,10 +1180,8 @@
 					"uid": "${datasource}"
 				},
 				"definition": "label_values(operation_name)",
-				"hide": 0,
 				"includeAll": false,
 				"label": "operation",
-				"multi": false,
 				"name": "operation",
 				"options": [],
 				"query": {
@@ -1198,27 +1190,20 @@
 				},
 				"refresh": 1,
 				"regex": "",
-				"skipUrlSync": false,
-				"sort": 0,
 				"type": "query"
 			},
 			{
 				"current": {
-					"selected": false,
 					"text": "prometheus",
 					"value": "ddyar1y1798u8a"
 				},
-				"hide": 0,
 				"includeAll": false,
 				"label": "datasource",
-				"multi": false,
 				"name": "datasource",
 				"options": [],
 				"query": "prometheus",
-				"queryValue": "",
 				"refresh": 1,
 				"regex": "",
-				"skipUrlSync": false,
 				"type": "datasource"
 			}
 		]
@@ -1230,7 +1215,7 @@
 	"timepicker": {},
 	"timezone": "browser",
 	"title": "Duplicati Backup Dashboard",
-	"version": 2,
 	"uid": "ee7fdlyarp9mod",
+	"version": 1,
 	"weekStart": ""
 }
