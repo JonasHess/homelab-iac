@@ -1,0 +1,11 @@
+apps:
+  immichold:
+    importJob:
+      enabled: false
+      uploadPath: "/mnt/import/library/upload/"
+    generic:
+      persistentVolumeClaims:
+        library: "/mnt/tank1/encrypted/apps/immich-old/library"
+        postgresql: "/mnt/tank1/encrypted/apps/immich-old/postgresql"
+        redis: "/mnt/tank1/encrypted/apps/immich-old/redis"
+        cli: "/mnt/tank1/encrypted/apps/immich-old/immich-old"
