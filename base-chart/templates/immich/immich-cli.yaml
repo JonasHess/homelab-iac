@@ -1,36 +1,49 @@
-{{- if .Values.apps.immich.enabled -}}
-apiVersion: v1
-kind: Pod
+{{- if and .Values.apps.immich.enabled .Values.apps.immich.importJob.enabled -}}
+{{- if not .Values.apps.immich.importJob.uploadPath -}}
+{{- fail "Upload path must be defined in .Values.apps.immich.importJob.uploadPath" -}}
+{{- end -}}
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: immich-cli
+  name: immich-cli-upload
   namespace: argocd
   labels:
     app: immich
-    component: cli
+    component: cli-job
 spec:
-  containers:
-    - name: cli
-      image: ghcr.io/immich-app/immich-cli:latest
-      imagePullPolicy: IfNotPresent
-      # Set the container to always run - in real usage, you'd probably want to use a Job or CronJob
-      command:
-        - sleep
-        - "infinity"
-      env:
-        - name: IMMICH_INSTANCE_URL
-          value: "http://immich-server:2283/api"
-        - name: IMMICH_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: immich-cli-credentials
-              key: api_key
-      volumeMounts:
+  template:
+    metadata:
+      labels:
+        app: immich
+        component: cli-job
+    spec:
+      containers:
+        - name: cli
+          image: ghcr.io/immich-app/immich-cli:latest
+          imagePullPolicy: IfNotPresent
+          workingDir: /usr/src/app/dist
+          command:
+            - node
+            - index.js
+            - upload
+            - --recursive
+            - {{ .Values.apps.immich.importJob.uploadPath | quote }}
+          env:
+            - name: IMMICH_INSTANCE_URL
+              value: "http://immich-server:2283/api"
+            - name: IMMICH_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: immich-cli-credentials
+                  key: api_key
+          volumeMounts:
+            - name: library
+              mountPath: /mnt/import
+              readOnly: true
+      volumes:
         - name: library
-          mountPath: /mnt/import
-          readOnly: true
-  volumes:
-    - name: library
-      persistentVolumeClaim:
-        claimName: immich-cli-pvc
-  restartPolicy: Always
+          persistentVolumeClaim:
+            claimName: immich-cli-pvc
+      restartPolicy: Never
+  backoffLimit: 0  # No retries
 {{- end -}}
