@@ -8,4 +8,4 @@ apps:
         library: "/mnt/tank0/encrypted/apps/immich/library"
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
-        cli: "/mnt/tank0/encrypted/apps/immich-old"
+        cli: "/mnt/tank0/encrypted/apps/immich-old/immich-old"
