@@ -30,7 +30,7 @@ spec:
             - {{ .Values.apps.immich.importJob.uploadPath | quote }}
           env:
             - name: IMMICH_INSTANCE_URL
-              value: "http://immich-server:2283/api"
+              value: "http://immich-app-server:2283/api"
             - name: IMMICH_API_KEY
               valueFrom:
                 secretKeyRef:

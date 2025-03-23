@@ -773,7 +773,7 @@ apps:
         https:
           - subdomain: "immich"
             port: 2283
-            service: "immich-server"
+            service: "immich-app-server"
   search:
     enabled: false
     generic:

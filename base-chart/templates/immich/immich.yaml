@@ -2,7 +2,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: immich-server
+  name: immich-app-server
   namespace: argocd
 spec:
   replicas: 1
@@ -84,7 +84,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: immich-server
+  name: immich-app-server
   namespace: argocd
   labels:
     app: immich
@@ -102,7 +102,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: immich-machine-learning
+  name: immich-app-machine-learning
   namespace: argocd
 spec:
   replicas: 1
@@ -160,7 +160,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: immich-machine-learning
+  name: immich-app-machine-learning
   namespace: argocd
   labels:
     app: immich
