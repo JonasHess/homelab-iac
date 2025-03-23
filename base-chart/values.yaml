@@ -62,6 +62,21 @@ apps:
           - subdomain: "drone"
             port: 8080
             service: "drone-helm"
+
+  immichold:
+    enabled: false
+    generic:
+      persistentVolumeClaims:
+        library: "/mnt/somewhere/encrypted/apps/immich/library"
+        postgresql: "/mnt/somewhere/encrypted/apps/immich/postgresql"
+        redis: "/mnt/somewhere/encrypted/apps/immich/redis"
+      persistentVolume:
+        cnpg: "/mnt/somewhere/encrypted/apps/immich/cnpg"
+      ingress:
+        https:
+          - subdomain: "immichold"
+            port: 2283
+            service: "immichold-server"
   prowlarr:
     enabled: false
     generic:
