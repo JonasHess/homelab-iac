@@ -733,6 +733,21 @@ apps:
         hostPath: "/mnt/somewhere/unencrypted/apps/githubarc/storage/standard"
   immich:
     enabled: false
+    resources:
+      server:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1000m"
+      machineLearning:
+        requests:
+          memory: "2Gi"
+          cpu: "1000m"
+        limits:
+          memory: "4Gi"
+          cpu: "2000m"
     generic:
       persistentVolumeClaims:
         library: "/mnt/somewhere/encrypted/apps/immich/library"
