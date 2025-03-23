@@ -1,0 +1,36 @@
+{{- if .Values.apps.immich.enabled -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: immich-cli
+  namespace: argocd
+  labels:
+    app: immich
+    component: cli
+spec:
+  containers:
+    - name: cli
+      image: ghcr.io/immich-app/immich-cli:latest
+      imagePullPolicy: IfNotPresent
+      # Set the container to always run - in real usage, you'd probably want to use a Job or CronJob
+      command:
+        - sleep
+        - "infinity"
+      env:
+        - name: IMMICH_INSTANCE_URL
+          value: "http://immich-server:2283/api"
+        - name: IMMICH_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: immich-cli-credentials
+              key: api_key
+      volumeMounts:
+        - name: library
+          mountPath: /mnt/import
+          readOnly: true
+  volumes:
+    - name: library
+      persistentVolumeClaim:
+        claimName: immich-cli-pvc
+  restartPolicy: Always
+{{- end -}}
