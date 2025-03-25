@@ -240,4 +240,11 @@ input#serviceFilter.form-control.filter-box {
     .keyboard-info {
         display: none;
     }
+
+    /* Mobile-specific layout changes to reduce the top gap */
+    .search-container {
+        justify-content: flex-start;
+        padding-top: 2rem;
+        min-height: auto;
+    }
 }
