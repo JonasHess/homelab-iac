@@ -47,20 +47,25 @@ spec:
             # Add grpc_web to help with some network configurations
             grpc_web: true
 
-          # Registries configuration
+          # Registries configuration with explicit anonymous access
           registries:
             - name: Docker Hub
               prefix: docker.io
               api_url: https://registry-1.docker.io
               defaultns: library
+              credentials: anonymous
 
             - name: GitHub Container Registry
               prefix: ghcr.io
               api_url: https://ghcr.io
+              credentials: anonymous
+              limit: 0
 
             - name: LinuxServer.io
               prefix: lscr.io
               api_url: https://registry-1.docker.io
+              credentials: anonymous
+              limit: 0
 
           # Log level: debug for troubleshooting
           logLevel: debug
