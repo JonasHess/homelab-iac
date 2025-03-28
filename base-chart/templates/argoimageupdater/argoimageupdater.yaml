@@ -10,26 +10,26 @@ metadata:
     # This label tells ArgoCD Image Updater to manage this application
     argocd-image-updater.argoproj.io/managed: "true"
   annotations:
-    # Critical for self-updates - explicitly specify the image to update
-    argocd-image-updater.argoproj.io/image-list: "argoimageupdater=argoproj/argocd-image-updater"
+    # Use the chart-name annotation for Helm updates
+    argocd-image-updater.argoproj.io/image-list: "chart-name=argocd-image-updater"
 
     # Image Updater annotations for self-management
     argocd-image-updater.argoproj.io/write-back-method: git
     argocd-image-updater.argoproj.io/git-branch: "chart-update/argoimageupdater/{{.NewTag}}"
     argocd-image-updater.argoproj.io/write-back-target: "base-chart/values.yaml"
 
-    # Force update setting - important for self-update cases
+    # Force update setting
     argocd-image-updater.argoproj.io/update-interval: "1m"
-    argocd-image-updater.argoproj.io/argoimageupdater.force-update: "true"
+    argocd-image-updater.argoproj.io/chart-name.force-update: "true"
 
-    # Helm chart update annotations (specific to updating itself)
-    argocd-image-updater.argoproj.io/argoimageupdater.helm.chart-name: argocd-image-updater
-    argocd-image-updater.argoproj.io/argoimageupdater.helm.repo-url: https://argoproj.github.io/argo-helm
-    argocd-image-updater.argoproj.io/argoimageupdater.update-strategy: semver
-    argocd-image-updater.argoproj.io/argoimageupdater.helm.version-constraint: ">=0.9.0"
-    argocd-image-updater.argoproj.io/argoimageupdater.allow-tags: "regexp:^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    argocd-image-updater.argoproj.io/argoimageupdater.platform: "helm"
-    argocd-image-updater.argoproj.io/argoimageupdater.helm.path-template: "apps.argoimageupdater.helm.targetRevision"
+    # Helm chart update annotations
+    argocd-image-updater.argoproj.io/chart-name.helm.chart-name: argocd-image-updater
+    argocd-image-updater.argoproj.io/chart-name.helm.repo-url: https://argoproj.github.io/argo-helm
+    argocd-image-updater.argoproj.io/chart-name.update-strategy: semver
+    argocd-image-updater.argoproj.io/chart-name.helm.version-constraint: ">=0.9.0"
+    argocd-image-updater.argoproj.io/chart-name.allow-tags: "regexp:^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    argocd-image-updater.argoproj.io/chart-name.platform: "helm"
+    argocd-image-updater.argoproj.io/chart-name.helm.path-template: "apps.argoimageupdater.helm.targetRevision"
 spec:
   project: default
   source:
@@ -44,36 +44,10 @@ spec:
             serverAddress: argocd-server.argocd.svc
             insecure: true
             plaintext: true
-            # Add grpc_web to help with some network configurations
             grpc_web: true
-
-          # Registries configuration with explicit anonymous access
-          registries:
-            - name: Docker Hub
-              prefix: docker.io
-              api_url: https://registry-1.docker.io
-              defaultns: library
-              credentials: anonymous
-
-            - name: GitHub Container Registry
-              prefix: ghcr.io
-              api_url: https://ghcr.io
-              credentials: anonymous
-              limit: 0
-
-            - name: LinuxServer.io
-              prefix: lscr.io
-              api_url: https://registry-1.docker.io
-              credentials: anonymous
-              limit: 0
 
           # Log level: debug for troubleshooting
           logLevel: debug
-
-        # Explicitly set service account
-        serviceAccount:
-          create: true
-          name: "argocd-image-updater"
 
         git:
           # Provider type
