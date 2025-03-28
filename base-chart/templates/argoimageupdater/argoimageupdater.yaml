@@ -6,6 +6,13 @@ metadata:
   namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  labels:
+    # Add labels for Argo Image Updater
+    argocd-image-updater.argoproj.io/managed: "true"
+  annotations:
+    # Annotations to enable image updates across all applications
+    argocd-image-updater.argoproj.io/write-back-method: git
+    argocd-image-updater.argoproj.io/git-branch: image-updater-branch
 spec:
   project: default
   source:
