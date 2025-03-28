@@ -864,3 +864,5 @@ apps:
     enabled: false
   zfs:
     enabled: false
+  argoimageupdater:
+    enabled: false

@@ -1,0 +1,62 @@
+{{- if .Values.apps.argoimageupdater.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-argoimageupdater
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argocd-image-updater
+    targetRevision: 0.9.1
+    helm:
+      values: |
+        config:
+          # ArgoCD server address
+          argocd:
+            serverAddress: argocd-server.argocd.svc
+            insecure: true
+            plaintext: true
+
+          # Registries configuration - using public registries without credentials
+          registries:
+            - name: Docker Hub
+              prefix: docker.io
+              api_url: https://registry-1.docker.io
+              defaultns: library
+
+            - name: GitHub Container Registry
+              prefix: ghcr.io
+              api_url: https://ghcr.io
+
+            - name: LinuxServer.io
+              prefix: lscr.io
+              api_url: https://registry-1.docker.io
+
+          # Log level: debug, info, warn, error
+          logLevel: info
+
+        # Default update strategy for all applications
+        applications:
+          - name: "*"
+            match_patterns:
+              - "*.yaml"
+            update_strategy: semver
+
+  # Destination cluster and namespace to deploy the application
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  # Sync policy
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+{{- end -}}
