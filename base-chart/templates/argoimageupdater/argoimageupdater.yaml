@@ -10,26 +10,23 @@ metadata:
     # This label tells ArgoCD Image Updater to manage this application
     argocd-image-updater.argoproj.io/managed: "true"
   annotations:
-    # Use the chart-name annotation for Helm updates
-    argocd-image-updater.argoproj.io/image-list: "chart-name=argocd-image-updater"
+    # Critical configuration: instead of image-list, use helm.chart
+    argocd-image-updater.argoproj.io/helm.chart: "argocd-image-updater"
+    argocd-image-updater.argoproj.io/helm.repo-url: "https://argoproj.github.io/argo-helm"
+    argocd-image-updater.argoproj.io/helm.strategy: "semver"
+    argocd-image-updater.argoproj.io/helm.constraint: ">=0.9.0"
+    argocd-image-updater.argoproj.io/helm.allow-tags: "regexp:^[0-9]+\\.[0-9]+\\.[0-9]+$"
 
-    # Image Updater annotations for self-management
+    # Write-back configuration
     argocd-image-updater.argoproj.io/write-back-method: git
     argocd-image-updater.argoproj.io/git-branch: "chart-update/argoimageupdater/{{.NewTag}}"
     argocd-image-updater.argoproj.io/write-back-target: "base-chart/values.yaml"
 
-    # Force update setting
+    # Update interval
     argocd-image-updater.argoproj.io/update-interval: "1m"
-    argocd-image-updater.argoproj.io/chart-name.force-update: "true"
 
-    # Helm chart update annotations
-    argocd-image-updater.argoproj.io/chart-name.helm.chart-name: argocd-image-updater
-    argocd-image-updater.argoproj.io/chart-name.helm.repo-url: https://argoproj.github.io/argo-helm
-    argocd-image-updater.argoproj.io/chart-name.update-strategy: semver
-    argocd-image-updater.argoproj.io/chart-name.helm.version-constraint: ">=0.9.0"
-    argocd-image-updater.argoproj.io/chart-name.allow-tags: "regexp:^[0-9]+\\.[0-9]+\\.[0-9]+$"
-    argocd-image-updater.argoproj.io/chart-name.platform: "helm"
-    argocd-image-updater.argoproj.io/chart-name.helm.path-template: "apps.argoimageupdater.helm.targetRevision"
+    # Path template for the update
+    argocd-image-updater.argoproj.io/helm.path-template: "apps.argoimageupdater.helm.targetRevision"
 spec:
   project: default
   source:
@@ -48,6 +45,10 @@ spec:
 
           # Log level: debug for troubleshooting
           logLevel: debug
+
+          # Helm-specific configuration
+          helm:
+            enable: true
 
         git:
           # Provider type
