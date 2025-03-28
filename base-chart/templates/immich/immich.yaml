@@ -19,6 +19,7 @@ spec:
       containers:
         - name: server
           image: ghcr.io/immich-app/immich-server:release
+          imagePullPolicy: Always
           ports:
             - containerPort: 2283
               name: http
@@ -119,6 +120,7 @@ spec:
       containers:
         - name: machine-learning
           image: ghcr.io/immich-app/immich-machine-learning:release
+          imagePullPolicy: Always
           resources:
             {{- with .Values.apps.immich.resources.machineLearning }}
             requests:
