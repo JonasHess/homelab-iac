@@ -5,7 +5,7 @@ metadata:
   name: cloudflare-ddns-config-map
   namespace: argocd
 data:
-  CRON_JOB: '* * * * *'
+  CRON_JOB: {{ .Values.apps.cloudflareddns.cron_job | quote }}
   AUTH_METHOD: global
   RECORD_NAME: {{ .Values.domain }}
   RECORD_TYPE: 'A'

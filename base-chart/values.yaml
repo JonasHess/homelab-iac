@@ -787,6 +787,7 @@ apps:
             port: 3000
   cloudflareddns:
     enabled: false
+    cron_job: '5 * * * *'
     generic:
       deployment:
         image: "zimmermq/cloudflare-ddns:main"
