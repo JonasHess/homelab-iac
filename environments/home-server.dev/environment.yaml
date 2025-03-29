@@ -1,0 +1,16 @@
+serverip: 192.168.1.5
+username: root
+cluster-name: home-server.dev
+ip-range: 192.168.1.91-192.168.1.100
+
+domain: "home-server.dev"
+cloudflare:
+  email: "Jonas@Hess.pm"
+letsencrypt:
+  email: "Jonas@Hess.pm"
+traefik_forward_auth:
+  oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+  oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+apps:
+  akeyless:
+    path: "/home-server.dev"

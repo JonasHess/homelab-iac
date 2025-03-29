@@ -1,0 +1,14 @@
+apps:
+  traefik:
+    additionalExposedPorts:
+      plex:
+        port: 32400
+        protocol: TCP
+    loadBalancerIP: "192.168.1.91"
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/data/apps/traefik"
+    middlewares:
+      cloudflare:
+        allowedCIDRs:
+          - 192.168.1.0/24

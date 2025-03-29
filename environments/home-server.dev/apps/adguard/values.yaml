@@ -1,0 +1,9 @@
+apps:
+  adguard:
+    generic:
+      deployment:
+        pvcMounts:
+          config:
+            hostPath: "/mnt/data/apps/adguard/config"
+          data:
+            hostPath: "/mnt/data/apps/adguard/data"
