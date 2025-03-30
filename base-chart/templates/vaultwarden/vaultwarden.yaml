@@ -28,15 +28,19 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
+        env:
+          SIGNUPS_ALLOWED: "false"
+          DOMAIN: "https://vaultwarden.{{ $.Values.domain }}"
+          WEBSOCKET_ENABLED: "true"
+          SENDS_ALLOWED: "true"
+          EMERGENCY_ACCESS_ALLOWED: "true"
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: vaultwarden
+    namespace: argocd
 
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
   {{- end -}}
