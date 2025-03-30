@@ -1,0 +1,5 @@
+apps:
+  vaultwarden:
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/tank1/encrypted/apps/vaultwarden/data"

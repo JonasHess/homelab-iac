@@ -1,0 +1,42 @@
+{{- if .Values.apps.vaultwarden.enabled -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vaultwarden
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: vaultwarden
+    repoURL: https://guerzon.github.io/vaultwarden
+    targetRevision: latest
+    helm:
+      valuesObject:
+        ingress:
+          enabled: false
+
+        persistence:
+          data:
+            enabled: true
+            type: pvc
+            existingClaim: vaultwarden-data
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vaultwarden
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  {{- end -}}

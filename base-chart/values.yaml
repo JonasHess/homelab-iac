@@ -871,3 +871,16 @@ apps:
       owner: "zimmermq"
     helm:
       targetRevision: "0.9.0"
+  vaultwarden:
+    enabled: false
+    generic:
+      persistentVolumeClaims:
+        data: "/mnt/somewhere/encrypted/apps/vaultwarden/data"
+      ingress:
+        https:
+          - subdomain: "vaultwarden"
+            port: 80
+            service: "vaultwarden"
+            middlewares:
+              - name: "traefik-forward-auth"
+                namespace: "argocd"
