@@ -9,7 +9,7 @@ spec:
   source:
     chart: vaultwarden
     repoURL: https://guerzon.github.io/vaultwarden
-    targetRevision: latest
+    targetRevision: v0.31.8
     helm:
       valuesObject:
         ingress:
