@@ -31,6 +31,10 @@ spec:
             cpu: 100m
             memory: 128Mi
 
+        adminToken:
+          existingSecret: "vaultwarden-secret"
+          existingSecretKey: "ADMIN_TOKEN"
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
