@@ -881,9 +881,6 @@ apps:
           - subdomain: "vaultwarden"
             port: 80
             service: "vaultwarden"
-            middlewares:
-              - name: "traefik-forward-auth"
-                namespace: "argocd"
     smtp:
       host: "smtp.example.com"
       from: "vaultwarden@example.com"
