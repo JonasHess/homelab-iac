@@ -3,3 +3,7 @@ apps:
     generic:
       persistentVolumeClaims:
         data: "/mnt/tank1/encrypted/apps/vaultwarden/data"
+    smtp:
+      host: "www594.your-server.de"
+      from: "vaultwarden@zimmermann.lat"
+      fromName: "Vaultwarden"

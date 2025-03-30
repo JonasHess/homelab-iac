@@ -35,6 +35,16 @@ spec:
           existingSecret: "vaultwarden-secret"
           existingSecretKey: "ADMIN_TOKEN"
 
+        smtp:
+          host: "{{ .Values.apps.vaultwarden.smtp.host }}"
+          from: "{{ .Values.apps.vaultwarden.smtp.from }}"
+          fromName: "{{ .Values.apps.vaultwarden.smtp.fromName }}"
+          existingSecret: "vaultwarden-smtp-secret"
+          username:
+            existingSecretKey: "SMTP_USERNAME"
+          password:
+            existingSecretKey: "SMTP_PASSWORD"
+
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

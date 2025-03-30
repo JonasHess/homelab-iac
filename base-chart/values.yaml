@@ -884,3 +884,7 @@ apps:
             middlewares:
               - name: "traefik-forward-auth"
                 namespace: "argocd"
+    smtp:
+      host: "smtp.example.com"
+      from: "vaultwarden@example.com"
+      fromName: "Vaultwarden"
