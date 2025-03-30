@@ -12,6 +12,8 @@ spec:
     targetRevision: v0.31.8
     helm:
       valuesObject:
+        domain: "https://vaultwarden.{{ $.Values.domain }}"
+        signupsAllowed: false
         ingress:
           enabled: false
 
@@ -28,12 +30,6 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
-        env:
-          SIGNUPS_ALLOWED: "false"
-          DOMAIN: "https://vaultwarden.{{ $.Values.domain }}"
-          WEBSOCKET_ENABLED: "true"
-          SENDS_ALLOWED: "true"
-          EMERGENCY_ACCESS_ALLOWED: "true"
 
   destination:
     server: https://kubernetes.default.svc
