@@ -1,8 +1,8 @@
 apps:
   immich:
     importJob:
-      enabled: true
-      uploadPath: "/mnt/import/library/upload/"
+      enabled: false
+      uploadPath: "/mnt/import/library/library/admin/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank1/encrypted/apps/immich/library"
