@@ -17,11 +17,11 @@ spec:
         ingress:
           enabled: false
 
-        persistence:
-          data:
-            enabled: true
-            type: pvc
-            existingClaim: vaultwarden-data
+        storage:
+          existingVolumeClaim:
+            dataPath: "/data"
+            attachmentsPath: "/data/attachments"
+            claimName: "vaultwarden-data"
 
         resources:
           limits:
