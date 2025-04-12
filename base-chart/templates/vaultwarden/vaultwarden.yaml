@@ -21,7 +21,7 @@ spec:
           existingVolumeClaim:
             dataPath: "/data"
             attachmentsPath: "/data/attachments"
-            claimName: "vaultwarden-data"
+            claimName: "vaultwarden-data-pvc"
 
         resources:
           limits:
