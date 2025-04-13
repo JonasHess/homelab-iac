@@ -1,4 +1,4 @@
-{{- if .Values.apps.immich.enabled -}}
+{{- if .Values.apps.immichold.enabled -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
