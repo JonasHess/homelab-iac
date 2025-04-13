@@ -27,7 +27,7 @@ spec:
             - index.js
             - upload
             - --recursive
-            - {{ .Values.apps.immich.importJob.uploadPath | quote }}
+            - "/mnt/import/"
           env:
             - name: IMMICH_INSTANCE_URL
               value: "http://immich-app-server:2283/api"

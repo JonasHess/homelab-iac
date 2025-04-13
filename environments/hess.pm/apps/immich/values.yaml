@@ -2,13 +2,12 @@ apps:
   immich:
     importJob:
       enabled: true
-      uploadPath: "/mnt/import/library/library/admin/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank0/encrypted/apps/immich/library"
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
-        cli: "/mnt/tank1/encrypted/apps/immich-old"
+        cli: "/mnt/tank1/encrypted/apps/immich-old/library/library/admin"
 
     smtp:
       enabled: true

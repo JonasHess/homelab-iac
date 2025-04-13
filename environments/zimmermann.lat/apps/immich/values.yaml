@@ -2,13 +2,12 @@ apps:
   immich:
     importJob:
       enabled: false
-      uploadPath: "/mnt/import/library/library/3312b68f-9fa6-48c2-a851-59ae2d764d44/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank1/encrypted/apps/immich/library"
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
-        cli: "/mnt/tank1/encrypted/apps/immich-old"
+        cli: "/mnt/tank1/encrypted/apps/immich-old/library/library/3312b68f-9fa6-48c2-a851-59ae2d764d44/"
     smtp:
       enabled: true
       host: "mail.your-server.de"
