@@ -46,6 +46,8 @@ spec:
               value: {{ .Values.apps.immich.smtp.enabled | quote }}
             - name: SMTP_HOST
               value: {{ .Values.apps.immich.smtp.host | quote }}
+            - name: SMTP_FROM
+              value: {{ .Values.apps.immich.smtp.from | quote }}
             - name: SMTP_IGNORE_CERT
               value: {{ .Values.apps.immich.smtp.ignoreCert | quote }}
             - name: SMTP_PORT

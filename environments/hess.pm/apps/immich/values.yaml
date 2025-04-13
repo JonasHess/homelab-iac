@@ -1,7 +1,7 @@
 apps:
   immich:
     importJob:
-      enabled: true
+      enabled: false
       uploadPath: "/mnt/import/library/upload/"
     generic:
       persistentVolumeClaims:
@@ -9,3 +9,8 @@ apps:
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
         cli: "/mnt/tank0/encrypted/apps/immich-old/immich-old"
+    smtp:
+      enabled: true
+      host: "email-smtp.eu-central-1.amazonaws.com"
+      username: "AKIAZE6KDVU2EPZKN2IL"
+      from: "Immich Photo Server <immich@hess.pm>"

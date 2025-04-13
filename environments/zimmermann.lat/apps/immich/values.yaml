@@ -13,3 +13,4 @@ apps:
       enabled: true
       host: "mail.your-server.de"
       username: "michael@zimmermann.lat"
+      from: "Immich Photo Server <michael@zimmermann.lat>"

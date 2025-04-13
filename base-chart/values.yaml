@@ -769,6 +769,7 @@ apps:
       ignoreCert: false
       port: 587
       username: "immich@example.com"
+      from: "Immich Photo Server <immich@example.com>"
     server:
       externalSubDomain: "immich"
     generic:
