@@ -1,14 +1,15 @@
 apps:
   immich:
     importJob:
-      enabled: false
-      uploadPath: "/mnt/import/library/upload/"
+      enabled: true
+      uploadPath: "/mnt/import/library/library/admin/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank0/encrypted/apps/immich/library"
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
-        cli: "/mnt/tank0/encrypted/apps/immich-old/immich-old"
+        cli: "/mnt/tank1/encrypted/apps/immich-old"
+
     smtp:
       enabled: true
       host: "email-smtp.eu-central-1.amazonaws.com"
