@@ -55,7 +55,7 @@ spec:
             - name: OAUTH_ISSUER_URL
               value: {{ .Values.traefik_forward_auth.oidc_issuer_url | quote }}
             - name: SERVER_EXTERNAL_DOMAIN
-              value: {{ printf "%s.%s" .Values.apps.immich.server.externalSubDomain  .Values.domain | quote }}
+              value: {{ printf "https://%s.%s" .Values.apps.immich.server.externalSubDomain  .Values.domain | quote }}
       containers:
         - name: server
           image: ghcr.io/immich-app/immich-server:release
