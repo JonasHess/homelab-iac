@@ -2,7 +2,7 @@ apps:
   immich:
     importJob:
       enabled: true
-      uploadPath: "/mnt/import/library/library/admin/"
+      uploadPath: "/mnt/import/library/library/d9ccb127-9d96-4f3b-9450-67852297c299/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank1/encrypted/apps/immich/library"
