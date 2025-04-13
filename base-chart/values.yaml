@@ -777,7 +777,7 @@ apps:
         library: "/mnt/somewhere/encrypted/apps/immich/library"
         postgresql: "/mnt/somewhere/encrypted/apps/immich/postgresql"
         redis: "/mnt/somewhere/encrypted/apps/immich/redis"
-        cli: "/mnt/somewhere/encrypted/apps/immich-old"
+        cli: ~
       ingress:
         https:
           - subdomain: "immich"

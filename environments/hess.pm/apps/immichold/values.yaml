@@ -2,7 +2,6 @@ apps:
   immichold:
     importJob:
       enabled: false
-      uploadPath: "/mnt/import/library/upload/"
     generic:
       persistentVolumeClaims:
         library: "/mnt/tank1/encrypted/apps/immich-old/library"

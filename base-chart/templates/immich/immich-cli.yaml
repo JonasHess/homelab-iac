@@ -1,6 +1,6 @@
 {{- if and .Values.apps.immich.enabled .Values.apps.immich.importJob.enabled -}}
-{{- if not .Values.apps.immich.importJob.uploadPath -}}
-{{- fail "Upload path must be defined in .Values.apps.immich.importJob.uploadPath" -}}
+{{- if not .Values.apps.immich.generic.persistentVolumeClaims.cli -}}
+{{- fail "Upload path must be defined in .Values.apps.immich.generic.persistentVolumeClaims.cli" -}}
 {{- end -}}
 apiVersion: batch/v1
 kind: Job
