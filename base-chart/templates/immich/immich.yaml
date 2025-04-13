@@ -32,6 +32,16 @@ spec:
           env:
             - name: OAUTH_CLIENT_ID
               value: {{ .Values.traefik_forward_auth.oidc_client_id | quote }}
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: immich-credentials
+                  key: client_secret
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: immich-credentials
+                  key: email_password
       containers:
         - name: server
           image: ghcr.io/immich-app/immich-server:release

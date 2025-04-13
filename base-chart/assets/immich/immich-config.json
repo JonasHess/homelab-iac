@@ -1,11 +1,4 @@
 {
-  "backup": {
-    "database": {
-      "cronExpression": "0 02 * * *",
-      "enabled": true,
-      "keepLastAmount": 14
-    }
-  },
   "ffmpeg": {
     "accel": "disabled",
     "accelDecode": false,
@@ -149,7 +142,7 @@
       "transport": {
         "host": "mail.your-server.de",
         "ignoreCert": true,
-        "password": "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+        "password": "${EMAIL_PASSWORD}",
         "port": 587,
         "username": "michael@zimmermann.lat"
       }
@@ -160,7 +153,7 @@
     "autoRegister": false,
     "buttonText": "Login with Cognito",
     "clientId": "${OAUTH_CLIENT_ID}",
-    "clientSecret": "XXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    "clientSecret": "${OAUTH_CLIENT_SECRET}",
     "defaultStorageQuota": 0,
     "enabled": true,
     "issuerUrl": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5",
