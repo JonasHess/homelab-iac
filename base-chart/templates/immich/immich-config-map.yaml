@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: immich-config
+  name: immich-config-map
   namespace: argocd
 data:
 {{- $files := .Files.Glob "assets/immich/*.json" }}
