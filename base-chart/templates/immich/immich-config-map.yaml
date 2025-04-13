@@ -5,7 +5,7 @@ metadata:
   name: immich-config-map
   namespace: argocd
 data:
-{{- $files := .Files.Glob "assets/immich/*.json" }}
+{{- $files := .Files.Glob "assets/immich/*.templ" }}
 {{- range $path, $file := $files }}
   {{ $path | base }}: |-
     {{ $file | toString | nindent 4 }}
