@@ -6,15 +6,15 @@
   },
   "notifications": {
     "smtp": {
-      "enabled": true,
+      "enabled": ${SMTP_ENABLED},
       "from": "Immich Photo Server",
       "replyTo": "",
       "transport": {
-        "host": "mail.your-server.de",
-        "ignoreCert": true,
+        "host": "${SMTP_HOST}",
+        "ignoreCert": ${SMTP_IGNORE_CERT},
         "password": "${EMAIL_PASSWORD}",
-        "port": 587,
-        "username": "michael@zimmermann.lat"
+        "port": ${SMTP_PORT},
+        "username": "${SMTP_USERNAME}"
       }
     }
   },
@@ -26,7 +26,7 @@
     "clientSecret": "${OAUTH_CLIENT_SECRET}",
     "defaultStorageQuota": 0,
     "enabled": true,
-    "issuerUrl": "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_A6gtz8gw5",
+    "issuerUrl": "${OAUTH_ISSUER_URL}",
     "mobileOverrideEnabled": false,
     "mobileRedirectUri": "",
     "profileSigningAlgorithm": "none",
@@ -39,7 +39,7 @@
     "enabled": false
   },
   "server": {
-    "externalDomain": "https://immich.zimmermann.lat",
+    "externalDomain": "${SERVER_EXTERNAL_DOMAIN}",
     "loginPageMessage": "",
     "publicUsers": true
   },

@@ -763,6 +763,14 @@ apps:
         limits:
           memory: "4Gi"
           cpu: "2000m"
+    smtp:
+      enabled: false
+      host: "smtp.example.com"
+      ignoreCert: false
+      port: 587
+      username: "immich@example.com"
+    server:
+      externalSubDomain: "immich"
     generic:
       persistentVolumeClaims:
         library: "/mnt/somewhere/encrypted/apps/immich/library"

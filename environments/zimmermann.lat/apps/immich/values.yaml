@@ -9,3 +9,7 @@ apps:
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
         cli: "/mnt/tank1/encrypted/apps/immich-old"
+    smtp:
+      enabled: true
+      host: "mail.your-server.de"
+      username: "michael@zimmermann.lat"

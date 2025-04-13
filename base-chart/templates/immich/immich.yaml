@@ -42,6 +42,20 @@ spec:
                 secretKeyRef:
                   name: immich-credentials
                   key: email_password
+            - name: SMTP_ENABLED
+              value: {{ .Values.apps.immich.smtp.enabled | quote }}
+            - name: SMTP_HOST
+              value: {{ .Values.apps.immich.smtp.host | quote }}
+            - name: SMTP_IGNORE_CERT
+              value: {{ .Values.apps.immich.smtp.ignoreCert | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.apps.immich.smtp.port | quote }}
+            - name: SMTP_USERNAME
+              value: {{ .Values.apps.immich.smtp.username | quote }}
+            - name: OAUTH_ISSUER_URL
+              value: {{ .Values.traefik_forward_auth.oidc_issuer_url | quote }}
+            - name: SERVER_EXTERNAL_DOMAIN
+              value: {{ printf "%s.%s" .Values.apps.immich.server.externalSubDomain  .Values.domain | quote }}
       containers:
         - name: server
           image: ghcr.io/immich-app/immich-server:release
