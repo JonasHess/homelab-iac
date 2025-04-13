@@ -1,7 +1,7 @@
 apps:
   immich:
     importJob:
-      enabled: true
+      enabled: false
       uploadPath: "/mnt/import/library/library/3312b68f-9fa6-48c2-a851-59ae2d764d44/"
     generic:
       persistentVolumeClaims:
