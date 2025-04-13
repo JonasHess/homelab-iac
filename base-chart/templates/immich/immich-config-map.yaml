@@ -1,0 +1,13 @@
+{{- if .Values.apps.immich.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immich-config
+  namespace: argocd
+data:
+{{- $files := .Files.Glob "assets/immich/*.json" }}
+{{- range $path, $file := $files }}
+  {{ $path | base }}: |-
+    {{ $file | toString | nindent 4 }}
+{{- end }}
+{{- end -}}
