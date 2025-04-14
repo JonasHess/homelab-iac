@@ -107,8 +107,8 @@ spec:
               value: "production"
             - name: IMMICH_WEB_URL
               value: "https://immich.{{ .Values.domain }}"
-            - name: LOG_LEVEL
-              value: "log"
+            - name: IMMICH_LOG_LEVEL
+              value: "debug"
             - name: TZ
               value: "Europe/Berlin"
             - name: IMMICH_CONFIG_FILE
