@@ -1,7 +1,5 @@
-{{- range $appName, $app := .Values.apps }}
-  {{- if $app.enabled }}
-    {{- if and $app.generic $app.generic.persistentVolume }}
-      {{- range $pvName, $pvPath := $app.generic.persistentVolume }}
+    {{- if and .Values. .Values..persistentVolume }}
+      {{- range $pvName, $pvPath := .Values..persistentVolume }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -26,5 +24,3 @@ spec:
     path: {{ $pvPath }}
       {{- end }}
     {{- end }}
-  {{- end }}
-{{- end }}

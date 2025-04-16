@@ -1,7 +1,5 @@
-{{- range $appName, $app := .Values.apps }}
-  {{- if $app.enabled }}
-    {{- if and $app.generic $app.generic.service }}
-      {{- $svc := $app.generic.service }}
+    {{- if and .Values. .Values..service }}
+      {{- $svc := .Values..service }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -24,5 +22,3 @@ spec:
   selector:
     app: {{ $appName }}
     {{- end }}
-  {{- end }}
-{{- end }}

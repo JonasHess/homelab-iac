@@ -267,6 +267,30 @@ def repair_helm_references():
                     f.write(updated_content)
                 print(f"Repaired Helm references in {yaml_file}")
 
+def fix_akeyless_references():
+    """Replace .Values.apps.akeyless.path with .Values.global.akeyless.path in all template files"""
+    for app_dir in OUTPUT_DIR.glob("*"):
+        if not app_dir.is_dir():
+            continue
+
+        templates_dir = app_dir / "templates"
+        if not templates_dir.exists():
+            continue
+
+        # Process each yaml file
+        for yaml_file in templates_dir.glob("**/*.yaml"):
+            with open(yaml_file, "r") as f:
+                content = f.read()
+
+            # Simple string replacement for akeyless path
+            updated_content = content.replace(".Values.apps.akeyless.path", ".Values.global.akeyless.path")
+
+            # Write back if changed
+            if updated_content != content:
+                with open(yaml_file, "w") as f:
+                    f.write(updated_content)
+                print(f"Fixed akeyless references in {yaml_file}")
+
 def main():
     # Create chart directories and structure
     process_values_yaml()
@@ -285,6 +309,9 @@ def main():
 
     # Repair helm references
     repair_helm_references()
+
+    # Fix akeyless references specifically
+    fix_akeyless_references()
 
     print(f"Successfully split base chart into individual charts in {OUTPUT_DIR}")
 

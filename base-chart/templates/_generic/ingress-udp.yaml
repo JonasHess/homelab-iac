@@ -1,7 +1,5 @@
-{{- range $appName, $app := .Values.apps }}
-  {{- if $app.enabled }}
-    {{- if and $app.generic $app.generic.ingress $app.generic.ingress.udp }}
-      {{- range $ingress := $app.generic.ingress.udp }}
+    {{- if and .Values. .Values..ingress .Values..ingress.udp }}
+      {{- range $ingress := .Values..ingress.udp }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
@@ -18,5 +16,3 @@ spec:
           port: {{ $ingress.port }}
       {{- end }}
     {{- end }}
-  {{- end }}
-{{- end }}

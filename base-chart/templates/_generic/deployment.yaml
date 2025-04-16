@@ -1,7 +1,5 @@
-{{- range $appName, $app := .Values.apps }}
-  {{- if $app.enabled }}
-    {{- if and $app.generic $app.generic.deployment }}
-      {{- $deployment := $app.generic.deployment }}
+    {{- if and .Values. .Values..deployment }}
+      {{- $deployment := .Values..deployment }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -137,5 +135,3 @@ spec:
 
 
     {{- end }}
-  {{- end }}
-{{- end }}
