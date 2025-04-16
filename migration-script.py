@@ -3,6 +3,7 @@ import os
 import shutil
 import yaml
 import json
+import re
 from pathlib import Path
 
 # Define paths
@@ -229,6 +230,43 @@ def clean_template_files():
                     f.write(updated_content)
                 print(f"Cleaned conditionals in {yaml_file}")
 
+def repair_helm_references():
+    """Replace .Values.apps.[appname] with .Values in template files"""
+    for app_dir in OUTPUT_DIR.glob("*"):
+        if not app_dir.is_dir():
+            continue
+
+        app_name = app_dir.name
+        templates_dir = app_dir / "templates"
+        if not templates_dir.exists():
+            continue
+
+        # Process each yaml file
+        for yaml_file in templates_dir.glob("**/*.yaml"):
+            with open(yaml_file, "r") as f:
+                content = f.read()
+
+            # Replace .Values.apps.[appname] with .Values
+            # This regex handles different whitespace patterns and braces
+            pattern = re.compile(r'\.Values\.apps\.' + app_name + r'(\.[^\s\}\)]+|\s|\}|\))')
+
+            # Function to process each match and preserve what comes after the app name
+            def replace_match(match):
+                suffix = match.group(1)
+                # If suffix starts with a dot, keep it (it's a property path)
+                if suffix.startswith('.'):
+                    return '.Values' + suffix
+                # Otherwise it's likely a space, brace, or parenthesis that should be preserved
+                return '.Values' + suffix
+
+            updated_content = pattern.sub(replace_match, content)
+
+            # Write back if changed
+            if updated_content != content:
+                with open(yaml_file, "w") as f:
+                    f.write(updated_content)
+                print(f"Repaired Helm references in {yaml_file}")
+
 def main():
     # Create chart directories and structure
     process_values_yaml()
@@ -244,6 +282,9 @@ def main():
 
     # Clean app conditionals from template files
     clean_template_files()
+
+    # Repair helm references
+    repair_helm_references()
 
     print(f"Successfully split base chart into individual charts in {OUTPUT_DIR}")
 
