@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Define paths
 BASE_DIR = Path("base-chart")
-OUTPUT_DIR = Path("new-world")
+OUTPUT_DIR = Path("charts")
 TEMPLATES_DIR = BASE_DIR / "templates"
 ASSETS_DIR = BASE_DIR / "assets"
 
@@ -67,9 +67,16 @@ def process_values_yaml():
             if key != "apps":
                 app_values[key] = value
 
-        # Add app-specific values
+        # Add app-specific values - extract them directly without nesting under "app"
         if app_name != "generic" and app_name in apps:
-            app_values["app"] = apps[app_name]
+            app_specific_values = apps[app_name]
+
+            # If app has configuration, add it directly to values
+            # Skip the 'enabled' flag as it's not needed in individual charts
+            if isinstance(app_specific_values, dict):
+                for k, v in app_specific_values.items():
+                    if k != "enabled":  # Skip the enabled flag
+                        app_values[k] = v
 
         with open(app_dir / "values.yaml", "w") as f:
             yaml.dump(app_values, f, default_flow_style=False)

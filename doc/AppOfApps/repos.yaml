@@ -3,7 +3,7 @@ repos:
     base-chart-app.yaml
       version = main
      - values.yaml:
-  michael.pm:
+  zimmermann.lat:
     base-chart-app.yaml
       version = 2.0.0
     - values.yaml:
@@ -24,6 +24,7 @@ repos:
           immich-app.yaml <-- version = ~
           sftpgo-app.yaml
           plex-app.yaml
+
         Chart.yaml
         values.yaml
       immich:
@@ -43,11 +44,16 @@ values.yaml of immich app
 enabled: true
 gernic:
   deployment: true
+global:
+  domain: ~
 
 
 
 values.yaml of base-chart
 
+
+global:
+  domain: ~
 
 immich:
   enabled: true
