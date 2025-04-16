@@ -4,10 +4,10 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{$appName}}-{{ $pvName }}-pv"
+  name: "{{.Values.appName}}-{{ $pvName }}-pv"
   namespace: argocd
   labels:
-    app: "{{$appName}}-{{ $pvName }}"
+    app: "{{.Values.appName}}-{{ $pvName }}"
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:

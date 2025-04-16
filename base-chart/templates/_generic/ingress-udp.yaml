@@ -3,7 +3,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
-  name: {{ $appName }}-udp-{{ $ingress.port }}
+  name: {{ .Values.appName }}-udp-{{ $ingress.port }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
@@ -12,7 +12,7 @@ spec:
     - {{ $ingress.traefikEntryPoint }}
   routes:
     - services:
-        - name: {{ $appName }}-service
+        - name: {{ .Values.appName }}-service
           port: {{ $ingress.port }}
       {{- end }}
     {{- end }}

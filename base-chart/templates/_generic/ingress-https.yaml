@@ -5,7 +5,7 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
+  name: {{ .Values.appName }}-https-{{ $ingress.port }}-{{ $index }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
@@ -17,7 +17,7 @@ spec:
       kind: Rule
       priority: {{ default 10 $ingress.priority }}
       services:
-        - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
+        - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ .Values.appName }}-service{{ end }}
           port: {{ $ingress.port }}
       {{- if $ingress.middlewares }}
       middlewares:

@@ -3,10 +3,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $appName }}-service
+  name: {{ .Values.appName }}-service
   namespace: argocd
   labels:
-    app: {{ $appName }}
+    app: {{ .Values.appName }}
 spec:
   ports:
     {{- range $port := $svc.ports }}
@@ -20,5 +20,5 @@ spec:
       {{- end }}
     {{- end }}
   selector:
-    app: {{ $appName }}
+    app: {{ .Values.appName }}
     {{- end }}
