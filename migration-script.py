@@ -93,6 +93,19 @@ def process_values_yaml():
                     if k != "enabled":  # Skip the enabled flag
                         app_values[k] = v
 
+        # Add generic.appName for all charts except the generic chart itself
+        # Make sure we don't overwrite existing generic section
+        if app_name != "generic":
+            if "generic" not in app_values:
+                app_values["generic"] = {"appName": app_name}
+            else:
+                # Merge with existing generic section
+                if isinstance(app_values["generic"], dict):
+                    app_values["generic"]["appName"] = app_name
+                else:
+                    # If generic is not a dict for some reason, replace it
+                    app_values["generic"] = {"appName": app_name}
+
         with open(app_dir / "values.yaml", "w") as f:
             yaml.dump(app_values, f, default_flow_style=False)
 
