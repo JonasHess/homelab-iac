@@ -1,4 +1,4 @@
-    {{- if and .Values. .Values.deployment }}
+    {{- if .Values.deployment }}
       {{- $deployment := .Values.deployment }}
 apiVersion: apps/v1
 kind: Deployment

@@ -1,4 +1,4 @@
-    {{- if and .Values. .Values.service }}
+    {{- if .Values.service }}
       {{- $svc := .Values.service }}
 apiVersion: v1
 kind: Service

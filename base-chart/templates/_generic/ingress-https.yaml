@@ -1,4 +1,4 @@
-    {{- if and .Values. .Values.ingress }}
+    {{- if .Values.ingress }}
        {{- if .Values.ingress.https }}
          {{- range $index, $ingress := .Values.ingress.https }}
 ---
