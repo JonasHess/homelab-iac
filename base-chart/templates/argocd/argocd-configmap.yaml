@@ -1,4 +1,3 @@
-{{- if .Values.apps.argocd.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,4 +16,3 @@ data:
     clientSecret: $oidc.auth0.clientSecret
     requestedScopes: ["openid", "profile", "email"]
     requestedIDTokenClaims: {"groups": {"essential": true}}
-{{- end -}}

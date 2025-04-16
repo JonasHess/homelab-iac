@@ -135,6 +135,42 @@ def copy_assets():
                 shutil.rmtree(app_assets_dir)
             shutil.copytree(asset_dir, app_assets_dir)
 
+def fix_asset_references():
+    """Fix references to asset paths in YAML files"""
+    # Look for template files that might reference assets
+    for app_dir in OUTPUT_DIR.glob("*"):
+        if not app_dir.is_dir():
+            continue
+
+        templates_dir = app_dir / "templates"
+        if not templates_dir.exists():
+            continue
+
+        # Scan all yaml files in the templates directory
+        for yaml_file in templates_dir.glob("**/*.yaml"):
+            with open(yaml_file, "r") as f:
+                content = f.read()
+
+            # Replace asset paths
+            updated_content = content
+            # Fix references to assets/[app_name]/... to just assets/...
+            updated_content = updated_content.replace(f"assets/{app_dir.name}/", "assets/")
+
+            # Fix references like "assets/prometheus/dashboards/*.json"
+            for other_app in OUTPUT_DIR.glob("*"):
+                if not other_app.is_dir() or other_app.name == app_dir.name:
+                    continue
+
+                # Replace patterns like assets/prometheus/dashboards/ with assets/dashboards/
+                if f"assets/{other_app.name}/" in updated_content:
+                    updated_content = updated_content.replace(f"assets/{other_app.name}/", "assets/")
+
+            # Write back if changed
+            if updated_content != content:
+                with open(yaml_file, "w") as f:
+                    f.write(updated_content)
+                print(f"Updated asset references in {yaml_file}")
+
 def main():
     # Create chart directories and structure
     process_values_yaml()
@@ -144,6 +180,9 @@ def main():
 
     # Copy assets
     copy_assets()
+
+    # Fix asset references in template files
+    fix_asset_references()
 
     print(f"Successfully split base chart into individual charts in {OUTPUT_DIR}")
 
