@@ -1,5 +1,5 @@
-    {{- if and .Values. .Values..persistentVolume }}
-      {{- range $pvName, $pvPath := .Values..persistentVolume }}
+    {{- if and .Values. .Values.persistentVolume }}
+      {{- range $pvName, $pvPath := .Values.persistentVolume }}
 ---
 apiVersion: v1
 kind: PersistentVolume

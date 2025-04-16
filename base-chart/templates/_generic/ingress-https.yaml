@@ -1,6 +1,6 @@
-    {{- if and .Values. .Values..ingress }}
-       {{- if .Values..ingress.https }}
-         {{- range $index, $ingress := .Values..ingress.https }}
+    {{- if and .Values. .Values.ingress }}
+       {{- if .Values.ingress.https }}
+         {{- range $index, $ingress := .Values.ingress.https }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
