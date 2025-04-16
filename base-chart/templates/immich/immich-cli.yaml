@@ -1,4 +1,4 @@
-{{- if and .Values.apps.immich.enabled .Values.apps.immich.importJob.enabled -}}
+{{- if .Values.apps.immich.importJob.enabled -}}
 {{- if not .Values.apps.immich.generic.persistentVolumeClaims.cli -}}
 {{- fail "Upload path must be defined in .Values.apps.immich.generic.persistentVolumeClaims.cli" -}}
 {{- end -}}

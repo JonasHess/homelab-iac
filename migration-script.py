@@ -73,17 +73,13 @@ def process_values_yaml():
         app_values = {}
         global_values = {}
 
-        # Separate global values from app-specific values
+        # Extract global values from main values.yaml
         for key, value in values.items():
             if key != "apps":
                 if key in global_fields:
                     global_values[key] = value
 
-        # Add global section if there are global values
-        if global_values:
-            app_values["global"] = global_values
-
-        # Add app-specific values directly to values
+        # Add app-specific values first
         if app_name != "generic" and app_name in apps:
             app_specific_values = apps[app_name]
 
@@ -91,20 +87,32 @@ def process_values_yaml():
             if isinstance(app_specific_values, dict):
                 for k, v in app_specific_values.items():
                     if k != "enabled":  # Skip the enabled flag
-                        app_values[k] = v
+                        if k != "generic":  # Don't overwrite generic section yet
+                            app_values[k] = v
 
-        # Add generic.appName for all charts except the generic chart itself
-        # Make sure we don't overwrite existing generic section
+        # Now handle the generic section carefully
+        if "generic" not in app_values:
+            app_values["generic"] = {}
+        elif not isinstance(app_values["generic"], dict):
+            app_values["generic"] = {}
+
+        # Set the app name for all non-generic charts
         if app_name != "generic":
-            if "generic" not in app_values:
-                app_values["generic"] = {"appName": app_name}
-            else:
-                # Merge with existing generic section
-                if isinstance(app_values["generic"], dict):
-                    app_values["generic"]["appName"] = app_name
-                else:
-                    # If generic is not a dict for some reason, replace it
-                    app_values["generic"] = {"appName": app_name}
+            app_values["generic"]["appName"] = app_name
+
+        # Add global values under generic.global
+        if global_values:
+            app_values["generic"]["global"] = global_values
+
+        # If there was an existing generic section in the app config, merge it
+        if app_name != "generic" and app_name in apps:
+            app_specific_values = apps[app_name]
+            if isinstance(app_specific_values, dict) and "generic" in app_specific_values:
+                if isinstance(app_specific_values["generic"], dict):
+                    # Merge with existing generic section, but don't overwrite appName or global
+                    for k, v in app_specific_values["generic"].items():
+                        if k != "appName" and k != "global":
+                            app_values["generic"][k] = v
 
         with open(app_dir / "values.yaml", "w") as f:
             yaml.dump(app_values, f, default_flow_style=False)
@@ -304,6 +312,42 @@ def fix_akeyless_references():
                     f.write(updated_content)
                 print(f"Fixed akeyless references in {yaml_file}")
 
+def fix_global_references():
+    """Replace references to global fields with generic.global in all template files"""
+    # Define global fields that need reference updates
+    global_fields = [
+        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth"
+    ]
+
+    for app_dir in OUTPUT_DIR.glob("*"):
+        if not app_dir.is_dir():
+            continue
+
+        templates_dir = app_dir / "templates"
+        if not templates_dir.exists():
+            continue
+
+        # Process each yaml file
+        for yaml_file in templates_dir.glob("**/*.yaml"):
+            with open(yaml_file, "r") as f:
+                content = f.read()
+
+            updated_content = content
+
+            # Replace direct references to global fields
+            for field in global_fields:
+                # Replace .Values.field with .Values.generic.global.field
+                updated_content = updated_content.replace(
+                    f".Values.{field}",
+                    f".Values.generic.global.{field}"
+                )
+
+            # Write back if changed
+            if updated_content != content:
+                with open(yaml_file, "w") as f:
+                    f.write(updated_content)
+                print(f"Fixed global field references in {yaml_file}")
+
 def main():
     # Create chart directories and structure
     process_values_yaml()
@@ -325,6 +369,9 @@ def main():
 
     # Fix akeyless references specifically
     fix_akeyless_references()
+
+    # Fix global field references
+    fix_global_references()
 
     print(f"Successfully split base chart into individual charts in {OUTPUT_DIR}")
 

@@ -748,6 +748,8 @@ apps:
         hostPath: "/mnt/somewhere/unencrypted/apps/githubarc/storage/standard"
   immich:
     enabled: false
+    importJob:
+      enabled: false
     resources:
       server:
         requests:
