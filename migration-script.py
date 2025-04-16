@@ -11,7 +11,11 @@ OUTPUT_DIR = Path("charts")
 TEMPLATES_DIR = BASE_DIR / "templates"
 ASSETS_DIR = BASE_DIR / "assets"
 
-# Ensure output directory exists
+# Clean output directory if it exists
+if OUTPUT_DIR.exists():
+    shutil.rmtree(OUTPUT_DIR)
+
+# Create output directory
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 def create_chart_yaml(app_name, version="0.1.0", description=None):
@@ -171,6 +175,60 @@ def fix_asset_references():
                     f.write(updated_content)
                 print(f"Updated asset references in {yaml_file}")
 
+def clean_template_files():
+    """Remove app conditionals from template files"""
+    for app_dir in OUTPUT_DIR.glob("*"):
+        if not app_dir.is_dir():
+            continue
+
+        app_name = app_dir.name
+        templates_dir = app_dir / "templates"
+        if not templates_dir.exists():
+            continue
+
+        # Process each yaml file
+        for yaml_file in templates_dir.glob("**/*.yaml"):
+            with open(yaml_file, "r") as f:
+                content = f.read()
+
+            # Remove the opening conditional for this app
+            # Match patterns like {{- if .Values.apps.appname.enabled -}} with variable whitespace
+            updated_content = content
+
+            # Handle various whitespace patterns in the conditional
+            patterns = [
+                f"{{{{- if .Values.apps.{app_name}.enabled -}}}}",
+                f"{{{{- if  .Values.apps.{app_name}.enabled  -}}}}",
+                f"{{{{- if .Values.apps.{app_name}.enabled -}}}}\n",
+                f"{{{{-if .Values.apps.{app_name}.enabled-}}}}",
+                f"{{{{- if .Values.apps.{app_name}.enabled }}}}",
+                f"{{{{- if .Values.apps.{app_name}.enabled}}}}"
+            ]
+
+            for pattern in patterns:
+                if pattern in updated_content:
+                    updated_content = updated_content.replace(pattern, "")
+                    # Also try to remove ending conditional
+                    updated_content = updated_content.rstrip()
+                    if updated_content.endswith("{{- end -}}"):
+                        updated_content = updated_content[:-10]
+                    elif updated_content.endswith("{{- end }}"):
+                        updated_content = updated_content[:-10]
+                    elif updated_content.endswith("{{-end}}"):
+                        updated_content = updated_content[:-8]
+                    elif updated_content.endswith("{{end}}"):
+                        updated_content = updated_content[:-7]
+
+                    # Cleanup any trailing newlines but ensure there's one at the end
+                    updated_content = updated_content.rstrip() + "\n"
+                    break
+
+            # Write back if changed
+            if updated_content != content:
+                with open(yaml_file, "w") as f:
+                    f.write(updated_content)
+                print(f"Cleaned conditionals in {yaml_file}")
+
 def main():
     # Create chart directories and structure
     process_values_yaml()
@@ -183,6 +241,9 @@ def main():
 
     # Fix asset references in template files
     fix_asset_references()
+
+    # Clean app conditionals from template files
+    clean_template_files()
 
     print(f"Successfully split base chart into individual charts in {OUTPUT_DIR}")
 
