@@ -49,6 +49,11 @@ def process_values_yaml():
     # Add generic to the list of apps
     app_names.add("generic")
 
+    # Define global fields - those that should be moved under 'global'
+    global_fields = [
+        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth"
+    ]
+
     # Create a values file for each app
     for app_name in app_names:
         app_dir = OUTPUT_DIR / app_name
@@ -61,18 +66,23 @@ def process_values_yaml():
 
         # Create values.yaml
         app_values = {}
+        global_values = {}
 
-        # Add global values if relevant for this app
+        # Separate global values from app-specific values
         for key, value in values.items():
             if key != "apps":
-                app_values[key] = value
+                if key in global_fields:
+                    global_values[key] = value
 
-        # Add app-specific values - extract them directly without nesting under "app"
+        # Add global section if there are global values
+        if global_values:
+            app_values["global"] = global_values
+
+        # Add app-specific values directly to values
         if app_name != "generic" and app_name in apps:
             app_specific_values = apps[app_name]
 
             # If app has configuration, add it directly to values
-            # Skip the 'enabled' flag as it's not needed in individual charts
             if isinstance(app_specific_values, dict):
                 for k, v in app_specific_values.items():
                     if k != "enabled":  # Skip the enabled flag
