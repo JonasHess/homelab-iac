@@ -7,7 +7,7 @@ apps:
         library: "/mnt/tank0/encrypted/apps/immich/library"
         postgresql: "/mnt/tank1/encrypted/apps/immich/postgresql"
         redis: "/mnt/tank1/encrypted/apps/immich/redis"
-        cli: "/mnt/tank1/encrypted/apps/immich-old/library/library/admin"
+        cli: "/mnt/tank1/encrypted/apps/immich-old/library/library/f7bf1225-04c1-421d-b639-295a991458a3"
 
     smtp:
       enabled: true
