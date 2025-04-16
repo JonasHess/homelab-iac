@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import os
 import shutil
 import yaml
@@ -22,7 +23,6 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 def create_chart_yaml(app_name, version="0.1.0", description=None):
     """Create a Chart.yaml file for the app"""
     description = description or f"Helm chart for {app_name}"
-
     chart_data = {
         "apiVersion": "v2",
         "name": app_name,
@@ -39,7 +39,6 @@ def create_chart_yaml(app_name, version="0.1.0", description=None):
             "version": version,
             "repository": "file://../generic"
         }]
-
     return chart_data
 
 def process_values_yaml():
@@ -82,12 +81,11 @@ def process_values_yaml():
         # Add app-specific values first
         if app_name != "generic" and app_name in apps:
             app_specific_values = apps[app_name]
-
             # If app has configuration, add it directly to values
             if isinstance(app_specific_values, dict):
                 for k, v in app_specific_values.items():
-                    if k != "enabled":  # Skip the enabled flag
-                        if k != "generic":  # Don't overwrite generic section yet
+                    if k != "enabled": # Skip the enabled flag
+                        if k != "generic": # Don't overwrite generic section yet
                             app_values[k] = v
 
         # Now handle the generic section carefully
@@ -146,7 +144,6 @@ def copy_templates():
 def copy_assets():
     """Copy app-specific assets to each app chart"""
     # Skip the static-page folder as requested
-
     # Process each app directory in assets
     for asset_dir in ASSETS_DIR.iterdir():
         if not asset_dir.is_dir() or asset_dir.name == "static-page":
@@ -179,6 +176,7 @@ def fix_asset_references():
 
             # Replace asset paths
             updated_content = content
+
             # Fix references to assets/[app_name]/... to just assets/...
             updated_content = updated_content.replace(f"assets/{app_dir.name}/", "assets/")
 
@@ -213,37 +211,18 @@ def clean_template_files():
             with open(yaml_file, "r") as f:
                 content = f.read()
 
-            # Remove the opening conditional for this app
-            # Match patterns like {{- if .Values.apps.appname.enabled -}} with variable whitespace
-            updated_content = content
+            # Use a single regex pattern to match all variations of the app conditional
+            opening_pattern = re.compile(
+                r'{{{\s*-?\s*if\s+\.Values\.apps\.' + re.escape(app_name) + r'\.enabled\s*-?\s*}}}(?:\n)?'
+            )
+            updated_content = opening_pattern.sub('', content)
 
-            # Handle various whitespace patterns in the conditional
-            patterns = [
-                f"{{{{- if .Values.apps.{app_name}.enabled -}}}}",
-                f"{{{{- if  .Values.apps.{app_name}.enabled  -}}}}",
-                f"{{{{- if .Values.apps.{app_name}.enabled -}}}}\n",
-                f"{{{{-if .Values.apps.{app_name}.enabled-}}}}",
-                f"{{{{- if .Values.apps.{app_name}.enabled }}}}",
-                f"{{{{- if .Values.apps.{app_name}.enabled}}}}"
-            ]
+            # Use regex to match and remove ending conditionals with various whitespace patterns
+            ending_pattern = re.compile(r'{{{\s*-?\s*end\s*-?\s*}}}$')
+            updated_content = ending_pattern.sub('', updated_content.rstrip())
 
-            for pattern in patterns:
-                if pattern in updated_content:
-                    updated_content = updated_content.replace(pattern, "")
-                    # Also try to remove ending conditional
-                    updated_content = updated_content.rstrip()
-                    if updated_content.endswith("{{- end -}}"):
-                        updated_content = updated_content[:-10]
-                    elif updated_content.endswith("{{- end }}"):
-                        updated_content = updated_content[:-10]
-                    elif updated_content.endswith("{{-end}}"):
-                        updated_content = updated_content[:-8]
-                    elif updated_content.endswith("{{end}}"):
-                        updated_content = updated_content[:-7]
-
-                    # Cleanup any trailing newlines but ensure there's one at the end
-                    updated_content = updated_content.rstrip() + "\n"
-                    break
+            # Ensure there's a trailing newline
+            updated_content = updated_content.rstrip() + '\n'
 
             # Write back if changed
             if updated_content != content:
