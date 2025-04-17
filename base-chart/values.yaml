@@ -7,6 +7,8 @@ traefik_forward_auth:
 # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
   oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
   oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+akeyless:
+  path: "/kind-homelab"
 apps:
   test:
     enabled: false

@@ -55,7 +55,7 @@ def process_values_yaml():
 
     # Define global fields - those that should be moved under 'global'
     global_fields = [
-        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth"
+        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth", "akeyless"
     ]
 
     # Create a values file for each app
@@ -284,7 +284,7 @@ def fix_akeyless_references():
                 content = f.read()
 
             # Simple string replacement for akeyless path
-            updated_content = content.replace(".Values.apps.akeyless.path", ".Values.global.akeyless.path")
+            updated_content = content.replace(".Values.apps.akeyless.path", ".Values.generic.global.akeyless.path")
 
             # Write back if changed
             if updated_content != content:
@@ -296,7 +296,7 @@ def fix_global_references():
     """Replace references to global fields with generic.global in all template files"""
     # Define global fields that need reference updates
     global_fields = [
-        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth"
+        "domain", "cloudflare", "letsencrypt", "traefik_forward_auth", "akeyless"
     ]
 
     for app_dir in OUTPUT_DIR.glob("*"):
