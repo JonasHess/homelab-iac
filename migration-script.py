@@ -213,12 +213,13 @@ def clean_template_files():
 
             # Use a single regex pattern to match all variations of the app conditional
             opening_pattern = re.compile(
-                r'{{{\s*-?\s*if\s+\.Values\.apps\.' + re.escape(app_name) + r'\.enabled\s*-?\s*}}}(?:\n)?'
+                r'{{{\s*-?\s*if\s+(?:\.Values\.apps\.' + re.escape(app_name) + r'\.enabled|\.Values\.enabled)\s*-?\s*}}}(?:\n)?|' +
+                r'{{-?\s*if\s+(?:\.Values\.apps\.' + re.escape(app_name) + r'\.enabled|\.Values\.enabled)\s*-?}}(?:\n)?'
             )
             updated_content = opening_pattern.sub('', content)
 
             # Use regex to match and remove ending conditionals with various whitespace patterns
-            ending_pattern = re.compile(r'{{{\s*-?\s*end\s*-?\s*}}}$')
+            ending_pattern = re.compile(r'{?{{\s*-?\s*end\s*-?\s*}}}?$')
             updated_content = ending_pattern.sub('', updated_content.rstrip())
 
             # Ensure there's a trailing newline
