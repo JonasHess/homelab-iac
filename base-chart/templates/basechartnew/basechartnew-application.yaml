@@ -64,22 +64,11 @@ spec:
           # They should be deployed early in the sequence
           #--------------------------------------
 
-
-
           stirlingpdf:
             enabled: true
             argocd:
               targetRevision: feature/refactor-apps
-              project: "default"
-              syncWave: "10"  # Deploy after monitoring is available
-              namespace: "argocd"
-              labels:
-                tier: "application"
-                category: "documents"
-              annotations:
-                description: "StirlingPDF - PDF Processing and Management"
               helm:
-                releaseName: "stirlingpdf-app"
                 values:
                   generic:
                     deployment:
