@@ -59,6 +59,9 @@ spec:
         {{- /* Add app name to values object */ -}}
         {{- $_ := set $valuesObject "appName" $appName }}
 
+        {{- /* Add generic.appName to values object */ -}}
+        {{- set $valuesObject "generic" (dict "appName" $appName) | ignore }}
+
         {{- /* Add global values to values object (deep copied to prevent modifications) */ -}}
         {{- if $.Values.global }}
         {{- $_ := set $valuesObject "global" (deepCopy $.Values.global) }}
