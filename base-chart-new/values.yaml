@@ -26,6 +26,9 @@ global:
     oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
 
   argocd:
+
+    targetRevision: ~ # main
+
     # Global ignore differences (applied to all apps unless overridden)
     ignoreDifferences:
       - group: ""
@@ -42,14 +45,357 @@ apps:
       targetRevision: ~
       description: "StirlingPDF - PDF Processing and Management"
       namespace: "argocd"
-      project: ~
+      project: "default"
       syncWave: "10"  # Deploy after monitoring is available
-      helm:
-        values:
-          generic:
-            deployment:
-              pvcMounts:
-                scanner:
-                  hostPath: ~
-                paperlessconsume:
-                  hostPath: ~
+  adguard:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "AdGuard - Network-wide Ad and Tracking Blocker"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after core services
+  akeyless:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Akeyless - Secrets Management Platform"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "5"  # Early deployment for secrets access
+  argocd:
+    enabled: true
+    argocd:
+      targetRevision: ~
+      description: "Argo CD - Declarative GitOps Continuous Delivery"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "0"  # Deploy first as it manages other deployments
+  argoimageupdater:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Argo Image Updater - Automated Image Updates for Argo CD Applications"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "1"  # Deploy right after ArgoCD
+  asn:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "ASN - Autonomous System Number Lookup and Management"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"
+  aws:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "AWS Tools - Amazon Web Services Integration Components"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "5"  # Early deployment for cloud infrastructure
+  cloudflareddns:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Cloudflared DNS - Cloudflare DNS Tunneling and Management"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "3"  # Early deployment for DNS services
+  cnpg:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Cloud Native PostgreSQL - Kubernetes Operator for PostgreSQL"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "4"  # Deploy before apps that need PostgreSQL
+  drone:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Drone CI - Continuous Integration Platform"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "8"  # Deploy after core services
+  duplicati:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Duplicati - Backup Software for File, Database and Web Data"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"  # Deploy later as it's not critical
+  duplicatiprometheusexporter:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Duplicati Prometheus Exporter - Metrics Collection for Duplicati"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "21"  # Deploy after Duplicati and Prometheus
+  generic:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Generic - Template for Generic Applications"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "25"
+  githubarc:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "GitHub Arc - GitHub Runner and Integration Services"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
+  gotenberg:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Gotenberg - API-driven PDF Engine"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
+  homeassistant:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Home Assistant - Open Source Home Automation Platform"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after core infrastructure
+  homematic:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Homematic - Smart Home System Integration"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "16"  # Deploy after Home Assistant
+  immich:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Immich - Self-Hosted Photo and Video Backup Solution"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "18"  # Higher resource usage, deploy later
+  immichold:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Immich Old - Legacy Version of Immich Photo Manager"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "19"  # Deploy after main Immich
+  mosquitto:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Mosquitto - Lightweight MQTT Broker"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "10"  # Deploy before IoT applications
+  ollama:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Ollama - Run Large Language Models Locally"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Higher resource usage, deploy later
+  openwebui:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Open WebUI - Web Interface for AI Models"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "16"  # Deploy after Ollama
+  paperlessgpt:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Paperless-GPT - AI-Enhanced Document Management"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "17"  # Deploy after AI components
+  paperlessngx:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Paperless-ngx - Document Management System"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "16"  # Deploy after core services
+  plex:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Plex - Media Server for Movies, TV, Music and Photos"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"  # Heavy resource usage, deploy later
+  postgres:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "PostgreSQL - Advanced Open Source Database"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "5"  # Deploy early as many services depend on it
+  prometheus:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Prometheus - Monitoring System and Time Series Database"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "2"  # Deploy early for monitoring other services
+  prowlarr:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Prowlarr - Indexer Manager/Proxy for *arr Suite"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "12"  # Deploy before other *arr applications
+  qbittorrent:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "qBittorrent - BitTorrent Client"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
+  radarr:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Radarr - Movie Collection Manager"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "14"  # Deploy after Prowlarr
+  readarr:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Readarr - Book Collection Manager"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "14"  # Deploy after Prowlarr
+  redis:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Redis - In-Memory Data Structure Store"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "5"  # Deploy early as many services depend on it
+  sabnzbd:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "SABnzbd - Binary Newsreader"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "13"  # Deploy before dependent media apps
+  search:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Search - Self-Hosted Search Engine"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "18"
+  sftpgo:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "SFTPGo - Fully Featured SFTP Server"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "10"
+  smarthome3:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Smart Home 3 - Smart Home Integration Suite"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "17"  # Deploy after Home Assistant components
+  sonarr:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Sonarr - TV Show Collection Manager"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "14"  # Deploy after Prowlarr
+  tautulli:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Tautulli - Plex Media Server Monitoring"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "21"  # Deploy after Plex
+  test:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Test - Testing Application"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "30"  # Deploy last for testing
+  tgtg:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "TGTG - Too Good To Go Integration"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"
+  tika:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Apache Tika - Content Analysis and Extraction Toolkit"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy before document processing apps
+  traefik:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Traefik - Cloud Native Edge Router"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "1"  # Deploy early for ingress management
+  vaultwarden:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Vaultwarden - Unofficial Bitwarden Compatible Server"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "10"
+  zfs:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "ZFS - ZFS Storage System Management"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "4"  # Deploy early for storage management
+  zigbee2mqtt:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Zigbee2MQTT - Zigbee to MQTT Bridge"
+      namespace: "argocd"
+      project: "default"
+      syncWave: "12"  # Deploy after MQTT broker

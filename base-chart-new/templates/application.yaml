@@ -44,7 +44,7 @@ spec:
   project: {{ $appConfig.argocd.project | default "default" }}
   source:
     repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/JonasHess/homelab-iac.git" }}
-    targetRevision: {{ $appConfig.argocd.targetRevision | default "HEAD" }}
+    targetRevision: {{ $appConfig.argocd.targetRevision | default ( required "A global targetRevision is required" $.Values.global.argocd.targetRevision) }}
     path: {{ $appConfig.argocd.path | default (printf "apps/%s" $appName) }}
     helm:
       releaseName: {{ $appConfig.argocd.helm.releaseName | default $appName }}
