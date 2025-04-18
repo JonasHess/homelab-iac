@@ -55,30 +55,23 @@ spec:
         {{- end }}
       {{- end }}
       valuesObject:
-        {{- /* Define default generic values */ -}}
-        {{- $defaultGeneric := dict "appName" $appName -}}
-        {{- if $.Values.global -}}
-        {{- $defaultGeneric = set $defaultGeneric "global" $.Values.global -}}
-        {{- end -}}
+        {{- $valuesObject := dict }}
+        {{- /* Add app name to values object */ -}}
+        {{- $_ := set $valuesObject "appName" $appName }}
 
-        {{- /* Get user values or create empty dict */ -}}
-        {{- $userValues := deepCopy ($appConfig.argocd.helm.values | default dict) -}}
+        {{- /* Add global values to values object (deep copied to prevent modifications) */ -}}
+        {{- if $.Values.global }}
+        {{- $_ := set $valuesObject "global" (deepCopy $.Values.global) }}
+        {{- end }}
 
-        {{- /* Get user's generic values or create empty dict */ -}}
-        {{- $userGeneric := deepCopy (get $userValues "generic" | default dict) -}}
+        {{- /* Add app-specific helm values to values object (deep copied to prevent modifications) */ -}}
+        {{- if $appConfig.argocd.helm.values }}
+        {{- $mergedValues := deepCopy $appConfig.argocd.helm.values }}
+        {{- $valuesObject := merge $valuesObject $mergedValues }}
+        {{- end }}
 
-        {{- /* Merge the user's generic values with defaults */ -}}
-        {{- range $key, $value := $defaultGeneric -}}
-          {{- if not (hasKey $userGeneric $key) -}}
-            {{- $_ := set $userGeneric $key $value -}}
-          {{- end -}}
-        {{- end -}}
+        {{- toYaml $valuesObject | nindent 8 }}
 
-        {{- /* Set the merged generic values back into user values */ -}}
-        {{- $_ := set $userValues "generic" $userGeneric -}}
-
-        {{- /* Output the final values */ -}}
-        {{- toYaml $userValues | nindent 8 -}}
       {{- with $appConfig.argocd.helm.parameters }}
       parameters:
         {{- toYaml . | nindent 8 }}

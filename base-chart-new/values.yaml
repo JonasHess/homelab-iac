@@ -37,7 +37,7 @@ global:
 # All applications to be deployed by Argo CD
 apps:
   stirlingpdf:
-    enabled: true
+    enabled: false
     argocd:
       targetRevision: ~
       description: "StirlingPDF - PDF Processing and Management"

@@ -8,10 +8,10 @@ generic:
     - containerPort: 8080
     pvcMounts:
       paperlessconsume:
-        hostPath: /mnt/somewhere/encrypted/apps/paperlessngx/consume
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/consume
         mountPath: /pipeline/finishedFolders
       scanner:
-        hostPath: /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
+        hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
         mountPath: /pipeline/watchedFolders/scanner
   ingress:
     https:
