@@ -1,9 +1,0 @@
-apps:
-  sonarr:
-    generic:
-      deployment:
-        pvcMounts:
-          config:
-            hostPath: "/mnt/tank1/unencrypted/apps/sonarr/config"
-          media:
-            hostPath: "/mnt/tank0/encrypted/media"

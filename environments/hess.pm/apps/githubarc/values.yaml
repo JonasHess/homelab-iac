@@ -1,5 +1,0 @@
-apps:
-  githubarc:
-      storageclasses:
-        standard:
-          hostPath: "/mnt/tank1/unencrypted/apps/githubarc/storage/standard"

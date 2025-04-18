@@ -1,5 +1,0 @@
-apps:
-  homematic:
-    persistence:
-      data:
-        mountPath: "/mnt/tank1/unencrypted/apps/homematic/ccu_data"
