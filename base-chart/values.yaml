@@ -894,3 +894,5 @@ apps:
       host: "smtp.example.com"
       from: "vaultwarden@example.com"
       fromName: "Vaultwarden"
+  basechartnew:
+    enabled: false
