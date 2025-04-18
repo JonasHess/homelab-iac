@@ -75,8 +75,8 @@ spec:
                       pvcMounts:
                         scanner:
                           hostPath: "/mnt/tank1/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner"
-                        paperlessconsume:
-                          hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/consume"
+{{/*                        paperlessconsume:*/}}
+{{/*                          hostPath: "/mnt/tank1/encrypted/apps/paperlessngx/consume"*/}}
 
 
   destination:
