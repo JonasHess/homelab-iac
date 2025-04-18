@@ -1,0 +1,282 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["appName"],
+  "properties": {
+    "appName": {
+      "type": "string",
+      "description": "Name of the application. Used as a prefix for all resources."
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "string",
+          "description": "Domain name for HTTPS ingress routes (required if ingress.https is defined)."
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "description": "Configuration for the Kubernetes Deployment",
+      "required": ["image"],
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "Container image to deploy"
+        },
+        "imagePullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"],
+          "description": "Image pull policy"
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "Security context for the container"
+        },
+        "resources": {
+          "type": "object",
+          "description": "Resource requests and limits for the container",
+          "properties": {
+            "limits": {
+              "type": "object",
+              "description": "Resource limits (e.g. cpu, memory)",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "requests": {
+              "type": "object",
+              "description": "Resource requests (e.g. cpu, memory)",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ports": {
+          "type": "array",
+          "description": "Container ports to expose",
+          "items": {
+            "type": "object",
+            "required": ["containerPort"],
+            "properties": {
+              "containerPort": {
+                "type": "integer",
+                "description": "Port number to expose on the container"
+              }
+            }
+          }
+        },
+        "pvcMounts": {
+          "type": "object",
+          "description": "Persistent volume claims to mount in the container",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["mountPath", "hostPath"],
+            "properties": {
+              "mountPath": {
+                "type": "string",
+                "description": "Path where the volume should be mounted in the container"
+              },
+              "hostPath": {
+                "type": "string",
+                "description": "Path on the host that will be used as the persistent volume"
+              }
+            }
+          }
+        },
+        "deviceMounts": {
+          "type": "object",
+          "description": "Device mounts from the host into the container",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["mountPath", "hostPath"],
+            "properties": {
+              "mountPath": {
+                "type": "string",
+                "description": "Path where the device should be mounted in the container"
+              },
+              "hostPath": {
+                "type": "string",
+                "description": "Path on the host to the device"
+              }
+            }
+          }
+        },
+        "configMapMounts": {
+          "type": "object",
+          "description": "ConfigMaps to mount in the container",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["mountPath", "configMapName"],
+            "properties": {
+              "mountPath": {
+                "type": "string",
+                "description": "Path where the ConfigMap should be mounted in the container"
+              },
+              "configMapName": {
+                "type": "string",
+                "description": "Name of the ConfigMap to mount"
+              }
+            }
+          }
+        },
+        "envFrom": {
+          "type": "object",
+          "description": "References to ConfigMaps or Secrets for environment variables",
+          "properties": {
+            "configMapRef": {
+              "type": "string",
+              "description": "Name of the ConfigMap to load environment variables from"
+            },
+            "secretRef": {
+              "type": "string",
+              "description": "Name of the Secret to load environment variables from"
+            }
+          }
+        }
+      }
+    },
+    "service": {
+      "type": "object",
+      "description": "Configuration for the Kubernetes Service",
+      "required": ["ports"],
+      "properties": {
+        "ports": {
+          "type": "array",
+          "description": "Ports to expose through the service",
+          "items": {
+            "type": "object",
+            "required": ["name", "port"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name of the port"
+              },
+              "port": {
+                "type": "integer",
+                "description": "Port number to expose on the service"
+              },
+              "targetPort": {
+                "type": ["integer", "string"],
+                "description": "Target port in the container (defaults to the port value if not specified)"
+              },
+              "protocol": {
+                "type": "string",
+                "enum": ["TCP", "UDP", "SCTP"],
+                "description": "Protocol for the port (defaults to TCP if not specified)"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "description": "Configuration for Ingress routes",
+      "properties": {
+        "https": {
+          "type": "array",
+          "description": "HTTPS ingress routes (requires global.domain to be set)",
+          "items": {
+            "type": "object",
+            "required": ["port", "subdomain"],
+            "properties": {
+              "port": {
+                "type": "integer",
+                "description": "Port on the service to route traffic to"
+              },
+              "subdomain": {
+                "type": "string",
+                "description": "Subdomain for the ingress route (will be combined with global.domain)"
+              },
+              "matchSuffix": {
+                "type": "string",
+                "description": "Additional matching criteria for the route"
+              },
+              "priority": {
+                "type": "integer",
+                "description": "Priority of the route (defaults to 10 if not specified)"
+              },
+              "service": {
+                "type": "string",
+                "description": "Name of the service to route to (defaults to {appName}-service if not specified)"
+              },
+              "middlewares": {
+                "type": "array",
+                "description": "Traefik middlewares to apply to the route",
+                "items": {
+                  "type": "object",
+                  "required": ["name", "namespace"],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Name of the middleware"
+                    },
+                    "namespace": {
+                      "type": "string",
+                      "description": "Namespace of the middleware"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tcp": {
+          "type": "array",
+          "description": "TCP ingress routes",
+          "items": {
+            "type": "object",
+            "required": ["port", "traefikEntryPoint"],
+            "properties": {
+              "port": {
+                "type": "integer",
+                "description": "Port on the service to route traffic to"
+              },
+              "traefikEntryPoint": {
+                "type": "string",
+                "description": "Traefik entry point for the route"
+              }
+            }
+          }
+        },
+        "udp": {
+          "type": "array",
+          "description": "UDP ingress routes",
+          "items": {
+            "type": "object",
+            "required": ["port", "traefikEntryPoint"],
+            "properties": {
+              "port": {
+                "type": "integer",
+                "description": "Port on the service to route traffic to"
+              },
+              "traefikEntryPoint": {
+                "type": "string",
+                "description": "Traefik entry point for the route"
+              }
+            }
+          }
+        }
+      }
+    },
+    "persistentVolume": {
+      "type": "object",
+      "description": "Persistent volumes without claims (use persistentVolumeClaims instead for volumes with claims)",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Path on the host for the persistent volume"
+      }
+    },
+    "persistentVolumeClaims": {
+      "type": "object",
+      "description": "Persistent volumes with claims (standalone PVCs)",
+      "additionalProperties": {
+        "type": "string",
+        "description": "Path on the host for the persistent volume"
+      }
+    }
+  }
+}

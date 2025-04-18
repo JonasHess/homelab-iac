@@ -4,3 +4,5 @@ description: Helm chart for generic
 name: generic
 type: application
 version: 0.1.0
+
+schema: file://values.schema.json
