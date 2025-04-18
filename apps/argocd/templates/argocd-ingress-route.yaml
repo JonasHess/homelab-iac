@@ -1,0 +1,37 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: argocd-https
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`argocd.{{ .Values.generic.global.domain }}`)
+      priority: 10
+      services:
+        - kind: Service
+          name: argocd-server
+          port: https
+          serversTransport: insecure-transport
+      middlewares:
+        - name: traefik-forward-auth
+          namespace: argocd
+{{/*    - kind: Rule*/}}
+{{/*      match: >-*/}}
+{{/*        Host(`argocd.{{ .Values.generic.global.domain }}`) &&*/}}
+{{/*        Headers(`Content-Type`, `application/grpc`)*/}}
+{{/*      priority: 11*/}}
+{{/*      services:*/}}
+{{/*        - kind: Service*/}}
+{{/*          name: argocd-server*/}}
+{{/*          port: https*/}}
+{{/*          scheme: h2c*/}}
+{{/*      middlewares:*/}}
+{{/*        - name: traefik-forward-auth*/}}
+{{/*          namespace: argocd*/}}
+  tls:
+    certResolver: cloudflare

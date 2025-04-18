@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-deployment
+  namespace: argocd
+  labels:
+    app: search
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: search
+  template:
+    metadata:
+      labels:
+        app: search
+    spec:
+      containers:
+        - name: search-app
+          image: node:lts-alpine
+          command: [ "sh", "-c" ]
+          args:
+            - >
+              cd /usr/app &&
+              npm install express &&
+              node ./app.js
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: search-config
+              mountPath: /usr/app/app.js
+              subPath: app.js
+      volumes:
+        - name: search-config
+          configMap:
+            name: search-config

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: immich-config-map
+  namespace: argocd
+data:
+{{- $files := .Files.Glob "assets/*.templ" }}
+{{- range $path, $file := $files }}
+  {{ $path | base }}: |-
+    {{ $file | toString | nindent 4 }}
+{{- end }}

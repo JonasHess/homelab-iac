@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflare-ddns-config-map
+  namespace: argocd
+data:
+  CRON_JOB: {{ .Values.cron_job | quote }}
+  AUTH_METHOD: global
+  RECORD_NAME: {{ .Values.generic.global.domain }}
+  RECORD_TYPE: 'A'
+  TTL: '60'
+  PROXY: 'false'
+  SITENAME: {{ .Values.generic.global.domain }}
+  NOTIFICATION_LEVEL: on_success_or_error

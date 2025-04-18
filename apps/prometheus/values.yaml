@@ -1,0 +1,38 @@
+generic:
+  appName: prometheus
+  global:
+    akeyless:
+      path: /kind-homelab
+    cloudflare:
+      email: Jonas@Hess.pm
+    domain: home-server.dev
+    letsencrypt:
+      email: Jonas@Hess.pm
+    traefik_forward_auth:
+      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  ingress:
+    https:
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 9090
+      service: kube-prometheus-stack-prometheus
+      subdomain: prometheus
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 80
+      service: kube-prometheus-stack-grafana
+      subdomain: grafana
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 9093
+      service: kube-prometheus-stack-alertmanager
+      subdomain: alertmanager
+  persistentVolume:
+    prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
+  persistentVolumeClaims:
+    alertmanager: /mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data
+    grafana: /mnt/somewhere/unencrypted/apps/prometheus/grafana/data

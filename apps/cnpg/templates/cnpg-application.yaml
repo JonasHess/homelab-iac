@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: cloudnative-pg
+    repoURL: https://cloudnative-pg.io/charts/
+    targetRevision: 0.23.0
+    helm:
+      # Values file as block file
+      valuesObject: {}
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - Validate=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: -1 # unlimited
+      backoff:
+        maxDuration: 20m
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd

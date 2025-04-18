@@ -1,0 +1,49 @@
+generic:
+  appName: immich
+  global:
+    akeyless:
+      path: /kind-homelab
+    cloudflare:
+      email: Jonas@Hess.pm
+    domain: home-server.dev
+    letsencrypt:
+      email: Jonas@Hess.pm
+    traefik_forward_auth:
+      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  ingress:
+    https:
+    - port: 2283
+      service: immich-app-server
+      subdomain: immich
+  persistentVolumeClaims:
+    cli: null
+    library: /mnt/somewhere/encrypted/apps/immich/library
+    postgresql: /mnt/somewhere/encrypted/apps/immich/postgresql
+    redis: /mnt/somewhere/encrypted/apps/immich/redis
+importJob:
+  enabled: false
+resources:
+  machineLearning:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  server:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+server:
+  externalSubDomain: immich
+smtp:
+  enabled: false
+  from: Immich Photo Server <immich@example.com>
+  host: smtp.example.com
+  ignoreCert: false
+  port: 587
+  username: immich@example.com

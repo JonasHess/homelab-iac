@@ -1,0 +1,65 @@
+generic:
+  appName: sftpgo
+  deployment:
+    configMapMounts:
+      configmap:
+        configMapName: sftpgo-config
+        mountPath: /etc/sftpgo/
+    envFrom:
+      secretRef: sftpgo-secret
+    image: drakkan/sftpgo:latest
+    ports:
+    - containerPort: 8080
+    - containerPort: 2222
+    - containerPort: 2121
+    pvcMounts:
+      config:
+        hostPath: /mnt/somewhere/unencrypted/apps/sftpgo/config
+        mountPath: /var/lib/sftpgo
+      data:
+        hostPath: /mnt/somewhere/encrypted/apps/sftpgo/data
+        mountPath: /srv/sftpgo
+      stirlingpdf:
+        hostPath: /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
+        mountPath: /mnt/stirlingpdf/pipeline/
+  global:
+    akeyless:
+      path: /kind-homelab
+    cloudflare:
+      email: Jonas@Hess.pm
+    domain: home-server.dev
+    letsencrypt:
+      email: Jonas@Hess.pm
+    traefik_forward_auth:
+      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  ingress:
+    https:
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 8080
+      subdomain: sftpgo
+    - matchSuffix: '&& PathPrefix(`/web/client/pubshares/`)'
+      port: 8080
+      priority: 20
+      subdomain: sftpgo
+    - port: 8081
+      subdomain: webdav
+    tcp:
+    - port: 2222
+      traefikEntryPoint: sftpgo
+    - port: 2121
+      traefikEntryPoint: ftp
+  service:
+    ports:
+    - name: http
+      port: 8080
+    - name: webdav
+      port: 8081
+    - name: sftp
+      port: 2222
+      protocol: TCP
+    - name: ftp
+      port: 2121
+      protocol: TCP

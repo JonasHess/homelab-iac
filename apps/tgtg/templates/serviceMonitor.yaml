@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: tgtg-monitor
+  namespace: argocd
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: tgtg
+  endpoints:
+  - port: http
+    interval: 30s
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - argocd

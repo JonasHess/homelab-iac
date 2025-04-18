@@ -1,0 +1,39 @@
+generic:
+  appName: openwebui
+  deployment:
+    envFrom:
+      configMapRef: openwebui-config
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+    - containerPort: 8080
+    pvcMounts:
+      data:
+        hostPath: /mnt/somewhere/encrypted/apps/openwebui/data
+        mountPath: /app/backend/data
+  global:
+    akeyless:
+      path: /kind-homelab
+    cloudflare:
+      email: Jonas@Hess.pm
+    domain: home-server.dev
+    letsencrypt:
+      email: Jonas@Hess.pm
+    traefik_forward_auth:
+      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  ingress:
+    https:
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 8080
+      subdomain: openwebui
+    - middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+      port: 8080
+      subdomain: chat
+  service:
+    ports:
+    - name: http
+      port: 8080

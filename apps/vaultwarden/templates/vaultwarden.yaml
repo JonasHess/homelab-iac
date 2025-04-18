@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vaultwarden
+  namespace: argocd
+spec:
+  project: default
+  source:
+    chart: vaultwarden
+    repoURL: https://guerzon.github.io/vaultwarden
+    targetRevision: v0.31.8
+    helm:
+      valuesObject:
+        domain: "https://vaultwarden.{{ $.Values.generic.global.domain }}"
+        signupsAllowed: false
+        ingress:
+          enabled: false
+
+        storage:
+          existingVolumeClaim:
+            dataPath: "/data"
+            attachmentsPath: "/data/attachments"
+            claimName: "vaultwarden-data-pvc"
+
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+        adminToken:
+          existingSecret: "vaultwarden-secret"
+          existingSecretKey: "ADMIN_TOKEN"
+
+        smtp:
+          host: "{{ .Values.smtp.host }}"
+          from: "{{ .Values.smtp.from }}"
+          fromName: "{{ .Values.smtp.fromName }}"
+          existingSecret: "vaultwarden-smtp-secret"
+          username:
+            existingSecretKey: "SMTP_USERNAME"
+          password:
+            existingSecretKey: "SMTP_PASSWORD"
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

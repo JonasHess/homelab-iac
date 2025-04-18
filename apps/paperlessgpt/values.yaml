@@ -1,0 +1,31 @@
+AWS_OCR_BUCKET_NAME: paperless-ocr
+LLM_MODEL: gpt-4o
+LLM_PROVIDER: openai
+LOG_LEVEL: INFO
+PROMPT_CORRESPONDENT_EXPLANATION: ''
+PROMPT_DOCUMENT_TYPE_EXPLANATION: ''
+PROMPT_POSTAMBLE: ''
+PROMPT_TITLE_EXPLANATION: ''
+generic:
+  appName: paperlessgpt
+  deployment:
+    envFrom:
+      configMapRef: paperlessgpt-config
+      secretRef: paperlessgpt-secret
+    image: jonashess/paperless-gpt:unreleased
+    imagePullPolicy: Always
+    pvcMounts:
+      prompts:
+        hostPath: /mnt/somewhere/encrypted/apps/paperless-gpt/prompts
+        mountPath: /app/prompts
+  global:
+    akeyless:
+      path: /kind-homelab
+    cloudflare:
+      email: Jonas@Hess.pm
+    domain: home-server.dev
+    letsencrypt:
+      email: Jonas@Hess.pm
+    traefik_forward_auth:
+      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
