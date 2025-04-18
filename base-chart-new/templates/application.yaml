@@ -96,12 +96,12 @@ spec:
     syncOptions:
       - CreateNamespace=true
     {{- end }}
-  {{- if or $appConfig.argocd.ignoreDifferences $.Values.global.ignoreDifferences }}
+  {{- if or $appConfig.argocd.ignoreDifferences $.Values.global.argocd.ignoreDifferences }}
   ignoreDifferences:
     {{- if $appConfig.argocd.ignoreDifferences }}
     {{- toYaml $appConfig.argocd.ignoreDifferences | nindent 4 }}
-    {{- else if $.Values.global.ignoreDifferences }}
-    {{- toYaml $.Values.global.ignoreDifferences | nindent 4 }}
+    {{- else if $.Values.global.argocd.ignoreDifferences }}
+    {{- toYaml $.Values.global.argocd.ignoreDifferences | nindent 4 }}
     {{- end }}
   {{- end }}
   revisionHistoryLimit: {{ $appConfig.argocd.revisionHistoryLimit | default 3 }}

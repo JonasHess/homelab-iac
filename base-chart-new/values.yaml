@@ -25,20 +25,13 @@ global:
     oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
     oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
 
-  # Global ignore differences (applied to all apps unless overridden)
-  ignoreDifferences:
-    - group: ""
-      kind: "Secret"
-      jsonPointers:
-        - "/data"
-
-  # Notification settings
-  notifications:
-    # Default notification channels
-    slack:
-      channel: general
-      token: "${SECRET:slack-token}"
-
+  argocd:
+    # Global ignore differences (applied to all apps unless overridden)
+    ignoreDifferences:
+      - group: ""
+        kind: "Secret"
+        jsonPointers:
+          - "/data"
 
 
 # All applications to be deployed by Argo CD
