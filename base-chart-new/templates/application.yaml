@@ -9,9 +9,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/yourusername/your-repo.git" }}
+    repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/JonasHess/homelab-iac.git" }}
     targetRevision: {{ $appConfig.argocd.targetRevision | default "HEAD" }}
-    path: charts/{{ $appName }}
+    path: {{ $appConfig.argocd.path | default (printf "charts/%s" $appName) }}
     helm:
       valuesObject:
         {{- with $appConfig.argocd.helm.values }}

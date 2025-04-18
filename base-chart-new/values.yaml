@@ -13,6 +13,7 @@ apps:
   immich:
     enabled: true
     argocd:
+      # Using default path (charts/immich)
       helm:
         values:
           aaa:
@@ -31,6 +32,9 @@ apps:
   sftpgo:
     enabled: true
     argocd:
+      # Custom path specified
+      path: custom-charts/sftpgo-v2
+      targetRevision: main
       helm:
         values:
           persistence:
@@ -42,6 +46,21 @@ apps:
           mysql:
             enabled: true
             existingSecret: sftpgo-mysql-secret
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+  prometheus:
+    enabled: true
+    argocd:
+      # Different repo with custom path
+      repoURL: https://github.com/prometheus-community/helm-charts.git
+      path: charts/kube-prometheus-stack
+      targetRevision: 42.0.3
+      helm:
+        values:
+          grafana:
+            enabled: true
       syncPolicy:
         automated:
           prune: true
