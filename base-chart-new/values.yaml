@@ -1,0 +1,48 @@
+global:
+  akeyless:
+    path: /kind-homelab
+  cloudflare:
+    email: Jonas@Hess.pm
+  domain: home-server.dev
+  letsencrypt:
+    email: Jonas@Hess.pm
+  traefik_forward_auth:
+    oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+    oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+apps:
+  immich:
+    enabled: true
+    argocd:
+      helm:
+        values:
+          aaa:
+            enabled: true
+            existingClaim: immich-pvc
+          bbb:
+            enabled: true
+            existingSecret: immich-redis-secret
+          ccc:
+            enabled: true
+            existingSecret: immich-mysql-secret
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+  sftpgo:
+    enabled: true
+    argocd:
+      helm:
+        values:
+          persistence:
+            enabled: true
+            existingClaim: sftpgo-pvc
+          redis:
+            enabled: true
+            existingSecret: sftpgo-redis-secret
+          mysql:
+            enabled: true
+            existingSecret: sftpgo-mysql-secret
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true

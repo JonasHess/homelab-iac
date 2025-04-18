@@ -1,0 +1,33 @@
+{{- range $appName, $appConfig := .Values.apps }}
+{{- if $appConfig.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $appName }}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/yourusername/your-repo.git" }}
+    targetRevision: {{ $appConfig.argocd.targetRevision | default "HEAD" }}
+    path: charts/{{ $appName }}
+    helm:
+      valuesObject:
+        {{- with $appConfig.argocd.helm.values }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        generic:
+          global:
+            {{- with $.Values.global }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  {{- with $appConfig.argocd.syncPolicy }}
+  syncPolicy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
