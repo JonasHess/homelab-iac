@@ -1,10 +1,8 @@
-{{- if not .Values.appName }}
-  {{- fail "appName must be set in values.yaml" }}
-{{- end }}
-{{- $appName := .Values.appName }}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.deployment }}
-  {{- $deployment := .Values.deployment }}
+  {{- $deployment := required "deployment configuration must be set in values.yaml" .Values.deployment }}
+  {{- $image := required "deployment.image must be set in values.yaml" $deployment.image }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,7 +22,7 @@ spec:
     spec:
       containers:
         - name: {{ $appName }}
-          image: {{ $deployment.image }}
+          image: {{ $image }}
           {{- if $deployment.imagePullPolicy }}
           imagePullPolicy: {{ $deployment.imagePullPolicy }}
           {{- end }}
@@ -49,30 +47,30 @@ spec:
           {{- end }}
           ports:
             {{- range $port := $deployment.ports }}
-            - containerPort: {{ $port.containerPort }}
+            - containerPort: {{ required "containerPort must be specified for each port" $port.containerPort }}
             {{- end }}
           volumeMounts:
             {{- range $mountName, $mount := $deployment.pvcMounts }}
-            - mountPath: "{{ $mount.mountPath }}"
+            - mountPath: "{{ required (printf "mountPath for pvcMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
             {{- range $mountName, $mount := $deployment.deviceMounts }}
-            - mountPath: "{{ $mount.mountPath }}"
+            - mountPath: "{{ required (printf "mountPath for deviceMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
             {{- range $mountName, $mount := $deployment.configMapMounts }}
-            - mountPath: "{{ $mount.mountPath }}"
+            - mountPath: "{{ required (printf "mountPath for configMapMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
           {{- if $deployment.envFrom }}
           envFrom:
             {{- if $deployment.envFrom.configMapRef }}
             - configMapRef:
-                name: {{ $deployment.envFrom.configMapRef }}
+                name: {{ required "envFrom.configMapRef must be a valid configMap name" $deployment.envFrom.configMapRef }}
             {{- end }}
             {{- if $deployment.envFrom.secretRef }}
             - secretRef:
-                name: {{ $deployment.envFrom.secretRef }}
+                name: {{ required "envFrom.secretRef must be a valid secret name" $deployment.envFrom.secretRef }}
             {{- end }}
           {{- end }}
       volumes:
@@ -84,13 +82,13 @@ spec:
         {{- range $mountName, $mount := $deployment.deviceMounts }}
         - name: {{ $appName }}-{{ $mountName }}-volume
           hostPath:
-            path: {{ $mount.hostPath | quote }}
+            path: {{ required (printf "hostPath for deviceMount %s must be specified" $mountName) $mount.hostPath | quote }}
             type: CharDevice
         {{- end }}
         {{- range $mountName, $mount := $deployment.configMapMounts }}
         - name: {{ $appName }}-{{ $mountName }}-volume
           configMap:
-            name: {{ $mount.configMapName }}
+            name: {{ required (printf "configMapName for configMapMount %s must be specified" $mountName) $mount.configMapName }}
         {{- end }}
 
 {{- range $mountName, $mount := $deployment.pvcMounts }}
@@ -112,7 +110,7 @@ spec:
   storageClassName: manual
   hostPath:
     type: Directory
-    path: {{ $mount.hostPath }}
+    path: {{ required (printf "deployment.pvcMounts.%s.hostPath must be set in values.yaml" $mountName) $mount.hostPath }}
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
