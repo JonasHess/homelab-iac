@@ -1,10 +1,7 @@
-{{- if not .Values.appName }}
-  {{- fail "appName must be set in values.yaml" }}
-{{- end }}
-{{- $appName := .Values.appName }}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.service }}
-{{- $svc := .Values.service }}
+  {{- $svc := required "service configuration must be set in values.yaml" .Values.service }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -14,9 +11,12 @@ metadata:
     app: {{ $appName }}
 spec:
   ports:
+    {{- if not $svc.ports }}
+      {{- fail "service.ports must be specified with at least one port definition" }}
+    {{- end }}
     {{- range $port := $svc.ports }}
-    - name: {{ $port.name }}
-      port: {{ $port.port }}
+    - name: {{ required "name must be specified for each service port" $port.name }}
+      port: {{ required "port must be specified for each service port" $port.port }}
       {{- if $port.targetPort }}
       targetPort: {{ $port.targetPort }}
       {{- end }}

@@ -1,16 +1,14 @@
-{{- if not .Values.appName }}
-  {{- fail "appName must be set in values.yaml" }}
-{{- end }}
-{{- $appName := .Values.appName }}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.ingress }}
-       {{- if .Values.ingress.https }}
-         {{- range $index, $ingress := .Values.ingress.https }}
+  {{- if .Values.ingress.https }}
+    {{- $domain := required "global.domain must be set in values.yaml" $.Values.global.domain }}
+    {{- range $index, $ingress := .Values.ingress.https }}
 ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ $appName | default $.Chart.Name }}-https-{{ $ingress.port }}-{{ $index }}
+  name: {{ $appName | default $.Chart.Name }}-https-{{ required "port must be specified for each HTTPS ingress" $ingress.port }}-{{ $index }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
@@ -18,21 +16,21 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ $ingress.subdomain }}.{{  $.Values.global.domain}}`) {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
+    - match: Host(`{{ required "subdomain must be specified for each HTTPS ingress" $ingress.subdomain }}.{{ $domain }}`) {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
       kind: Rule
       priority: {{ default 10 $ingress.priority }}
       services:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName | default $.Chart.Name }}-service{{ end }}
-          port: {{ $ingress.port }}
+          port: {{ required "port must be specified for each HTTPS ingress" $ingress.port }}
       {{- if $ingress.middlewares }}
       middlewares:
         {{- range $middleware := $ingress.middlewares }}
-        - name: {{ $middleware.name }}
-          namespace: {{ $middleware.namespace }}
+        - name: {{ required "middleware name must be specified" $middleware.name }}
+          namespace: {{ required "middleware namespace must be specified" $middleware.namespace }}
         {{- end }}
       {{- end }}
   tls:
     certResolver: cloudflare
-        {{- end }}
-      {{- end }}
-   {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

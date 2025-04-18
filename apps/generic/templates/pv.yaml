@@ -1,7 +1,4 @@
-{{- if not .Values.appName }}
-  {{- fail "appName must be set in values.yaml" }}
-{{- end }}
-{{- $appName := .Values.appName }}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.persistentVolume }}
   {{- range $pvName, $pvPath := .Values.persistentVolume }}
@@ -21,11 +18,11 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce
-# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ''
   hostPath:
     type: Directory
-    path: {{ $pvPath }}
-      {{- end }}
-   {{- end }}
+    path: {{ required (printf "path for persistentVolume.%s must be specified" $pvName) $pvPath }}
+  {{- end }}
+{{- end }}

@@ -1,7 +1,4 @@
-{{- if not .Values.appName }}
-  {{- fail "appName must be set in values.yaml" }}
-{{- end }}
-{{- $appName := .Values.appName }}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.persistentVolumeClaims }}
   {{- range $pvcName, $pvcPath := .Values.persistentVolumeClaims }}
@@ -19,12 +16,12 @@ spec:
   volumeMode: Filesystem
   accessModes:
     - ReadWriteMany
-# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  # WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ''
   hostPath:
     type: Directory
-    path: {{ $pvcPath }}
+    path: {{ required (printf "path for persistentVolumeClaims.%s must be specified" $pvcName) $pvcPath }}
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
@@ -45,6 +42,5 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-      {{- end }}
-   {{- end }}
+  {{- end }}
+{{- end }}
