@@ -1,36 +1,24 @@
 generic:
-  appName: homeassistant
   deployment:
     image: lscr.io/linuxserver/homeassistant:latest
     ports:
     - containerPort: 8123
     pvcMounts:
       config:
-        hostPath: /mnt/somewhere/unencrypted/apps/homeassistant/config
         mountPath: /config
-  global:
-    akeyless:
-      path: /kind-homelab
-    cloudflare:
-      email: Jonas@Hess.pm
-    domain: home-server.dev
-    letsencrypt:
-      email: Jonas@Hess.pm
-    traefik_forward_auth:
-      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
-  ingress:
-    https:
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 8123
-      subdomain: homeassistant
-    - matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`))'
-      port: 8123
-      priority: 20
-      subdomain: homeassistant
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/homeassistant/config
   service:
     ports:
     - name: http
+      port: 8123
+  ingress:
+    https:
+    - subdomain: homeassistant
+      port: 8123
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+    - subdomain: homeassistant
+      priority: 20
+      matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`))'
       port: 8123

@@ -1,24 +1,12 @@
 generic:
-  appName: vaultwarden
-  global:
-    akeyless:
-      path: /kind-homelab
-    cloudflare:
-      email: Jonas@Hess.pm
-    domain: home-server.dev
-    letsencrypt:
-      email: Jonas@Hess.pm
-    traefik_forward_auth:
-      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
-  ingress:
-    https:
-    - port: 80
-      service: vaultwarden
-      subdomain: vaultwarden
   persistentVolumeClaims:
     data: /mnt/somewhere/encrypted/apps/vaultwarden/data
+  ingress:
+    https:
+    - subdomain: vaultwarden
+      port: 80
+      service: vaultwarden
 smtp:
+  host: smtp.example.com
   from: vaultwarden@example.com
   fromName: Vaultwarden
-  host: smtp.example.com

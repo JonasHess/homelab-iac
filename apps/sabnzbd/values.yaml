@@ -1,45 +1,33 @@
 generic:
-  appName: sabnzbd
   deployment:
     image: lscr.io/linuxserver/sabnzbd:latest
     ports:
     - containerPort: 8080
     pvcMounts:
       config:
-        hostPath: /mnt/somewhere/unencrypted/apps/sabnzbd/config
         mountPath: /config
-      downloads:
-        hostPath: /data/volumes/sabnzbd-downloads
-        mountPath: /mnt/downloads
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/sabnzbd/config
       media:
-        hostPath: /mnt/somewhere/encrypted/media
         mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
+      downloads:
+        mountPath: /mnt/downloads
+        hostPath: ~ # /data/volumes/sabnzbd-downloads
       watchdir:
-        hostPath: /mnt/somewhere/unencrypted/apps/watchdir
         mountPath: /mnt/watchdir
-  global:
-    akeyless:
-      path: /kind-homelab
-    cloudflare:
-      email: Jonas@Hess.pm
-    domain: home-server.dev
-    letsencrypt:
-      email: Jonas@Hess.pm
-    traefik_forward_auth:
-      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
-  ingress:
-    https:
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 8080
-      subdomain: sabnzbd
-    - matchSuffix: '&& ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))'
-      port: 8080
-      priority: 20
-      subdomain: sabnzbd
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/watchdir
   service:
     ports:
     - name: http
+      port: 8080
+  ingress:
+    https:
+    - subdomain: sabnzbd
+      port: 8080
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+    - subdomain: sabnzbd
+      matchSuffix: '&& ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))'
+      priority: 20
       port: 8080

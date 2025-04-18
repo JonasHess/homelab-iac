@@ -1,31 +1,28 @@
 generic:
-  appName: stirlingpdf
-  global:
-    domain: hess.pm
   deployment:
     image: frooodle/s-pdf:latest
     ports:
     - containerPort: 8080
     pvcMounts:
-      paperlessconsume:
-        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/consume
-        mountPath: /pipeline/finishedFolders
       scanner:
-        hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
         mountPath: /pipeline/watchedFolders/scanner
-  ingress:
-    https:
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 8080
-      subdomain: stirling-pdf
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 8080
-      subdomain: pdf
+        hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
+      paperlessconsume:
+        mountPath: /pipeline/finishedFolders
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/consume
   service:
     ports:
     - name: http
       port: 8080
+  ingress:
+    https:
+    - subdomain: stirling-pdf
+      port: 8080
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+    - subdomain: pdf
+      port: 8080
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd

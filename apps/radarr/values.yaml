@@ -1,39 +1,27 @@
 generic:
-  appName: radarr
   deployment:
     image: lscr.io/linuxserver/radarr:latest
     ports:
     - containerPort: 7878
     pvcMounts:
       config:
-        hostPath: /mnt/somewhere/unencrypted/apps/radarr/config
         mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/radarr/config
       media:
-        hostPath: /mnt/somewhere/encrypted/media
         mountPath: /mnt/media
-  global:
-    akeyless:
-      path: /kind-homelab
-    cloudflare:
-      email: Jonas@Hess.pm
-    domain: home-server.dev
-    letsencrypt:
-      email: Jonas@Hess.pm
-    traefik_forward_auth:
-      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
-  ingress:
-    https:
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 7878
-      subdomain: radarr
-    - matchSuffix: '&& PathPrefix(`/api`)'
-      port: 7878
-      priority: 20
-      subdomain: radarr
+        hostPath: ~ # /mnt/somewhere/encrypted/media
   service:
     ports:
     - name: http
+      port: 7878
+  ingress:
+    https:
+    - subdomain: radarr
+      port: 7878
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+    - subdomain: radarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
       port: 7878

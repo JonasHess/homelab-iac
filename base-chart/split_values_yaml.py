@@ -2,6 +2,7 @@ import yaml
 import os
 import sys
 from pathlib import Path
+import re
 
 def split_values_yaml(source_file, target_dir):
     """
@@ -40,15 +41,42 @@ def split_values_yaml(source_file, target_dir):
         app_dir = target_base / app_name
         os.makedirs(app_dir, exist_ok=True)
 
-        # Write the app-specific values.yaml file
+        # Write the app-specific values.yaml file (without hostPath modifications)
         output_file = app_dir / 'values.yaml'
         with open(output_file, 'w') as f:
             yaml.dump(app_data, f, default_flow_style=False, sort_keys=False)
+
+        # Post-process the file to modify hostPath entries
+        modify_hostpaths(output_file)
 
         print(f"Created {output_file}")
         apps_processed += 1
 
     print(f"\nDone! Processed {apps_processed} apps from values.yaml")
+
+def modify_hostpaths(yaml_file):
+    """
+    Modify a YAML file to replace hostPath values with "~" and add original as a comment.
+
+    Args:
+        yaml_file: Path to the YAML file to modify
+    """
+    with open(yaml_file, 'r') as f:
+        content = f.read()
+
+    # Use regex to find and replace hostPath entries
+    # This matches "hostPath: <value>" and captures the value
+    pattern = r'(\s+)hostPath: (.+)$'
+
+    def replace_hostpath(match):
+        indent = match.group(1)  # Preserve indentation
+        path_value = match.group(2).strip()  # Get the path value
+        return f"{indent}hostPath: ~ # {path_value}"
+
+    modified_content = re.sub(pattern, replace_hostpath, content, flags=re.MULTILINE)
+
+    with open(yaml_file, 'w') as f:
+        f.write(modified_content)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

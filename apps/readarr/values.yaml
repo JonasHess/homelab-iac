@@ -1,39 +1,27 @@
 generic:
-  appName: readarr
   deployment:
     image: lscr.io/linuxserver/readarr:develop
     ports:
     - containerPort: 8787
     pvcMounts:
       config:
-        hostPath: /mnt/somewhere/unencrypted/apps/readarr/config
         mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/readarr/config
       media:
-        hostPath: /mnt/somewhere/encrypted/media
         mountPath: /mnt/media
-  global:
-    akeyless:
-      path: /kind-homelab
-    cloudflare:
-      email: Jonas@Hess.pm
-    domain: home-server.dev
-    letsencrypt:
-      email: Jonas@Hess.pm
-    traefik_forward_auth:
-      oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-      oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
-  ingress:
-    https:
-    - middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
-      port: 8787
-      subdomain: readarr
-    - matchSuffix: '&& PathPrefix(`/api`)'
-      port: 8787
-      priority: 20
-      subdomain: readarr
+        hostPath: ~ # /mnt/somewhere/encrypted/media
   service:
     ports:
     - name: http
+      port: 8787
+  ingress:
+    https:
+    - subdomain: readarr
+      port: 8787
+      middlewares:
+      - name: traefik-forward-auth
+        namespace: argocd
+    - subdomain: readarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
       port: 8787
