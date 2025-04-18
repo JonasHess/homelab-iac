@@ -1,9 +1,14 @@
-    {{- if and .Values.ingress .Values.ingress.udp }}
-      {{- range $ingress := .Values.ingress.udp }}
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
+{{- if and .Values.ingress .Values.ingress.udp }}
+  {{- range $ingress := .Values.ingress.udp }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
-  name: {{ .Values.appName }}-udp-{{ $ingress.port }}
+  name: {{  $appName }}-udp-{{ $ingress.port }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true

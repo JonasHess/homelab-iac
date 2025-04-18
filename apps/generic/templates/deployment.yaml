@@ -1,9 +1,14 @@
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
 {{- if .Values.deployment }}
   {{- $deployment := .Values.deployment }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.appName }}-deployment
+  name: {{ $appName }}-deployment
   namespace: argocd
 spec:
   replicas: 1
@@ -11,14 +16,14 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: {{ .Values.appName }}
+      app: {{ $appName }}
   template:
     metadata:
       labels:
-        app: {{ .Values.appName }}
+        app: {{ $appName }}
     spec:
       containers:
-        - name: {{ .Values.appName }}
+        - name: {{ $appName }}
           image: {{ $deployment.image }}
           {{- if $deployment.imagePullPolicy }}
           imagePullPolicy: {{ $deployment.imagePullPolicy }}
@@ -49,15 +54,15 @@ spec:
           volumeMounts:
             {{- range $mountName, $mount := $deployment.pvcMounts }}
             - mountPath: "{{ $mount.mountPath }}"
-              name: {{ .Values.appName }}-{{ $mountName }}-volume
+              name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
             {{- range $mountName, $mount := $deployment.deviceMounts }}
             - mountPath: "{{ $mount.mountPath }}"
-              name: {{ .Values.appName }}-{{ $mountName }}-volume
+              name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
             {{- range $mountName, $mount := $deployment.configMapMounts }}
             - mountPath: "{{ $mount.mountPath }}"
-              name: {{ .Values.appName }}-{{ $mountName }}-volume
+              name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
           {{- if $deployment.envFrom }}
           envFrom:
@@ -72,18 +77,18 @@ spec:
           {{- end }}
       volumes:
         {{- range $mountName, $mount := $deployment.pvcMounts }}
-        - name: {{ .Values.appName }}-{{ $mountName }}-volume
+        - name: {{ $appName }}-{{ $mountName }}-volume
           persistentVolumeClaim:
-            claimName: {{ .Values.appName }}-{{ $mountName }}-pvc
+            claimName: {{ $appName }}-{{ $mountName }}-pvc
         {{- end }}
         {{- range $mountName, $mount := $deployment.deviceMounts }}
-        - name: {{ .Values.appName }}-{{ $mountName }}-volume
+        - name: {{ $appName }}-{{ $mountName }}-volume
           hostPath:
             path: {{ $mount.hostPath | quote }}
             type: CharDevice
         {{- end }}
         {{- range $mountName, $mount := $deployment.configMapMounts }}
-        - name: {{ .Values.appName }}-{{ $mountName }}-volume
+        - name: {{ $appName }}-{{ $mountName }}-volume
           configMap:
             name: {{ $mount.configMapName }}
         {{- end }}
@@ -93,7 +98,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{.Values.appName}}-{{ $mountName }}-pv"
+  name: "{{ $appName }}-{{ $mountName }}-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -111,13 +116,13 @@ spec:
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "{{.Values.appName}}-{{ $mountName }}-pvc"
+    name: "{{ $appName }}-{{ $mountName }}-pvc"
     namespace: argocd
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "{{.Values.appName}}-{{ $mountName }}-pvc"
+  name: "{{ $appName }}-{{ $mountName }}-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true

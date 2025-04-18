@@ -1,9 +1,15 @@
-    {{- if and .Values.ingress .Values.ingress.tcp }}
-      {{- range $ingress := .Values.ingress.tcp }}
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
+
+{{- if and .Values.ingress .Values.ingress.tcp }}
+  {{- range $ingress := .Values.ingress.tcp }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
-  name: {{ .Values.appName }}-tcp-{{ $ingress.port }}
+  name: {{ $appName }}-tcp-{{ $ingress.port }}
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
@@ -13,7 +19,7 @@ spec:
   routes:
     - match: HostSNI(`*`)
       services:
-        - name: {{ .Values.appName }}-service
+        - name: {{ $appName }}-service
           port: {{ $ingress.port }}
       {{- end }}
    {{- end }}

@@ -1,5 +1,7 @@
 generic:
   appName: stirlingpdf
+  global:
+    domain: hess.pm
   deployment:
     image: frooodle/s-pdf:latest
     ports:

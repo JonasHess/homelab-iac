@@ -1,12 +1,17 @@
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
 {{- if .Values.service }}
 {{- $svc := .Values.service }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.appName }}-service
+  name: {{ $appName }}-service
   namespace: argocd
   labels:
-    app: {{ .Values.appName }}
+    app: {{ $appName }}
 spec:
   ports:
     {{- range $port := $svc.ports }}
@@ -20,5 +25,5 @@ spec:
       {{- end }}
     {{- end }}
   selector:
-    app: {{ .Values.appName }}
+    app: {{ $appName }}
 {{- end -}}

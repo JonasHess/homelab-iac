@@ -1,10 +1,15 @@
-    {{- if .Values.persistentVolumeClaims }}
-      {{- range $pvcName, $pvcPath := .Values.persistentVolumeClaims }}
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
+{{- if .Values.persistentVolumeClaims }}
+  {{- range $pvcName, $pvcPath := .Values.persistentVolumeClaims }}
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{.Values.appName}}-{{ $pvcName }}-pv"
+  name: "{{ $appName }}-{{ $pvcName }}-pv"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -23,13 +28,13 @@ spec:
   claimRef:
     apiVersion: v1
     kind: PersistentVolumeClaim
-    name: "{{.Values.appName}}-{{ $pvcName }}-pvc"
+    name: "{{ $appName }}-{{ $pvcName }}-pvc"
     namespace: argocd
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: "{{.Values.appName}}-{{ $pvcName }}-pvc"
+  name: "{{ $appName }}-{{ $pvcName }}-pvc"
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-options: Prune=true

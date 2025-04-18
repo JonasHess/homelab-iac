@@ -1,13 +1,18 @@
-    {{- if .Values.persistentVolume }}
-      {{- range $pvName, $pvPath := .Values.persistentVolume }}
+{{- if not .Values.appName }}
+  {{- fail "appName must be set in values.yaml" }}
+{{- end }}
+{{- $appName := .Values.appName }}
+
+{{- if .Values.persistentVolume }}
+  {{- range $pvName, $pvPath := .Values.persistentVolume }}
 ---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: "{{.Values.appName}}-{{ $pvName }}-pv"
+  name: "{{ $appName }}-{{ $pvName }}-pv"
   namespace: argocd
   labels:
-    app: "{{.Values.appName}}-{{ $pvName }}"
+    app: "{{ $appName }}-{{ $pvName }}"
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
