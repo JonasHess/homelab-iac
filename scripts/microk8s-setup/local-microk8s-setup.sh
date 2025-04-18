@@ -1,70 +1,52 @@
 #!/usr/bin/env bash
 
 # Summary: This script automates the setup of a MicroK8s cluster on a remote server.
-# It takes the environment name and a local path for the kube-config file as input.
-# It connects to the remote server via SSH, installs MicroK8s, enables necessary addons,
-# configures MetalLB with a provided IP range, handles optional GPU driver and operator installation,
+# It takes the git repo URL, target revision, values path, and a local path for the kube-config file as input.
+# It clones the specified repository, reads the values from the specified YAML file,
+# connects to the remote server via SSH, installs MicroK8s, enables necessary addons,
+# configures MetalLB with the provided IP range, handles optional GPU driver and operator installation,
 # retrieves the kube-config file, updates it with the correct cluster, user, and context names,
-# and cleans up temporary files on the remote server. It also includes interactive prompts for user confirmation
-# and error handling for missing arguments and existing files. The script uses environment variables defined in
-# the environment directory.
+# and cleans up temporary files on the remote server and local machine.
 #
-# Usage: ./local-microk8s-setup.sh <environment> <kube-config-path>
+# Usage: ./local-microk8s-setup.sh <repoURL> <targetRevision> <path> <kube-config-path>
 
+# yq is required to parse the values.yaml file.
+# To install yq visit https://github.com/mikefarah/yq
+#    wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
+#    chmod +x /usr/bin/yq
 
 set -e  # Exit on first error
 set -o pipefail  # Fail if any command in a pipe fails
 
 cd "$(dirname "$0")"
 
-list_environments() {
-  echo "Available environments:"
-  for dir in ../../environments/*/; do
-    [ -d "$dir" ] && echo "  - $(basename "$dir")"
-  done
-}
-
-if [ -z "$1" ]; then
-  echo "You are missing the environment argument!"
-  echo "Correct usage: $0 <environment> <kube-config-path>"
-  list_environments
-  exit 1
-fi
-
-if [ -z "$2" ]; then
-  echo "You are missing the kube-config-path argument (e.g., ~/.kube/config.d/config)!"
-  echo "Correct usage: $0 <environment> <kube-config-path>"
-  exit 1
-fi
-
-ENVIRONMENT=$1
-KUBE_CONFIG_PATH=$2
-export ENVIRONMENT
-
-# Load parameters from the environment.yaml file
-ENV_FILE="../../environments/${ENVIRONMENT}/environment.yaml"
-if [ ! -f "$ENV_FILE" ]; then
-  echo "Error: Environment file $ENV_FILE not found!"
-  exit 1
-fi
-
-# Install yq https://github.com/mikefarah/yq
-# wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq &&\
-#    chmod +x /usr/bin/yq
-SERVER_IP=$(yq e '.serverip' "$ENV_FILE")
-USERNAME=$(yq e '.username' "$ENV_FILE")
-IP_RANGE=$(yq e '.ip-range' "$ENV_FILE")
-CLUSTER_NAME=$(yq e '.cluster-name' "$ENV_FILE")
-
 show_help() {
-  echo "Usage: $0 <environment> <kube-config-path> [--help]"
+  echo "Usage: $0 <repoURL> <targetRevision> <path> <kube-config-path> [--help]"
   echo
   echo "Arguments:"
-  echo "  <environment>       The environment name."
-  echo "  <kube-config-path>  The path to the kube-config file (e.g., ~/.kube/config.d/config)."
-  echo "  --help              Display this help message."
+  echo "  <repoURL>          The URL of the git repository (e.g., https://github.com/username/repo.git)"
+  echo "  <targetRevision>   The branch or tag to checkout (e.g., main)"
+  echo "  <path>             Path to the values.yaml file within the repository (e.g., cluster/values.yaml)"
+  echo "  <kube-config-path> The path to the kube-config file (e.g., ~/.kube/config.d/config)"
+  echo "  --help             Display this help message."
   exit 0
 }
+
+# Check if the help command is provided
+if [[ "$1" == "--help" ]]; then
+  show_help
+fi
+
+# Check for required arguments
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
+  echo "Error: Missing required arguments!"
+  show_help
+fi
+
+REPO_URL=$1
+TARGET_REVISION=$2
+VALUES_PATH=$3
+KUBE_CONFIG_PATH=$4
 
 # Function to ask for user confirmation
 confirm() {
@@ -79,6 +61,62 @@ confirm() {
   esac
 }
 
+# Check if the kube-config file already exists
+if [ -f "$KUBE_CONFIG_PATH" ]; then
+  if confirm "The file $KUBE_CONFIG_PATH already exists. Do you want to replace it? [y/N]"; then
+    rm -f "$KUBE_CONFIG_PATH"
+  else
+    echo "Cannot proceed with the installation. Cannot replace $KUBE_CONFIG_PATH."
+    exit 1
+  fi
+fi
+
+# Create a temporary directory for the git repository
+LOCAL_TMP_DIR=$(mktemp -d /tmp/microk8sSetup.XXXXXX)
+echo "Created temporary directory: $LOCAL_TMP_DIR"
+
+# Clone the repository and checkout the specified branch/tag
+echo "Cloning repository $REPO_URL with branch/tag $TARGET_REVISION..."
+git clone --depth 1 --branch "$TARGET_REVISION" "$REPO_URL" "$LOCAL_TMP_DIR"
+
+# Read values from the values.yaml file
+VALUES_FILE="$LOCAL_TMP_DIR/$VALUES_PATH"
+if [ ! -f "$VALUES_FILE" ]; then
+  echo "Error: Values file $VALUES_PATH not found in the repository!"
+  rm -rf "$LOCAL_TMP_DIR"
+  exit 1
+fi
+
+# Check if yq is installed
+if ! command -v yq &> /dev/null; then
+  echo "Error: yq is not installed! Please install yq first."
+  echo "Visit https://github.com/mikefarah/yq for installation instructions."
+  rm -rf "$LOCAL_TMP_DIR"
+  exit 1
+fi
+
+# Extract values from the values.yaml file
+SERVER_IP=$(yq e '.global.cluster.serverip' "$VALUES_FILE")
+USERNAME=$(yq e '.global.cluster.username' "$VALUES_FILE")
+IP_RANGE=$(yq e '.global.cluster.ip-range' "$VALUES_FILE")
+CLUSTER_NAME=$(yq e '.global.cluster.cluster-name' "$VALUES_FILE")
+
+# Verify that all required values were extracted
+if [ -z "$SERVER_IP" ] || [ -z "$USERNAME" ] || [ -z "$IP_RANGE" ] || [ -z "$CLUSTER_NAME" ]; then
+  echo "Error: One or more required values not found in $VALUES_FILE!"
+  echo "Make sure the file contains all required fields: serverip, username, ip-range, cluster-name"
+  rm -rf "$LOCAL_TMP_DIR"
+  exit 1
+fi
+
+# Display the extracted values
+echo "Extracted configuration values:"
+echo "  Server IP: $SERVER_IP"
+echo "  Username: $USERNAME"
+echo "  IP Range: $IP_RANGE"
+echo "  Cluster Name: $CLUSTER_NAME"
+
+# Function to update the kube-config file
 update_kube_config() {
   local kube_config_path=$1
   local new_cluster_name=$2
@@ -103,21 +141,6 @@ update_kube_config() {
 
   echo "kube-config file updated successfully!"
 }
-
-# Check if the help command is provided
-if [[ "$1" == "--help" ]]; then
-  show_help
-fi
-
-# Check if the kube-config file already exists
-if [ -f "$KUBE_CONFIG_PATH" ]; then
-  if confirm "The file $KUBE_CONFIG_PATH already exists. Do you want to replace it? [y/N]"; then
-    rm -f "$KUBE_CONFIG_PATH"
-  else
-    echo "Cannot proceed with the installation. Cannot replace $KUBE_CONFIG_PATH."
-    exit 1
-  fi
-fi
 
 echo "Connecting to the remote server via ssh://${USERNAME}@${SERVER_IP}..."
 # Create a random subdirectory in /tmp on the remote server
@@ -144,8 +167,12 @@ chmod 600 "$KUBE_CONFIG_PATH"
 echo "Cleaning up the remote server..."
 ssh ${USERNAME}@${SERVER_IP} \
   "rm -f ${REMOTE_TMP_DIR}/remote-microk8s-setup.sh ${REMOTE_TMP_DIR}/kube-config && \
-  rm ${REMOTE_TMP_DIR}/nohup.out && \
+  rm ${REMOTE_TMP_DIR}/nohup.out || true && \
   rmdir ${REMOTE_TMP_DIR}" || true
+
+# Clean up the local temporary directory
+echo "Cleaning up the local temporary directory..."
+rm -rf "$LOCAL_TMP_DIR"
 
 echo "Checking the cluster nodes..."
 kubectl --kubeconfig="$KUBE_CONFIG_PATH" get nodes -o wide

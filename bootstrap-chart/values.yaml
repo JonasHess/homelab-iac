@@ -1,0 +1,11 @@
+basechart:
+  chart:
+    repoURL: "https://github.com/JonasHess/homelab-iac.git"
+    targetRevision: feature/refactor-apps
+    path: base-chart-new
+  values:
+    repoURL: ~ # https://github.com/JonasHess/homelab-environments.git
+    targetRevision: ~ # main
+    path: ~ # "hess.pm/values.yaml"
+
+
