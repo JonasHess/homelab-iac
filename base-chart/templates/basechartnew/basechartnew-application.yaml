@@ -69,6 +69,7 @@ spec:
           stirlingpdf:
             enabled: true
             argocd:
+              targetRevision: feature/refactor-apps
               project: "default"
               syncWave: "10"  # Deploy after monitoring is available
               namespace: "argocd"
