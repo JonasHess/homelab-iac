@@ -24,10 +24,16 @@ spec:
             {{- end }}
   destination:
     server: https://kubernetes.default.svc
-    namespace: argocd
-  {{- with $appConfig.argocd.syncPolicy }}
+    namespace: {{ $appConfig.argocd.namespace | default "argocd" }}
   syncPolicy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    {{- if $appConfig.argocd.syncPolicy }}
+    {{- toYaml $appConfig.argocd.syncPolicy | nindent 4 }}
+    {{- else }}
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    {{- end }}
 {{- end }}
 {{- end }}

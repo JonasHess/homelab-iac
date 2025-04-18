@@ -14,6 +14,8 @@ apps:
     enabled: true
     argocd:
       # Using default path (charts/immich)
+      # Using default namespace (argocd)
+      # Using default syncPolicy
       helm:
         values:
           aaa:
@@ -25,16 +27,21 @@ apps:
           ccc:
             enabled: true
             existingSecret: immich-mysql-secret
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
   sftpgo:
     enabled: true
     argocd:
       # Custom path specified
       path: custom-charts/sftpgo-v2
       targetRevision: main
+      # Custom namespace
+      namespace: file-storage
+      # Custom syncPolicy that overrides the default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: false  # Different from default
+        syncOptions:
+          - ApplyOutOfSyncOnly=true  # Additional option
       helm:
         values:
           persistence:
@@ -46,10 +53,6 @@ apps:
           mysql:
             enabled: true
             existingSecret: sftpgo-mysql-secret
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
   prometheus:
     enabled: true
     argocd:
@@ -57,11 +60,15 @@ apps:
       repoURL: https://github.com/prometheus-community/helm-charts.git
       path: charts/kube-prometheus-stack
       targetRevision: 42.0.3
+      # Custom namespace for monitoring
+      namespace: monitoring
+      # Completely different syncPolicy
+      syncPolicy:
+        automated: false  # No automation
+        syncOptions:
+          - Validate=false
+          - SkipDryRunOnMissingResource=true
       helm:
         values:
           grafana:
             enabled: true
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
