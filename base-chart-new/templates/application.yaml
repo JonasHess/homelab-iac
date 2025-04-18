@@ -70,9 +70,6 @@ spec:
       {{- with $appConfig.argocd.helm.parameters }}
       {{- toYaml . | nindent 8 }}
       {{- end }}
-      parameters:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
   destination:
     server: {{ $appConfig.argocd.server | default "https://kubernetes.default.svc" }}
     namespace: {{ $appConfig.argocd.namespace | default "argocd" }}
@@ -99,4 +96,5 @@ spec:
   info:
     {{- toYaml $appConfig.argocd.info | nindent 4 }}
   {{- end }}
+{{- end }}
 {{- end }}
