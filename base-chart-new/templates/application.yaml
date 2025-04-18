@@ -52,15 +52,30 @@ spec:
         {{- end }}
       {{- end }}
       valuesObject:
-        {{- with $appConfig.argocd.helm.values }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-        generic:
-          appName: {{ $appName }}
-          global:
-            {{- with $.Values.global }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
+        {{- /* Define default generic values */ -}}
+        {{- $defaultGeneric := dict "appName" $appName -}}
+        {{- if $.Values.global -}}
+        {{- $defaultGeneric = set $defaultGeneric "global" $.Values.global -}}
+        {{- end -}}
+
+        {{- /* Get user values or create empty dict */ -}}
+        {{- $userValues := deepCopy ($appConfig.argocd.helm.values | default dict) -}}
+
+        {{- /* Get user's generic values or create empty dict */ -}}
+        {{- $userGeneric := deepCopy (get $userValues "generic" | default dict) -}}
+
+        {{- /* Merge the user's generic values with defaults */ -}}
+        {{- range $key, $value := $defaultGeneric -}}
+          {{- if not (hasKey $userGeneric $key) -}}
+            {{- $_ := set $userGeneric $key $value -}}
+          {{- end -}}
+        {{- end -}}
+
+        {{- /* Set the merged generic values back into user values */ -}}
+        {{- $_ := set $userValues "generic" $userGeneric -}}
+
+        {{- /* Output the final values */ -}}
+        {{- toYaml $userValues | nindent 8 -}}
       {{- with $appConfig.argocd.helm.parameters }}
       parameters:
         {{- toYaml . | nindent 8 }}
