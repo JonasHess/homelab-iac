@@ -1,21 +1,19 @@
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: traefik-dashboard
+  name: traefik-forward-auth
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   entryPoints:
     - websecure
-
   routes:
-    - match: Host(`traefik.{{ .Values.global.domain }}`)
-      kind: Rule
+    - kind: Rule
+      match: Host(`auth.{{.Values.global.domain}}`)
       services:
-        - name: api@internal
-          kind: TraefikService
+        - name: traefik-forward-auth
+          port: 80
       middlewares:
         - name: traefik-forward-auth
           namespace: argocd

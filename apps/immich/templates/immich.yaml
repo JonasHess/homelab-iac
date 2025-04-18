@@ -30,7 +30,7 @@ spec:
               mountPath: /config
           env:
             - name: OAUTH_CLIENT_ID
-              value: {{ .Values.generic.global.traefik_forward_auth.oidc_client_id | quote }}
+              value: {{ .Values.global.traefik_forward_auth.oidc_client_id | quote }}
             - name: OAUTH_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -54,9 +54,9 @@ spec:
             - name: SMTP_USERNAME
               value: {{ .Values.smtp.username | quote }}
             - name: OAUTH_ISSUER_URL
-              value: {{ .Values.generic.global.traefik_forward_auth.oidc_issuer_url | quote }}
+              value: {{ .Values.global.traefik_forward_auth.oidc_issuer_url | quote }}
             - name: SERVER_EXTERNAL_DOMAIN
-              value: {{ printf "https://%s.%s" .Values.server.externalSubDomain  .Values.generic.global.domain | quote }}
+              value: {{ printf "https://%s.%s" .Values.server.externalSubDomain  .Values.global.domain | quote }}
       containers:
         - name: server
           image: ghcr.io/immich-app/immich-server:release
@@ -105,7 +105,7 @@ spec:
             - name: NODE_ENV
               value: "production"
             - name: IMMICH_WEB_URL
-              value: "https://immich.{{ .Values.generic.global.domain }}"
+              value: "https://immich.{{ .Values.global.domain }}"
             - name: IMMICH_LOG_LEVEL
               value: "debug"
             - name: TZ

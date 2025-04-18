@@ -14,7 +14,7 @@ spec:
   targets:
     staticConfig:
       static:
-      - https://{{ .Values.generic.global.domain }}:443
+      - https://{{ .Values.global.domain }}:443
   metricRelabelings:
   - action: keep
     regex: .*

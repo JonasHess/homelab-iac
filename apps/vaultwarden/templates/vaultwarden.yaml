@@ -11,7 +11,7 @@ spec:
     targetRevision: v0.31.8
     helm:
       valuesObject:
-        domain: "https://vaultwarden.{{ $.Values.generic.global.domain }}"
+        domain: "https://vaultwarden.{{ $.Values.global.domain }}"
         signupsAllowed: false
         ingress:
           enabled: false

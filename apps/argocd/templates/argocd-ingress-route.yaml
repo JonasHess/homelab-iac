@@ -10,7 +10,7 @@ spec:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`argocd.{{ .Values.generic.global.domain }}`)
+      match: Host(`argocd.{{ .Values.global.domain }}`)
       priority: 10
       services:
         - kind: Service
@@ -22,7 +22,7 @@ spec:
           namespace: argocd
 {{/*    - kind: Rule*/}}
 {{/*      match: >-*/}}
-{{/*        Host(`argocd.{{ .Values.generic.global.domain }}`) &&*/}}
+{{/*        Host(`argocd.{{ .Values.global.domain }}`) &&*/}}
 {{/*        Headers(`Content-Type`, `application/grpc`)*/}}
 {{/*      priority: 11*/}}
 {{/*      services:*/}}

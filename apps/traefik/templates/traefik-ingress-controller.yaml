@@ -69,15 +69,15 @@ spec:
 
         additionalArguments:
           - --entrypoints.websecure.http.tls.certresolver=cloudflare
-          - --entrypoints.websecure.http.tls.domains[0].main={{.Values.generic.global.domain}}
-          - --entrypoints.websecure.http.tls.domains[0].sans=*.{{.Values.generic.global.domain}}
+          - --entrypoints.websecure.http.tls.domains[0].main={{.Values.global.domain}}
+          - --entrypoints.websecure.http.tls.domains[0].sans=*.{{.Values.global.domain}}
           - --entryPoints.web.proxyProtocol.insecure
           - --entryPoints.web.forwardedHeaders.insecure
           - --entrypoints.web.http.redirections.entrypoint.to=websecure
           - --entrypoints.web.http.redirections.entrypoint.scheme=https
           - --entrypoints.web.http.redirections.entrypoint.permanent=true
           - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
-          - --certificatesresolvers.cloudflare.acme.email={{.Values.generic.global.letsencrypt.email}}
+          - --certificatesresolvers.cloudflare.acme.email={{.Values.global.letsencrypt.email}}
           - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1
           - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
 

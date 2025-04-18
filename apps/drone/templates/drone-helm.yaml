@@ -57,7 +57,7 @@ spec:
           ## REQUIRED: Set the user-visible Drone hostname, sans protocol.
           ## Ref: https://docs.drone.io/installation/reference/drone-server-host/
           ##
-          DRONE_SERVER_HOST: "drone.{{ .Values.generic.global.domain }}"
+          DRONE_SERVER_HOST: "drone.{{ .Values.global.domain }}"
   destination:
     server: "https://kubernetes.default.svc"
     namespace: argocd

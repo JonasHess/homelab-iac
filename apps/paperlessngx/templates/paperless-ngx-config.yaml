@@ -10,10 +10,10 @@ data:
   PAPERLESS_DBUSER: "paperless"
   PAPERLESS_ADMIN_USER: {{ .Values.admin.username | quote }}
   PAPERLESS_ADMIN_MAIL: {{ .Values.admin.email | quote }}
-  PAPERLESS_URL: https://paperlessngx.{{ .Values.generic.global.domain }}
+  PAPERLESS_URL: https://paperlessngx.{{ .Values.global.domain }}
   PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
   PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
-  PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.generic.global.domain }}/"
+  PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.global.domain }}/"
   PAPERLESS_CONSUMER_BARCODE_UPSCALE: "2.0"
   PAPERLESS_CONSUMER_BARCODE_DPI: "600"
   PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"

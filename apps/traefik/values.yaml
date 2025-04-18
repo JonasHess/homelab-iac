@@ -1,3 +1,10 @@
+global:
+  domain: ~ # example.com
+  traefik_forward_auth:
+    oidc_client_id: ~ # traefik-forward-auth
+    oidc_issuer_url: ~ # https://accounts.google.com
+  akeyless:
+    path: ~ # oidc/traefik-forward-auth
 additionalExposedPorts:
   sftpgo:
     port: 2222

@@ -26,7 +26,7 @@ spec:
           command: ["node", "/usr/src/app/app.js"]
           env:
             - name: PAPERLESS_URL
-              value: "https://paperlessngx.{{ .Values.generic.global.domain }}"
+              value: "https://paperlessngx.{{ .Values.global.domain }}"
       volumes:
         - name: app-volume
           configMap:
