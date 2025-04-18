@@ -16,3 +16,4 @@ spec:
         - name: {{ .Values.appName }}-service
           port: {{ $ingress.port }}
       {{- end }}
+   {{- end }}

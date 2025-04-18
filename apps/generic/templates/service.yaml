@@ -1,5 +1,5 @@
-    {{- if .Values.service }}
-      {{- $svc := .Values.service }}
+{{- if .Values.service }}
+{{- $svc := .Values.service }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -21,3 +21,4 @@ spec:
     {{- end }}
   selector:
     app: {{ .Values.appName }}
+{{- end -}}
