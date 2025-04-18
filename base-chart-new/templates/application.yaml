@@ -34,6 +34,9 @@ metadata:
     notifications.argoproj.io/subscribe.on-sync-failed: {{ $appConfig.argocd.notifications.onSyncFailed | default "slack:general" }}
     notifications.argoproj.io/subscribe.on-health-degraded: {{ $appConfig.argocd.notifications.onHealthDegraded | default "slack:general" }}
     {{- end }}
+    {{- if $appConfig.description }}
+    argocd.argoproj.io/description: {{ $appConfig.description }}
+    {{- end }}
     {{- with $appConfig.argocd.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
