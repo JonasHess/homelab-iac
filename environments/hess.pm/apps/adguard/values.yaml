@@ -1,9 +1,0 @@
-apps:
-  adguard:
-    generic:
-      deployment:
-        pvcMounts:
-          config:
-            hostPath: "/mnt/tank1/unencrypted/apps/adguard/config"
-          data:
-            hostPath: "/mnt/tank1/encrypted/apps/adguard/data"

@@ -1,7 +1,0 @@
-apps:
-  tautulli:
-    generic:
-      deployment:
-        pvcMounts:
-          config:
-            hostPath: "/mnt/tank1/unencrypted/apps/tautulli/config"
