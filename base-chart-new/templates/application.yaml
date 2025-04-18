@@ -1,18 +1,56 @@
+{{- /*
+Application template for Argo CD applications
+This template generates Argo CD Application resources based on the values provided in values.yaml
+It includes best practices for Argo CD application management:
+- Resource organization with labels
+- Sync wave support for controlling deployment order
+- Project-based access control
+- Configurable sync policies with sensible defaults
+- Support for custom paths, namespaces, and revisions
+*/ -}}
+
 {{- range $appName, $appConfig := .Values.apps }}
 {{- if $appConfig.enabled }}
+{{- if not $appName }}
+{{- fail "App name is required" }}
+{{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: {{ $appName }}
   namespace: argocd
+  labels:
+    app.kubernetes.io/name: {{ $appName }}
+    app.kubernetes.io/instance: {{ $appName }}
+    app.kubernetes.io/part-of: {{ $appConfig.argocd.partOf | default $appName }}
+    app.kubernetes.io/managed-by: argocd
+    {{- with $appConfig.argocd.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "{{ $appConfig.argocd.syncWave | default "0" }}"
+    {{- if $appConfig.argocd.notifications }}
+    notifications.argoproj.io/subscribe.on-sync-failed: {{ $appConfig.argocd.notifications.onSyncFailed | default "slack:general" }}
+    notifications.argoproj.io/subscribe.on-health-degraded: {{ $appConfig.argocd.notifications.onHealthDegraded | default "slack:general" }}
+    {{- end }}
+    {{- with $appConfig.argocd.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
 spec:
-  project: default
+  project: {{ $appConfig.argocd.project | default "default" }}
   source:
     repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/JonasHess/homelab-iac.git" }}
     targetRevision: {{ $appConfig.argocd.targetRevision | default "HEAD" }}
     path: {{ $appConfig.argocd.path | default (printf "charts/%s" $appName) }}
     helm:
+      releaseName: {{ $appConfig.argocd.helm.releaseName | default $appName }}
+      {{- if $appConfig.argocd.helm.valueFiles }}
+      valueFiles:
+        {{- range $appConfig.argocd.helm.valueFiles }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
       valuesObject:
         {{- with $appConfig.argocd.helm.values }}
         {{- toYaml . | nindent 8 }}
@@ -22,8 +60,12 @@ spec:
             {{- with $.Values.global }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+      {{- with $appConfig.argocd.helm.parameters }}
+      parameters:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
   destination:
-    server: https://kubernetes.default.svc
+    server: {{ $appConfig.argocd.server | default "https://kubernetes.default.svc" }}
     namespace: {{ $appConfig.argocd.namespace | default "argocd" }}
   syncPolicy:
     {{- if $appConfig.argocd.syncPolicy }}
@@ -35,5 +77,18 @@ spec:
     syncOptions:
       - CreateNamespace=true
     {{- end }}
+  {{- if or $appConfig.argocd.ignoreDifferences $.Values.global.ignoreDifferences }}
+  ignoreDifferences:
+    {{- if $appConfig.argocd.ignoreDifferences }}
+    {{- toYaml $appConfig.argocd.ignoreDifferences | nindent 4 }}
+    {{- else if $.Values.global.ignoreDifferences }}
+    {{- toYaml $.Values.global.ignoreDifferences | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  revisionHistoryLimit: {{ $appConfig.argocd.revisionHistoryLimit | default 3 }}
+  {{- if $appConfig.argocd.info }}
+  info:
+    {{- toYaml $appConfig.argocd.info | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}
