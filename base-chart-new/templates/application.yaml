@@ -55,27 +55,21 @@ spec:
         {{- end }}
       {{- end }}
       valuesObject:
-        {{- $valuesObject := dict }}
-        {{- /* Add app name to values object */ -}}
-        {{- $_ := set $valuesObject "appName" $appName }}
-
-        {{- /* Add generic.appName to values object */ -}}
-        {{- set $valuesObject "generic" (dict "appName" $appName) | ignore }}
-
-        {{- /* Add global values to values object (deep copied to prevent modifications) */ -}}
         {{- if $.Values.global }}
-        {{- $_ := set $valuesObject "global" (deepCopy $.Values.global) }}
+        global:
+          {{- $.Values.global | toYaml | nindent 10 }}
         {{- end }}
-
-        {{- /* Add app-specific helm values to values object (deep copied to prevent modifications) */ -}}
         {{- if $appConfig.argocd.helm.values }}
-        {{- $mergedValues := deepCopy $appConfig.argocd.helm.values }}
-        {{- $valuesObject := merge $valuesObject $mergedValues }}
+        {{- $appConfig.argocd.helm.values | toYaml | nindent 8 }}
         {{- end }}
-
-        {{- toYaml $valuesObject | nindent 8 }}
-
+      parameters:
+        - name: appName
+          value: {{ $appName }}
+        - name: generic.appName
+          value: {{ $appName }}
       {{- with $appConfig.argocd.helm.parameters }}
+      {{- toYaml . | nindent 8 }}
+      {{- end }}
       parameters:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -105,5 +99,4 @@ spec:
   info:
     {{- toYaml $appConfig.argocd.info | nindent 4 }}
   {{- end }}
-{{- end }}
 {{- end }}
