@@ -386,7 +386,7 @@ spec:
               helm:
                 values: {}
           prometheus:
-            enabled: false
+            enabled: true
             argocd:
               targetRevision: feature/refactor-apps
               helm:
