@@ -10,7 +10,6 @@ metadata:
 spec:
   project: default
   source:
-    chart: base-chart-new
     repoURL: "https://github.com/JonasHess/homelab-iac.git"
     targetRevision: feature/refactor-apps
     path: base-chart-new
