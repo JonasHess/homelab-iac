@@ -4,7 +4,7 @@ dependencies:
 - name: generic
   repository: file://../generic
   version: 0.1.0
-description: Helm chart for sabnzbd
-name: sabnzbd
+description: Helm chart for stirlingpdf
+name: stirlingpdf
 type: application
 version: 0.1.0

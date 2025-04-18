@@ -42,7 +42,7 @@ spec:
   source:
     repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/JonasHess/homelab-iac.git" }}
     targetRevision: {{ $appConfig.argocd.targetRevision | default "HEAD" }}
-    path: {{ $appConfig.argocd.path | default (printf "charts/%s" $appName) }}
+    path: {{ $appConfig.argocd.path | default (printf "apps/%s" $appName) }}
     helm:
       releaseName: {{ $appConfig.argocd.helm.releaseName | default $appName }}
       {{- if $appConfig.argocd.helm.valueFiles }}

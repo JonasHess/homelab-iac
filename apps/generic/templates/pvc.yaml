@@ -1,0 +1,44 @@
+    {{- if .Values.persistentVolumeClaims }}
+      {{- range $pvcName, $pvcPath := .Values.persistentVolumeClaims }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{.Values.appName}}-{{ $pvcName }}-pv"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteMany
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  hostPath:
+    type: Directory
+    path: {{ $pvcPath }}
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: "{{.Values.appName}}-{{ $pvcName }}-pvc"
+    namespace: argocd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: "{{.Values.appName}}-{{ $pvcName }}-pvc"
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  storageClassName: ''
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+---
+      {{- end }}

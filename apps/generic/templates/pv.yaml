@@ -1,0 +1,25 @@
+    {{- if .Values.persistentVolume }}
+      {{- range $pvName, $pvPath := .Values.persistentVolume }}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: "{{.Values.appName}}-{{ $pvName }}-pv"
+  namespace: argocd
+  labels:
+    app: "{{.Values.appName}}-{{ $pvName }}"
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+# WARNING: THIS WILL DELETE THE PV AND ALL DATA INSIDE IT
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  hostPath:
+    type: Directory
+    path: {{ $pvPath }}
+      {{- end }}

@@ -1,0 +1,19 @@
+{
+  "name": "Scanner",
+  "pipeline": [
+    {
+      "operation": "/api/v1/misc/remove-blanks",
+      "parameters": {
+        "threshold": 10,
+        "whitePercent": 99,
+        "fileInput": "automated"
+      }
+    }
+  ],
+  "_examples": {
+    "outputDir": "{outputFolder}/{folderName}",
+    "outputFileName": "{filename}-{pipelineName}-{date}-{time}"
+  },
+  "outputDir": "{outputFolder}",
+  "outputFileName": "{filename}"
+}
