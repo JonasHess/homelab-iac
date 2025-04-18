@@ -3,6 +3,9 @@
 # Stop at any error
 set -e
 
+# Move to script dir
+cd "$(dirname "$0")"
+
 # Script to run helm dependency update on each chart directory
 # Place this script in the root folder of your helm charts repository
 

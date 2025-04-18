@@ -1,5 +1,5 @@
-    {{- if .Values.deployment }}
-      {{- $deployment := .Values.deployment }}
+{{- if .Values.deployment }}
+  {{- $deployment := .Values.deployment }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -130,4 +130,4 @@ spec:
       storage: 10Gi
 ---
 {{- end }}
-   {{- end }}
+{{- end }}
