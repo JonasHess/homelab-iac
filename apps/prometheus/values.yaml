@@ -22,5 +22,5 @@ generic:
   persistentVolume:
     prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
   persistentVolumeClaims:
-    grafana: /mnt/somewhere/unencrypted/apps/prometheus/grafana/data
-    alertmanager: /mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data
+    grafana: ~ # /mnt/somewhere/unencrypted/apps/prometheus/grafana/data
+    alertmanager: ~ # /mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data

@@ -1,6 +1,6 @@
 generic:
   persistentVolumeClaims:
-    data: /mnt/somewhere/encrypted/apps/vaultwarden/data
+    data: ~ # /mnt/somewhere/encrypted/apps/vaultwarden/data
   ingress:
     https:
     - subdomain: vaultwarden
