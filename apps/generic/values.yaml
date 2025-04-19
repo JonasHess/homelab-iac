@@ -3,7 +3,3 @@ global:
   traefik:
     middlewareNamespace: ~
 appName: ~
-
-externalSecrets:
-  - immich-cli-credentials:
-    - api_key: "/immich/api/api_key"

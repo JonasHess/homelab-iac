@@ -35,3 +35,12 @@ generic:
     - subdomain: immich
       port: 2283
       service: immich-app-server
+  externalSecrets:
+    immich-credentials:
+      - client_secret: "/immich/oauth/client_secret"
+      - email_password: "/immich/email/password"
+    immich-db-credentials:
+      - username: "/immich/database/username"
+      - password: "/immich/database/password"
+    immich-redis-credentials:
+      - password: "/immich/redis/password"
