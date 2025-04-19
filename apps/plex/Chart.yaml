@@ -3,7 +3,7 @@ appVersion: 1.0.0
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.2
+  version: 0.1.3
 description: Helm chart for plex
 name: plex
 type: application
