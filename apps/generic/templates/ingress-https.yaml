@@ -28,7 +28,7 @@ spec:
       middlewares:
         {{- range $middleware := $ingress.middlewares }}
         - name: {{ $middleware }}
-          namespace: {{ .Release.Namespace }} {{ $middlewareNamespace }}
+          namespace: {{ $middlewareNamespace }}
         {{- end }}
       {{- end }}
   tls:
