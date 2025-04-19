@@ -13,6 +13,15 @@
         "domain": {
           "type": "string",
           "description": "Domain name for HTTPS ingress routes (required if ingress.https is defined)."
+        },
+        "traefik": {
+          "type": "object",
+          "properties": {
+            "middlewareNamespace": {
+              "type": "string",
+              "description": "Namespace where Traefik middlewares are defined"
+            }
+          }
         }
       }
     },
@@ -205,20 +214,10 @@
               },
               "middlewares": {
                 "type": "array",
-                "description": "Traefik middlewares to apply to the route",
+                "description": "Traefik middlewares to apply to the route (array of middleware names)",
                 "items": {
-                  "type": "object",
-                  "required": ["name", "namespace"],
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "description": "Name of the middleware"
-                    },
-                    "namespace": {
-                      "type": "string",
-                      "description": "Namespace of the middleware"
-                    }
-                  }
+                  "type": "string",
+                  "description": "Name of the middleware"
                 }
               }
             }

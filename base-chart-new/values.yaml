@@ -20,6 +20,9 @@ global:
   letsencrypt:
     email: Jonas@Hess.pm
 
+  traefik:
+    middlewareNamespace: argocd
+
   # Authentication provider
   traefik_forward_auth:
     oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
