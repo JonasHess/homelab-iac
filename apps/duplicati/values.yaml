@@ -15,6 +15,7 @@ generic:
   service:
     ports:
     - port: 8200
+      name: web
   ingress:
     https:
     - subdomain: duplicati
