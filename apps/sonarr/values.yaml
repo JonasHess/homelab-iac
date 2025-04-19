@@ -19,8 +19,7 @@ generic:
     - subdomain: sonarr
       port: 8989
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: sonarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

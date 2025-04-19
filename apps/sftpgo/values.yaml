@@ -38,8 +38,7 @@ generic:
     - subdomain: sftpgo
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: sftpgo
       port: 8080
       matchSuffix: '&& PathPrefix(`/web/client/pubshares/`)'

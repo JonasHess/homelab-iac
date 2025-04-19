@@ -32,5 +32,4 @@ generic:
     - subdomain: zigbee2mqtt
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth

@@ -16,8 +16,7 @@ generic:
     - subdomain: homeassistant
       port: 8123
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: homeassistant
       priority: 20
       matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`))'

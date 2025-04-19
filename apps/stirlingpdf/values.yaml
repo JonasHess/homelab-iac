@@ -19,10 +19,8 @@ generic:
     - subdomain: stirling-pdf
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: pdf
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth

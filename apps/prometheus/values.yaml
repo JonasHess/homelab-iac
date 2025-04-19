@@ -5,20 +5,17 @@ generic:
       port: 9090
       service: kube-prometheus-stack-prometheus
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: grafana
       port: 80
       service: kube-prometheus-stack-grafana
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: alertmanager
       port: 9093
       service: kube-prometheus-stack-alertmanager
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
   persistentVolume:
     prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
   persistentVolumeClaims:

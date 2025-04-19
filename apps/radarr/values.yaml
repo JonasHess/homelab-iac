@@ -19,8 +19,7 @@ generic:
     - subdomain: radarr
       port: 7878
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: radarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

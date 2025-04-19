@@ -25,8 +25,7 @@ generic:
     - subdomain: qbittorrent
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: qbittorrent
       matchSuffix: '&& PathPrefix(`/api`)'
       priority: 20

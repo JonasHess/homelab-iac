@@ -8,5 +8,4 @@ generic:
       port: 80
       service: homematic-raspberrymatic
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth

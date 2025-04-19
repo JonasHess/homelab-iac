@@ -16,5 +16,4 @@ generic:
     - subdomain: tautulli
       port: 8181
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth

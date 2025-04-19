@@ -31,8 +31,7 @@ generic:
     - subdomain: paperlessngx
       port: 8000
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: paperlessngx
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

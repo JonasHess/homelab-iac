@@ -19,8 +19,7 @@ generic:
     - subdomain: prowlarr
       port: 9696
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: prowlarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

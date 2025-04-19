@@ -25,8 +25,7 @@ generic:
     - subdomain: sabnzbd
       port: 8080
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: sabnzbd
       matchSuffix: '&& ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))'
       priority: 20

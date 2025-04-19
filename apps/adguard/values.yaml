@@ -28,13 +28,11 @@ generic:
     - subdomain: adguard
       port: 80
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: adguard-admin
       port: 3000
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     udp:
     - port: 53
       traefikEntryPoint: dns

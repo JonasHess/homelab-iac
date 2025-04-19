@@ -19,8 +19,7 @@ generic:
     - subdomain: readarr
       port: 8787
       middlewares:
-      - name: traefik-forward-auth
-        namespace: argocd
+      - traefik-forward-auth
     - subdomain: readarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'
