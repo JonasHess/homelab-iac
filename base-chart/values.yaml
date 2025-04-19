@@ -5,6 +5,10 @@ global:
   # Common domain configuration
   domain: home-server.dev
 
+  externalSecrets:
+    clusterSecretStoreRef:
+      name: akeyless-secret-store
+
   # Authentication settings
   akeyless:
     path: /kind-homelab
