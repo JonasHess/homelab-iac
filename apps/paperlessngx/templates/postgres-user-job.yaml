@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: paperless-db-init
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   template:
     spec:

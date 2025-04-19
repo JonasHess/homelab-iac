@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: immich-app-server
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -138,7 +138,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: immich-app-server
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: immich
     component: server
@@ -156,7 +156,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: immich-app-machine-learning
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -215,7 +215,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: immich-app-machine-learning
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: immich
     component: machine-learning

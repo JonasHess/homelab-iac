@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mosquitto-deployment
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: mosquitto
     name: mosquitto-deployment

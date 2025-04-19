@@ -11,7 +11,7 @@ apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: {{ $appName | default $.Chart.Name }}-https-{{ required "port must be specified for each HTTPS ingress" $ingress.port }}-{{ $index }}
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
 spec:
@@ -28,7 +28,7 @@ spec:
       middlewares:
         {{- range $middleware := $ingress.middlewares }}
         - name: {{ $middleware }}
-          namespace: {{ $middlewareNamespace }}
+          namespace: {{ .Release.Namespace }} {{ $middlewareNamespace }}
         {{- end }}
       {{- end }}
   tls:

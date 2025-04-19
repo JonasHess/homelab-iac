@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: drone-helm
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
@@ -60,7 +60,7 @@ spec:
           DRONE_SERVER_HOST: "drone.{{ .Values.global.domain }}"
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: argocd
+    namespace: {{ .Release.Namespace }}
   syncPolicy:
     automated:
       allowEmpty: true

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: search-config
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: search
 data:

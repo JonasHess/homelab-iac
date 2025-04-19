@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: tgtg-monitor
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     prometheus: kube-prometheus-stack-prometheus
     release: kube-prometheus-stack

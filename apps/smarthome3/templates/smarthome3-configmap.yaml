@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: smarthome3-config-map
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   HUE_IP: {{ .Values.hueIp | quote }}
   MQTT_URL: {{ .Values.mqttUrl | quote }}

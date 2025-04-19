@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: plex-config
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   PUID: "1000"
   PGID: "997"

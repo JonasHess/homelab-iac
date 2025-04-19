@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: gha-runner-scale-set
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   project: default
   source:
@@ -60,10 +60,10 @@ spec:
 #                           storage: 2Gi
         controllerServiceAccount:
           name: arc-gha-rs-controller  # Explicitly set your service account name here
-          namespace: argocd  # Ensure this matches the namespace of the service account
+          namespace: {{ .Release.Namespace }}  # Ensure this matches the namespace of the service account
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: argocd
+    namespace: {{ .Release.Namespace }}
 #   syncPolicy:
 #     automated:
 #       selfHeal: true

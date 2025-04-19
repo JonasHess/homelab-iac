@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: sftpgo-config
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   sftpgo.json: |
     {

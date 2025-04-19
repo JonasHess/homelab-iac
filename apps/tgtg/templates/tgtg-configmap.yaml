@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: tgtg-config-map
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   SLEEP_TIME: "15"
   TZ: "Europe/Berlin"

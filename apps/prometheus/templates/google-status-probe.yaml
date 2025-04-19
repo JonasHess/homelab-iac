@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: Probe
 metadata:
   name: google-status-probe
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     prometheus: kube-prometheus-stack-prometheus
     release: kube-prometheus-stack

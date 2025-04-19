@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: node-redirect-deployment
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: asn
 spec:
@@ -37,7 +37,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: node-redirect-config
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   labels:
     app: asn
 data:

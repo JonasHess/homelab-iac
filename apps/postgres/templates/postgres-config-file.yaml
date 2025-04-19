@@ -6,4 +6,4 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: postgres-config-file
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}

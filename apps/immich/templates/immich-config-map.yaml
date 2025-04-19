@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: immich-config-map
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
 {{- $files := .Files.Glob "assets/*.templ" }}
 {{- range $path, $file := $files }}

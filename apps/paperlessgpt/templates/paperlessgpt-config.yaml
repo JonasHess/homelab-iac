@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: paperlessgpt-config
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   PAPERLESS_BASE_URL: "http://paperlessngx-service:8000"
   LLM_PROVIDER: {{ .Values.LLM_PROVIDER | quote }}

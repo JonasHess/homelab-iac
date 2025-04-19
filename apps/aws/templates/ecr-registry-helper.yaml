@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ecr-registry-helper-cm
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   AWS_REGION: "eu-central-1" # Replace with your ECR region
   DOCKER_SECRET_NAME: regcred # Replace with your desired ECR token secret name
@@ -11,12 +11,12 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: sa-argocd
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   name: role-full-access-to-secrets
 rules:
 - apiGroups: [""]
@@ -31,11 +31,11 @@ kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: argocd-role-binding
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 subjects:
 - kind: ServiceAccount
   name: sa-argocd # Replace with your service account name if different
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   apiGroup: ""
 roleRef:
   kind: Role
@@ -46,7 +46,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: ecr-registry-helper
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   schedule: "0 */10 * * *"
   successfulJobsHistoryLimit: 2
@@ -80,7 +80,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: ecr-registry-helper-immediate
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 spec:
   template:
     spec:

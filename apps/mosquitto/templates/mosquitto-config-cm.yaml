@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mosquitto-config-cm
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
 data:
   mosquitto.conf: |-
     allow_anonymous true

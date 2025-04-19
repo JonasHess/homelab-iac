@@ -7,7 +7,7 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: "{{ $appName }}-{{ $pvcName }}-pv"
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
@@ -26,13 +26,13 @@ spec:
     apiVersion: v1
     kind: PersistentVolumeClaim
     name: "{{ $appName }}-{{ $pvcName }}-pvc"
-    namespace: argocd
+    namespace: {{ .Release.Namespace }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: "{{ $appName }}-{{ $pvcName }}-pvc"
-  namespace: argocd
+  namespace: {{ .Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
