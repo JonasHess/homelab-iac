@@ -183,7 +183,7 @@ apps:
     argocd:
       targetRevision: ~
       description: "Immich - Self-Hosted Photo and Video Backup Solution"
-      namespace: "argocd"
+      namespace: "app-immich"
       project: "default"
       syncWave: "18"  # Higher resource usage, deploy later
   immichold:
