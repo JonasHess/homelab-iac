@@ -2,7 +2,7 @@ basechart:
   chart:
     repoURL: "https://github.com/JonasHess/homelab-iac.git"
     targetRevision: feature/refactor-apps
-    path: base-chart-new
+    path: base-chart
   values:
     repoURL: ~ # https://github.com/JonasHess/homelab-environments.git
     targetRevision: ~ # main
