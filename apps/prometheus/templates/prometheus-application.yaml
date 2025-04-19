@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: kube-prometheus-stack
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true,ServerSideApply=true
 spec:
@@ -87,7 +87,7 @@ spec:
 
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ $.Release.Namespace }}
   syncPolicy:
     automated:
       prune: true

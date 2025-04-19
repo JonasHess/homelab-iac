@@ -2,10 +2,10 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: gha-runner-scale-set-controller
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
 spec:
   destination:
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ $.Release.Namespace }}
     server: https://kubernetes.default.svc
   project: default
   source:
@@ -217,7 +217,7 @@ spec:
         ## to help it finish RoleBinding with the right service account.
         ## Note: if your controller is installed to only watch a single namespace, you have to pass these values explicitly.
         # controllerServiceAccount:
-        #   namespace: {{ .Release.Namespace }} arc-system
+        #   namespace: {{ $.Release.Namespace }} arc-system
         #   name: test-arc-gha-runner-scale-set-controller
   syncPolicy:
     syncOptions:

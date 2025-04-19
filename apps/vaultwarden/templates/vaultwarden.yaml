@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: vaultwarden
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
 spec:
   project: default
   source:
@@ -46,7 +46,7 @@ spec:
 
   destination:
     server: https://kubernetes.default.svc
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ $.Release.Namespace }}
 
   syncPolicy:
     automated:

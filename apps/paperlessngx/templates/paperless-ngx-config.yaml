@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: paperlessngx-config
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
 data:
   PAPERLESS_REDIS: "redis://redis-service:6379"
   PAPERLESS_DBHOST: "postgres-service"

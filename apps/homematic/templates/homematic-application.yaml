@@ -2,7 +2,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: homematic
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
@@ -174,4 +174,4 @@ spec:
 
   destination:
     server: "https://kubernetes.default.svc"
-    namespace: {{ .Release.Namespace }}
+    namespace: {{ $.Release.Namespace }}

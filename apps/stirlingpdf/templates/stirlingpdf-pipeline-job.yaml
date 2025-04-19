@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: stirlingpdf-pipeline-cronjob
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:

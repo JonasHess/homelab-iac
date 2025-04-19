@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: zigbee2mqtt-config-map
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
 data:
   ZIGBEE2MQTT_CONFIG_HOMEASSISTANT_ENABLED: {{ .Values.homeAssistant | quote }}
   ZIGBEE2MQTT_CONFIG_PERMIT_JOIN: {{ .Values.permitJoin | quote }}
