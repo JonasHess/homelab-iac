@@ -1,6 +1,6 @@
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.4
-digest: sha256:28e037d2b0de1d931cabbea11da7250b51421a51d37201f278bf725d2118eacd
-generated: "2025-04-19T17:27:51.121434+02:00"
+  version: 0.1.5
+digest: sha256:5839b1e16337a385ea46292a6c8a90dea18540a02e65b7cf3d0b63560a3e0134
+generated: "2025-04-19T17:32:04.821256+02:00"
