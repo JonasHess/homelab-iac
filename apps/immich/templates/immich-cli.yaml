@@ -46,4 +46,4 @@ spec:
             claimName: immich-cli-pvc
       restartPolicy: Never
   backoffLimit: 0  # No retries
-  {{-end-}}
+{{- end -}}
