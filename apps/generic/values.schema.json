@@ -22,6 +22,39 @@
               "description": "Namespace where Traefik middlewares are defined"
             }
           }
+        },
+        "externalSecrets": {
+          "type": "object",
+          "description": "Global configuration for External Secrets",
+          "properties": {
+            "refreshInterval": {
+              "type": "string",
+              "description": "Interval at which to refresh secrets from the external store (default: 1h)"
+            },
+            "clusterSecretStoreRef": {
+              "type": "object",
+              "description": "Reference to the cluster secret store",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the ClusterSecretStore resource"
+                }
+              },
+              "required": ["name"]
+            }
+          },
+          "required": ["clusterSecretStoreRef"]
+        },
+        "akeyless": {
+          "type": "object",
+          "description": "Configuration for Akeyless secret management",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Base path in Akeyless where secrets are stored"
+            }
+          },
+          "required": ["path"]
         }
       }
     },
@@ -275,6 +308,22 @@
       "additionalProperties": {
         "type": "string",
         "description": "Path on the host for the persistent volume"
+      }
+    },
+    "externalSecrets": {
+      "type": "object",
+      "description": "External Secrets configuration for integrating with external secret management systems",
+      "additionalProperties": {
+        "type": "array",
+        "description": "List of secret key-value pairs for an external secret",
+        "items": {
+          "type": "object",
+          "description": "Secret key-value pair mapping local key to remote path",
+          "additionalProperties": {
+            "type": "string",
+            "description": "Remote path for the secret value (will be prefixed with global.akeyless.path)"
+          }
+        }
       }
     }
   }

@@ -6,6 +6,7 @@ global:
   domain: home-server.dev
 
   externalSecrets:
+    refreshInterval: "1h"
     clusterSecretStoreRef:
       name: akeyless-secret-store
 
