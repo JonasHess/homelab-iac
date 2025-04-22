@@ -7,3 +7,4 @@ generic:
     https:
       - subdomain: homer
         port: 8080
+        service: homer
