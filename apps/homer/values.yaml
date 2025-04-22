@@ -1,8 +1,4 @@
 generic:
-  service:
-    ports:
-      - name: http
-        port: 8080
   ingress:
     https:
       - subdomain: homer
