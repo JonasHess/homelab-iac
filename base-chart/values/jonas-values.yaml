@@ -1,0 +1,437 @@
+# Global settings applied to all applications
+global:
+  cluster:
+    serverip: 192.168.1.3
+    username: root
+    cluster-name: hess.pm
+    ip-range: 192.168.1.80-192.168.1.90
+
+  # Common domain configuration
+  domain: hess.pm
+
+  # Authentication settings
+  akeyless:
+    path: /hess.pm
+
+  # Email settings for services
+  email: Jonas@Hess.pm
+
+  # DNS provider configuration
+  cloudflare:
+    email: Jonas@Hess.pm
+
+  # Certificate management
+  letsencrypt:
+    email: Jonas@Hess.pm
+
+  # Authentication provider
+  traefik_forward_auth:
+    oidc_client_id: "6e1bl5i55ao7bhhcufk85ussm"
+    oidc_issuer_url: "https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX"
+
+  argocd:
+    targetRevision: feature/refactor-apps
+
+# All applications to be deployed by Argo CD
+apps:
+  homer:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: { }
+  mosquitto:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  paperlessgpt:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                prompts:
+                  hostPath: /mnt/tank1/encrypted/apps/paperless-gpt/prompts
+          LLM_PROVIDER: openai
+          LLM_MODEL: gpt-4o
+          CORRESPONDENT_BLACK_LIST: "Jonas He\xDF, Lena Raab, Lena He\xDF"
+          AWS_OCR_BUCKET_NAME: paperless-ocr
+          PROMPT_PREAMBLE: "Dein Name ist Jonas He\xDF. Du arbeitest als Softwareentwickler.\
+            \ Du bist geboren am 24.02.1993. Du wohnst in der Heinrich-B\xF6ll-Str.\
+            \ 40a Bruchk\xF6bel."
+          PROMPT_TITLE_EXPLANATION: ''
+          PROMPT_TAGS_EXPLANATION: ''
+          PROMPT_DOCUMENT_TYPE_EXPLANATION: ''
+          PROMPT_CORRESPONDENT_EXPLANATION: ''
+          PROMPT_POSTAMBLE: ''
+  duplicati:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/encrypted/apps/duplicati/config
+                tank1:
+                  mountPath: /mnt/tank1
+                  hostPath: /mnt/tank1
+                tank0:
+                  mountPath: /mnt/tank0
+                  hostPath: /mnt/tank0
+  prowlarr:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/prowlarr/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+  homeassistant:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/homeassistant/config
+  adguard:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/adguard/config
+                data:
+                  hostPath: /mnt/tank1/encrypted/apps/adguard/data
+  qbittorrent:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/qbittorrent/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+                downloads:
+                  hostPath: /data/volumes/qbittorrent-downloads
+                watchdir:
+                  hostPath: /mnt/tank1/unencrypted/apps/watchdir
+  redis:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  hostPath: /mnt/tank1/encrypted/apps/redis/data
+  immich:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            persistentVolumeClaims:
+              library: /mnt/tank0/encrypted/apps/immich/library
+              postgresql: /mnt/tank1/encrypted/apps/immich/postgresql
+              redis: /mnt/tank1/encrypted/apps/immich/redis
+              cli: /mnt/tank1/encrypted/apps/immich-old/library/library/f7bf1225-04c1-421d-b639-295a991458a3
+          importJob:
+            enabled: false
+          smtp:
+            enabled: true
+            host: email-smtp.eu-central-1.amazonaws.com
+            username: AKIAZE6KDVU2EPZKN2IL
+            from: Immich Photo Server <immich@hess.pm>
+  smarthome3:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          hueIp: 192.168.1.194
+          mqttUrl: tcp://mosquitto-service:1883
+          homeAssistantIp: ws://homeassistant-service:8123
+          profilesActive: jonas
+  immichold:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            persistentVolumeClaims:
+              library: /mnt/tank1/encrypted/apps/immich-old/library
+              postgresql: /mnt/tank1/encrypted/apps/immich-old/postgresql
+              redis: /mnt/tank1/encrypted/apps/immich-old/redis
+              cli: /mnt/tank1/encrypted/apps/immich-old/immich-old
+          importJob:
+            enabled: false
+  argocd:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  gotenberg:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  paperlessngx:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/data
+                media:
+                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/media
+                export:
+                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/export
+                consume:
+                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/consume
+          admin:
+            username: jonas
+            email: Jonas@Hess.pm
+  sabnzbd:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/sabnzbd/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+                downloads:
+                  hostPath: /data/volumes/sabnzbd-downloads
+                watchdir:
+                  hostPath: /mnt/tank1/unencrypted/apps/watchdir
+  githubarc:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          storageclasses:
+            standard:
+              hostPath: /mnt/tank1/unencrypted/apps/githubarc/storage/standard
+  stirlingpdf:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                scanner:
+                  hostPath: /mnt/tank1/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
+                paperlessconsume:
+                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/consume
+  radarr:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/radarr/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+  search:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  zfs:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  postgres:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  hostPath: /mnt/tank1/encrypted/apps/postgres/data
+  tika:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  akeyless:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  zigbee2mqtt:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  hostPath: /mnt/tank1/unencrypted/apps/zigbee2mqtt/data
+              deviceMounts:
+                zigbeeusb:
+                  hostPath: /dev/serial/by-id/usb-ITead_Sonoff_Zigbee_3.0_USB_Dongle_Plus_2a6293476f3bec118baba4957a0af07f-if00-port0
+          serialAdapter: zstack
+  asn:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  plex:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/encrypted/apps/plex/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+  tautulli:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/tautulli/config
+  aws:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}
+  prometheus:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            persistentVolume:
+              prometheus: /mnt/tank1/unencrypted/apps/prometheus/data
+            persistentVolumeClaims:
+              grafana: /mnt/tank1/unencrypted/apps/prometheus/grafana/data
+              alertmanager: /mnt/tank1/unencrypted/apps/prometheus/alertmanager/data
+  sftpgo:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  hostPath: /mnt/tank1/encrypted/apps/sftpgo/data
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/sftpgo/config
+                tank0:
+                  mountPath: /mnt/tank0
+                  hostPath: /mnt/tank0
+                tank1:
+                  mountPath: /mnt/tank1
+                  hostPath: /mnt/tank1
+                stirlingpdf:
+                  mountPath: /mnt/stirlingpdf/pipeline/
+                  hostPath: /mnt/tank1/encrypted/apps/stirlingpdf/pipeline/
+  sonarr:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                config:
+                  hostPath: /mnt/tank1/unencrypted/apps/sonarr/config
+                media:
+                  hostPath: /mnt/tank0/encrypted/media
+  traefik:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values:
+          generic:
+            persistentVolumeClaims:
+              data: /mnt/tank1/unencrypted/apps/traefik
+          additionalExposedPorts:
+            plex:
+              port: 32400
+              protocol: TCP
+          loadBalancerIP: 192.168.1.80
+          middlewares:
+            cloudflare:
+              allowedCIDRs:
+                - 192.168.1.0/24
+  duplicatiprometheusexporter:
+    enabled: true
+    argocd:
+      targetRevision: feature/refactor-apps
+      helm:
+        values: {}

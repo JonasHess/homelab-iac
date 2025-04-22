@@ -1,0 +1,59 @@
+{{- if .Values.apps.homer.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homer-config
+  namespace: {{ .Values.apps.homer.argocd.namespace | default "argocd" }}
+  labels:
+    app: homer
+data:
+  config.yml: |
+    ---
+    title: "Home Server Dashboard"
+    subtitle: "Home Server Applications"
+    logo: "logo.png"
+    # Optional: Set the header background color with a HEX value
+    header: true
+    footer: '<p>Created with <span class="has-text-danger">❤</span> by Kubernetes</p>'
+
+    # Optional theme customization
+    theme: default
+    colors:
+      light:
+        primary: "#3367d6"
+      dark:
+        primary: "#3367d6"
+
+    # Optional message
+    message:
+      style: "is-info"
+      title: "Welcome!"
+      content: "Welcome to your home server dashboard. All your applications are listed below."
+
+    # Optional navbar
+    links:
+      - name: "GitHub"
+        icon: "fab fa-github"
+        url: "https://github.com/bastienwirtz/homer"
+        target: "_blank"
+      - name: "Documentation"
+        icon: "fas fa-book"
+        url: "https://github.com/bastienwirtz/homer/blob/main/docs/configuration.md"
+        target: "_blank"
+
+    # Services
+    services:
+      - name: "Applications"
+        icon: "fas fa-cloud"
+        items:
+          {{- range $appName, $appConfig := .Values.apps }}
+          {{- if and $appConfig.enabled $appConfig.homer }}
+          - name: "{{ $appConfig.argocd.description | default $appName }}"
+            logo: "{{ $appConfig.homer.logo | default "" }}"
+            subtitle: "{{ $appConfig.homer.subtitle | default "" }}"
+            tag: "{{ $appConfig.homer.tag | default "" }}"
+            url: "{{ $appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain) }}"
+            target: "_blank"
+          {{- end }}
+          {{- end }}
+{{- end }}

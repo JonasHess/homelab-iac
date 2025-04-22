@@ -193,6 +193,14 @@ apps:
       syncWave: "16"  # Deploy after Home Assistant
   immich:
     enabled: false
+    homer:
+      enabled: true
+      logo: "https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling-pdf-logo.svg"
+      subtitle: "Your favorite PDF manipulation tool"
+      tag: "pdf"
+      url: "https://stirlingpdf.home-server.dev"
+
+
     argocd:
       targetRevision: ~
       description: "Immich - Self-Hosted Photo and Video Backup Solution"
