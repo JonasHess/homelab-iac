@@ -15,7 +15,6 @@ It includes best practices for Argo CD application management:
 {{- fail "App name is required" }}
 {{- end }}
 ---
-{{ required  (printf "The apps.%s.helm object can not be null" $appName) $appConfig.argocd.helm}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
