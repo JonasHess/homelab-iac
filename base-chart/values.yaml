@@ -52,7 +52,7 @@ apps:
     argocd:
       targetRevision: ~
       description: "Homer - Simple, static homepage for your server"
-      namespace: "homer"
+      namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy after core services
   stirlingpdf:
