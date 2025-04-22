@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: homer
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: "https://zekker6.github.io/helm-charts"
+    targetRevision: 8.25.0
+    chart: homer
+    helm:
+      # https://artifacthub.io/packages/helm/zekker6/homer
+      values: |
+        image:
+          repository: b4bz/homer
+        env.TZ: Europe/Berlin
+        controller:
+          replicas: 1
+        configmap:
+          config:
+            # -- Store homer configuration as a ConfigMap
+            enabled: true
+            data:
+              config.yml: |
+                title: "Homelab"
+                subtitle: "Cosmos"
+                logo: "https://icons.veryicon.com/png/o/education-technology/cosmic-planet-monochromatic-line/cosmos-21.png"
+                footer: false
+                defaults:
+                  layout: columns
+                  colorTheme: dark
+                services:
+                  - name: "Control"
+                    icon: "fas fa-gear"
+                    items:
+                      - name: "Argo CD"
+                        logo: "https://icon.icepanel.io/Technology/svg/Argo-CD.svg"
+                        subtitle: ""
+                        tag: "control"
+                        url: "https://argocd.{{ .Values.global.domain }}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homer
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: -1 # unlimited
+      backoff:
+        maxDuration: 20m

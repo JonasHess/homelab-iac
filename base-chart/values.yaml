@@ -47,6 +47,14 @@ global:
 
 # All applications to be deployed by Argo CD
 apps:
+  homer:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      description: "Homer - Simple, static homepage for your server"
+      namespace: "homer"
+      project: "default"
+      syncWave: "10"  # Deploy after core services
   stirlingpdf:
     enabled: false
     argocd:
