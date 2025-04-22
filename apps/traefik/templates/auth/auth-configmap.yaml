@@ -7,7 +7,7 @@ data:
   INSECURE_COOKIE: 'true'
   COOKIE_DOMAIN: {{ .Values.global.domain | quote }}
   DOMAINS: {{ .Values.global.domain | quote }}
-  AUTH_HOST: auth.{{ .Values.global.domain | quote }}
+  AUTH_HOST: auth.{{ .Values.global.domain }}
   URL_PATH: "/_oauth"
   DEFAULT_PROVIDER: "oidc"
   PROVIDERS_OIDC_ISSUER_URL: {{ .Values.global.traefik_forward_auth.oidc_issuer_url | quote }}
