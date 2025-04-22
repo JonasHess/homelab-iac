@@ -158,6 +158,13 @@ spec:
           runAsNonRoot: false
           runAsUser: 0
 
+        providers: # @schema additionalProperties: false
+          kubernetesCRD:
+            # -- Load Kubernetes IngressRoute provider
+            enabled: true
+            # -- Allows IngressRoute to reference resources in namespace other than theirs
+            allowCrossNamespace: true
+
 
   destination:
     server: "https://kubernetes.default.svc"
