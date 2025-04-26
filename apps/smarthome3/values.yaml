@@ -1,0 +1,4 @@
+hueIp: NOT_SET
+mqttUrl: tcp://mosquitto-service:1883
+homeAssistantIp: homeassistant-service:8123
+profilesActive: NOT_SET

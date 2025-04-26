@@ -1,0 +1,26 @@
+generic:
+  deployment:
+    image: lscr.io/linuxserver/radarr:latest
+    ports:
+    - containerPort: 7878
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/radarr/config
+      media:
+        mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
+  service:
+    ports:
+    - name: http
+      port: 7878
+  ingress:
+    https:
+    - subdomain: radarr
+      port: 7878
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: radarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 7878

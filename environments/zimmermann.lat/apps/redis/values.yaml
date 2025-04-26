@@ -1,7 +1,0 @@
-apps:
-  redis:
-    generic:
-      deployment:
-        pvcMounts:
-          data:
-            hostPath: "/mnt/tank1/encrypted/apps/redis/data"

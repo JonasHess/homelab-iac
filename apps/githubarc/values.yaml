@@ -1,0 +1,3 @@
+storageclasses:
+  standard:
+    hostPath: ~ # /mnt/somewhere/unencrypted/apps/githubarc/storage/standard

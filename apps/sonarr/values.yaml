@@ -1,0 +1,26 @@
+generic:
+  deployment:
+    image: lscr.io/linuxserver/sonarr:latest
+    ports:
+    - containerPort: 8989
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/sonarr/config
+      media:
+        mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
+  service:
+    ports:
+    - name: http
+      port: 8989
+  ingress:
+    https:
+    - subdomain: sonarr
+      port: 8989
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: sonarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 8989

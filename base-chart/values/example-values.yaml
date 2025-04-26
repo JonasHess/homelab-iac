@@ -1,0 +1,429 @@
+# Global settings applied to all applications
+global:
+  # Common domain configuration
+  domain: home-server.dev
+  
+  # Authentication settings
+  akeyless:
+    path: /kind-homelab
+  
+  # Email settings for services
+  email: Jonas@Hess.pm
+  
+  # DNS provider configuration
+  cloudflare:
+    email: Jonas@Hess.pm
+  
+  # Certificate management
+  letsencrypt:
+    email: Jonas@Hess.pm
+  
+  # Authentication provider
+  traefik_forward_auth:
+    oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
+    oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  
+  argocd:
+    # Global ignore differences (applied to all apps unless overridden)
+    ignoreDifferences:
+      - group: ""
+        kind: "Secret"
+        jsonPointers:
+          - "/data"
+
+  # Notification settings
+  notifications:
+    # Default notification channels
+    slack:
+      channel: general
+      token: "${SECRET:slack-token}"
+
+
+
+# Projects configuration for Argo CD
+# Define different projects with their permissions and constraints
+
+projects:
+  # Infrastructure project for core services
+  infrastructure:
+    enabled: false
+    description: "Core infrastructure components"
+    labels:
+      tier: infrastructure
+    # Allow only specific repositories
+    sourceRepos:
+      - "https://github.com/JonasHess/homelab-iac.git"
+      - "https://charts.jetstack.io"  # Cert-manager Helm repo
+    # Allow specific clusters and namespaces
+    destinations:
+      - server: "https://kubernetes.default.svc"
+        namespace: "cert-manager"
+      - server: "https://kubernetes.default.svc"
+        namespace: "traefik"
+      - server: "https://kubernetes.default.svc"
+        namespace: "kube-system"
+    # Allow specific cluster-wide resources
+    clusterResourceWhitelist:
+      - group: "apiextensions.k8s.io"
+        kind: "CustomResourceDefinition"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRole"
+      - group: "rbac.authorization.k8s.io"
+        kind: "ClusterRoleBinding"
+    # Define project roles for access control
+    roles:
+      - name: admin
+        description: Admin role for infrastructure team
+        policies:
+          - p, proj:infrastructure:admin, applications, *, infrastructure/*, allow
+        groups:
+          - infrastructure-admins
+      - name: readonly
+        description: Read-only access
+        policies:
+          - p, proj:infrastructure:readonly, applications, get, infrastructure/*, allow
+        groups:
+          - all-developers
+
+  # Monitoring project for observability tools
+  monitoring:
+    enabled: false
+    description: "Monitoring and observability tools"
+    labels:
+      tier: monitoring
+    sourceRepos:
+      - "https://github.com/JonasHess/homelab-iac.git"
+      - "https://prometheus-community.github.io/helm-charts"
+      - "https://grafana.github.io/helm-charts"
+    destinations:
+      - server: "https://kubernetes.default.svc"
+        namespace: "monitoring"
+    # Define project roles
+    roles:
+      - name: admin
+        description: Admin role for monitoring team
+        policies:
+          - p, proj:monitoring:admin, applications, *, monitoring/*, allow
+        groups:
+          - monitoring-admins
+      - name: readonly
+        description: Read-only access
+        policies:
+          - p, proj:monitoring:readonly, applications, get, monitoring/*, allow
+        groups:
+          - all-developers
+
+  # Applications project for business applications
+  applications:
+    enabled: false
+    description: "Business applications"
+    labels:
+      tier: applications
+    sourceRepos:
+      - "https://github.com/JonasHess/homelab-iac.git"
+    destinations:
+      - server: "https://kubernetes.default.svc"
+        namespace: "photos"
+      - server: "https://kubernetes.default.svc"
+        namespace: "file-storage"
+    # No cluster-wide resources allowed
+    clusterResourceWhitelist: []
+    # Define project roles
+    roles:
+      - name: admin
+        description: Admin role for application team
+        policies:
+          - p, proj:applications:admin, applications, *, applications/*, allow
+        groups:
+          - app-admins
+      - name: developer
+        description: Developer access
+        policies:
+          - p, proj:applications:developer, applications, get, applications/*, allow
+          - p, proj:applications:developer, applications, sync, applications/*, allow
+        groups:
+          - developers
+
+  # DevTools project for development tools
+  devtools:
+    enabled: false
+    description: "Development tools and utilities"
+    labels:
+      tier: devtools
+    sourceRepos:
+      - "https://github.com/JonasHess/homelab-iac.git"
+    destinations:
+      - server: "https://kubernetes.default.svc"
+        namespace: "devtools"
+      - server: "https://kubernetes.dev-cluster.svc"
+        namespace: "devtools"
+    # Define project roles
+    roles:
+      - name: admin
+        description: Admin role for DevOps team
+        policies:
+          - p, proj:devtools:admin, applications, *, devtools/*, allow
+        groups:
+          - devops-admins
+
+
+# All applications to be deployed by Argo CD
+apps:
+  #--------------------------------------
+  # INFRASTRUCTURE APPLICATIONS
+  # These applications provide core infrastructure services
+  # They should be deployed early in the sequence
+  #--------------------------------------
+  
+  cert-manager:
+    enabled: false
+    argocd:
+      # Infrastructure project for RBAC
+      project: "infrastructure"
+      # Deploy very early
+      syncWave: "-10"
+      # Path to the Helm chart
+      path: "charts/cert-manager"
+      # Deployment target
+      namespace: "cert-manager"
+      # Labels for organization
+      labels:
+        tier: "infrastructure"
+        criticality: "high"
+      # Custom annotations
+      annotations:
+        description: "Certificate management for Kubernetes"
+      # Notification configuration
+      notifications:
+        onSyncFailed: "slack:alerts"
+        onHealthDegraded: "slack:alerts"
+      # Application links in Argo CD UI  
+      info:
+        - name: "Documentation"
+          value: "https://cert-manager.io/docs/"
+      # Custom helm values
+      helm:
+        values:
+          installCRDs: true
+          prometheus:
+            enabled: false
+            serviceMonitor:
+              enabled: false
+  
+  traefik:
+    enabled: false
+    argocd:
+      project: "infrastructure"
+      syncWave: "-8"
+      path: "charts/traefik"
+      namespace: "traefik"
+      labels:
+        tier: "infrastructure"
+        category: "networking"
+      annotations:
+        description: "Kubernetes ingress controller"
+      info:
+        - name: "Dashboard"
+          value: "https://traefik.{{.Values.global.domain}}"
+      helm:
+        values:
+          ingressRoute:
+            dashboard:
+              enabled: false
+          additionalArguments:
+            - "--api.dashboard=true"
+            - "--accesslog=true"
+          deployment:
+            replicas: 2
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
+          metrics:
+            prometheus:
+              enabled: false
+  
+  #--------------------------------------
+  # MONITORING APPLICATIONS
+  # Applications that provide monitoring, alerting and observability
+  #--------------------------------------
+  
+  prometheus-stack:
+    enabled: false
+    argocd:
+      repoURL: "https://prometheus-community.github.io/helm-charts"
+      path: ""
+      targetRevision: "45.27.2"  # Specific chart version
+      project: "monitoring"
+      syncWave: "0"  # Deploy after core infrastructure
+      namespace: "monitoring"
+      labels:
+        tier: "monitoring"
+      annotations:
+        description: "Monitoring stack with Prometheus, Alertmanager and Grafana"
+      # Ignore differences in secrets
+      ignoreDifferences:
+        - group: ""
+          kind: "Secret"
+          jsonPointers:
+            - "/data"
+      helm:
+        # Example of using chart from a Helm repo rather than Git
+        releaseName: "kube-prometheus-stack"
+        # Add value files relative to the chart path
+        valueFiles:
+          - "values.yaml"
+          - "values-custom.yaml"
+        values:
+          grafana:
+            enabled: false
+            ingress:
+              enabled: false
+              hosts:
+                - grafana.${DOMAIN}
+          alertmanager:
+            enabled: false
+            ingress:
+              enabled: false
+          prometheus:
+            enabled: false
+            serviceMonitor:
+              enabled: false
+      info:
+        - name: "Grafana"
+          value: "https://grafana.{{.Values.global.domain}}"
+        - name: "Prometheus"
+          value: "https://prometheus.{{.Values.global.domain}}"
+        - name: "AlertManager"
+          value: "https://alertmanager.{{.Values.global.domain}}"
+  
+  loki:
+    enabled: false
+    argocd:
+      repoURL: "https://grafana.github.io/helm-charts"
+      path: ""
+      targetRevision: "5.8.9"  # Specific chart version
+      project: "monitoring"
+      syncWave: "5"  # Deploy after Prometheus
+      namespace: "monitoring"
+      labels:
+        tier: "monitoring"
+        category: "logs"
+      helm:
+        releaseName: "loki"
+        values:
+          persistence:
+            enabled: false
+            size: 50Gi
+          gateway:
+            enabled: false
+      info:
+        - name: "Logs"
+          value: "Use Grafana to view logs"
+  
+  #--------------------------------------
+  # APPLICATION WORKLOADS
+  # Business applications and services
+  #--------------------------------------
+  
+  immich:
+    enabled: false
+    argocd:
+      project: "applications"
+      syncWave: "10"  # Deploy after monitoring is available
+      namespace: "photos"
+      labels:
+        tier: "application"
+        category: "photos"
+        data: "sensitive"
+      annotations:
+        description: "Self-hosted photo and video backup solution"
+      # Custom sync policy
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+      helm:
+        releaseName: "immich-app"
+        values:
+          aaa:
+            enabled: false
+            existingClaim: immich-pvc
+          bbb:
+            enabled: false
+            existingSecret: immich-redis-secret
+          ccc:
+            enabled: false
+            existingSecret: immich-mysql-secret
+          persistence:
+            enabled: false
+            size: 100Gi
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 0.5
+      info:
+        - name: "Web UI"
+          value: "https://photos.{{.Values.global.domain}}"
+  
+  sftpgo:
+    enabled: false
+    argocd:
+      path: "custom-charts/sftpgo-v2"  # Custom path
+      targetRevision: "main"  # Specific branch
+      project: "applications"
+      syncWave: "15"
+      namespace: "file-storage"
+      labels:
+        tier: "application"
+        category: "storage"
+      helm:
+        values:
+          persistence:
+            enabled: false
+            existingClaim: sftpgo-pvc
+          redis:
+            enabled: false
+            existingSecret: sftpgo-redis-secret
+          mysql:
+            enabled: false
+            existingSecret: sftpgo-mysql-secret
+      info:
+        - name: "Web Admin"
+          value: "https://files.{{.Values.global.domain}}/admin"
+  
+  #--------------------------------------
+  # DEVELOPMENT TOOLS
+  # Tools for development teams
+  #--------------------------------------
+  
+  gitea:
+    enabled: false
+    argocd:
+      project: "devtools"
+      syncWave: "20"
+      namespace: "devtools"
+      labels:
+        tier: "devtools"
+      # Using a project-specific server
+      server: "https://kubernetes.dev-cluster.svc"
+      helm:
+        values:
+          gitea:
+            admin:
+              existingSecret: gitea-admin-secret
+          ingress:
+            enabled: false
+            annotations:
+              kubernetes.io/ingress.class: traefik
+            hosts:
+              - host: git.{{.Values.global.domain}}
+      info:
+        - name: "Git Server"
+          value: "https://git.{{.Values.global.domain}}"

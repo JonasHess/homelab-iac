@@ -1,0 +1,15 @@
+generic:
+  deployment:
+    image: docker.io/library/redis:7
+    ports:
+    - containerPort: 6379
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/redis/data
+    envFrom:
+      configMapRef: redis-config
+  service:
+    ports:
+    - name: redis
+      port: 6379

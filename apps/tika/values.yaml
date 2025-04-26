@@ -1,0 +1,9 @@
+generic:
+  deployment:
+    image: docker.io/apache/tika:latest
+    ports:
+    - containerPort: 9998
+  service:
+    ports:
+    - name: tika
+      port: 9998

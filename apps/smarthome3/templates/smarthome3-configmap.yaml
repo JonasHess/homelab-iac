@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smarthome3-config-map
+  namespace: {{ $.Release.Namespace }}
+data:
+  HUE_IP: {{ .Values.hueIp | quote }}
+  MQTT_URL: {{ .Values.mqttUrl | quote }}
+  HOME_ASSISTANT_IP: {{ .Values.homeAssistantIp | quote }}
+  spring.profiles.active: {{ .Values.profilesActive | quote }}

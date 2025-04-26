@@ -1,0 +1,38 @@
+admin:
+  username: admin
+  email: null
+generic:
+  deployment:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    ports:
+    - containerPort: 8000
+    pvcMounts:
+      data:
+        mountPath: /usr/src/paperless/data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/data
+      media:
+        mountPath: /usr/src/paperless/media
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/media
+      export:
+        mountPath: /usr/src/paperless/export
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/export
+      consume:
+        mountPath: /usr/src/paperless/consume
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperlessngx/consume
+    envFrom:
+      configMapRef: paperlessngx-config
+      secretRef: paperlessngx-secret
+  service:
+    ports:
+    - name: http
+      port: 8000
+  ingress:
+    https:
+    - subdomain: paperlessngx
+      port: 8000
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: paperlessngx
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 8000

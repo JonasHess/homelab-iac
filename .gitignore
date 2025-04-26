@@ -3,3 +3,5 @@ secrets
 environment-secrets.yaml
 /base-chart/unittest/actual/
 node_modules/
+/myenv/
+/charts/

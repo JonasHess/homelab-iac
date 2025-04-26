@@ -1,0 +1,36 @@
+# Application name (required by the template)
+appName: my-application
+
+
+# Global configuration
+global:
+  domain: example.com
+
+  externalSecrets:
+    refreshInterval: "1h"
+    clusterSecretStoreRef:
+      name: akeyless-secret-store
+  akeyless:
+    path: "/k8s/my-cluster"
+
+  traefik:
+    middlewareNamespace: traefik-middlewares
+
+# External Secrets configuration
+externalSecrets:
+  # Database credentials secret
+  db-credentials:
+    - DB_USERNAME: "/apps/my-application/db/username"
+    - DB_PASSWORD: "/apps/my-application/db/password"
+    - DB_HOST: "/apps/my-application/db/host"
+    - DB_PORT: "/apps/my-application/db/port"
+
+  # API keys secret
+  api-keys:
+    - STRIPE_API_KEY: "/apps/my-application/stripe/api-key"
+    - SENDGRID_API_KEY: "/apps/my-application/sendgrid/api-key"
+
+  # JWT secret
+  jwt-secret:
+    - JWT_SECRET: "/apps/my-application/auth/jwt-secret"
+    - JWT_EXPIRY: "/apps/my-application/auth/jwt-expiry"

@@ -1,8 +1,0 @@
-apps:
-  tgtg:
-    enabled: false
-    generic:
-      deployment:
-        pvcMounts:
-          tokens:
-            hostPath: "/mnt/tank1/unencrypted/apps/tgtg/tokens"

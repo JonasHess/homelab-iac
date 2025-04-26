@@ -1,0 +1,24 @@
+generic:
+  deployment:
+    image: lscr.io/linuxserver/duplicati:latest
+    ports:
+    - containerPort: 8200
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/duplicati/config
+    securityContext:
+      privileged: true
+      runAsUser: 0
+    envFrom:
+      configMapRef: duplicati-cm
+  service:
+    ports:
+    - port: 8200
+      name: web
+  ingress:
+    https:
+    - subdomain: duplicati
+      port: 8200
+      middlewares:
+      - traefik-forward-auth

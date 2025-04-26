@@ -1,0 +1,11 @@
+persistence:
+  data:
+    mountPath: /mnt/somewhere/unencrypted/apps/homematic/ccu_data
+generic:
+  ingress:
+    https:
+    - subdomain: homematic
+      port: 80
+      service: homematic-raspberrymatic
+      middlewares:
+      - traefik-forward-auth

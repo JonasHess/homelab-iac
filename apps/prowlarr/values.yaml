@@ -1,0 +1,26 @@
+generic:
+  deployment:
+    image: lscr.io/linuxserver/prowlarr:latest
+    ports:
+    - containerPort: 9696
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/prowlarr/config
+      media:
+        mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
+  service:
+    ports:
+    - name: http
+      port: 9696
+  ingress:
+    https:
+    - subdomain: prowlarr
+      port: 9696
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: prowlarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 9696

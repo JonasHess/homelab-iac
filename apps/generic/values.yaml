@@ -1,0 +1,5 @@
+global:
+  domain: ~
+  traefik:
+    middlewareNamespace: ~
+appName: ~

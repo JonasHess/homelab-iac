@@ -1,0 +1,38 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+
+{{- if .Values.ingress }}
+  {{- if .Values.ingress.https }}
+    {{- $domain := required "global.domain must be set in values.yaml" $.Values.global.domain }}
+    {{- range $index, $ingress := .Values.ingress.https }}
+
+{{- $middlewareNamespace := required "Middleware namespace must be specifie" $.Values.global.traefik.middlewareNamespace }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ $appName | default $.Chart.Name }}-https-{{ required "port must be specified for each HTTPS ingress" $ingress.port }}-{{ $index }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ required "subdomain must be specified for each HTTPS ingress" $ingress.subdomain }}.{{ $domain }}`) {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
+      kind: Rule
+      priority: {{ default 10 $ingress.priority }}
+      services:
+        - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName | default $.Chart.Name }}-service{{ end }}
+          port: {{ required "port must be specified for each HTTPS ingress" $ingress.port }}
+      {{- if $ingress.middlewares }}
+      middlewares:
+        {{- range $middleware := $ingress.middlewares }}
+        - name: {{ $middleware }}
+          namespace: {{ $middlewareNamespace }}
+        {{- end }}
+      {{- end }}
+  tls:
+    certResolver: cloudflare
+    {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,4 @@
+github:
+  owner: zimmermq
+helm:
+  targetRevision: 0.9.0

@@ -1,0 +1,19 @@
+LLM_PROVIDER: openai
+LLM_MODEL: gpt-4o
+LOG_LEVEL: INFO
+AWS_OCR_BUCKET_NAME: paperless-ocr
+PROMPT_TITLE_EXPLANATION: ''
+PROMPT_DOCUMENT_TYPE_EXPLANATION: ''
+PROMPT_CORRESPONDENT_EXPLANATION: ''
+PROMPT_POSTAMBLE: ''
+generic:
+  deployment:
+    image: jonashess/paperless-gpt:unreleased
+    imagePullPolicy: Always
+    pvcMounts:
+      prompts:
+        mountPath: /app/prompts
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/paperless-gpt/prompts
+    envFrom:
+      secretRef: paperlessgpt-secret
+      configMapRef: paperlessgpt-config

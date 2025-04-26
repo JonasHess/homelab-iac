@@ -1,0 +1,21 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+
+{{- if and .Values.ingress .Values.ingress.udp }}
+  {{- range $ingress := .Values.ingress.udp }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: {{ $appName }}-udp-{{ required "port must be specified for each UDP ingress" $ingress.port }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  entryPoints:
+    - {{ required "traefikEntryPoint must be specified for each UDP ingress" $ingress.traefikEntryPoint }}
+  routes:
+    - services:
+        - name: {{ $appName }}-service
+          port: {{ required "port must be specified for each UDP ingress" $ingress.port }}
+  {{- end }}
+{{- end }}

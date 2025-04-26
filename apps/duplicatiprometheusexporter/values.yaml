@@ -1,0 +1,7 @@
+generic:
+  deployment:
+    image: aleixolucas/duplicati-prometheus-exporter
+  service:
+    ports:
+    - name: http
+      port: 5000

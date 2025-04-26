@@ -1,0 +1,14 @@
+generic:
+  deployment:
+    image: derhenning/tgtg:latest-alpine
+    envFrom:
+      secretRef: tgtg-credentials
+      configMapRef: tgtg-config-map
+    pvcMounts:
+      tokens:
+        mountPath: /tokens
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/tgtg/tokens
+  service:
+    ports:
+    - name: http
+      port: 8000

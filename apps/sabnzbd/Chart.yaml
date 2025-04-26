@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.7
+description: Helm chart for sabnzbd
+name: sabnzbd
+type: application
+version: 0.1.0

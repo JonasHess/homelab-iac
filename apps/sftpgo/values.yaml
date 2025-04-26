@@ -1,0 +1,52 @@
+generic:
+  deployment:
+    image: drakkan/sftpgo:latest
+    ports:
+    - containerPort: 8080
+    - containerPort: 2222
+    - containerPort: 2121
+    pvcMounts:
+      data:
+        mountPath: /srv/sftpgo
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/sftpgo/data
+      config:
+        mountPath: /var/lib/sftpgo
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/sftpgo/config
+      stirlingpdf:
+        mountPath: /mnt/stirlingpdf/pipeline/
+        hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
+    envFrom:
+      secretRef: sftpgo-secret
+    configMapMounts:
+      configmap:
+        mountPath: /etc/sftpgo/
+        configMapName: sftpgo-config
+  service:
+    ports:
+    - name: http
+      port: 8080
+    - name: webdav
+      port: 8081
+    - name: sftp
+      port: 2222
+      protocol: TCP
+    - name: ftp
+      port: 2121
+      protocol: TCP
+  ingress:
+    https:
+    - subdomain: sftpgo
+      port: 8080
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: sftpgo
+      port: 8080
+      matchSuffix: '&& PathPrefix(`/web/client/pubshares/`)'
+      priority: 20
+    - subdomain: webdav
+      port: 8081
+    tcp:
+    - port: 2222
+      traefikEntryPoint: sftpgo
+    - port: 2121
+      traefikEntryPoint: ftp

@@ -1,0 +1,7 @@
+cron_job: 5 * * * *
+generic:
+  deployment:
+    image: zimmermq/cloudflare-ddns:main
+    envFrom:
+      secretRef: cloudflare-ddns-api-credentials
+      configMapRef: cloudflare-ddns-config-map

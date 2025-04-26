@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessngx-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  PAPERLESS_REDIS: "redis://redis-service:6379"
+  PAPERLESS_DBHOST: "postgres-service"
+  PAPERLESS_DBNAME: "paperless"
+  PAPERLESS_DBUSER: "paperless"
+  PAPERLESS_ADMIN_USER: {{ .Values.admin.username | quote }}
+  PAPERLESS_ADMIN_MAIL: {{ .Values.admin.email | quote }}
+  PAPERLESS_URL: https://paperlessngx.{{ .Values.global.domain }}
+  PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
+  PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
+  PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.global.domain }}/"
+  PAPERLESS_CONSUMER_BARCODE_UPSCALE: "2.0"
+  PAPERLESS_CONSUMER_BARCODE_DPI: "600"
+  PAPERLESS_CONSUMER_BARCODE_MAX_PAGE: "5"
+  PAPERLESS_CONSUMER_BARCODE_SCANNER: "ZXING"
+  PAPERLESS_OCR_USER_ARGS: "{\"invalidate_digital_signatures\": true}"
+  PAPERLESS_TIKA_ENABLED: "1"
+  PAPERLESS_TIKA_GOTENBERG_ENDPOINT: "http://gotenberg-service:3000"
+  PAPERLESS_TIKA_ENDPOINT: "http://tika-service:9998"
+  PAPERLESS_FILENAME_FORMAT: "{{`{{ created_year }}`}}/{{`{{ correspondent }}`}}/{{`{{ created_year }}`}}_{{`{{ created_month }}`}}_{{`{{ created_day }}`}}_{{`{{ correspondent }}`}}_{{`{{ title }}`}}"
+  PAPERLESS_FILENAME_FORMAT_REMOVE_NONE: "true"
+  PAPERLESS_CONSUMER_RECURSIVE: "1"
+  PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS: "1"
+  PAPERLESS_CONSUMER_DELETE_DUPLICATES: "1"
+  PAPERLESS_APPS: "allauth.socialaccount.providers.amazon_cognito"
+  PAPERLESS_SOCIAL_AUTO_SIGNUP: "false"
+  PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS: "false"
+  PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"

@@ -1,0 +1,20 @@
+generic:
+  deployment:
+    image: postgres:17
+    ports:
+    - containerPort: 5432
+    pvcMounts:
+      data:
+        mountPath: /var/lib/postgresql/data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/postgres/data
+    envFrom:
+      secretRef: postgres-secret
+      configMapRef: postgres-config
+    configMapMounts:
+      postgresqlconf:
+        mountPath: /etc/postgresql
+        configMapName: postgres-config-file
+  service:
+    ports:
+    - name: postgres
+      port: 5432

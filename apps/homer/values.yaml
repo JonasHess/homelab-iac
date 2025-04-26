@@ -1,0 +1,8 @@
+generic:
+  ingress:
+    https:
+      - subdomain: homer
+        port: 8080
+        service: homer
+        middlewares:
+          - traefik-forward-auth

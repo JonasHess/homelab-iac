@@ -1,0 +1,9 @@
+generic:
+  service:
+    ports:
+    - name: http
+      port: 80
+  ingress:
+    https:
+    - subdomain: asn
+      port: 80

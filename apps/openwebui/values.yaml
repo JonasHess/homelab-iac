@@ -1,0 +1,25 @@
+generic:
+  deployment:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+    - containerPort: 8080
+    pvcMounts:
+      data:
+        mountPath: /app/backend/data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/openwebui/data
+    envFrom:
+      configMapRef: openwebui-config
+  service:
+    ports:
+    - name: http
+      port: 8080
+  ingress:
+    https:
+    - subdomain: openwebui
+      port: 8080
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: chat
+      port: 8080
+      middlewares:
+      - traefik-forward-auth

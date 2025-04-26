@@ -1,0 +1,19 @@
+generic:
+  deployment:
+    image: tautulli/tautulli:latest
+    ports:
+    - containerPort: 8181
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/tautulli/config
+  service:
+    ports:
+    - name: http
+      port: 8181
+  ingress:
+    https:
+    - subdomain: tautulli
+      port: 8181
+      middlewares:
+      - traefik-forward-auth

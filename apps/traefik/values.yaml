@@ -1,0 +1,24 @@
+global:
+  domain: ~ # example.com
+  traefik_forward_auth:
+    oidc_client_id: ~ # traefik-forward-auth
+    oidc_issuer_url: ~ # https://accounts.google.com
+  akeyless:
+    path: ~ # oidc/traefik-forward-auth
+additionalExposedPorts:
+  sftpgo:
+    port: 2222
+    protocol: TCP
+  ftp:
+    port: 2121
+    protocol: TCP
+  dns:
+    port: 53
+    protocol: UDP
+loadBalancerIP: null
+generic:
+  persistentVolumeClaims:
+    data: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
+middlewares:
+  cloudflare:
+    allowedCIDRs: []

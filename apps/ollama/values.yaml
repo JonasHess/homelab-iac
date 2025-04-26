@@ -1,0 +1,13 @@
+generic:
+  deployment:
+    image: ollama/ollama:latest
+    ports:
+    - containerPort: 11434
+    pvcMounts:
+      data:
+        mountPath: /root/.ollama
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/ollama/data
+  service:
+    ports:
+    - name: http
+      port: 11434

@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.basechart.values.repoURL }}
+      targetRevision: {{ .Values.basechart.values.targetRevision }}
+      ref: values
+    - repoURL: {{ .Values.basechart.chart.repoURL }}
+      targetRevision: {{ .Values.basechart.chart.targetRevision }}
+      path: {{ .Values.basechart.chart.path }}
+      helm:
+        valueFiles:
+          - $values/{{ .Values.basechart.values.path }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Release.Namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

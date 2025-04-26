@@ -1,0 +1,46 @@
+importJob:
+  enabled: false
+resources:
+  server:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+  machineLearning:
+    requests:
+      memory: 2Gi
+      cpu: 1000m
+    limits:
+      memory: 4Gi
+      cpu: 2000m
+smtp:
+  enabled: false
+  host: smtp.example.com
+  ignoreCert: false
+  port: 587
+  username: immich@example.com
+  from: Immich Photo Server <immich@example.com>
+server:
+  externalSubDomain: immich
+generic:
+  persistentVolumeClaims:
+    library: ~ # /mnt/somewhere/encrypted/apps/immich/library
+    postgresql: ~ # /mnt/somewhere/encrypted/apps/immich/postgresql
+    redis: ~ # /mnt/somewhere/encrypted/apps/immich/redis
+    cli: ~ # null
+  ingress:
+    https:
+    - subdomain: immich
+      port: 2283
+      service: immich-app-server
+  externalSecrets:
+    immich-credentials:
+      - client_secret: "/immich/oauth/client_secret"
+      - email_password: "/immich/email/password"
+    immich-db-credentials:
+      - username: "/immich/database/username"
+      - password: "/immich/database/password"
+    immich-redis-credentials:
+      - password: "/immich/redis/password"

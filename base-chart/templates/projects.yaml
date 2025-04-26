@@ -1,0 +1,69 @@
+# This template creates Argo CD projects for different application categories
+  # Projects provide RBAC controls and destination constraints
+
+{{- range $projectName, $projectConfig := .Values.projects }}
+{{- if $projectConfig.enabled }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $projectName }}
+  namespace: argocd
+  {{- with $projectConfig.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with $projectConfig.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  description: {{ $projectConfig.description | default $projectName }}
+
+  # Source repositories
+  sourceRepos:
+  {{- if $projectConfig.sourceRepos }}
+  {{- range $projectConfig.sourceRepos }}
+    - {{ . }}
+  {{- end }}
+  {{- else }}
+    - '*'
+  {{- end }}
+
+  # Destination clusters and namespaces
+  destinations:
+  {{- if $projectConfig.destinations }}
+  {{- range $projectConfig.destinations }}
+    - server: {{ .server | default "*" }}
+      namespace: {{ .namespace | default "*" }}
+  {{- end }}
+  {{- else }}
+    - server: '*'
+      namespace: '*'
+  {{- end }}
+
+  # Allow cluster-scoped resources
+  clusterResourceWhitelist:
+  {{- if $projectConfig.clusterResourceWhitelist }}
+  {{- toYaml $projectConfig.clusterResourceWhitelist | nindent 2 }}
+  {{- else }}
+    - group: '*'
+      kind: '*'
+  {{- end }}
+
+  # Namespace-scoped resources
+  namespaceResourceWhitelist:
+  {{- if $projectConfig.namespaceResourceWhitelist }}
+  {{- toYaml $projectConfig.namespaceResourceWhitelist | nindent 2 }}
+  {{- else }}
+    - group: '*'
+      kind: '*'
+  {{- end }}
+
+  # Project roles for RBAC
+  {{- if $projectConfig.roles }}
+  roles:
+  {{- toYaml $projectConfig.roles | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}
