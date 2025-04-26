@@ -34,7 +34,6 @@ global:
     oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
 
   argocd:
-
     targetRevision: ~ # main
 
     # Global ignore differences (applied to all apps unless overridden)
@@ -59,6 +58,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-file-pdf"
     argocd:
       targetRevision: ~
       description: "StirlingPDF - PDF Processing and Management"
@@ -69,6 +71,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-shield-alt"
     argocd:
       targetRevision: ~
       description: "AdGuard - Network-wide Ad and Tracking Blocker"
@@ -79,6 +84,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-key"
     argocd:
       targetRevision: ~
       description: "Akeyless - Secrets Management Platform"
@@ -87,6 +95,11 @@ apps:
       syncWave: "5"  # Early deployment for secrets access
   argocd:
     enabled: true
+    homer:
+      enabled: true
+      group:
+        name: "Core Systems"
+        icon: "fas fa-server"
     argocd:
       targetRevision: ~
       description: "Argo CD - Declarative GitOps Continuous Delivery"
@@ -97,6 +110,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Core Systems"
+        icon: "fas fa-sync-alt"
     argocd:
       targetRevision: ~
       description: "Argo Image Updater - Automated Image Updates for Argo CD Applications"
@@ -107,6 +123,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-network-wired"
     argocd:
       targetRevision: ~
       description: "ASN - Autonomous System Number Lookup and Management"
@@ -117,6 +136,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Infrastructure"
+        icon: "fab fa-aws"
     argocd:
       targetRevision: ~
       description: "AWS Tools - Amazon Web Services Integration Components"
@@ -127,6 +149,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-cloud"
     argocd:
       targetRevision: ~
       description: "Cloudflared DNS - Cloudflare DNS Tunneling and Management"
@@ -137,6 +162,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Infrastructure"
+        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "Cloud Native PostgreSQL - Kubernetes Operator for PostgreSQL"
@@ -147,6 +175,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Development"
+        icon: "fas fa-code-branch"
     argocd:
       targetRevision: ~
       description: "Drone CI - Continuous Integration Platform"
@@ -157,6 +188,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Maintenance"
+        icon: "fas fa-hdd"
     argocd:
       targetRevision: ~
       description: "Duplicati - Backup Software for File, Database and Web Data"
@@ -167,6 +201,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Monitoring"
+        icon: "fas fa-chart-line"
     argocd:
       targetRevision: ~
       description: "Duplicati Prometheus Exporter - Metrics Collection for Duplicati"
@@ -177,6 +214,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Other Applications"
+        icon: "fas fa-cubes"
     argocd:
       targetRevision: ~
       description: "Generic - Template for Generic Applications"
@@ -187,6 +227,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Development"
+        icon: "fab fa-github"
     argocd:
       targetRevision: ~
       description: "GitHub Arc - GitHub Runner and Integration Services"
@@ -197,6 +240,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Gotenberg - API-driven PDF Engine"
@@ -207,6 +253,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Smart Home"
+        icon: "fas fa-home"
     argocd:
       targetRevision: ~
       description: "Home Assistant - Open Source Home Automation Platform"
@@ -217,6 +266,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Smart Home"
+        icon: "fas fa-home"
     argocd:
       targetRevision: ~
       description: "Homematic - Smart Home System Integration"
@@ -227,6 +279,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-images"
     argocd:
       targetRevision: ~
       description: "Immich - Self-Hosted Photo and Video Backup Solution"
@@ -237,6 +292,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-images"
     argocd:
       targetRevision: ~
       description: "Immich Old - Legacy Version of Immich Photo Manager"
@@ -247,6 +305,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Smart Home"
+        icon: "fas fa-exchange-alt"
     argocd:
       targetRevision: ~
       description: "Mosquitto - Lightweight MQTT Broker"
@@ -257,6 +318,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "AI & ML"
+        icon: "fas fa-robot"
     argocd:
       targetRevision: ~
       description: "Ollama - Run Large Language Models Locally"
@@ -267,6 +331,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "AI & ML"
+        icon: "fas fa-comments"
     argocd:
       targetRevision: ~
       description: "Open WebUI - Web Interface for AI Models"
@@ -277,6 +344,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Paperless-GPT - AI-Enhanced Document Management"
@@ -287,6 +357,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Paperless-ngx - Document Management System"
@@ -297,6 +370,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-photo-video"
     argocd:
       targetRevision: ~
       description: "Plex - Media Server for Movies, TV, Music and Photos"
@@ -307,6 +383,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Infrastructure"
+        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "PostgreSQL - Advanced Open Source Database"
@@ -317,6 +396,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Monitoring"
+        icon: "fas fa-chart-line"
     argocd:
       targetRevision: ~
       description: "Prometheus - Monitoring System and Time Series Database"
@@ -327,6 +409,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-search"
     argocd:
       targetRevision: ~
       description: "Prowlarr - Indexer Manager/Proxy for *arr Suite"
@@ -337,6 +422,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-download"
     argocd:
       targetRevision: ~
       description: "qBittorrent - BitTorrent Client"
@@ -347,6 +435,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-film"
     argocd:
       targetRevision: ~
       description: "Radarr - Movie Collection Manager"
@@ -357,6 +448,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-book"
     argocd:
       targetRevision: ~
       description: "Readarr - Book Collection Manager"
@@ -367,6 +461,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Infrastructure"
+        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "Redis - In-Memory Data Structure Store"
@@ -377,6 +474,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-download"
     argocd:
       targetRevision: ~
       description: "SABnzbd - Binary Newsreader"
@@ -387,6 +487,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-search"
     argocd:
       targetRevision: ~
       description: "Search - Self-Hosted Search Engine"
@@ -397,6 +500,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-exchange-alt"
     argocd:
       targetRevision: ~
       description: "SFTPGo - Fully Featured SFTP Server"
@@ -407,6 +513,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Smart Home"
+        icon: "fas fa-home"
     argocd:
       targetRevision: ~
       description: "Smart Home 3 - Smart Home Integration Suite"
@@ -417,6 +526,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-tv"
     argocd:
       targetRevision: ~
       description: "Sonarr - TV Show Collection Manager"
@@ -427,6 +539,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Media & Entertainment"
+        icon: "fas fa-chart-bar"
     argocd:
       targetRevision: ~
       description: "Tautulli - Plex Media Server Monitoring"
@@ -437,6 +552,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Development"
+        icon: "fas fa-vial"
     argocd:
       targetRevision: ~
       description: "Test - Testing Application"
@@ -447,6 +565,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-shopping-bag"
     argocd:
       targetRevision: ~
       description: "TGTG - Too Good To Go Integration"
@@ -457,6 +578,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Apache Tika - Content Analysis and Extraction Toolkit"
@@ -467,6 +591,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Infrastructure"
+        icon: "fas fa-network-wired"
     argocd:
       targetRevision: ~
       description: "Traefik - Cloud Native Edge Router"
@@ -477,6 +604,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Security & Networks"
+        icon: "fas fa-lock"
     argocd:
       targetRevision: ~
       description: "Vaultwarden - Unofficial Bitwarden Compatible Server"
@@ -487,6 +617,9 @@ apps:
     enabled: false
     homer:
       enabled: true
+      group:
+        name: "Smart Home"
+        icon: "fas fa-exchange-alt"
     argocd:
       targetRevision: ~
       description: "Zigbee2MQTT - Zigbee to MQTT Bridge"

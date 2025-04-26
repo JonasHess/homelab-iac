@@ -10,27 +10,39 @@ data:
   config.yml: |
     ---
     title: "Home Server Dashboard"
-    subtitle: "Home Server Applications"
-    logo: "logo.png"
-    # Optional: Set the header background color with a HEX value
-    header: true
-    footer: '<p>Created with <span class="has-text-danger">❤</span> by Kubernetes</p>'
+    subtitle: "Your Self-Hosted Applications Hub"
+    logo: "assets/icons/homer.png"
 
-    # Optional theme customization
-    theme: default
+    # Theme settings with improved aesthetics
+    theme: slate
     colors:
       light:
         primary: "#3367d6"
+        background: "#f5f5f5"
+        card-background: "#ffffff"
+        text: "#363636"
+        highlight-primary: "#4285f4"
       dark:
-        primary: "#3367d6"
+        primary: "#5c6bc0"
+        background: "#131313"
+        card-background: "#1c1c1c"
+        text: "#eaeaea"
+        highlight-primary: "#7986cb"
 
-    # Optional message
+    # Customization options
+    header: true
+    footer: '<p>Created with <span class="has-text-danger">❤</span> by Kubernetes | <a href="https://github.com/bastienwirtz/homer" target="_blank">Homer Project</a></p>'
+    defaults:
+      layout: columns
+      colorTheme: auto
+
+    # Welcome message with markdown support
     message:
       style: "is-info"
-      title: "Welcome!"
-      content: "Welcome to your home server dashboard. All your applications are listed below."
+      title: "Welcome to Your Home Server!"
+      content: "All your self-hosted applications are organized below. Use the **search bar** to quickly find what you need."
 
-    # Optional navbar
+    # Navigation
     links:
       - name: "GitHub"
         icon: "fab fa-github"
@@ -40,20 +52,52 @@ data:
         icon: "fas fa-book"
         url: "https://github.com/bastienwirtz/homer/blob/main/docs/configuration.md"
         target: "_blank"
+      - name: "Refresh"
+        icon: "fas fa-sync"
+        url: "/"
 
-    # Services
+    # Services organized by groups defined in values.yaml
     services:
-      - name: "Applications"
-        icon: "fas fa-cloud"
-        items:
-          {{- range $appName, $appConfig := .Values.apps }}
-          {{- if and $appConfig.enabled $appConfig.homer }}
-          - name: "{{ $appConfig.argocd.description | default $appName }}"
-            logo: "{{ $appConfig.homer.logo | default "" }}"
-            subtitle: "{{ $appConfig.homer.subtitle | default "" }}"
-            tag: "{{ $appConfig.homer.tag | default "" }}"
-            url: "{{ $appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain) }}"
-            target: "_blank"
+      {{- $groups := dict }}
+
+      {{- /* First collect all apps into group buckets */ -}}
+      {{- range $appName, $appConfig := .Values.apps }}
+        {{- if and $appConfig.enabled $appConfig.homer }}
+          {{- $group := "Other Applications" }}
+          {{- $icon := "fas fa-cubes" }}
+
+          {{- if $appConfig.homer.group }}
+            {{- $group = $appConfig.homer.group.name | default "Other Applications" }}
+            {{- $icon = $appConfig.homer.group.icon | default "fas fa-cubes" }}
           {{- end }}
+
+          {{- /* Initialize the group if it doesn't exist */ -}}
+          {{- if not (hasKey $groups $group) }}
+            {{- $_ := set $groups $group (dict "icon" $icon "items" list) }}
           {{- end }}
+
+          {{- /* Add the app to the group's items */ -}}
+          {{- $item := dict "name" ($appConfig.argocd.description | default $appName)
+                           "logo" ($appConfig.homer.logo | default (printf "assets/icons/%s.png" $appName))
+                           "subtitle" ($appConfig.homer.subtitle | default "")
+                           "tag" ($appConfig.homer.tag | default "")
+                           "url" ($appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain))
+                           "target" "_blank" }}
+
+          {{- $groupItems := (index $groups $group).items }}
+          {{- $groupItems = append $groupItems $item }}
+          {{- $_ := set (index $groups $group) "items" $groupItems }}
+        {{- end }}
+      {{- end }}
+
+      {{- /* Now output the groups */ -}}
+      {{- range $groupName, $groupConfig := $groups }}
+      - name: "{{ $groupName }}"
+        icon: "{{ $groupConfig.icon }}"
+        items: {{ $groupConfig.items | toJson }}
+      {{- end }}
+
+    # Custom stylesheet for additional customization
+    stylesheet:
+      - "assets/custom.css"
 {{- end }}
