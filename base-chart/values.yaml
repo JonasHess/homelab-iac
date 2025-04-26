@@ -399,14 +399,6 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "10"
-  zfs:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      description: "ZFS - ZFS Storage System Management"
-      namespace: "argocd"
-      project: "default"
-      syncWave: "4"  # Deploy early for storage management
   zigbee2mqtt:
     enabled: false
     argocd:
