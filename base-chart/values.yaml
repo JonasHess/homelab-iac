@@ -54,13 +54,68 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy after core services
+
+    # Centralized group definitions
+    groups:
+      coreServices:
+        name: "Core Systems"
+        icon: "fas fa-server"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/server.svg"
+
+      infrastructure:
+        name: "Infrastructure"
+        icon: "fas fa-network-wired"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/network.svg"
+
+      monitoring:
+        name: "Monitoring"
+        icon: "fas fa-chart-line"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/grafana.svg"
+
+      development:
+        name: "Development"
+        icon: "fas fa-code-branch"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/github.svg"
+
+      security:
+        name: "Security & Networks"
+        icon: "fas fa-shield-alt"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/security.svg"
+
+      smartHome:
+        name: "Smart Home"
+        icon: "fas fa-home"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
+
+      media:
+        name: "Media & Entertainment"
+        icon: "fas fa-photo-video"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
+
+      maintenance:
+        name: "Maintenance"
+        icon: "fas fa-hdd"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
+
+      productivity:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
+
+      ai:
+        name: "AI & ML"
+        icon: "fas fa-comments"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/ollama.svg"
+
+
+  # Application Definitions
   stirlingpdf:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-file-pdf"
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/stirlingpdf.svg"
+      subtitle: "Your PDF Swiss Army Knife"
     argocd:
       targetRevision: ~
       description: "StirlingPDF - PDF Processing and Management"
@@ -71,9 +126,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-shield-alt"
+      group: "security"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/adguard-home.svg"
+      subtitle: "Network-wide Ad Blocker"
     argocd:
       targetRevision: ~
       description: "AdGuard - Network-wide Ad and Tracking Blocker"
@@ -85,9 +140,9 @@ apps:
     homer:
       enabled: true
       url: "https://console.akeyless.io/"
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-key"
+      group: "security"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/key.svg"
+      subtitle: "Secrets Management Platform"
     argocd:
       targetRevision: ~
       description: "Akeyless - Secrets Management Platform"
@@ -98,9 +153,9 @@ apps:
     enabled: true
     homer:
       enabled: true
-      group:
-        name: "Core Systems"
-        icon: "fas fa-server"
+      group: "coreServices"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/argo-cd.svg"
+      subtitle: "GitOps Continuous Delivery"
     argocd:
       targetRevision: ~
       description: "Argo CD - Declarative GitOps Continuous Delivery"
@@ -151,9 +206,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Development"
-        icon: "fas fa-code-branch"
+      group: "development"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/drone.svg"
+      subtitle: "Continuous Integration Platform"
     argocd:
       targetRevision: ~
       description: "Drone CI - Continuous Integration Platform"
@@ -164,9 +219,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Maintenance"
-        icon: "fas fa-hdd"
+      group: "maintenance"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
+      subtitle: "Backup Software"
     argocd:
       targetRevision: ~
       description: "Duplicati - Backup Software for File, Database and Web Data"
@@ -209,9 +264,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Smart Home"
-        icon: "fas fa-home"
+      group: "smartHome"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
+      subtitle: "Home Automation Platform"
     argocd:
       targetRevision: ~
       description: "Home Assistant - Open Source Home Automation Platform"
@@ -222,9 +277,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Smart Home"
-        icon: "fas fa-home"
+      group: "smartHome"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homematic.svg"
+      subtitle: "Smart Home System"
     argocd:
       targetRevision: ~
       description: "Homematic - Smart Home System Integration"
@@ -235,9 +290,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-images"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
+      subtitle: "Photo & Video Backup"
     argocd:
       targetRevision: ~
       description: "Immich - Self-Hosted Photo and Video Backup Solution"
@@ -248,9 +303,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-images"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
+      subtitle: "Legacy Photo Manager"
     argocd:
       targetRevision: ~
       description: "Immich Old - Legacy Version of Immich Photo Manager"
@@ -277,9 +332,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "AI & ML"
-        icon: "fas fa-comments"
+      group: "ai"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/openwebui.svg"
+      subtitle: "Web Interface for AI Models"
     argocd:
       targetRevision: ~
       description: "Open WebUI - Web Interface for AI Models"
@@ -298,9 +353,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-file-alt"
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
+      subtitle: "Document Management System"
     argocd:
       targetRevision: ~
       description: "Paperless-ngx - Document Management System"
@@ -311,9 +366,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-photo-video"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
+      subtitle: "Media Server"
     argocd:
       targetRevision: ~
       description: "Plex - Media Server for Movies, TV, Music and Photos"
@@ -332,9 +387,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Monitoring"
-        icon: "fas fa-chart-line"
+      group: "monitoring"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prometheus.svg"
+      subtitle: "Monitoring System"
     argocd:
       targetRevision: ~
       description: "Prometheus - Monitoring System and Time Series Database"
@@ -345,9 +400,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-search"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg"
+      subtitle: "Indexer Manager/Proxy"
     argocd:
       targetRevision: ~
       description: "Prowlarr - Indexer Manager/Proxy for *arr Suite"
@@ -358,9 +413,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-download"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg"
+      subtitle: "BitTorrent Client"
     argocd:
       targetRevision: ~
       description: "qBittorrent - BitTorrent Client"
@@ -371,9 +426,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-film"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg"
+      subtitle: "Movie Collection Manager"
     argocd:
       targetRevision: ~
       description: "Radarr - Movie Collection Manager"
@@ -384,9 +439,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-book"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/readarr.svg"
+      subtitle: "Book Collection Manager"
     argocd:
       targetRevision: ~
       description: "Readarr - Book Collection Manager"
@@ -405,9 +460,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-download"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sabnzbd.svg"
+      subtitle: "Binary Newsreader"
     argocd:
       targetRevision: ~
       description: "SABnzbd - Binary Newsreader"
@@ -418,9 +473,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-search"
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/search.svg"
+      subtitle: "Self-Hosted Search Engine"
     argocd:
       targetRevision: ~
       description: "Search - Self-Hosted Search Engine"
@@ -431,9 +486,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-exchange-alt"
+      group: "security"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sftpgo.svg"
+      subtitle: "SFTP Server"
     argocd:
       targetRevision: ~
       description: "SFTPGo - Fully Featured SFTP Server"
@@ -452,9 +507,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-tv"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg"
+      subtitle: "TV Show Collection Manager"
     argocd:
       targetRevision: ~
       description: "Sonarr - TV Show Collection Manager"
@@ -465,9 +520,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Media & Entertainment"
-        icon: "fas fa-chart-bar"
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg"
+      subtitle: "Plex Media Server Monitoring"
     argocd:
       targetRevision: ~
       description: "Tautulli - Plex Media Server Monitoring"
@@ -494,9 +549,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Infrastructure"
-        icon: "fas fa-network-wired"
+      group: "infrastructure"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/traefik.svg"
+      subtitle: "Cloud Native Edge Router"
     argocd:
       targetRevision: ~
       description: "Traefik - Cloud Native Edge Router"
@@ -507,9 +562,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-lock"
+      group: "security"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg"
+      subtitle: "Password Manager"
     argocd:
       targetRevision: ~
       description: "Vaultwarden - Unofficial Bitwarden Compatible Server"
@@ -520,9 +575,9 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group:
-        name: "Smart Home"
-        icon: "fas fa-exchange-alt"
+      group: "smartHome"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/zigbee2mqtt.svg"
+      subtitle: "Zigbee to MQTT Bridge"
     argocd:
       targetRevision: ~
       description: "Zigbee2MQTT - Zigbee to MQTT Bridge"
