@@ -1,8 +1,19 @@
 generic:
+  deployment:
+    image: bobbyhub/homer:latest
+    ports:
+     - containerPort: 8080
+    configMapMounts:
+      homerconf:
+        mountPath: /www/assets/
+        configMapName: homer-config
   ingress:
     https:
       - subdomain: homer
         port: 8080
-        service: homer
         middlewares:
           - traefik-forward-auth
+  service:
+    ports:
+      - name: http
+        port: 8080
