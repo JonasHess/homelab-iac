@@ -84,6 +84,7 @@ apps:
     enabled: false
     homer:
       enabled: true
+      url: "https://console.akeyless.io/"
       group:
         name: "Security & Networks"
         icon: "fas fa-key"
@@ -108,11 +109,6 @@ apps:
       syncWave: "0"  # Deploy first as it manages other deployments
   argoimageupdater:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Core Systems"
-        icon: "fas fa-sync-alt"
     argocd:
       targetRevision: ~
       description: "Argo Image Updater - Automated Image Updates for Argo CD Applications"
@@ -121,11 +117,6 @@ apps:
       syncWave: "1"  # Deploy right after ArgoCD
   asn:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-network-wired"
     argocd:
       targetRevision: ~
       description: "ASN - Autonomous System Number Lookup and Management"
@@ -134,11 +125,6 @@ apps:
       syncWave: "20"
   aws:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Infrastructure"
-        icon: "fab fa-aws"
     argocd:
       targetRevision: ~
       description: "AWS Tools - Amazon Web Services Integration Components"
@@ -147,11 +133,6 @@ apps:
       syncWave: "5"  # Early deployment for cloud infrastructure
   cloudflareddns:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Security & Networks"
-        icon: "fas fa-cloud"
     argocd:
       targetRevision: ~
       description: "Cloudflared DNS - Cloudflare DNS Tunneling and Management"
@@ -160,11 +141,6 @@ apps:
       syncWave: "3"  # Early deployment for DNS services
   cnpg:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Infrastructure"
-        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "Cloud Native PostgreSQL - Kubernetes Operator for PostgreSQL"
@@ -199,11 +175,6 @@ apps:
       syncWave: "20"  # Deploy later as it's not critical
   duplicatiprometheusexporter:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Monitoring"
-        icon: "fas fa-chart-line"
     argocd:
       targetRevision: ~
       description: "Duplicati Prometheus Exporter - Metrics Collection for Duplicati"
@@ -212,11 +183,6 @@ apps:
       syncWave: "21"  # Deploy after Duplicati and Prometheus
   generic:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Other Applications"
-        icon: "fas fa-cubes"
     argocd:
       targetRevision: ~
       description: "Generic - Template for Generic Applications"
@@ -225,11 +191,6 @@ apps:
       syncWave: "25"
   githubarc:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Development"
-        icon: "fab fa-github"
     argocd:
       targetRevision: ~
       description: "GitHub Arc - GitHub Runner and Integration Services"
@@ -238,11 +199,6 @@ apps:
       syncWave: "15"
   gotenberg:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Gotenberg - API-driven PDF Engine"
@@ -303,11 +259,6 @@ apps:
       syncWave: "19"  # Deploy after main Immich
   mosquitto:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Smart Home"
-        icon: "fas fa-exchange-alt"
     argocd:
       targetRevision: ~
       description: "Mosquitto - Lightweight MQTT Broker"
@@ -316,11 +267,6 @@ apps:
       syncWave: "10"  # Deploy before IoT applications
   ollama:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "AI & ML"
-        icon: "fas fa-robot"
     argocd:
       targetRevision: ~
       description: "Ollama - Run Large Language Models Locally"
@@ -342,11 +288,6 @@ apps:
       syncWave: "16"  # Deploy after Ollama
   paperlessgpt:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Paperless-GPT - AI-Enhanced Document Management"
@@ -381,11 +322,6 @@ apps:
       syncWave: "20"  # Heavy resource usage, deploy later
   postgres:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Infrastructure"
-        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "PostgreSQL - Advanced Open Source Database"
@@ -459,11 +395,6 @@ apps:
       syncWave: "14"  # Deploy after Prowlarr
   redis:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Infrastructure"
-        icon: "fas fa-database"
     argocd:
       targetRevision: ~
       description: "Redis - In-Memory Data Structure Store"
@@ -511,11 +442,6 @@ apps:
       syncWave: "10"
   smarthome3:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Smart Home"
-        icon: "fas fa-home"
     argocd:
       targetRevision: ~
       description: "Smart Home 3 - Smart Home Integration Suite"
@@ -548,26 +474,8 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "21"  # Deploy after Plex
-  test:
-    enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Development"
-        icon: "fas fa-vial"
-    argocd:
-      targetRevision: ~
-      description: "Test - Testing Application"
-      namespace: "argocd"
-      project: "default"
-      syncWave: "30"  # Deploy last for testing
   tgtg:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-shopping-bag"
     argocd:
       targetRevision: ~
       description: "TGTG - Too Good To Go Integration"
@@ -576,11 +484,6 @@ apps:
       syncWave: "20"
   tika:
     enabled: false
-    homer:
-      enabled: true
-      group:
-        name: "Productivity"
-        icon: "fas fa-file-alt"
     argocd:
       targetRevision: ~
       description: "Apache Tika - Content Analysis and Extraction Toolkit"
