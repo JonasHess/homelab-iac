@@ -64,21 +64,30 @@ data:
       {{- range $appName, $appConfig := .Values.apps }}
         {{- if and $appConfig.enabled $appConfig.homer }}
           {{- $group := "Other Applications" }}
-          {{- $icon := "fas fa-cubes" }}
+          {{- $groupIcon := "fas fa-cubes" }}
 
           {{- if $appConfig.homer.group }}
             {{- $group = $appConfig.homer.group.name | default "Other Applications" }}
-            {{- $icon = $appConfig.homer.group.icon | default "fas fa-cubes" }}
+            {{- $groupIcon = $appConfig.homer.group.icon | default "fas fa-cubes" }}
           {{- end }}
 
           {{- /* Initialize the group if it doesn't exist */ -}}
           {{- if not (hasKey $groups $group) }}
-            {{- $_ := set $groups $group (dict "icon" $icon "items" list) }}
+            {{- $_ := set $groups $group (dict "icon" $groupIcon "items" list) }}
+          {{- end }}
+
+          {{- /* Get app icon - first from homer.icon if set, then from predefined map, fallback to default */ -}}
+          {{- $appIcon := "" }}
+          {{- if $appConfig.homer.icon }}
+            {{- $appIcon = $appConfig.homer.icon }}
+          {{- else }}
+            {{- $appIcon = "fas fa-puzzle-piece" }}
           {{- end }}
 
           {{- /* Add the app to the group's items */ -}}
           {{- $item := dict "name" ($appConfig.argocd.description | default $appName)
-                           "logo" ($appConfig.homer.logo | default (printf "assets/icons/%s.png" $appName))
+                           "logo" ($appConfig.homer.logo | default "")
+                           "icon" $appIcon
                            "subtitle" ($appConfig.homer.subtitle | default "")
                            "tag" ($appConfig.homer.tag | default "")
                            "url" ($appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain))
