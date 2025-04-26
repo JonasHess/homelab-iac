@@ -13,6 +13,8 @@ data:
     subtitle: "Your Self-Hosted Applications Hub"
     logo: "assets/icons/homer.png"
 
+    connectivityCheck: false
+
     # Theme settings with improved aesthetics
     theme: slate
     colors:
