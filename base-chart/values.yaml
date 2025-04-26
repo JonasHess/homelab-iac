@@ -57,6 +57,8 @@ apps:
       syncWave: "10"  # Deploy after core services
   stirlingpdf:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "StirlingPDF - PDF Processing and Management"
@@ -65,6 +67,8 @@ apps:
       syncWave: "10"  # Deploy after monitoring is available
   adguard:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "AdGuard - Network-wide Ad and Tracking Blocker"
@@ -73,6 +77,8 @@ apps:
       syncWave: "15"  # Deploy after core services
   akeyless:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Akeyless - Secrets Management Platform"
@@ -89,6 +95,8 @@ apps:
       syncWave: "0"  # Deploy first as it manages other deployments
   argoimageupdater:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Argo Image Updater - Automated Image Updates for Argo CD Applications"
@@ -97,6 +105,8 @@ apps:
       syncWave: "1"  # Deploy right after ArgoCD
   asn:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "ASN - Autonomous System Number Lookup and Management"
@@ -105,6 +115,8 @@ apps:
       syncWave: "20"
   aws:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "AWS Tools - Amazon Web Services Integration Components"
@@ -113,6 +125,8 @@ apps:
       syncWave: "5"  # Early deployment for cloud infrastructure
   cloudflareddns:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Cloudflared DNS - Cloudflare DNS Tunneling and Management"
@@ -121,6 +135,8 @@ apps:
       syncWave: "3"  # Early deployment for DNS services
   cnpg:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Cloud Native PostgreSQL - Kubernetes Operator for PostgreSQL"
@@ -129,6 +145,8 @@ apps:
       syncWave: "4"  # Deploy before apps that need PostgreSQL
   drone:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Drone CI - Continuous Integration Platform"
@@ -137,6 +155,8 @@ apps:
       syncWave: "8"  # Deploy after core services
   duplicati:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Duplicati - Backup Software for File, Database and Web Data"
@@ -145,6 +165,8 @@ apps:
       syncWave: "20"  # Deploy later as it's not critical
   duplicatiprometheusexporter:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Duplicati Prometheus Exporter - Metrics Collection for Duplicati"
@@ -153,6 +175,8 @@ apps:
       syncWave: "21"  # Deploy after Duplicati and Prometheus
   generic:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Generic - Template for Generic Applications"
@@ -161,6 +185,8 @@ apps:
       syncWave: "25"
   githubarc:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "GitHub Arc - GitHub Runner and Integration Services"
@@ -169,6 +195,8 @@ apps:
       syncWave: "15"
   gotenberg:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Gotenberg - API-driven PDF Engine"
@@ -177,6 +205,8 @@ apps:
       syncWave: "15"
   homeassistant:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Home Assistant - Open Source Home Automation Platform"
@@ -185,6 +215,8 @@ apps:
       syncWave: "15"  # Deploy after core infrastructure
   homematic:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Homematic - Smart Home System Integration"
@@ -195,12 +227,6 @@ apps:
     enabled: false
     homer:
       enabled: true
-      logo: "https://raw.githubusercontent.com/Stirling-Tools/Stirling-PDF/main/docs/stirling-pdf-logo.svg"
-      subtitle: "Your favorite PDF manipulation tool"
-      tag: "pdf"
-      url: "https://stirlingpdf.home-server.dev"
-
-
     argocd:
       targetRevision: ~
       description: "Immich - Self-Hosted Photo and Video Backup Solution"
@@ -209,6 +235,8 @@ apps:
       syncWave: "18"  # Higher resource usage, deploy later
   immichold:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Immich Old - Legacy Version of Immich Photo Manager"
@@ -217,6 +245,8 @@ apps:
       syncWave: "19"  # Deploy after main Immich
   mosquitto:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Mosquitto - Lightweight MQTT Broker"
@@ -225,6 +255,8 @@ apps:
       syncWave: "10"  # Deploy before IoT applications
   ollama:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Ollama - Run Large Language Models Locally"
@@ -233,6 +265,8 @@ apps:
       syncWave: "15"  # Higher resource usage, deploy later
   openwebui:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Open WebUI - Web Interface for AI Models"
@@ -241,6 +275,8 @@ apps:
       syncWave: "16"  # Deploy after Ollama
   paperlessgpt:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Paperless-GPT - AI-Enhanced Document Management"
@@ -249,6 +285,8 @@ apps:
       syncWave: "17"  # Deploy after AI components
   paperlessngx:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Paperless-ngx - Document Management System"
@@ -257,6 +295,8 @@ apps:
       syncWave: "16"  # Deploy after core services
   plex:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Plex - Media Server for Movies, TV, Music and Photos"
@@ -265,6 +305,8 @@ apps:
       syncWave: "20"  # Heavy resource usage, deploy later
   postgres:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "PostgreSQL - Advanced Open Source Database"
@@ -273,6 +315,8 @@ apps:
       syncWave: "5"  # Deploy early as many services depend on it
   prometheus:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Prometheus - Monitoring System and Time Series Database"
@@ -281,6 +325,8 @@ apps:
       syncWave: "2"  # Deploy early for monitoring other services
   prowlarr:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Prowlarr - Indexer Manager/Proxy for *arr Suite"
@@ -289,6 +335,8 @@ apps:
       syncWave: "12"  # Deploy before other *arr applications
   qbittorrent:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "qBittorrent - BitTorrent Client"
@@ -297,6 +345,8 @@ apps:
       syncWave: "15"
   radarr:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Radarr - Movie Collection Manager"
@@ -305,6 +355,8 @@ apps:
       syncWave: "14"  # Deploy after Prowlarr
   readarr:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Readarr - Book Collection Manager"
@@ -313,6 +365,8 @@ apps:
       syncWave: "14"  # Deploy after Prowlarr
   redis:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Redis - In-Memory Data Structure Store"
@@ -321,6 +375,8 @@ apps:
       syncWave: "5"  # Deploy early as many services depend on it
   sabnzbd:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "SABnzbd - Binary Newsreader"
@@ -329,6 +385,8 @@ apps:
       syncWave: "13"  # Deploy before dependent media apps
   search:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Search - Self-Hosted Search Engine"
@@ -337,6 +395,8 @@ apps:
       syncWave: "18"
   sftpgo:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "SFTPGo - Fully Featured SFTP Server"
@@ -345,6 +405,8 @@ apps:
       syncWave: "10"
   smarthome3:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Smart Home 3 - Smart Home Integration Suite"
@@ -353,6 +415,8 @@ apps:
       syncWave: "17"  # Deploy after Home Assistant components
   sonarr:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Sonarr - TV Show Collection Manager"
@@ -361,6 +425,8 @@ apps:
       syncWave: "14"  # Deploy after Prowlarr
   tautulli:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Tautulli - Plex Media Server Monitoring"
@@ -369,6 +435,8 @@ apps:
       syncWave: "21"  # Deploy after Plex
   test:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Test - Testing Application"
@@ -377,6 +445,8 @@ apps:
       syncWave: "30"  # Deploy last for testing
   tgtg:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "TGTG - Too Good To Go Integration"
@@ -385,6 +455,8 @@ apps:
       syncWave: "20"
   tika:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Apache Tika - Content Analysis and Extraction Toolkit"
@@ -393,6 +465,8 @@ apps:
       syncWave: "15"  # Deploy before document processing apps
   traefik:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Traefik - Cloud Native Edge Router"
@@ -401,6 +475,8 @@ apps:
       syncWave: "1"  # Deploy early for ingress management
   vaultwarden:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Vaultwarden - Unofficial Bitwarden Compatible Server"
@@ -409,6 +485,8 @@ apps:
       syncWave: "10"
   zigbee2mqtt:
     enabled: false
+    homer:
+      enabled: true
     argocd:
       targetRevision: ~
       description: "Zigbee2MQTT - Zigbee to MQTT Bridge"
