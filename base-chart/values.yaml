@@ -50,7 +50,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Homer - Simple, static homepage for your server"
       namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy after core services
@@ -116,9 +115,9 @@ apps:
       group: "productivity"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/stirlingpdf.svg"
       subtitle: "Your PDF Swiss Army Knife"
+      displayName: "StirlingPDF"
     argocd:
       targetRevision: ~
-      description: "StirlingPDF - PDF Processing and Management"
       namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy after monitoring is available
@@ -129,9 +128,9 @@ apps:
       group: "security"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/adguard-home.svg"
       subtitle: "Network-wide Ad Blocker"
+      displayName: "AdGuard"
     argocd:
       targetRevision: ~
-      description: "AdGuard - Network-wide Ad and Tracking Blocker"
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy after core services
@@ -143,9 +142,9 @@ apps:
       group: "security"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/key.svg"
       subtitle: "Secrets Management Platform"
+      displayName: "Akeyless"
     argocd:
       targetRevision: ~
-      description: "Akeyless - Secrets Management Platform"
       namespace: "argocd"
       project: "default"
       syncWave: "5"  # Early deployment for secrets access
@@ -156,9 +155,9 @@ apps:
       group: "coreServices"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/argo-cd.svg"
       subtitle: "GitOps Continuous Delivery"
+      displayName: "Argo CD"
     argocd:
       targetRevision: ~
-      description: "Argo CD - Declarative GitOps Continuous Delivery"
       namespace: "argocd"
       project: "default"
       syncWave: "0"  # Deploy first as it manages other deployments
@@ -166,7 +165,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Argo Image Updater - Automated Image Updates for Argo CD Applications"
       namespace: "argocd"
       project: "default"
       syncWave: "1"  # Deploy right after ArgoCD
@@ -174,7 +172,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "ASN - Autonomous System Number Lookup and Management"
       namespace: "argocd"
       project: "default"
       syncWave: "20"
@@ -182,7 +179,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "AWS Tools - Amazon Web Services Integration Components"
       namespace: "argocd"
       project: "default"
       syncWave: "5"  # Early deployment for cloud infrastructure
@@ -190,7 +186,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Cloudflared DNS - Cloudflare DNS Tunneling and Management"
       namespace: "argocd"
       project: "default"
       syncWave: "3"  # Early deployment for DNS services
@@ -198,7 +193,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Cloud Native PostgreSQL - Kubernetes Operator for PostgreSQL"
       namespace: "argocd"
       project: "default"
       syncWave: "4"  # Deploy before apps that need PostgreSQL
@@ -209,9 +203,9 @@ apps:
       group: "development"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/drone.svg"
       subtitle: "Continuous Integration Platform"
+      displayName: "Drone CI"
     argocd:
       targetRevision: ~
-      description: "Drone CI - Continuous Integration Platform"
       namespace: "argocd"
       project: "default"
       syncWave: "8"  # Deploy after core services
@@ -222,9 +216,9 @@ apps:
       group: "maintenance"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
       subtitle: "Backup Software"
+      displayName: "Duplicati"
     argocd:
       targetRevision: ~
-      description: "Duplicati - Backup Software for File, Database and Web Data"
       namespace: "argocd"
       project: "default"
       syncWave: "20"  # Deploy later as it's not critical
@@ -232,7 +226,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Duplicati Prometheus Exporter - Metrics Collection for Duplicati"
       namespace: "argocd"
       project: "default"
       syncWave: "21"  # Deploy after Duplicati and Prometheus
@@ -240,7 +233,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Generic - Template for Generic Applications"
       namespace: "argocd"
       project: "default"
       syncWave: "25"
@@ -248,7 +240,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "GitHub Arc - GitHub Runner and Integration Services"
       namespace: "argocd"
       project: "default"
       syncWave: "15"
@@ -256,7 +247,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Gotenberg - API-driven PDF Engine"
       namespace: "argocd"
       project: "default"
       syncWave: "15"
@@ -267,9 +257,9 @@ apps:
       group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
       subtitle: "Home Automation Platform"
+      displayName: "Home Assistant"
     argocd:
       targetRevision: ~
-      description: "Home Assistant - Open Source Home Automation Platform"
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy after core infrastructure
@@ -280,9 +270,9 @@ apps:
       group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homematic.svg"
       subtitle: "Smart Home System"
+      displayName: "Homematic"
     argocd:
       targetRevision: ~
-      description: "Homematic - Smart Home System Integration"
       namespace: "argocd"
       project: "default"
       syncWave: "16"  # Deploy after Home Assistant
@@ -293,9 +283,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
       subtitle: "Photo & Video Backup"
+      displayName: "Immich"
     argocd:
       targetRevision: ~
-      description: "Immich - Self-Hosted Photo and Video Backup Solution"
       namespace: "app-immich"
       project: "default"
       syncWave: "18"  # Higher resource usage, deploy later
@@ -306,9 +296,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
       subtitle: "Legacy Photo Manager"
+      displayName: "Immich Old"
     argocd:
       targetRevision: ~
-      description: "Immich Old - Legacy Version of Immich Photo Manager"
       namespace: "argocd"
       project: "default"
       syncWave: "19"  # Deploy after main Immich
@@ -316,7 +306,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Mosquitto - Lightweight MQTT Broker"
       namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy before IoT applications
@@ -324,7 +313,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Ollama - Run Large Language Models Locally"
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Higher resource usage, deploy later
@@ -335,9 +323,9 @@ apps:
       group: "ai"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/openwebui.svg"
       subtitle: "Web Interface for AI Models"
+      displayName: "Open WebUI"
     argocd:
       targetRevision: ~
-      description: "Open WebUI - Web Interface for AI Models"
       namespace: "argocd"
       project: "default"
       syncWave: "16"  # Deploy after Ollama
@@ -345,7 +333,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Paperless-GPT - AI-Enhanced Document Management"
       namespace: "argocd"
       project: "default"
       syncWave: "17"  # Deploy after AI components
@@ -356,9 +343,9 @@ apps:
       group: "productivity"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
       subtitle: "Document Management System"
+      displayName: "Paperless"
     argocd:
       targetRevision: ~
-      description: "Paperless-ngx - Document Management System"
       namespace: "argocd"
       project: "default"
       syncWave: "16"  # Deploy after core services
@@ -369,9 +356,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
       subtitle: "Media Server"
+      displayName: "Plex"
     argocd:
       targetRevision: ~
-      description: "Plex - Media Server for Movies, TV, Music and Photos"
       namespace: "argocd"
       project: "default"
       syncWave: "20"  # Heavy resource usage, deploy later
@@ -379,7 +366,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "PostgreSQL - Advanced Open Source Database"
       namespace: "argocd"
       project: "default"
       syncWave: "5"  # Deploy early as many services depend on it
@@ -390,9 +376,9 @@ apps:
       group: "monitoring"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prometheus.svg"
       subtitle: "Monitoring System"
+      displayName: "Prometheus"
     argocd:
       targetRevision: ~
-      description: "Prometheus - Monitoring System and Time Series Database"
       namespace: "argocd"
       project: "default"
       syncWave: "2"  # Deploy early for monitoring other services
@@ -403,9 +389,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg"
       subtitle: "Indexer Manager/Proxy"
+      displayName: "Prowlarr"
     argocd:
       targetRevision: ~
-      description: "Prowlarr - Indexer Manager/Proxy for *arr Suite"
       namespace: "argocd"
       project: "default"
       syncWave: "12"  # Deploy before other *arr applications
@@ -416,9 +402,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg"
       subtitle: "BitTorrent Client"
+      displayName: "qBittorrent"
     argocd:
       targetRevision: ~
-      description: "qBittorrent - BitTorrent Client"
       namespace: "argocd"
       project: "default"
       syncWave: "15"
@@ -429,9 +415,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg"
       subtitle: "Movie Collection Manager"
+      displayName: "Radarr"
     argocd:
       targetRevision: ~
-      description: "Radarr - Movie Collection Manager"
       namespace: "argocd"
       project: "default"
       syncWave: "14"  # Deploy after Prowlarr
@@ -442,9 +428,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/readarr.svg"
       subtitle: "Book Collection Manager"
+      displayName: "Readarr"
     argocd:
       targetRevision: ~
-      description: "Readarr - Book Collection Manager"
       namespace: "argocd"
       project: "default"
       syncWave: "14"  # Deploy after Prowlarr
@@ -452,7 +438,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Redis - In-Memory Data Structure Store"
       namespace: "argocd"
       project: "default"
       syncWave: "5"  # Deploy early as many services depend on it
@@ -463,9 +448,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sabnzbd.svg"
       subtitle: "Binary Newsreader"
+      displayName: "SABnzbd"
     argocd:
       targetRevision: ~
-      description: "SABnzbd - Binary Newsreader"
       namespace: "argocd"
       project: "default"
       syncWave: "13"  # Deploy before dependent media apps
@@ -476,9 +461,9 @@ apps:
       group: "productivity"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/search.svg"
       subtitle: "Self-Hosted Search Engine"
+      displayName: "Search"
     argocd:
       targetRevision: ~
-      description: "Search - Self-Hosted Search Engine"
       namespace: "argocd"
       project: "default"
       syncWave: "18"
@@ -489,9 +474,9 @@ apps:
       group: "security"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sftpgo.svg"
       subtitle: "SFTP Server"
+      displayName: "SFTPGo"
     argocd:
       targetRevision: ~
-      description: "SFTPGo - Fully Featured SFTP Server"
       namespace: "argocd"
       project: "default"
       syncWave: "10"
@@ -499,7 +484,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Smart Home 3 - Smart Home Integration Suite"
       namespace: "argocd"
       project: "default"
       syncWave: "17"  # Deploy after Home Assistant components
@@ -510,9 +494,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg"
       subtitle: "TV Show Collection Manager"
+      displayName: "Sonarr"
     argocd:
       targetRevision: ~
-      description: "Sonarr - TV Show Collection Manager"
       namespace: "argocd"
       project: "default"
       syncWave: "14"  # Deploy after Prowlarr
@@ -523,9 +507,9 @@ apps:
       group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg"
       subtitle: "Plex Media Server Monitoring"
+      displayName: "Tautulli"
     argocd:
       targetRevision: ~
-      description: "Tautulli - Plex Media Server Monitoring"
       namespace: "argocd"
       project: "default"
       syncWave: "21"  # Deploy after Plex
@@ -533,7 +517,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "TGTG - Too Good To Go Integration"
       namespace: "argocd"
       project: "default"
       syncWave: "20"
@@ -541,7 +524,6 @@ apps:
     enabled: false
     argocd:
       targetRevision: ~
-      description: "Apache Tika - Content Analysis and Extraction Toolkit"
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy before document processing apps
@@ -552,9 +534,9 @@ apps:
       group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/traefik.svg"
       subtitle: "Cloud Native Edge Router"
+      displayName: "Traefik"
     argocd:
       targetRevision: ~
-      description: "Traefik - Cloud Native Edge Router"
       namespace: "argocd"
       project: "default"
       syncWave: "1"  # Deploy early for ingress management
@@ -565,9 +547,9 @@ apps:
       group: "security"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg"
       subtitle: "Password Manager"
+      displayName: "Vaultwarden"
     argocd:
       targetRevision: ~
-      description: "Vaultwarden - Unofficial Bitwarden Compatible Server"
       namespace: "argocd"
       project: "default"
       syncWave: "10"
@@ -578,9 +560,9 @@ apps:
       group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/zigbee2mqtt.svg"
       subtitle: "Zigbee to MQTT Bridge"
+      displayName: "Zigbee2MQTT"
     argocd:
       targetRevision: ~
-      description: "Zigbee2MQTT - Zigbee to MQTT Bridge"
       namespace: "argocd"
       project: "default"
       syncWave: "12"  # Deploy after MQTT broker

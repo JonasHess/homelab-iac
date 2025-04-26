@@ -81,8 +81,8 @@ data:
             {{- $appLogo := $appConfig.homer.logo | default "" }}
 
             {{- /* Add the app to the group's items */ -}}
-            {{- $subtitle := $appConfig.homer.subtitle | default $appConfig.argocd.description }}
-            {{- $item := dict "name" ($appConfig.argocd.description | default $appName)
+            {{- $subtitle := $appConfig.homer.subtitle | default "" }}
+            {{- $item := dict "name" ($appConfig.homer.displayName | default $appName)
                              "logo" $appLogo
                              "subtitle" $subtitle
                              "tag" ($appConfig.homer.tag | default "")
