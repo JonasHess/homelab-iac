@@ -62,65 +62,57 @@ data:
 
     # Services organized by groups defined in values.yaml
     services:
-      {{- /* Track the order of groups as they appear in values.yaml */ -}}
-      {{- $orderedGroupKeys := list -}}
-      {{- range $groupKey, $_ := .Values.apps.homer.groups -}}
-        {{- $orderedGroupKeys = append $orderedGroupKeys $groupKey -}}
-      {{- end -}}
+      {{- $groups := dict }}
 
-      {{- /* Collect all apps into their corresponding groups */ -}}
-      {{- $groupApps := dict -}}
-      {{- range $appName, $appConfig := .Values.apps -}}
-        {{- if and $appConfig.enabled $appConfig.homer -}}
-          {{- if $appConfig.homer.enabled -}}
-            {{- /* Get the group information */ -}}
-            {{- $groupKey := $appConfig.homer.group | default "other" -}}
-            {{- $groupInfo := index $.Values.apps.homer.groups $groupKey -}}
+      {{- /* First collect all apps into their corresponding groups */ -}}
+      {{- range $appName, $appConfig := .Values.apps }}
+        {{- if and $appConfig.enabled $appConfig.homer }}
+          {{- if $appConfig.homer.enabled }}
+            {{- /* Get the group information from the centralized config */ -}}
+            {{- $groupKey := $appConfig.homer.group | default "other" }}
+            {{- $groupInfo := index $.Values.apps.homer.groups $groupKey }}
 
             {{- /* Initialize the group if it doesn't exist */ -}}
-            {{- if not (hasKey $groupApps $groupKey) -}}
-              {{- $_ := set $groupApps $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) -}}
-            {{- end -}}
+            {{- if not (hasKey $groups $groupKey) }}
+              {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) }}
+            {{- end }}
+
+            {{- /* Get app icon/logo - prefer specific app logo if set */ -}}
+            {{- $appLogo := $appConfig.homer.logo | default "" }}
 
             {{- /* Add the app to the group's items */ -}}
-            {{- $appLogo := $appConfig.homer.logo | default "" -}}
-            {{- $subtitle := $appConfig.homer.subtitle | default "" -}}
+            {{- $subtitle := $appConfig.homer.subtitle | default "" }}
             {{- $item := dict "name" ($appConfig.homer.displayName | default $appName)
                              "logo" $appLogo
                              "subtitle" $subtitle
                              "tag" ($appConfig.homer.tag | default "")
                              "url" ($appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain))
-                             "target" "_blank" -}}
+                             "target" "_blank" }}
 
-            {{- $groupItems := (index $groupApps $groupKey).items -}}
-            {{- $groupItems = append $groupItems $item -}}
-            {{- $_ := set (index $groupApps $groupKey) "items" $groupItems -}}
-          {{- end -}}
-        {{- end -}}
-      {{- end -}}
+            {{- $groupItems := (index $groups $groupKey).items }}
+            {{- $groupItems = append $groupItems $item }}
+            {{- $_ := set (index $groups $groupKey) "items" $groupItems }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
 
-      {{- /* Now output the groups in the exact order they were defined in values.yaml */ -}}
-      {{- range $groupKey := $orderedGroupKeys -}}
-        {{- if hasKey $groupApps $groupKey -}}
-          {{- $groupConfig := index $groupApps $groupKey -}}
-          {{- if $groupConfig.items -}}
+      {{- /* Now output the groups */ -}}
+      {{- range $groupKey, $groupConfig := $groups }}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
-            {{- range $item := $groupConfig.items }}
+        {{- range $item := $groupConfig.items }}
           - name: "{{ $item.name }}"
-              {{- if $item.logo }}
+            {{- if $item.logo }}
             logo: "{{ $item.logo }}"
-              {{- end }}
+            {{- end }}
             subtitle: "{{ $item.subtitle }}"
-              {{- if $item.tag }}
+            {{- if $item.tag }}
             tag: "{{ $item.tag }}"
-              {{- end }}
+            {{- end }}
             url: "{{ $item.url }}"
             target: "{{ $item.target }}"
-            {{- end }}
-          {{- end -}}
-        {{- end -}}
+        {{- end }}
       {{- end }}
 
     # Custom stylesheet for additional customization
