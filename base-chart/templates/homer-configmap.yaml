@@ -62,42 +62,44 @@ data:
 
     # Services organized by groups defined in values.yaml
     services:
-      {{- $groups := dict }}
+      {{- /* First collect apps into their corresponding groups while preserving order */ -}}
+      {{- $orderedGroups := list -}}
+      {{- $groupApps := dict -}}
 
-      {{- /* First collect all apps into their corresponding groups */ -}}
-      {{- range $appName, $appConfig := .Values.apps }}
-        {{- if and $appConfig.enabled $appConfig.homer }}
-          {{- if $appConfig.homer.enabled }}
-            {{- /* Get the group information from the centralized config */ -}}
-            {{- $groupKey := $appConfig.homer.group | default "other" }}
-            {{- $groupInfo := index $.Values.apps.homer.groups $groupKey }}
+      {{- /* Initialize each group with empty items list */ -}}
+      {{- range $groupKey, $groupInfo := .Values.apps.homer.groups -}}
+        {{- $_ := set $groupApps $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) -}}
+        {{- $orderedGroups = append $orderedGroups $groupKey -}}
+      {{- end -}}
 
-            {{- /* Initialize the group if it doesn't exist */ -}}
-            {{- if not (hasKey $groups $groupKey) }}
-              {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) }}
-            {{- end }}
-
-            {{- /* Get app icon/logo - prefer specific app logo if set */ -}}
-            {{- $appLogo := $appConfig.homer.logo | default "" }}
+      {{- /* Collect all apps into their corresponding groups */ -}}
+      {{- range $appName, $appConfig := .Values.apps -}}
+        {{- if and $appConfig.enabled $appConfig.homer -}}
+          {{- if $appConfig.homer.enabled -}}
+            {{- /* Get the group information */ -}}
+            {{- $groupKey := $appConfig.homer.group | default "other" -}}
 
             {{- /* Add the app to the group's items */ -}}
-            {{- $subtitle := $appConfig.homer.subtitle | default "" }}
+            {{- $appLogo := $appConfig.homer.logo | default "" -}}
+            {{- $subtitle := $appConfig.homer.subtitle | default "" -}}
             {{- $item := dict "name" ($appConfig.homer.displayName | default $appName)
                              "logo" $appLogo
                              "subtitle" $subtitle
                              "tag" ($appConfig.homer.tag | default "")
                              "url" ($appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain))
-                             "target" "_blank" }}
+                             "target" "_blank" -}}
 
-            {{- $groupItems := (index $groups $groupKey).items }}
-            {{- $groupItems = append $groupItems $item }}
-            {{- $_ := set (index $groups $groupKey) "items" $groupItems }}
-          {{- end }}
-        {{- end }}
-      {{- end }}
+            {{- $groupItems := (index $groupApps $groupKey).items -}}
+            {{- $groupItems = append $groupItems $item -}}
+            {{- $_ := set (index $groupApps $groupKey) "items" $groupItems -}}
+          {{- end -}}
+        {{- end -}}
+      {{- end -}}
 
-      {{- /* Now output the groups */ -}}
-      {{- range $groupKey, $groupConfig := $groups }}
+      {{- /* Now output the groups in the preserved order */ -}}
+      {{- range $groupKey := $orderedGroups -}}
+        {{- $groupConfig := index $groupApps $groupKey -}}
+        {{- if $groupConfig.items -}}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
@@ -113,6 +115,7 @@ data:
             url: "{{ $item.url }}"
             target: "{{ $item.target }}"
         {{- end }}
+        {{- end -}}
       {{- end }}
 
     # Custom stylesheet for additional customization
