@@ -56,10 +56,6 @@ apps:
 
     # Centralized group definitions
     groups:
-      coreServices:
-        name: "Core Systems"
-        icon: "fas fa-server"
-        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/server.svg"
 
       infrastructure:
         name: "Infrastructure"
@@ -91,10 +87,16 @@ apps:
         icon: "fas fa-photo-video"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
 
-      maintenance:
-        name: "Maintenance"
-        icon: "fas fa-hdd"
-        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
+      starrs:
+        name: "Starrs"
+        icon: "fas fa-stars"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/jiohotstar.png"
+
+      downloads:
+        name: "Downloads"
+        icon: "fas fa-download"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/downloads.svg"
+
 
       productivity:
         name: "Productivity"
@@ -113,7 +115,7 @@ apps:
     homer:
       enabled: true
       group: "productivity"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/stirlingpdf.svg"
+      logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/stirling-pdf.svg"
       subtitle: "Your PDF Swiss Army Knife"
       displayName: "StirlingPDF"
     argocd:
@@ -125,7 +127,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "security"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/adguard-home.svg"
       subtitle: "Network-wide Ad Blocker"
       displayName: "AdGuard"
@@ -139,8 +141,8 @@ apps:
     homer:
       enabled: true
       url: "https://console.akeyless.io/"
-      group: "security"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/key.svg"
+      group: "infrastructure"
+      logo: "https://akeyless-908832575.imgix.net/wp-content/uploads/2024/03/akeyless-2024.png"
       subtitle: "Secrets Management Platform"
       displayName: "Akeyless"
     argocd:
@@ -152,7 +154,7 @@ apps:
     enabled: true
     homer:
       enabled: true
-      group: "coreServices"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/argo-cd.svg"
       subtitle: "GitOps Continuous Delivery"
       displayName: "Argo CD"
@@ -213,7 +215,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "maintenance"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
       subtitle: "Backup Software"
       displayName: "Duplicati"
@@ -373,7 +375,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "monitoring"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prometheus.svg"
       subtitle: "Monitoring System"
       displayName: "Prometheus"
@@ -386,7 +388,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg"
       subtitle: "Indexer Manager/Proxy"
       displayName: "Prowlarr"
@@ -399,7 +401,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "downloads"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg"
       subtitle: "BitTorrent Client"
       displayName: "qBittorrent"
@@ -412,7 +414,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg"
       subtitle: "Movie Collection Manager"
       displayName: "Radarr"
@@ -425,7 +427,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/readarr.svg"
       subtitle: "Book Collection Manager"
       displayName: "Readarr"
@@ -445,7 +447,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "downloads"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sabnzbd.svg"
       subtitle: "Binary Newsreader"
       displayName: "SABnzbd"
@@ -459,7 +461,7 @@ apps:
     homer:
       enabled: true
       group: "productivity"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/search.svg"
+      logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whoogle.png"
       subtitle: "Self-Hosted Search Engine"
       displayName: "Search"
     argocd:
@@ -471,8 +473,8 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "security"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sftpgo.svg"
+      group: "media"
+      logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/sftpgo.png"
       subtitle: "SFTP Server"
       displayName: "SFTPGo"
     argocd:
@@ -491,7 +493,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "media"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg"
       subtitle: "TV Show Collection Manager"
       displayName: "Sonarr"
