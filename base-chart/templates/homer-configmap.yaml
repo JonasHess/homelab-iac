@@ -62,22 +62,25 @@ data:
 
     # Services organized by groups defined in values.yaml
     services:
-      {{- /* First collect apps into their corresponding groups while preserving order */ -}}
-      {{- $orderedGroups := list -}}
-      {{- $groupApps := dict -}}
-
-      {{- /* Initialize each group with empty items list */ -}}
-      {{- range $groupKey, $groupInfo := .Values.apps.homer.groups -}}
-        {{- $_ := set $groupApps $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) -}}
-        {{- $orderedGroups = append $orderedGroups $groupKey -}}
+      {{- /* Track the order of groups as they appear in values.yaml */ -}}
+      {{- $orderedGroupKeys := list -}}
+      {{- range $groupKey, $_ := .Values.apps.homer.groups -}}
+        {{- $orderedGroupKeys = append $orderedGroupKeys $groupKey -}}
       {{- end -}}
 
       {{- /* Collect all apps into their corresponding groups */ -}}
+      {{- $groupApps := dict -}}
       {{- range $appName, $appConfig := .Values.apps -}}
         {{- if and $appConfig.enabled $appConfig.homer -}}
           {{- if $appConfig.homer.enabled -}}
             {{- /* Get the group information */ -}}
             {{- $groupKey := $appConfig.homer.group | default "other" -}}
+            {{- $groupInfo := index $.Values.apps.homer.groups $groupKey -}}
+
+            {{- /* Initialize the group if it doesn't exist */ -}}
+            {{- if not (hasKey $groupApps $groupKey) -}}
+              {{- $_ := set $groupApps $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) -}}
+            {{- end -}}
 
             {{- /* Add the app to the group's items */ -}}
             {{- $appLogo := $appConfig.homer.logo | default "" -}}
@@ -96,11 +99,8 @@ data:
         {{- end -}}
       {{- end -}}
 
-      {{- /* Define the order of groups explicitly based on values.yaml */ -}}
-      {{- $explicitOrder := list "infrastructure" "monitoring" "development" "security" "smartHome" "media" "starrs" "downloads" "productivity" "ai" -}}
-
-      {{- /* Now output the groups in the explicit order defined above */ -}}
-      {{- range $groupKey := $explicitOrder -}}
+      {{- /* Now output the groups in the exact order they were defined in values.yaml */ -}}
+      {{- range $groupKey := $orderedGroupKeys -}}
         {{- if hasKey $groupApps $groupKey -}}
           {{- $groupConfig := index $groupApps $groupKey -}}
           {{- if $groupConfig.items -}}
