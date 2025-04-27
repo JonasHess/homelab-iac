@@ -103,18 +103,18 @@ data:
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
-        {{- range $item := $groupConfig.items }}
+          {{- range $item := $groupConfig.items }}
           - name: "{{ $item.name }}"
-            {{- if $item.logo }}
+              {{- if $item.logo }}
             logo: "{{ $item.logo }}"
-            {{- end }}
+              {{- end }}
             subtitle: "{{ $item.subtitle }}"
-            {{- if $item.tag }}
+              {{- if $item.tag }}
             tag: "{{ $item.tag }}"
-            {{- end }}
+              {{- end }}
             url: "{{ $item.url }}"
             target: "{{ $item.target }}"
-        {{- end }}
+          {{- end }}
         {{- end -}}
       {{- end }}
 
