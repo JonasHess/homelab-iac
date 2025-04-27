@@ -379,6 +379,7 @@ apps:
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prometheus.svg"
       subtitle: "Monitoring System"
       displayName: "Prometheus"
+      subdomain: "grafana"
     argocd:
       targetRevision: ~
       namespace: "argocd"

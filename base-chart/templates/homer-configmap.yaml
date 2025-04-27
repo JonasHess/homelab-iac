@@ -86,7 +86,7 @@ data:
                              "logo" $appLogo
                              "subtitle" $subtitle
                              "tag" ($appConfig.homer.tag | default "")
-                             "url" ($appConfig.homer.url | default (printf "https://%s.%s" $appName $.Values.global.domain))
+                             "url" ($appConfig.homer.url | default (printf "https://%s.%s" (default $appName $appConfig.homer.subdomain) $.Values.global.domain))
                              "target" "_blank" }}
 
             {{- $groupItems := (index $groups $groupKey).items }}
