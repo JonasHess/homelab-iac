@@ -96,14 +96,18 @@ data:
         {{- end -}}
       {{- end -}}
 
-      {{- /* Now output the groups in the preserved order */ -}}
-      {{- range $groupKey := $orderedGroups -}}
-        {{- $groupConfig := index $groupApps $groupKey -}}
-        {{- if $groupConfig.items -}}
+      {{- /* Define the order of groups explicitly based on values.yaml */ -}}
+      {{- $explicitOrder := list "infrastructure" "monitoring" "development" "security" "smartHome" "media" "starrs" "downloads" "productivity" "ai" -}}
+
+      {{- /* Now output the groups in the explicit order defined above */ -}}
+      {{- range $groupKey := $explicitOrder -}}
+        {{- if hasKey $groupApps $groupKey -}}
+          {{- $groupConfig := index $groupApps $groupKey -}}
+          {{- if $groupConfig.items -}}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
-          {{- range $item := $groupConfig.items }}
+            {{- range $item := $groupConfig.items }}
           - name: "{{ $item.name }}"
               {{- if $item.logo }}
             logo: "{{ $item.logo }}"
@@ -114,7 +118,8 @@ data:
               {{- end }}
             url: "{{ $item.url }}"
             target: "{{ $item.target }}"
-          {{- end }}
+            {{- end }}
+          {{- end -}}
         {{- end -}}
       {{- end }}
 
