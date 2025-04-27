@@ -40,11 +40,11 @@ data:
       layout: columns
       colorTheme: dark
 
-    # Welcome message with markdown support
-    message:
-      style: "is-info"
-      title: "Welcome to Your Home Server!"
-      content: "All your self-hosted applications are organized below. Use the **search bar** to quickly find what you need."
+{{/*    # Welcome message with markdown support*/}}
+{{/*    message:*/}}
+{{/*      style: "is-info"*/}}
+{{/*      title: "Welcome to Your Home Server!"*/}}
+{{/*      content: "All your self-hosted applications are organized below. Use the **search bar** to quickly find what you need."*/}}
 
     # Navigation
     links:
