@@ -51,7 +51,7 @@ data:
 
             {{- /* Initialize the group if it doesn't exist */ -}}
             {{- if not (hasKey $groups $groupKey) }}
-              {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) }}
+              {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "sortId" $groupInfo.sortId "items" list) }}
             {{- end }}
 
             {{- /* Get app icon/logo - prefer specific app logo if set */ -}}
@@ -81,7 +81,7 @@ data:
 
           {{- /* Initialize the group if it doesn't exist */ -}}
           {{- if not (hasKey $groups $groupKey) }}
-            {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) }}
+            {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "sortId" $groupInfo.sortId "items" list) }}
           {{- end }}
 
           {{- /* Add the link to the group's items */ -}}
@@ -98,8 +98,16 @@ data:
         {{- end }}
       {{- end }}
 
-      {{- /* Now output the groups */ -}}
+      {{- /* Create a sorted list of groups */ -}}
+      {{- $sortedGroups := list }}
       {{- range $groupKey, $groupConfig := $groups }}
+        {{- $sortedGroups = append $sortedGroups (dict "key" $groupKey "config" $groupConfig "sortId" $groupConfig.sortId) }}
+      {{- end }}
+      {{- $sortedGroups = sort "sortId" $sortedGroups }}
+
+      {{- /* Now output the groups in the sorted order */ -}}
+      {{- range $group := $sortedGroups }}
+        {{- $groupConfig := $group.config }}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:

@@ -59,56 +59,64 @@ apps:
     # Centralized group definitions
     groups:
 
-      a_infrastructure:
+      infrastructure:
         name: "Infrastructure"
         icon: "fas fa-network-wired"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/network.svg"
+        sortId: 1
 
-      b_monitoring:
+      monitoring:
         name: "Monitoring"
         icon: "fas fa-chart-line"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/grafana.svg"
+        sortId: 2
 
-      c_smartHome:
+      smartHome:
         name: "Smart Home"
         icon: "fas fa-home"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
+        sortId: 3
 
-      d_media:
+      media:
         name: "Media & Entertainment"
         icon: "fas fa-photo-video"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
+        sortId: 4
 
-      e_starrs:
+      starrs:
         name: "Starrs"
         icon: "fas fa-stars"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/jiohotstar.png"
+        sortId: 5
 
-      f_downloads:
+      downloads:
         name: "Downloads"
         icon: "fas fa-download"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/downloads.svg"
+        sortId: 6
 
-      g_productivity:
+      productivity:
         name: "Productivity"
         icon: "fas fa-file-alt"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
+        sortId: 7
 
-      h_ai:
+      ai:
         name: "AI & ML"
         icon: "fas fa-comments"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/ollama.svg"
+        sortId: 8
 
     additionalLinks:
       githubIac:
         name: "GitHub IAC"
-        group: "a_infrastructure"
+        group: "infrastructure"
         subtitle: "Infrastructure as Code"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/github.svg"
         url: "https://github.com/JonasHess/homelab-iac"
       cloudflare:
         name: "Cloudflare"
-        group: "a_infrastructure"
+        group: "infrastructure"
         subtitle: "DNS Management"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/cloudflare.svg"
         url: "https://dash.cloudflare.com/"
@@ -118,7 +126,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "g_productivity"
+      group: "productivity"
       logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/stirling-pdf.svg"
       subtitle: "Your PDF Swiss Army Knife"
       displayName: "StirlingPDF"
@@ -131,7 +139,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/adguard-home.svg"
       subtitle: "Network-wide Ad Blocker"
       displayName: "AdGuard"
@@ -145,7 +153,7 @@ apps:
     homer:
       enabled: true
       url: "https://console.akeyless.io/"
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://akeyless-908832575.imgix.net/wp-content/uploads/2024/03/akeyless-2024.png"
       subtitle: "Secrets Management Platform"
       displayName: "Akeyless"
@@ -158,7 +166,7 @@ apps:
     enabled: true
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/argo-cd.svg"
       subtitle: "GitOps Continuous Delivery"
       displayName: "Argo CD"
@@ -206,7 +214,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/drone.svg"
       subtitle: "Continuous Integration Platform"
       displayName: "Drone CI"
@@ -219,7 +227,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
       subtitle: "Backup Software"
       displayName: "Duplicati"
@@ -260,7 +268,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "c_smartHome"
+      group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
       subtitle: "Home Automation Platform"
       displayName: "Home Assistant"
@@ -273,7 +281,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "c_smartHome"
+      group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homematic.svg"
       subtitle: "Smart Home System"
       displayName: "Homematic"
@@ -286,7 +294,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "d_media"
+      group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
       subtitle: "Photo & Video Backup"
       displayName: "Immich"
@@ -299,7 +307,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "d_media"
+      group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
       subtitle: "Legacy Photo Manager"
       displayName: "Immich Old"
@@ -326,7 +334,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "h_ai"
+      group: "ai"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/openwebui.svg"
       subtitle: "Web Interface for AI Models"
       displayName: "Open WebUI"
@@ -346,7 +354,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "g_productivity"
+      group: "productivity"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
       subtitle: "Document Management System"
       displayName: "Paperless"
@@ -359,7 +367,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "d_media"
+      group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
       subtitle: "Media Server"
       displayName: "Plex"
@@ -379,7 +387,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/grafana.svg"
       subtitle: "Monitoring System"
       displayName: "Grafana"
@@ -393,7 +401,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "e_starrs"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/prowlarr.svg"
       subtitle: "Indexer Manager/Proxy"
       displayName: "Prowlarr"
@@ -406,7 +414,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "f_downloads"
+      group: "downloads"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/qbittorrent.svg"
       subtitle: "BitTorrent Client"
       displayName: "qBittorrent"
@@ -419,7 +427,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "e_starrs"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radarr.svg"
       subtitle: "Movie Collection Manager"
       displayName: "Radarr"
@@ -432,7 +440,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "e_starrs"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/readarr.svg"
       subtitle: "Book Collection Manager"
       displayName: "Readarr"
@@ -452,7 +460,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "f_downloads"
+      group: "downloads"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sabnzbd.svg"
       subtitle: "Binary Newsreader"
       displayName: "SABnzbd"
@@ -465,7 +473,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "g_productivity"
+      group: "productivity"
       logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whoogle.png"
       subtitle: "Self-Hosted Search Engine"
       displayName: "Search"
@@ -478,7 +486,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "d_media"
+      group: "media"
       logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/sftpgo.png"
       subtitle: "SFTP Server"
       displayName: "SFTPGo"
@@ -498,7 +506,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "e_starrs"
+      group: "starrs"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg"
       subtitle: "TV Show Collection Manager"
       displayName: "Sonarr"
@@ -511,7 +519,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "d_media"
+      group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/tautulli.svg"
       subtitle: "Plex Media Server Monitoring"
       displayName: "Tautulli"
@@ -538,7 +546,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "a_infrastructure"
+      group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/traefik.svg"
       subtitle: "Cloud Native Edge Router"
       displayName: "Traefik"
@@ -551,7 +559,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "g_productivity"
+      group: "productivity"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/vaultwarden.svg"
       subtitle: "Password Manager"
       displayName: "Vaultwarden"
@@ -564,7 +572,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "c_smartHome"
+      group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/zigbee2mqtt.svg"
       subtitle: "Zigbee to MQTT Bridge"
       displayName: "Zigbee2MQTT"
