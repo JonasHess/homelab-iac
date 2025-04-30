@@ -98,17 +98,11 @@ data:
         {{- end }}
       {{- end }}
 
-      {{- /* Manual sort implementation because "sort" function isn't available */ -}}
-      {{- /* First, organize groups by sortId */ -}}
-      {{- $sortedGroupsMap := dict }}
-      {{- range $groupKey, $groupConfig := $groups }}
-        {{- $sortId := $groupConfig.sortId | default 999 }}
-        {{- $_ := set $sortedGroupsMap (printf "%04d_%s" $sortId $groupKey) $groupConfig }}
-      {{- end }}
-
-      {{- /* Now output the groups in order (keys are sorted lexicographically) */ -}}
-      {{- range $sortKey := keys $sortedGroupsMap | sort }}
-        {{- $groupConfig := index $sortedGroupsMap $sortKey }}
+      {{- /* Since no sort functions are available, manually output groups in order of sortId */ -}}
+      {{- /* We'll iterate through possible sortId values and output matching groups */ -}}
+      {{- range $sortIdValue := list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 }}
+        {{- range $groupKey, $groupConfig := $groups }}
+          {{- if eq ($groupConfig.sortId | default 999) $sortIdValue }}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
@@ -123,6 +117,8 @@ data:
             {{- end }}
             url: "{{ $item.url }}"
             target: "{{ $item.target }}"
+        {{- end }}
+          {{- end }}
         {{- end }}
       {{- end }}
 {{- end }}
