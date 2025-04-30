@@ -155,7 +155,7 @@ apps:
       url: "https://console.akeyless.io/"
       group: "infrastructure"
       logo: "https://akeyless-908832575.imgix.net/wp-content/uploads/2024/03/akeyless-2024.png"
-      subtitle: "Secrets Management Platform"
+      subtitle: "External Secrets"
       displayName: "Akeyless"
     argocd:
       targetRevision: ~
@@ -168,7 +168,7 @@ apps:
       enabled: true
       group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/argo-cd.svg"
-      subtitle: "GitOps Continuous Delivery"
+      subtitle: "GitOps"
       displayName: "Argo CD"
     argocd:
       targetRevision: ~
@@ -216,7 +216,7 @@ apps:
       enabled: true
       group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/drone.svg"
-      subtitle: "Continuous Integration Platform"
+      subtitle: ""
       displayName: "Drone CI"
     argocd:
       targetRevision: ~
@@ -229,7 +229,7 @@ apps:
       enabled: true
       group: "infrastructure"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
-      subtitle: "Backup Software"
+      subtitle: "Backups"
       displayName: "Duplicati"
     argocd:
       targetRevision: ~
@@ -283,7 +283,7 @@ apps:
       enabled: true
       group: "smartHome"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homematic.svg"
-      subtitle: "Smart Home System"
+      subtitle: "Smart Home"
       displayName: "Homematic"
     argocd:
       targetRevision: ~
