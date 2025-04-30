@@ -100,9 +100,10 @@ data:
 
       {{- /* Since no sort functions are available, manually output groups in order of sortId */ -}}
       {{- /* We'll iterate through possible sortId values and output matching groups */ -}}
-      {{- range $sortIdValue := list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 }}
+      {{- range $sortIdValue := list "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" }}
         {{- range $groupKey, $groupConfig := $groups }}
-          {{- if eq ($groupConfig.sortId | default 999) $sortIdValue }}
+          {{- $groupSortId := printf "%v" ($groupConfig.sortId | default 999) }}
+          {{- if eq $groupSortId $sortIdValue }}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
