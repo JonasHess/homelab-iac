@@ -10,41 +10,18 @@ data:
   config.yml: |
     ---
     title: "Home Server Dashboard"
-    subtitle: "Your Self-Hosted Applications Hub"
-    logo: "assets/icons/homer.png"
+    subtitle: ""
 
     connectivityCheck: false
 
-    # Theme settings with improved aesthetics
-    theme: slate
-    colors:
-      dark:
-        primary: "#5c6bc0"
-        background: "#131313"
-        card-background: "#1c1c1c"
-        text: "#eaeaea"
-        text-header: "#ffffff"
-        text-title: "#fafafa"
-        text-subtitle: "#f5f5f5"
-        card-shadow: "rgba(0, 0, 0, 0.4)"
-        link: "#3273dc"
-        link-hover: "#ffdd57"
-        highlight-primary: "#5c6bc0"
-        highlight-secondary: "#4285f4"
-        highlight-hover: "#7986cb"
+    # Default theme settings
+    # Using default Homer styling (removed custom theme and colors)
 
     # Customization options
     header: true
-    footer: '<p>Created with <span class="has-text-danger">❤</span> on Kubernetes | <a href="https://github.com/bastienwirtz/homer" target="_blank">Homer Project</a></p>'
+    footer: ''
     defaults:
       layout: columns
-      colorTheme: dark
-
-{{/*    # Welcome message with markdown support*/}}
-{{/*    message:*/}}
-{{/*      style: "is-info"*/}}
-{{/*      title: "Welcome to Your Home Server!"*/}}
-{{/*      content: "All your self-hosted applications are organized below. Use the **search bar** to quickly find what you need."*/}}
 
     # Navigation
     links:
@@ -139,83 +116,4 @@ data:
             target: "{{ $item.target }}"
         {{- end }}
       {{- end }}
-
-    # Custom stylesheet for additional customization
-    stylesheet:
-      - "assets/custom.css"
-
-  custom.css: |
-    /* Custom CSS for Homer Dashboard */
-
-    /* Card styling */
-    .card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Logo styling */
-    .logo img {
-        max-height: 80px;
-        transition: transform 0.3s ease;
-    }
-
-    .logo img:hover {
-        transform: scale(1.1);
-    }
-
-    /* Group heading styling */
-    .group-title {
-        font-weight: 600;
-        padding: 10px 0;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #5c6bc0;
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #131313;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #5c6bc0;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #7986cb;
-    }
-
-    /* Message box styling */
-    .message {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Footer styling */
-    footer {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    /* Search input styling */
-    .search input {
-        border-radius: 20px;
-        padding-left: 15px;
-        transition: all 0.3s ease;
-    }
-
-    .search input:focus {
-        box-shadow: 0 0 0 2px #5c6bc0;
-    }
 {{- end }}
