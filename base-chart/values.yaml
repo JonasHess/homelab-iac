@@ -71,34 +71,34 @@ apps:
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/grafana.svg"
         sortId: 2
 
+      productivity:
+        name: "Productivity"
+        icon: "fas fa-file-alt"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
+        sortId: 3
+
       smartHome:
         name: "Smart Home"
         icon: "fas fa-home"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
-        sortId: 3
+        sortId: 4
 
       media:
         name: "Media & Entertainment"
         icon: "fas fa-photo-video"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/plex.svg"
-        sortId: 4
+        sortId: 5
 
       starrs:
         name: "Starrs"
         icon: "fas fa-stars"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/jiohotstar.png"
-        sortId: 5
+        sortId: 6
 
       downloads:
         name: "Downloads"
         icon: "fas fa-download"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/downloads.svg"
-        sortId: 6
-
-      productivity:
-        name: "Productivity"
-        icon: "fas fa-file-alt"
-        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/paperless-ng.svg"
         sortId: 7
 
       ai:
