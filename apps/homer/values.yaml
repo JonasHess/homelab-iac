@@ -13,6 +13,9 @@ generic:
         port: 8080
         middlewares:
           - traefik-forward-auth
+      - port: 8080
+        middlewares:
+          - traefik-forward-auth
   service:
     ports:
       - name: http
