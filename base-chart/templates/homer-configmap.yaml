@@ -98,7 +98,7 @@ data:
 
       {{- /* Add any additional links defined directly in homer config */ -}}
       {{- if .Values.apps.homer.additionalLinks }}
-        {{- range $link := .Values.apps.homer.additionalLinks }}
+        {{- range $linkId, $link := .Values.apps.homer.additionalLinks }}
           {{- $groupKey := $link.group | default "other" }}
           {{- $groupInfo := index $.Values.apps.homer.groups $groupKey }}
 
