@@ -109,9 +109,9 @@ apps:
 
     additionalLinks:
       githubIac:
-        name: "GitHub IAC"
+        name: "IAC"
         group: "infrastructure"
-        subtitle: "Infrastructure as Code"
+        subtitle: "GitHub"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/github.svg"
         url: "https://github.com/JonasHess/homelab-iac"
       cloudflare:
