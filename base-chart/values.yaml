@@ -54,6 +54,18 @@ apps:
       project: "default"
       syncWave: "10"  # Deploy after core services
 
+    additionalLinks:
+      - name: "GitHub IAC"
+        group: "infrastructure"
+        subtitle: "Infrastructure as Code"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/github.svg"
+        url: "https://github.com/JonasHess/homelab-iac"
+      - name: "Cloudflare"
+        group: "infrastructure"
+        subtitle: "DNS Management"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/cloudflare.svg"
+        url: "https://dash.cloudflare.com/"
+
     # Centralized group definitions
     groups:
 

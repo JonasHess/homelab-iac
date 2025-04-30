@@ -96,6 +96,31 @@ data:
         {{- end }}
       {{- end }}
 
+      {{- /* Add any additional links defined directly in homer config */ -}}
+      {{- if .Values.apps.homer.additionalLinks }}
+        {{- range $link := .Values.apps.homer.additionalLinks }}
+          {{- $groupKey := $link.group | default "other" }}
+          {{- $groupInfo := index $.Values.apps.homer.groups $groupKey }}
+
+          {{- /* Initialize the group if it doesn't exist */ -}}
+          {{- if not (hasKey $groups $groupKey) }}
+            {{- $_ := set $groups $groupKey (dict "name" $groupInfo.name "icon" $groupInfo.icon "logo" $groupInfo.logo "items" list) }}
+          {{- end }}
+
+          {{- /* Add the link to the group's items */ -}}
+          {{- $item := dict "name" $link.name
+                           "logo" ($link.logo | default "")
+                           "subtitle" ($link.subtitle | default "")
+                           "tag" ($link.tag | default "")
+                           "url" $link.url
+                           "target" "_blank" }}
+
+          {{- $groupItems := (index $groups $groupKey).items }}
+          {{- $groupItems = append $groupItems $item }}
+          {{- $_ := set (index $groups $groupKey) "items" $groupItems }}
+        {{- end }}
+      {{- end }}
+
       {{- /* Now output the groups */ -}}
       {{- range $groupKey, $groupConfig := $groups }}
       - name: "{{ $groupConfig.name }}"
