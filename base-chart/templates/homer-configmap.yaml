@@ -98,16 +98,17 @@ data:
         {{- end }}
       {{- end }}
 
-      {{- /* Create a sorted list of groups */ -}}
-      {{- $sortedGroups := list }}
+      {{- /* Manual sort implementation because "sort" function isn't available */ -}}
+      {{- /* First, organize groups by sortId */ -}}
+      {{- $sortedGroupsMap := dict }}
       {{- range $groupKey, $groupConfig := $groups }}
-        {{- $sortedGroups = append $sortedGroups (dict "key" $groupKey "config" $groupConfig "sortId" $groupConfig.sortId) }}
+        {{- $sortId := $groupConfig.sortId | default 999 }}
+        {{- $_ := set $sortedGroupsMap (printf "%04d_%s" $sortId $groupKey) $groupConfig }}
       {{- end }}
-      {{- $sortedGroups = sort "sortId" $sortedGroups }}
 
-      {{- /* Now output the groups in the sorted order */ -}}
-      {{- range $group := $sortedGroups }}
-        {{- $groupConfig := $group.config }}
+      {{- /* Now output the groups in order (keys are sorted lexicographically) */ -}}
+      {{- range $sortKey := keys $sortedGroupsMap | sort }}
+        {{- $groupConfig := index $sortedGroupsMap $sortKey }}
       - name: "{{ $groupConfig.name }}"
         icon: "{{ $groupConfig.icon }}"
         items:
