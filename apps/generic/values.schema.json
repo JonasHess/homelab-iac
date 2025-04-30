@@ -223,7 +223,7 @@
           "description": "HTTPS ingress routes (requires global.domain to be set)",
           "items": {
             "type": "object",
-            "required": ["port", "subdomain"],
+            "required": ["port"],
             "properties": {
               "port": {
                 "type": "integer",
@@ -231,7 +231,7 @@
               },
               "subdomain": {
                 "type": "string",
-                "description": "Subdomain for the ingress route (will be combined with global.domain)"
+                "description": "Subdomain for the ingress route (will be combined with global.domain). If not specified, the bare domain will be used."
               },
               "matchSuffix": {
                 "type": "string",

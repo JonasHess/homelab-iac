@@ -18,7 +18,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ required "subdomain must be specified for each HTTPS ingress" $ingress.subdomain }}.{{ $domain }}`) {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
+    - match: {{ if $ingress.subdomain }}Host(`{{ $ingress.subdomain }}.{{ $domain }}`){{ else }}Host(`{{ $domain }}`){{ end }} {{ if $ingress.matchSuffix }}{{ $ingress.matchSuffix }}{{ end }}
       kind: Rule
       priority: {{ default 10 $ingress.priority }}
       services:
