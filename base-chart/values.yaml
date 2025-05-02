@@ -586,7 +586,7 @@ apps:
     enabled: false
     homer:
       enabled: true
-      group: "starrs"
+      group: "media"
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/audiobookshelf.svg"
       subtitle: "Audiobook Management"
       displayName: "Audiobookshelf"
