@@ -581,3 +581,17 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "12"  # Deploy after MQTT broker
+
+  audiobookshelf:
+    enabled: false
+    homer:
+      enabled: true
+      group: "starrs"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/audiobookshelf.svg"
+      subtitle: "Audiobook Management"
+      displayName: "Audiobookshelf"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"  # Deploy after other media apps

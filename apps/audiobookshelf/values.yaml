@@ -1,0 +1,22 @@
+generic:
+  deployment:
+    image: ghcr.io/advplyr/audiobookshelf:latest
+    ports:
+    - containerPort: 80
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/audiobookshelf/config
+      media:
+        mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
+  service:
+    ports:
+    - name: http
+      port: 80
+  ingress:
+    https:
+    - subdomain: audiobookshelf
+      port: 80
+      middlewares:
+        - traefik-forward-auth
