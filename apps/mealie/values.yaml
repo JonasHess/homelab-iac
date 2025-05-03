@@ -1,3 +1,5 @@
+oidc:
+  configurationUrl: ~ # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
 generic:
   deployment:
     image: ghcr.io/mealie-recipes/mealie:latest
@@ -7,6 +9,9 @@ generic:
       data:
         mountPath: /app/data
         hostPath: ~ # /mnt/somewhere/encrypted/apps/mealie/data
+    envFrom:
+      configMapRef: mealie-config
+      secretRef: mealie-secret
 #    env:
 #      - name: ALLOW_SIGNUP
 #        value: "false"
@@ -22,3 +27,11 @@ generic:
         port: 9000
         middlewares:
           - traefik-forward-auth
+  externalSecrets:
+    mealie-secret:
+      - OIDC_CLIENT_ID: "mealie/OIDC_CLIENT_ID"
+      - OIDC_CLIENT_SECRET: "mealie/OIDC_CLIENT_SECRET"
+      - SMTP_HOST: "mealie/SMTP_HOST"
+      - SMTP_FROM_EMAIL: "mealie/SMTP_FROM_EMAIL"
+      - SMTP_USER: "mealie/SMTP_USER"
+      - SMTP_PASSWORD: "mealie/SMTP_PASSWORD"
