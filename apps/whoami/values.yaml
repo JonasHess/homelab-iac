@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: ghcr.io/whoami/whoami:latest
+    image: traefik/whoami:latest
     ports:
     - containerPort: 80
   service:
