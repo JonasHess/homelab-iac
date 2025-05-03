@@ -5,7 +5,6 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 data:
   BASE_URL: "https://mealie.{{ .Values.global.domain }}"
-  STATIC_FILES: "/app/data/static"
   HOST_IP: "*"
   API_HOST: "0.0.0.0"
   API_PORT: "9000"
