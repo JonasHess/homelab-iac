@@ -29,9 +29,9 @@ generic:
           - traefik-forward-auth
   externalSecrets:
     mealie-secret:
-      - OIDC_CLIENT_ID: "mealie/OIDC_CLIENT_ID"
-      - OIDC_CLIENT_SECRET: "mealie/OIDC_CLIENT_SECRET"
-      - SMTP_HOST: "mealie/SMTP_HOST"
-      - SMTP_FROM_EMAIL: "mealie/SMTP_FROM_EMAIL"
-      - SMTP_USER: "mealie/SMTP_USER"
-      - SMTP_PASSWORD: "mealie/SMTP_PASSWORD"
+      - OIDC_CLIENT_ID: "/mealie/OIDC_CLIENT_ID"
+      - OIDC_CLIENT_SECRET: "/mealie/OIDC_CLIENT_SECRET"
+      - SMTP_HOST: "/mealie/SMTP_HOST"
+      - SMTP_FROM_EMAIL: "/mealie/SMTP_FROM_EMAIL"
+      - SMTP_USER: "/mealie/SMTP_USER"
+      - SMTP_PASSWORD: "/mealie/SMTP_PASSWORD"
