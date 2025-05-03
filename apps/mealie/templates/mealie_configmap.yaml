@@ -5,29 +5,24 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 data:
   BASE_URL: "https://mealie.{{ .Values.global.domain }}"
-  HOST_IP: "*"
-  API_HOST: "0.0.0.0"
-  API_PORT: "9000"
-  API_DOCS: "true"
-  TOKEN_TIME: "48"
-  SECURITY_MAX_LOGIN_ATTEMPTS: "5"
-  SECURITY_USER_LOCKOUT_TIME: "24"
+  ALLOW_SIGNUP: "false"
   DB_ENGINE: "sqlite"
+  IS_DEMO: "false"
+
   DEFAULT_GROUP: "Home"
   DEFAULT_HOUSEHOLD: "Family"
   DAILY_SCHEDULE_TIME: "23:45"
+
   SMTP_PORT: "587"
   SMTP_FROM_NAME: "Mealie"
   SMTP_AUTH_STRATEGY: "TLS"
+
   OIDC_AUTH_ENABLED: "true"
   OIDC_CONFIGURATION_URL: {{ required ".oidc.configurationUrl is required in values.yaml" .Values.oidc.configurationUrl | quote }}
-  TLS_CERTIFICATE_PATH: "true"  # Signal to use HTTPS
   OIDC_SIGNUP_ENABLED: "true"
   OIDC_PROVIDER_NAME: "Cognito"
-  OIDC_AUTO_REDIRECT: "true"
+  OIDC_AUTO_REDIRECT: "false"
   OIDC_REMEMBER_ME: "true"
   OIDC_USER_CLAIM: "email"
   OIDC_NAME_CLAIM: "name"
   OIDC_GROUPS_CLAIM: "groups"
-  ALLOW_SIGNUP: "false"
-  IS_DEMO: "false"
