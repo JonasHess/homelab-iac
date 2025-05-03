@@ -21,6 +21,7 @@ data:
   SMTP_AUTH_STRATEGY: "TLS"
   OIDC_AUTH_ENABLED: "true"
   OIDC_CONFIGURATION_URL: {{ required ".oidc.configurationUrl is required in values.yaml" .Values.oidc.configurationUrl | quote }}
+  TLS_CERTIFICATE_PATH: "true"  # Signal to use HTTPS
   OIDC_SIGNUP_ENABLED: "true"
   OIDC_PROVIDER_NAME: "Cognito"
   OIDC_AUTO_REDIRECT: "true"
