@@ -12,11 +12,6 @@ generic:
     envFrom:
       configMapRef: mealie-config
       secretRef: mealie-secret
-#    env:
-#      - name: ALLOW_SIGNUP
-#        value: "false"
-#      - name: BASE_URL
-#        value: "https://mealie.yourdomain.com"
   service:
     ports:
       - name: http
