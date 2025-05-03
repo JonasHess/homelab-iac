@@ -615,8 +615,8 @@ apps:
     homer:
       enabled: true
       group: infrastructure
-      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/whoami.svg
-      subtitle: "Request and Network Information"
+      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/traefik.svg
+      subtitle: "Debug Traefik"
       displayName: Whoami
     argocd:
       targetRevision: ~
