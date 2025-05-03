@@ -1,0 +1,24 @@
+generic:
+  deployment:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    ports:
+      - containerPort: 9000
+    pvcMounts:
+      data:
+        mountPath: /app/data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/mealie/data
+#    env:
+#      - name: ALLOW_SIGNUP
+#        value: "false"
+#      - name: BASE_URL
+#        value: "https://mealie.yourdomain.com"
+  service:
+    ports:
+      - name: http
+        port: 9000
+  ingress:
+    https:
+      - subdomain: mealie
+        port: 9000
+        middlewares:
+          - traefik-forward-auth

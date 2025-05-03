@@ -595,3 +595,17 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "20"  # Deploy after other media apps
+
+  mealie:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/mealie.svg"
+      subtitle: "Recipe Manager"
+      displayName: "Mealie"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after core services
