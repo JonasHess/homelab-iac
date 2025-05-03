@@ -126,6 +126,12 @@ apps:
         subtitle: "Incident Management"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pagerduty.svg"
         url: "https://www.pagerduty.com/"
+      backblaze:
+        name: "Backblaze"
+        group: "infrastructure"
+        subtitle: "Cloud Storage"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/backblaze.svg"
+        url: "https://www.backblaze.com/"
 
   # Application Definitions
   stirlingpdf:
