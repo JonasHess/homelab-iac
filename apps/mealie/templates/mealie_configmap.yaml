@@ -21,7 +21,7 @@ data:
   OIDC_CONFIGURATION_URL: {{ required ".oidc.configurationUrl is required in values.yaml" .Values.oidc.configurationUrl | quote }}
   OIDC_SIGNUP_ENABLED: "true"
   OIDC_PROVIDER_NAME: "Cognito"
-  OIDC_AUTO_REDIRECT: "false"
+  OIDC_AUTO_REDIRECT: "true"
   OIDC_REMEMBER_ME: "true"
   OIDC_USER_CLAIM: "email"
   OIDC_NAME_CLAIM: "name"
