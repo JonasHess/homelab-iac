@@ -1,0 +1,15 @@
+generic:
+  deployment:
+    image: ghcr.io/whoami/whoami:latest
+    ports:
+    - containerPort: 80
+  service:
+    ports:
+    - name: http
+      port: 80
+  ingress:
+    https:
+    - subdomain: whoami
+      port: 80
+      middlewares:
+      - traefik-forward-auth
