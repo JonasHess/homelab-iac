@@ -120,6 +120,12 @@ apps:
         subtitle: "DNS Management"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/cloudflare.svg"
         url: "https://dash.cloudflare.com/"
+      pagerDuty:
+        name: "PagerDuty"
+        group: "infrastructure"
+        subtitle: "Incident Management"
+        logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/pagerduty.svg"
+        url: "https://www.pagerduty.com/"
 
   # Application Definitions
   stirlingpdf:
