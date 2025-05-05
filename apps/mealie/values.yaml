@@ -30,3 +30,4 @@ generic:
       - SMTP_FROM_EMAIL: "/mealie/SMTP_FROM_EMAIL"
       - SMTP_USER: "/mealie/SMTP_USER"
       - SMTP_PASSWORD: "/mealie/SMTP_PASSWORD"
+      - OPENAI_API_KEY: "/mealie/OPENAI_API_KEY"
