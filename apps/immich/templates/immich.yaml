@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: immich-app-server
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
@@ -157,6 +159,8 @@ kind: Deployment
 metadata:
   name: immich-app-machine-learning
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   selector:
