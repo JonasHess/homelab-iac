@@ -25,6 +25,8 @@ spec:
           image: {{ $image }}
           {{- if $deployment.imagePullPolicy }}
           imagePullPolicy: {{ $deployment.imagePullPolicy }}
+          {{- else }}
+          imagePullPolicy: Always
           {{- end }}
           {{- if $deployment.securityContext }}
           securityContext:
