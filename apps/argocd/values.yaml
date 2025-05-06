@@ -1,5 +1,0 @@
-generic:
-  externalSecrets:
-    argocd-secret:
-      - oidc.auth0.clientSecret: "/oidc/traefik-forward-auth/client_secret"
-      - webhook.github.secret: "/argocd/webhook/github/secret"
