@@ -635,3 +635,11 @@ apps:
       namespace: argocd
       project: default
       syncWave: '15'
+
+  reloader:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '1'
