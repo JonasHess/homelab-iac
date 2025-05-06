@@ -19,7 +19,7 @@ data:
 
     # Customization options
     header: true
-    footer: 'test'
+    footer: ''
     defaults:
       layout: columns
 
