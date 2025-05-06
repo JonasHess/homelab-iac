@@ -8,6 +8,8 @@ kind: Deployment
 metadata:
   name: {{ $appName }}-deployment
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
