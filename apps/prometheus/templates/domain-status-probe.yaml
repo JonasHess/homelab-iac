@@ -3,6 +3,8 @@ kind: Probe
 metadata:
   name: domain-status-probe
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   labels:
     prometheus: kube-prometheus-stack-prometheus
     release: kube-prometheus-stack
