@@ -142,6 +142,7 @@ apps:
       logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/stirling-pdf.svg"
       subtitle: "Your PDF Swiss Army Knife"
       displayName: "StirlingPDF"
+      subdomain: "stirling-pdf"
     argocd:
       targetRevision: ~
       namespace: "argocd"
