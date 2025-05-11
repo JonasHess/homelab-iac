@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: groceries-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  # Add your app configuration here
+  APP_NAME: "groceries"
+  BASE_URL: "https://groceries.{{ .Values.global.domain }}"

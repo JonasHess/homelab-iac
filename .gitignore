@@ -5,3 +5,5 @@ environment-secrets.yaml
 node_modules/
 /myenv/
 /charts/
+
+**/.claude/settings.local.json

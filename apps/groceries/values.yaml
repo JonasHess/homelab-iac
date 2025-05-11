@@ -1,0 +1,26 @@
+generic:
+  deployment:
+    image: ghcr.io/groceries/groceries:latest
+    ports:
+    - containerPort: 8100
+    pvcMounts:
+      data:
+        mountPath: /app/data
+        hostPath: null
+    envFrom:
+      configMapRef: groceries-config
+      secretRef: groceries-secret
+  service:
+    ports:
+    - name: port-8100
+      port: 8100
+  externalSecrets:
+    groceries-secret:
+    - API_KEY: /groceries/API_KEY
+    - DB_PASSWORD: /groceries/DB_PASSWORD
+  ingress:
+    https:
+    - subdomain: groceries
+      port: 8100
+      middlewares:
+      - traefik-forward-auth
