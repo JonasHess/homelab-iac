@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groceriesauth
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: groceriesauth
+  template:
+    metadata:
+      labels:
+        app: groceriesauth
+    spec:
+      containers:
+      - name: groceriesauth
+        image: ghcr.io/davideshay/groceriesauth:latest
+        imagePullPolicy: Always
+        env:
+        - name: COUCHDB_URL
+          value: "https://couchdb.{{ .Values.global.domain }}/"
+        - name: COUCHDB_INTERNAL_URL  
+          value: "http://couchdb-service.couchdb:5984/"
+        - name: COUCHDB_DATABASE
+          value: "groceries"
+        - name: GROCERY_URL
+          value: "https://groceries.{{ .Values.global.domain }}"
+        - name: GROCERY_API_URL
+          value: "https://groceries.{{ .Values.global.domain }}/api"  
+        - name: GROCERY_API_PORT
+          value: "3333"
+        - name: ENABLE_SCHEDULING
+          value: "true"
+        - name: RESOLVE_CONFLICTS_FREQUENCY_MINUTES
+          value: "3"
+        - name: EXPIRE_JWT_FREQUENCY_MINUTES
+          value: "60"  
+        - name: ACCESS_TOKEN_EXPIRES
+          value: "12h"
+        - name: REFRESH_TOKEN_EXPIRES
+          value: "30d"
+        - name: DISABLE_ACCOUNT_CREATION
+          value: "false"
+        - name: SMTP_HOST
+          value: {{ .Values.generic.smtp.host | quote }}
+        - name: SMTP_FROM
+          value: {{ .Values.generic.smtp.from | quote }}
+        - name: SMTP_PORT
+          value: {{ .Values.generic.smtp.port | toString | quote }}
+        - name: SMTP_USER
+          value: {{ .Values.generic.smtp.user | quote }}
+        envFrom:
+        - secretRef:
+            name: groceries-auth-secrets
+        ports:
+        - containerPort: 3333

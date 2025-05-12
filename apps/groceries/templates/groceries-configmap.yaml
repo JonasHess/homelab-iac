@@ -1,9 +1,22 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: groceries-config
+  name: groceries-web-conf
   namespace: {{ $.Release.Namespace }}
 data:
-  # Add your app configuration here
-  APP_NAME: "groceries"
-  BASE_URL: "https://groceries.{{ .Values.global.domain }}"
+  default.conf: |
+    server {
+      listen       80;
+      listen  [::]:80;
+      server_name  localhost;
+
+      location / {
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+          try_files $uri $uri/ /index.html;
+      }
+
+      location = /50x.html {
+          root   /usr/share/nginx/html;
+      }
+    }

@@ -1,26 +1,28 @@
 generic:
-  deployment:
-    image: ghcr.io/groceries/groceries:latest
-    ports:
-    - containerPort: 8100
-    pvcMounts:
-      data:
-        mountPath: /app/data
-        hostPath: null
-    envFrom:
-      configMapRef: groceries-config
-      secretRef: groceries-secret
-  service:
-    ports:
-    - name: port-8100
-      port: 8100
-  externalSecrets:
-    groceries-secret:
-    - API_KEY: /groceries/API_KEY
-    - DB_PASSWORD: /groceries/DB_PASSWORD
+  appName: groceries
   ingress:
     https:
     - subdomain: groceries
-      port: 8100
+      port: 80
+      service: groceries
+    - subdomain: groceries
+      port: 3333
+      service: groceriesauth
+      matchSuffix: "&& PathPrefix(`/api`)"
+      priority: 100
       middlewares:
-      - traefik-forward-auth
+      - strip-api-prefix
+
+  # SMTP configuration
+  smtp:
+    host:  smtp.example.com
+    from: Groceries <groceries@example.com>
+    port: 587
+    user: immich@example.com
+
+  externalSecrets:
+    groceries-auth-secrets:
+    - COUCHDB_HMAC_KEY: /groceries/couchdb/hmac_key
+    - COUCHDB_ADMIN_USER: /groceries/couchdb/admin_user
+    - COUCHDB_ADMIN_PASSWORD: /groceries/couchdb/admin_password
+    - SMTP_PASSWORD: /groceries/smtp/password

@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: groceries
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: groceries
+  template:
+    metadata:
+      labels:
+        app: groceries
+    spec:
+      containers:
+      - name: groceries
+        image: ghcr.io/davideshay/groceries:latest
+        imagePullPolicy: Always
+        env:
+        - name: DEFAULT_API_URL
+          value: "https://groceries.{{ .Values.global.domain }}/api"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: webconfig
+      volumes:
+      - name: webconfig
+        configMap:
+          name: groceries-web-conf
