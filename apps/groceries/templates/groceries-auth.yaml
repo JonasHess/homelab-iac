@@ -45,13 +45,13 @@ spec:
         - name: DISABLE_ACCOUNT_CREATION
           value: "false"
         - name: SMTP_HOST
-          value: {{ .Values.generic.smtp.host | quote }}
+          value: {{ .Values.smtp.host | quote }}
         - name: SMTP_FROM
-          value: {{ .Values.generic.smtp.from | quote }}
+          value: {{ .Values.smtp.from | quote }}
         - name: SMTP_PORT
-          value: {{ .Values.generic.smtp.port | toString | quote }}
+          value: {{ .Values.smtp.port | toString | quote }}
         - name: SMTP_USER
-          value: {{ .Values.generic.smtp.user | quote }}
+          value: {{ .Values.smtp.user | quote }}
         envFrom:
         - secretRef:
             name: groceries-auth-secrets
