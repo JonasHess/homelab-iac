@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: groceries
-        image: ghcr.io/davideshay/groceries:latest
+        image: ghcr.io/davideshay/groceries-client:latest
         imagePullPolicy: Always
         env:
         - name: DEFAULT_API_URL

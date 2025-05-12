@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: groceriesauth
-        image: ghcr.io/davideshay/groceriesauth:latest
+        image: ghcr.io/davideshay/groceries-server:latest
         imagePullPolicy: Always
         env:
         - name: COUCHDB_URL
