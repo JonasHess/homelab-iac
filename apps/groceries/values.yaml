@@ -15,10 +15,10 @@ generic:
 
   externalSecrets:
     groceries-auth-secrets:
-    - COUCHDB_HMAC_KEY: /groceries/couchdb/hmac_key
-    - COUCHDB_ADMIN_USER: /groceries/couchdb/admin_user
-    - COUCHDB_ADMIN_PASSWORD: /groceries/couchdb/admin_password
-    - SMTP_PASSWORD: /groceries/smtp/password
+    - COUCHDB_HMAC_KEY: /groceries/COUCHDB_HMAC_KEY
+    - COUCHDB_ADMIN_USER: /groceries/COUCHDB_ADMIN_USER
+    - COUCHDB_ADMIN_PASSWORD: /groceries/COUCHDB_ADMIN_PASSWORD
+    - SMTP_PASSWORD: /groceries/SMTP_PASSWORD
 
 smtp:
   host:  smtp.example.com
