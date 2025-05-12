@@ -14,11 +14,11 @@ generic:
       - strip-api-prefix
 
   externalSecrets:
-  groceries-auth-secrets:
-  - COUCHDB_HMAC_KEY: /groceries/couchdb/hmac_key
-  - COUCHDB_ADMIN_USER: /groceries/couchdb/admin_user
-  - COUCHDB_ADMIN_PASSWORD: /groceries/couchdb/admin_password
-  - SMTP_PASSWORD: /groceries/smtp/password
+    groceries-auth-secrets:
+    - COUCHDB_HMAC_KEY: /groceries/couchdb/hmac_key
+    - COUCHDB_ADMIN_USER: /groceries/couchdb/admin_user
+    - COUCHDB_ADMIN_PASSWORD: /groceries/couchdb/admin_password
+    - SMTP_PASSWORD: /groceries/smtp/password
 
 smtp:
   host:  smtp.example.com
