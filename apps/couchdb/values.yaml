@@ -11,3 +11,4 @@ generic:
       - adminPassword: /couchdb/ADMIN_PASSWORD
       - adminUsername: /couchdb/ADMIN_USER
       - cookieAuthSecret: /couchdb/COOKIE_AUTH_SECRET
+      - erlangCookie: /couchdb/ERLANG_COOKIE
