@@ -7,5 +7,7 @@ generic:
       port: 5984
       service: couchdb
   externalSecrets:
-    couchdb-secret:
+    couchdb-couchdb:
       - adminPassword: /couchdb/ADMIN_PASSWORD
+      - adminUsername: /couchdb/ADMIN_USER
+      - cookieAuthSecret: /couchdb/COOKIE_AUTH_SECRET

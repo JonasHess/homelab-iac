@@ -15,12 +15,6 @@ spec:
     helm:
       # Values file as block file
       valuesObject:
-        adminUsername: admin
-        adminPassword:
-          valueFrom:
-            secretKeyRef:
-              name: couchdb-secret
-              key: adminPassword
         createAdminSecret: false
         couchdbConfig:
           couchdb:
