@@ -19,7 +19,7 @@ spec:
         adminPassword:
           valueFrom:
             secretKeyRef:
-              name: couchdb-admin-secret
+              name: couchdb-secret
               key: adminPassword
         createAdminSecret: false
         couchdbConfig:

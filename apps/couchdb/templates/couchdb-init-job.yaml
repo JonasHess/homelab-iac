@@ -41,5 +41,5 @@ spec:
       volumes:
       - name: couchdb-credentials
         secret:
-          secretName: couchdb-admin-secret
+          secretName: couchdb-secret
   backoffLimit: 5
