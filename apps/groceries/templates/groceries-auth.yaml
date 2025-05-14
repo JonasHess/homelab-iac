@@ -23,7 +23,7 @@ spec:
         - name: COUCHDB_URL
           value: "https://couchdb.{{ .Values.global.domain }}/"
         - name: COUCHDB_INTERNAL_URL
-          value: "http://couchdb-svc-couchdb.couchdb:5984/"
+          value: "http://couchdb-svc-couchdb:5984/"
         - name: COUCHDB_DATABASE
           value: "groceries"
         - name: GROCERY_URL
