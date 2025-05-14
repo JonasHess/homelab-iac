@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: couchdb-init-groceries
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: create-db
+        image: curlimages/curl:latest
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for CouchDB to be ready..."
+          until curl -s http://couchdb-service:5984/ > /dev/null; do
+            sleep 5
+          done
+          
+          echo "Creating groceries database..."
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/groceries
+          
+          echo "Setting up CORS..."
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/_node/_local/_config/httpd/enable_cors -d '"true"'
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/_node/_local/_config/cors/origins -d '"*"'
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/_node/_local/_config/cors/credentials -d '"true"'
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/_node/_local/_config/cors/methods -d '"GET, PUT, POST, HEAD, DELETE"'
+          curl -X PUT http://admin:$(cat /etc/couchdb-credentials/adminPassword)@couchdb-service:5984/_node/_local/_config/cors/headers -d '"accept, authorization, content-type, origin, referer, x-csrf-token"'
+          
+          echo "Setup complete!"
+        volumeMounts:
+        - name: couchdb-credentials
+          mountPath: /etc/couchdb-credentials
+          readOnly: true
+      restartPolicy: OnFailure
+      volumes:
+      - name: couchdb-credentials
+        secret:
+          secretName: couchdb-admin-secret
+  backoffLimit: 5

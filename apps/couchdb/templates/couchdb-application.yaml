@@ -1,0 +1,52 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: couchdb
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  project: default
+  source:
+    chart: couchdb
+    repoURL: https://apache.github.io/couchdb-helm
+    targetRevision: 4.6.0
+    helm:
+      # Values file as block file
+      valuesObject:
+        adminUsername: admin
+        adminPassword:
+          valueFrom:
+            secretKeyRef:
+              name: couchdb-admin-secret
+              key: adminPassword
+        createAdminSecret: false
+        couchdbConfig:
+          couchdb:
+            uuid: {{ randAlphaNum 32 | quote }}
+        persistence:
+          enabled: true
+          existingClaim: couchdb-data-pvc
+        allowAdminParty: false
+        enableSearch: true
+        service:
+          type: ClusterIP
+          name: couchdb-service
+
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: {{ $.Release.Namespace }}
+  syncPolicy:
+    automated:
+      allowEmpty: true
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - allowEmpty=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m

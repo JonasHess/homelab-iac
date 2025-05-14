@@ -1,0 +1,11 @@
+generic:
+  persistentVolumeClaims:
+    data: ~ # /mnt/somewhere/encrypted/apps/couchdb/data
+  ingress:
+    https:
+    - subdomain: couchdb
+      port: 5984
+      service: couchdb
+  externalSecrets:
+    couchdb-secret:
+      - adminPassword: /couchdb/ADMIN_PASSWORD
