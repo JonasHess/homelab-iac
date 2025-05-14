@@ -5,13 +5,13 @@ generic:
     - subdomain: groceries
       port: 80
       service: groceries
-    - subdomain: groceries
-      port: 3333
-      service: groceriesauth
-      matchSuffix: "&& PathPrefix(`/api`)"
-      priority: 100
-      middlewares:
-      - strip-api-prefix
+#    - subdomain: groceries
+#      port: 3333
+#      service: groceriesauth
+#      matchSuffix: "&& PathPrefix(`/api`)"
+#      priority: 100
+#      middlewares:
+#      - strip-api-prefix
 
   externalSecrets:
     groceries-auth-secrets:
