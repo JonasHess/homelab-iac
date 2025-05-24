@@ -646,7 +646,7 @@ apps:
       subtitle: backups
       displayName: Restic
     argocd:
-      targetRevision: null
+      targetRevision: feature/restic_backup
       namespace: argocd
       project: default
       syncWave: '15'
