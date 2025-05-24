@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restic-backup-paths
+  namespace: {{ .Values.apps.restic.argocd.namespace | default "argocd" }}
+  labels:
+    app.kubernetes.io/name: restic-backup-paths
+    app.kubernetes.io/component: backup
+data:
+  backup-paths.txt: |
+{{- $backupPaths := list }}
+{{- range $appName, $appConfig := .Values.apps }}
+  {{- if $appConfig.enabled }}
+    {{- if and $appConfig.generic $appConfig.generic.deployment $appConfig.generic.deployment.pvcMounts }}
+      {{- range $mountName, $mountConfig := $appConfig.generic.deployment.pvcMounts }}
+        {{- if and $mountConfig.backup $mountConfig.hostPath }}
+          {{- $backupPaths = append $backupPaths $mountConfig.hostPath }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $uniquePaths := $backupPaths | uniq | sortAlpha }}
+{{- range $uniquePaths }}
+    {{ . }}
+{{- end }}
