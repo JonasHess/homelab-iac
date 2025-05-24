@@ -637,6 +637,20 @@ apps:
       project: default
       syncWave: '15'
 
+  restic:
+    enabled: false
+    homer:
+      enabled: true
+      group: infrastructure
+      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/restic.svg
+      subtitle: backups
+      displayName: Restic
+    argocd:
+      targetRevision: null
+      namespace: argocd
+      project: default
+      syncWave: '15'
+
   reloader:
     enabled: false
     argocd:

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restic-backup-script
+  namespace: {{ $.Release.Namespace }}
+data:
+  backup-script.sh: |
+{{ .Files.Get "assets/backup-script.sh" | indent 4 }}

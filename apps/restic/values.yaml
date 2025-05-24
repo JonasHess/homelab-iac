@@ -1,0 +1,35 @@
+cronjob:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  image: restic/restic:latest
+  command: ["/bin/bash", "/scripts/backup-script.sh"]
+  restartPolicy: OnFailure
+  configMapMounts:
+    backup-script:
+      name: restic-backup-script
+      mountPath: /scripts
+    backup-paths:
+      name: restic-backup-paths
+      mountPath: /config
+  pvcMounts: []
+#    tank0:
+#      hostPath: /mnt/tank0
+#      mountPath: /mnt/tank0
+#    tank1:
+#      hostPath: /mnt/tank1
+#      mountPath: /mnt/tank1
+  envFrom:
+    secretRef: restic-secret
+  env:
+    - name: RESTIC_REPOSITORY
+      value: "s3:$(S3_ENDPOINT)/$(S3_BUCKET)"
+
+generic:
+  externalSecrets:
+    restic-secret:
+      - S3_ACCESS_KEY: /restic/S3_ACCESS_KEY
+      - S3_SECRET_KEY: /restic/S3_SECRET_KEY
+      - S3_BUCKET: /restic/S3_BUCKET
+      - S3_REGION: /restic/S3_REGION
+      - S3_ENDPOINT: /restic/S3_ENDPOINT
+      - RESTIC_PASSWORD: /restic/RESTIC_PASSWORD

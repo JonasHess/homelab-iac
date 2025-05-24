@@ -1,0 +1,65 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if .Values.cronjob.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+spec:
+  schedule: {{ .Values.cronjob.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ $appName }}
+        spec:
+          restartPolicy: {{ .Values.cronjob.restartPolicy | default "OnFailure" }}
+          containers:
+          - name: {{ $appName }}
+            image: {{ .Values.cronjob.image }}
+            {{- if .Values.cronjob.command }}
+            command: {{ .Values.cronjob.command | toJson }}
+            {{- end }}
+            {{- if .Values.cronjob.env }}
+            env:
+            {{- range .Values.cronjob.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.cronjob.envFrom }}
+            envFrom:
+            {{- if .Values.cronjob.envFrom.secretRef }}
+            - secretRef:
+                name: {{ .Values.cronjob.envFrom.secretRef }}
+            {{- end }}
+            {{- if .Values.cronjob.envFrom.configMapRef }}
+            - configMapRef:
+                name: {{ .Values.cronjob.envFrom.configMapRef }}
+            {{- end }}
+            {{- end }}
+            volumeMounts:
+            {{- range $name, $config := .Values.cronjob.configMapMounts }}
+            - name: {{ $name }}
+              mountPath: {{ $config.mountPath }}
+            {{- end }}
+            {{- range $mountName, $mount := .Values.cronjob.pvcMounts }}
+            - name: {{ $mountName }}-volume
+              mountPath: {{ $mount.mountPath }}
+            {{- end }}
+          volumes:
+          {{- range $name, $config := .Values.cronjob.configMapMounts }}
+          - name: {{ $name }}
+            configMap:
+              name: {{ $config.name }}
+              defaultMode: 0755
+          {{- end }}
+          {{- range $mountName, $mount := .Values.cronjob.pvcMounts }}
+          - name: {{ $mountName }}-volume
+            persistentVolumeClaim:
+              claimName: {{ $appName }}-{{ $mountName }}-pvc
+          {{- end }}
+{{- end }}
