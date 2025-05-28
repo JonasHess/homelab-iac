@@ -40,7 +40,7 @@ spec:
               mountPath: /scripts
             - name: backup-paths
               mountPath: /config
-            - name: restoredData
+            - name: restoreddata
               mountPath: /restored-data
           volumes:
           - name: restore-script
@@ -50,7 +50,7 @@ spec:
           - name: backup-paths
             configMap:
               name: restic-backup-paths
-          - name: restoredData
+          - name: restoreddata
             persistentVolumeClaim:
-              claimName: {{ $appName }}-restoredData-pvc
+              claimName: {{ $appName }}-restoreddata-pvc
 {{- end }}
