@@ -55,7 +55,7 @@ while IFS= read -r path; do
     echo "Checking for snapshot of path: $path"
     
     # Find the latest snapshot for this specific path and date
-    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | tail -n 1 | awk '{print $1}' || echo "")
+    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---" | tail -n 1 | awk '{print $1}' || echo "")
     
     if [ -z "$SNAPSHOT_ID" ]; then
         echo "ERROR: No backup found for path '$path' on date $RESTORE_DATE"
