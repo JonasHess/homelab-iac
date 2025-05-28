@@ -26,9 +26,12 @@ echo "File contents:"
 cat "$BACKUP_PATHS_FILE"
 echo "--- End of file contents ---"
 
+# Convert YYYY-MM-DD to YYYYMMDD format for tag matching
+BACKUP_TAG_DATE=$(echo "$RESTORE_DATE" | sed 's/-//g')
+
 # Get list of snapshots for the specified date
-echo "Finding snapshots for date: $RESTORE_DATE"
-restic snapshots --tag "homelab-$RESTORE_DATE" --json > /tmp/snapshots.json
+echo "Finding snapshots for date: $RESTORE_DATE (tag: homelab-$BACKUP_TAG_DATE)"
+restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --json > /tmp/snapshots.json
 
 # Check if any snapshots exist for this date
 SNAPSHOT_COUNT=$(cat /tmp/snapshots.json | wc -l)
@@ -40,7 +43,7 @@ if [ "$SNAPSHOT_COUNT" -eq 0 ] || [ "$(cat /tmp/snapshots.json)" = "null" ]; the
 fi
 
 echo "Found snapshots for $RESTORE_DATE:"
-restic snapshots --tag "homelab-$RESTORE_DATE"
+restic snapshots --tag "homelab-$BACKUP_TAG_DATE"
 
 # For each path in backup-paths.txt, check if it has a snapshot for this date
 while IFS= read -r path; do
@@ -52,7 +55,7 @@ while IFS= read -r path; do
     echo "Checking for snapshot of path: $path"
     
     # Find snapshot for this specific path and date
-    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$RESTORE_DATE" --path "$path" --latest=1 --json | grep -o '"id":"[^"]*"' | cut -d'"' -f4 || echo "")
+    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 --json | grep -o '"id":"[^"]*"' | cut -d'"' -f4 || echo "")
     
     if [ -z "$SNAPSHOT_ID" ]; then
         echo "ERROR: No backup found for path '$path' on date $RESTORE_DATE"
