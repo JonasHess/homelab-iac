@@ -16,10 +16,21 @@ if [[ ! -f "$BACKUP_PATHS_FILE" ]]; then
 fi
 
 echo "Reading backup paths from $BACKUP_PATHS_FILE"
-PATHS=$(cat "$BACKUP_PATHS_FILE" | grep -v '^$' | tr '\n' ' ')
 
-if [[ -z "$PATHS" ]]; then
+# Show file contents for debugging
+echo "File contents:"
+cat "$BACKUP_PATHS_FILE" || echo "Failed to read file"
+echo "--- End of file contents ---"
+
+# Filter out empty lines and comments
+PATHS=$(cat "$BACKUP_PATHS_FILE" | grep -v '^$' | grep -v '^#' | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+
+echo "Processed paths: '$PATHS'"
+
+if [ -z "$PATHS" ]; then
     echo "WARNING: No backup paths found in configmap"
+    echo "This means no applications have 'backup: true' set in their pvcMounts configuration"
+    echo "To fix this, add 'backup: true' to pvcMounts in your application values.yaml files"
     exit 0
 fi
 
