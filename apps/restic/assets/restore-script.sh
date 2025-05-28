@@ -1,5 +1,5 @@
 #!/bin/sh
-set -euo pipefail
+set -eu
 
 echo "Starting restic restore at $(date)"
 echo "Restore date: $RESTORE_DATE"
@@ -16,14 +16,14 @@ mkdir -p "$RESTORE_DIR"
 # Read backup paths from configmap (but filter for restore flag)
 BACKUP_PATHS_FILE="/config/backup-paths.txt"
 
-if [[ ! -f "$BACKUP_PATHS_FILE" ]]; then
+if [ ! -f "$BACKUP_PATHS_FILE" ]; then
     echo "ERROR: Backup paths file not found at $BACKUP_PATHS_FILE"
     exit 1
 fi
 
 echo "Reading backup paths from $BACKUP_PATHS_FILE"
 echo "File contents:"
-cat "$BACKUP_PATHS_FILE"
+< "$BACKUP_PATHS_FILE" cat
 echo "--- End of file contents ---"
 
 # Convert YYYY-MM-DD to YYYYMMDD format for tag matching
@@ -34,7 +34,7 @@ echo "Finding snapshots for date: $RESTORE_DATE (tag: homelab-$BACKUP_TAG_DATE)"
 restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --json > /tmp/snapshots.json
 
 # Check if any snapshots exist for this date
-SNAPSHOT_COUNT=$(cat /tmp/snapshots.json | wc -l)
+SNAPSHOT_COUNT=$(wc -l < /tmp/snapshots.json)
 if [ "$SNAPSHOT_COUNT" -eq 0 ] || [ "$(cat /tmp/snapshots.json)" = "null" ]; then
     echo "ERROR: No snapshots found for date $RESTORE_DATE"
     echo "Available snapshots:"
@@ -54,16 +54,8 @@ while IFS= read -r path; do
     
     echo "Checking for snapshot of path: $path"
     
-    # Debug: Show raw output
-    echo "Debug - Raw restic output:"
-    restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1
-    echo "Debug - Filtered output:"
-    restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---\|^$"
-    
     # Find the latest snapshot for this specific path and date
     SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---\|^$\|snapshots$" | tail -n 1 | awk '{print $1}' || echo "")
-    
-    echo "Debug - Extracted SNAPSHOT_ID: '$SNAPSHOT_ID'"
     
     if [ -z "$SNAPSHOT_ID" ]; then
         echo "ERROR: No backup found for path '$path' on date $RESTORE_DATE"
