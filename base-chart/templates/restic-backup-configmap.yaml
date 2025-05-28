@@ -11,8 +11,9 @@ data:
 {{- $backupPaths := list }}
 {{- range $appName, $appConfig := .Values.apps }}
   {{- if $appConfig.enabled }}
-    {{- if and $appConfig.generic $appConfig.generic.deployment $appConfig.generic.deployment.pvcMounts }}
-      {{- range $mountName, $mountConfig := $appConfig.generic.deployment.pvcMounts }}
+    {{- $pvcMounts := $appConfig.argocd.helm.values.generic.deployment.pvcMounts }}
+    {{- if $pvcMounts }}
+      {{- range $mountName, $mountConfig := $pvcMounts }}
         {{- if and $mountConfig.backup $mountConfig.hostPath }}
           {{- $backupPaths = append $backupPaths $mountConfig.hostPath }}
         {{- end }}
