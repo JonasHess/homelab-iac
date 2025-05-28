@@ -1,5 +1,5 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
-{{- if index .Values "restore-cronjob" }}
+{{- if .Values.restore-cronjob }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -17,15 +17,15 @@ spec:
           labels:
             app: {{ $appName }}-restore
         spec:
-          restartPolicy: {{ index .Values "restore-cronjob" "restartPolicy" | default "OnFailure" }}
+          restartPolicy: {{ .Values.restore-cronjob.restartPolicy | default "OnFailure" }}
           hostname: {{ $appName }}-restore
           containers:
           - name: {{ $appName }}-restore
-            image: {{ index .Values "restore-cronjob" "image" | default "restic/restic:latest" }}
+            image: {{ .Values.restore-cronjob.image | default "restic/restic:latest" }}
             command: ["/bin/sh", "/scripts/restore-script.sh"]
             env:
             - name: RESTORE_DATE
-              value: {{ index .Values "restore-cronjob" "date" | quote }}
+              value: {{ .Values.restore-cronjob.date | quote }}
             - name: RESTIC_REPOSITORY
               value: "s3:$(ENDPOINT)/$(BUCKET)"
             - name: AWS_ACCESS_KEY_ID
