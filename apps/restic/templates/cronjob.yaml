@@ -17,7 +17,7 @@ spec:
             app: {{ $appName }}
         spec:
           restartPolicy: {{ .Values.cronjob.restartPolicy | default "OnFailure" }}
-          hostname: {{ $appName }}-backup.{{ .Values.global.domain }}
+          hostname: {{ $appName }}-backup-{{ .Values.global.domain | regexReplaceAll "[^a-zA-Z0-9]" "-" }}
           containers:
           - name: {{ $appName }}
             image: {{ .Values.cronjob.image }}
