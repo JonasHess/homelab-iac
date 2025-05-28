@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restic-restore-script
+  namespace: {{ $.Release.Namespace }}
+data:
+  restore-script.sh: |
+{{ .Files.Get "assets/restore-script.sh" | indent 4 }}

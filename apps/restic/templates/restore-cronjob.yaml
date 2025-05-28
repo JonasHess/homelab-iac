@@ -1,0 +1,56 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if .Values.restore-cronjob }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $appName }}-restore
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}-restore
+spec:
+  suspend: true  # Always suspended - manual execution only
+  schedule: "0 0 1 1 *"  # Dummy schedule (never runs)
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: {{ $appName }}-restore
+        spec:
+          restartPolicy: {{ .Values.restore-cronjob.restartPolicy | default "OnFailure" }}
+          hostname: {{ $appName }}-restore
+          containers:
+          - name: {{ $appName }}-restore
+            image: {{ .Values.restore-cronjob.image | default "restic/restic:latest" }}
+            command: ["/bin/sh", "/scripts/restore-script.sh"]
+            env:
+            - name: RESTORE_DATE
+              value: {{ .Values.restore-cronjob.date | quote }}
+            - name: RESTIC_REPOSITORY
+              value: "s3:$(ENDPOINT)/$(BUCKET)"
+            - name: AWS_ACCESS_KEY_ID
+              value: "$(ACCESS_KEY_ID)"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "$(SECRET_ACCESS_KEY)"
+            envFrom:
+            - secretRef:
+                name: restic-secret
+            volumeMounts:
+            - name: restore-script
+              mountPath: /scripts
+            - name: backup-paths
+              mountPath: /config
+            - name: restored-data
+              mountPath: /restored-data
+          volumes:
+          - name: restore-script
+            configMap:
+              name: restic-restore-script
+              defaultMode: 0755
+          - name: backup-paths
+            configMap:
+              name: restic-backup-paths
+          - name: restored-data
+            persistentVolumeClaim:
+              claimName: {{ $appName }}-restored-data-pvc
+{{- end }}
