@@ -54,8 +54,16 @@ while IFS= read -r path; do
     
     echo "Checking for snapshot of path: $path"
     
+    # Debug: Show raw output
+    echo "Debug - Raw restic output:"
+    restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1
+    echo "Debug - Filtered output:"
+    restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---\|^$"
+    
     # Find the latest snapshot for this specific path and date
-    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---" | tail -n 1 | awk '{print $1}' || echo "")
+    SNAPSHOT_ID=$(restic snapshots --tag "homelab-$BACKUP_TAG_DATE" --path "$path" --latest=1 | grep -v "^ID\|^---\|^$\|snapshots$" | tail -n 1 | awk '{print $1}' || echo "")
+    
+    echo "Debug - Extracted SNAPSHOT_ID: '$SNAPSHOT_ID'"
     
     if [ -z "$SNAPSHOT_ID" ]; then
         echo "ERROR: No backup found for path '$path' on date $RESTORE_DATE"
