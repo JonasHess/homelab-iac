@@ -13,10 +13,8 @@ cronjob:
       mountPath: /config
   pvcMounts: []
 #    tank0:
-#      hostPath: /mnt/tank0
 #      mountPath: /mnt/tank0
 #    tank1:
-#      hostPath: /mnt/tank1
 #      mountPath: /mnt/tank1
   envFrom:
     secretRef: restic-secret
@@ -29,6 +27,8 @@ cronjob:
       value: "$(SECRET_ACCESS_KEY)"
 
 generic:
+  persistentVolumeClaims:
+    tank1: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
   externalSecrets:
     restic-secret:
       # For Backblaze B2: Use your B2 Application Key ID from B2 console > App Keys
