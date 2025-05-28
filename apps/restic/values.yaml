@@ -26,13 +26,13 @@ cronjob:
     - name: AWS_SECRET_ACCESS_KEY
       value: "$(SECRET_ACCESS_KEY)"
 
-restore-cronjob:
+restoreCronjob:
   date: "2025-05-28"  # Date of backup to restore (YYYY-MM-DD format)
 
 generic:
   persistentVolumeClaims:
     tank1: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
-    restored-data: ~ # /mnt/tank1/unencrypted/apps/restic/restored-data
+    restoredData: ~ # /mnt/tank1/unencrypted/apps/restic/restored-data
   externalSecrets:
     restic-secret:
       # For Backblaze B2: Use your B2 Application Key ID from B2 console > App Keys
