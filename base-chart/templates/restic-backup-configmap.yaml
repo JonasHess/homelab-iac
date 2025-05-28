@@ -20,7 +20,9 @@ data:
     {{- end }}
   {{- end }}
 {{- end }}
-{{- $uniquePaths := $backupPaths | uniq | sortAlpha }}
-{{- range $uniquePaths }}
+{{- $backupPaths = append $backupPaths .Values.apps.mealie.argocd.helm.values.generic.deployment.pvcMounts.data.backup }}
+{{- $backupPaths = append $backupPaths "OK" }}
+{{/*{{- $uniquePaths := $backupPaths | uniq | sortAlpha }}*/}}
+{{- range $backupPaths }}
     {{ . }}
 {{- end }}
