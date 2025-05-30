@@ -21,7 +21,7 @@ spec:
             component: backup
         spec:
           serviceAccountName: restic-backup-scanner
-          restartPolicy: {{ .Values.cronjob.restartPolicy | default "OnFailure" }}
+          restartPolicy: {{ .Values.cronjob.restartPolicy | default "Never" }}
           hostname: {{ $appName }}-backup
           containers:
           - name: backup

@@ -10,6 +10,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -445,24 +446,56 @@ class ResticOperations:
             import shutil
             shutil.rmtree(self.temp_dir)
     
-    def run_maintenance(self):
+    def run_maintenance(self) -> bool:
         """Run repository maintenance after successful operations"""
         self.logger.info("Running repository maintenance...")
+        maintenance_success = True
+        
+        # Check if repository is locked and if it's safe to unlock
+        self.logger.info("Checking repository lock status...")
+        success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
+        
+        if not success and "repository is already locked" in stderr:
+            # Parse lock information to check if it's stale
+            if "by root" in stderr and "restic-backup" in stderr:
+                # This appears to be our own lock - check if it's stale (older than 10 minutes)
+                time_match = re.search(r'(\d+)m(\d+\.\d+)s ago', stderr)
+                if time_match:
+                    minutes = int(time_match.group(1))
+                    if minutes >= 10:  # Lock is stale (older than 10 minutes)
+                        self.logger.info(f"Found stale lock from {minutes} minutes ago, unlocking...")
+                        unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
+                        if not unlock_success:
+                            self.logger.error(f"Repository unlock failed: {unlock_stderr}")
+                            return False  # Maintenance failed
+                    else:
+                        self.logger.warning(f"Repository locked by active process, skipping maintenance")
+                        return True  # Not a failure, just skipped
+                else:
+                    self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
+                    return True  # Not a failure, just skipped
+            else:
+                self.logger.warning(f"Repository locked by different process, skipping maintenance: {stderr}")
+                return True  # Not a failure, just skipped
         
         # Integrity check
         self.logger.info("Verifying repository integrity...")
         success, stdout, stderr = self.run_restic_command(["check", "--read-data-subset=5%"])
         if not success:
-            self.logger.warning(f"Integrity check failed: {stderr}")
+            self.logger.error(f"Integrity check failed: {stderr}")
+            maintenance_success = False
         
         # Cleanup old snapshots
         self.logger.info("Cleaning up old snapshots...")
         success, stdout, stderr = self.run_restic_command([
-            "forget", "--keep-daily", "30", "--keep-weekly", "7", 
-            "--keep-monthly", "12", "--prune"
+            "forget", "--keep-daily", "7", "--keep-weekly", "3", 
+            "--keep-monthly", "6", "--prune"
         ])
         if not success:
-            self.logger.warning(f"Snapshot cleanup failed: {stderr}")
+            self.logger.error(f"Snapshot cleanup failed: {stderr}")
+            maintenance_success = False
+        
+        return maintenance_success
     
     def main(self, operation: str, label_selector: str) -> int:
         """Main execution function"""
@@ -495,10 +528,15 @@ class ResticOperations:
             self.logger.info(f"Operation completed - Success: {successful}, Failed: {failed}")
             
             # Run maintenance if any operations succeeded
+            maintenance_failed = False
             if successful > 0 and operation == "backup":
-                self.run_maintenance()
+                maintenance_success = self.run_maintenance()
+                if not maintenance_success:
+                    maintenance_failed = True
+                    self.logger.error("Maintenance operations failed")
             
-            return 1 if failed > 0 else 0
+            # Return failure if any backups failed OR maintenance failed
+            return 1 if (failed > 0 or maintenance_failed) else 0
             
         except ResticOperationsError as e:
             self.logger.error(f"Operation failed: {e}")
