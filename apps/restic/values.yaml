@@ -27,7 +27,7 @@ cronjob:
       value: "$(SECRET_ACCESS_KEY)"
 
 restoreCronjob:
-  date: "2025-05-28"  # Date of backup to restore (YYYY-MM-DD format)
+  date: "2025-05-30"  # Date of backup to restore (YYYY-MM-DD format)
 
 generic:
   persistentVolumeClaims:
