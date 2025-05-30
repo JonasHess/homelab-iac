@@ -2,7 +2,7 @@ cronjob:
   enabled: true
   schedule: "0 2 * * *"  # Daily at 2 AM
   image: restic/restic:latest
-  command: ["/bin/sh", "/scripts/backup-script.sh"]
+  command: ["/bin/sh", "/scripts/install-tools-and-backup.sh"]
   restartPolicy: OnFailure
   configMapMounts:
     backup-script:

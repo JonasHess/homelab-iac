@@ -6,3 +6,5 @@ metadata:
 data:
   backup-script.sh: |
 {{ .Files.Get "assets/backup-script.sh" | indent 4 }}
+  install-tools-and-backup.sh: |
+{{ .Files.Get "assets/install-tools-and-backup.sh" | indent 4 }}

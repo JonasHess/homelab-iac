@@ -622,6 +622,18 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy after core services
+      helm:
+        values:
+          generic:
+            deployment:
+              pvcMounts:
+                data:
+                  backup:
+                    enabled: true
+                    exclude:
+                      - "**/cache/**"
+                      - "**/temp/**"
+                    excludeLargerThan: "50M"
 
   whoami:
     enabled: false
@@ -650,6 +662,41 @@ apps:
       namespace: argocd
       project: default
       syncWave: '15'
+    # Global backup exclusion rules (applied to ALL backups)
+    globalBackupRules:
+      exclude:
+        # Log files
+        - "**/*.log"
+        - "**/*.log.*"
+        - "**/logs/**"
+        - "**/log/**"
+        
+        # Temporary files  
+        - "**/*.tmp"
+        - "**/*.temp"
+        - "**/tmp/**"
+        - "**/temp/**"
+        
+        # Cache directories
+        - "**/cache/**"
+        - "**/Cache/**"
+        - "**/.cache/**"
+        
+        # Thumbnails and previews
+        - "**/thumbnails/**"
+        - "**/Thumbnails/**"
+        - "**/.thumbnails/**"
+        
+        # System files
+        - "**/.DS_Store"
+        - "**/Thumbs.db"
+        - "**/.Trashes/**"
+        
+        # Build artifacts
+        - "**/node_modules/**"
+        - "**/target/**"
+        - "**/build/**"
+        - "**/dist/**"
 
   reloader:
     enabled: false
