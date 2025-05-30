@@ -33,7 +33,7 @@ spec:
                 echo "Installing Python dependencies..."
                 pip install --no-cache-dir -r /scripts/requirements.txt
                 echo "Starting backup operation..."
-                python /scripts/restic-operations.py backup backup.homelab.dev/enabled=true
+                python /scripts/restic-operations.py backup restic/backup=true
             {{- if .Values.cronjob.env }}
             env:
             {{- range .Values.cronjob.env }}

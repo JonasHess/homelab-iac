@@ -34,7 +34,7 @@ spec:
                 echo "Installing Python dependencies..."
                 pip install --no-cache-dir -r /scripts/requirements.txt
                 echo "Starting restore operation..."
-                python /scripts/restic-operations.py restore backup.homelab.dev/restore=true
+                python /scripts/restic-operations.py restore restic/restore=true
             env:
             - name: RESTORE_DATE
               value: {{ .Values.restoreCronjob.date | quote }}

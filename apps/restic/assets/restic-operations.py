@@ -275,6 +275,16 @@ class ResticOperations:
                 results[item_name] = False
                 continue
             
+            # Apply defaults if fields are missing
+            if 'include' not in item:
+                item['include'] = ["**"]
+            if 'exclude' not in item:
+                item['exclude'] = []
+            if 'excludeCaches' not in item:
+                item['excludeCaches'] = True
+            if 'excludeIfPresent' not in item:
+                item['excludeIfPresent'] = ".nobackup"
+            
             # Build filter files
             include_file, exclude_file = self.build_filter_files(item, global_excludes)
             
@@ -361,6 +371,16 @@ class ResticOperations:
             # Create restore directory
             restore_dir = f"/restored-data/{restore_timestamp}/{item_name}"
             os.makedirs(restore_dir, exist_ok=True)
+            
+            # Apply defaults if fields are missing (same as backup)
+            if 'include' not in item:
+                item['include'] = ["**"]
+            if 'exclude' not in item:
+                item['exclude'] = []
+            if 'excludeCaches' not in item:
+                item['excludeCaches'] = True
+            if 'excludeIfPresent' not in item:
+                item['excludeIfPresent'] = ".nobackup"
             
             # Build filter files (same as backup)
             include_file, exclude_file = self.build_filter_files(item, global_excludes)

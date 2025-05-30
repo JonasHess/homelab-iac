@@ -133,6 +133,10 @@
                     "type": "boolean",
                     "description": "Enable backup for this mount"
                   },
+                  "restore": {
+                    "type": "boolean",
+                    "description": "Enable restore for this mount (defaults to false)"
+                  },
                   "include": {
                     "type": "array",
                     "description": "Include patterns (restic glob patterns)",

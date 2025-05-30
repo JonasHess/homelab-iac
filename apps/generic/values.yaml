@@ -12,9 +12,10 @@ appName: ~
 #       mountPath: "/var/lib/postgresql/data"
 #       hostPath: "/mnt/storage/postgres/data"
 #       backup:
-#         enabled: true
-#         include: ["**"]  # defaults to ["**"] if not specified
-#         exclude: ["*.tmp"]  # defaults to [] if not specified
-#         excludeLargerThan: "1G"  # optional
-#         excludeCaches: true  # optional
-#         excludeIfPresent: ".nobackup"  # optional
+#         enabled: true  # creates restic/backup: "true" label
+#         restore: false  # creates restic/restore: "true" label if true (defaults to false)
+#         include: ["**"]  # optional, defaults applied in Python
+#         exclude: ["*.tmp"]  # optional, defaults applied in Python
+#         excludeLargerThan: "1G"  # optional, no default
+#         excludeCaches: true  # optional, defaults to true in Python
+#         excludeIfPresent: ".nobackup"  # optional, defaults to ".nobackup" in Python

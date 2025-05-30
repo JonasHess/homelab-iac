@@ -2,7 +2,7 @@
 {{- if .Values.deployment }}
 {{- if .Values.deployment.pvcMounts }}
 {{- range $mountName, $mount := .Values.deployment.pvcMounts }}
-{{- if and $mount.backup $mount.backup.enabled }}
+{{- if and $mount.backup (or $mount.backup.enabled $mount.backup.restore) }}
 ---
 apiVersion: backup.homelab.dev/v1
 kind: ResticBackup
@@ -12,7 +12,12 @@ metadata:
   labels:
     app: {{ $appName }}
     component: backup
-    backup.homelab.dev/enabled: "true"
+    {{- if $mount.backup.enabled }}
+    restic/backup: "true"
+    {{- end }}
+    {{- if $mount.backup.restore }}
+    restic/restore: "true"
+    {{- end }}
     argocd.argoproj.io/instance: {{ $.Release.Name }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
@@ -24,17 +29,12 @@ spec:
     {{- range $mount.backup.include }}
     - {{ . | quote }}
     {{- end }}
-  {{- else }}
-  include:
-    - "**"
   {{- end }}
   {{- if $mount.backup.exclude }}
   exclude:
     {{- range $mount.backup.exclude }}
     - {{ . | quote }}
     {{- end }}
-  {{- else }}
-  exclude: []
   {{- end }}
   {{- if $mount.backup.excludeLargerThan }}
   excludeLargerThan: {{ $mount.backup.excludeLargerThan | quote }}
