@@ -93,6 +93,7 @@ else
         
         # Build restic command arguments
         RESTIC_ARGS=""
+        INCLUDE_FILES_FILE=""
         
         # Add exclude file if it has content
         if [ -s "$EXCLUDE_FILE" ]; then
@@ -135,7 +136,7 @@ else
         echo "Starting backup of $BACKUP_PATH with args: $RESTIC_ARGS"
         
         # Execute backup with dynamic arguments
-        if [ -f "$INCLUDE_FILES_FILE" ]; then
+        if [ -n "$INCLUDE_FILES_FILE" ] && [ -f "$INCLUDE_FILES_FILE" ]; then
             # When using --files-from, don't specify the path as positional argument
             eval "restic backup $RESTIC_ARGS --tag 'homelab-$(date +%Y%m%d)' --one-file-system"
         else
