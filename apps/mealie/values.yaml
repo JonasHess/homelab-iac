@@ -9,6 +9,8 @@ generic:
       data:
         mountPath: /app/data
         hostPath: ~ # /mnt/somewhere/encrypted/apps/mealie/data
+        backup:
+          enabled: true
     envFrom:
       configMapRef: mealie-config
       secretRef: mealie-secret
