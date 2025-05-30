@@ -1,0 +1,52 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if .Values.deployment }}
+{{- if .Values.deployment.pvcMounts }}
+{{- range $mountName, $mount := .Values.deployment.pvcMounts }}
+{{- if and $mount.backup $mount.backup.enabled }}
+---
+apiVersion: backup.homelab.dev/v1
+kind: ResticBackup
+metadata:
+  name: {{ $appName }}-{{ $mountName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+    component: backup
+    backup.homelab.dev/enabled: "true"
+    argocd.argoproj.io/instance: {{ $.Release.Name }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+spec:
+  namespace: {{ $.Release.Namespace }}
+  pvcName: {{ $appName }}-{{ $mountName }}-pvc
+  {{- if $mount.backup.include }}
+  include:
+    {{- range $mount.backup.include }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- else }}
+  include:
+    - "**"
+  {{- end }}
+  {{- if $mount.backup.exclude }}
+  exclude:
+    {{- range $mount.backup.exclude }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- else }}
+  exclude: []
+  {{- end }}
+  {{- if $mount.backup.excludeLargerThan }}
+  excludeLargerThan: {{ $mount.backup.excludeLargerThan | quote }}
+  {{- end }}
+  {{- if $mount.backup.excludeCaches }}
+  excludeCaches: {{ $mount.backup.excludeCaches }}
+  {{- end }}
+  {{- if $mount.backup.excludeIfPresent }}
+  excludeIfPresent: {{ $mount.backup.excludeIfPresent | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

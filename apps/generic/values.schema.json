@@ -126,49 +126,41 @@
                 "description": "Path on the host that will be used as the persistent volume"
               },
               "backup": {
-                "oneOf": [
-                  {
+                "type": "object",
+                "description": "Backup configuration for this mount",
+                "properties": {
+                  "enabled": {
                     "type": "boolean",
-                    "description": "Simple backup enablement (true/false)"
+                    "description": "Enable backup for this mount"
                   },
-                  {
-                    "type": "object",
-                    "description": "Advanced backup configuration",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Enable backup for this mount"
-                      },
-                      "include": {
-                        "type": "array",
-                        "description": "Include patterns (restic glob patterns)",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "exclude": {
-                        "type": "array",
-                        "description": "Exclude patterns (restic glob patterns)",
-                        "items": {
-                          "type": "string"
-                        }
-                      },
-                      "excludeLargerThan": {
-                        "type": "string",
-                        "description": "Exclude files larger than this size (e.g., '100M', '1G')"
-                      },
-                      "excludeCaches": {
-                        "type": "boolean",
-                        "description": "Exclude cache directories marked with CACHEDIR.TAG"
-                      },
-                      "excludeIfPresent": {
-                        "type": "string",
-                        "description": "Exclude directories containing this file"
-                      }
-                    },
-                    "required": ["enabled"]
+                  "include": {
+                    "type": "array",
+                    "description": "Include patterns (restic glob patterns)",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "exclude": {
+                    "type": "array",
+                    "description": "Exclude patterns (restic glob patterns)",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "excludeLargerThan": {
+                    "type": "string",
+                    "description": "Exclude files larger than this size (e.g., '100M', '1G')"
+                  },
+                  "excludeCaches": {
+                    "type": "boolean",
+                    "description": "Exclude cache directories marked with CACHEDIR.TAG"
+                  },
+                  "excludeIfPresent": {
+                    "type": "string",
+                    "description": "Exclude directories containing this file"
                   }
-                ]
+                },
+                "required": ["enabled"]
               }
             }
           }

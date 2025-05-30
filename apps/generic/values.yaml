@@ -3,3 +3,18 @@ global:
   traefik:
     middlewareNamespace: ~
 appName: ~
+
+# Example deployment configuration with PVC mounts and backup
+# deployment:
+#   image: postgres:15-alpine
+#   pvcMounts:
+#     data:
+#       mountPath: "/var/lib/postgresql/data"
+#       hostPath: "/mnt/storage/postgres/data"
+#       backup:
+#         enabled: true
+#         include: ["**"]  # defaults to ["**"] if not specified
+#         exclude: ["*.tmp"]  # defaults to [] if not specified
+#         excludeLargerThan: "1G"  # optional
+#         excludeCaches: true  # optional
+#         excludeIfPresent: ".nobackup"  # optional
