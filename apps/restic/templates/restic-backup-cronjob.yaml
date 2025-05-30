@@ -24,7 +24,16 @@ spec:
           containers:
           - name: backup
             image: python:3.11-alpine
-            command: ["python", "/scripts/restic-operations.py", "backup", "backup.homelab.dev/enabled=true"]
+            command: ["/bin/sh"]
+            args:
+              - -c
+              - |
+                echo "Installing system dependencies..."
+                apk add --no-cache restic jq
+                echo "Installing Python dependencies..."
+                pip install --no-cache-dir -r /scripts/requirements.txt
+                echo "Starting backup operation..."
+                python /scripts/restic-operations.py backup backup.homelab.dev/enabled=true
             {{- if .Values.cronjob.env }}
             env:
             {{- range .Values.cronjob.env }}

@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Tuple, Optional
 
 import yaml
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
 
 class ResticOperationsError(Exception):
     """Custom exception for restic operations errors"""
@@ -28,7 +30,6 @@ class ResticOperations:
     def __init__(self):
         """Initialize the ResticOperations handler"""
         self.setup_logging()
-        self.install_dependencies()
         self.setup_clients()
         self.temp_dir = None
         
@@ -39,32 +40,10 @@ class ResticOperations:
             format='%(asctime)s - %(levelname)s - %(message)s'
         )
         self.logger = logging.getLogger(__name__)
-        
-    def install_dependencies(self):
-        """Install required dependencies at runtime"""
-        try:
-            self.logger.info("Installing Python dependencies...")
-            subprocess.run([
-                sys.executable, "-m", "pip", "install", "--no-cache-dir", 
-                "kubernetes", "pyyaml"
-            ], check=True, capture_output=True)
-            
-            self.logger.info("Installing system dependencies...")
-            subprocess.run([
-                "apk", "add", "--no-cache", "restic", "jq"
-            ], check=True, capture_output=True)
-            
-            self.logger.info("Dependencies installed successfully")
-            
-        except subprocess.CalledProcessError as e:
-            self.logger.error(f"Failed to install dependencies: {e}")
-            raise ResticOperationsError(f"Dependency installation failed: {e}")
             
     def setup_clients(self):
         """Initialize Kubernetes clients"""
         try:
-            from kubernetes import client, config
-            
             # Load in-cluster configuration
             try:
                 config.load_incluster_config()
@@ -102,7 +81,6 @@ class ResticOperations:
     def discover_crds(self, label_selector: str) -> List[Dict[str, Any]]:
         """Discover ResticBackup CRDs with specified label selector"""
         try:
-            from kubernetes.client.rest import ApiException
             
             self.logger.info(f"Discovering CRDs with label selector: {label_selector}")
             
@@ -177,8 +155,6 @@ class ResticOperations:
     def resolve_pvc_to_hostpath(self, pvc_name: str, namespace: str) -> str:
         """Resolve PVC to PV hostPath via Kubernetes API"""
         try:
-            from kubernetes.client.rest import ApiException
-            
             # Get PVC
             pvc = self.core_api.read_namespaced_persistent_volume_claim(
                 name=pvc_name, namespace=namespace

@@ -6,6 +6,8 @@ metadata:
 data:
   restic-operations.py: |
 {{ .Files.Get "assets/restic-operations.py" | indent 4 }}
+  requirements.txt: |
+{{ .Files.Get "assets/requirements.txt" | indent 4 }}
 ---
 apiVersion: v1
 kind: ConfigMap

@@ -25,7 +25,16 @@ spec:
           containers:
           - name: restore
             image: python:3.11-alpine
-            command: ["python", "/scripts/restic-operations.py", "restore", "backup.homelab.dev/restore=true"]
+            command: ["/bin/sh"]
+            args:
+              - -c
+              - |
+                echo "Installing system dependencies..."
+                apk add --no-cache restic jq
+                echo "Installing Python dependencies..."
+                pip install --no-cache-dir -r /scripts/requirements.txt
+                echo "Starting restore operation..."
+                python /scripts/restic-operations.py restore backup.homelab.dev/restore=true
             env:
             - name: RESTORE_DATE
               value: {{ .Values.restoreCronjob.date | quote }}
