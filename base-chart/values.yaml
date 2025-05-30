@@ -693,3 +693,13 @@ apps:
       namespace: argocd
       project: default
       syncWave: '1'
+
+  crossplane:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '2'  # Deploy early for infrastructure provisioning
