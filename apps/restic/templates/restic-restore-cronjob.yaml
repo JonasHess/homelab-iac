@@ -11,6 +11,8 @@ metadata:
 spec:
   suspend: true  # Always suspended - manual execution only
   schedule: "0 0 1 1 *"  # Dummy schedule (never runs)
+  successfulJobsHistoryLimit: {{ .Values.restoreCronjob.jobHistory.successfulJobsHistoryLimit | default 5 }}
+  failedJobsHistoryLimit: {{ .Values.restoreCronjob.jobHistory.failedJobsHistoryLimit | default 3 }}
   jobTemplate:
     spec:
       template:

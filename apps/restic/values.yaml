@@ -3,6 +3,8 @@ cronjob:
   schedule: "0 2 * * *"  # Daily at 2 AM
   image: restic/restic:latest
   restartPolicy: OnFailure
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
   pvcMounts: []
 #    tank0:
 #      mountPath: /mnt/tank0
@@ -60,6 +62,9 @@ examples:
 
 restoreCronjob:
   date: "2025-05-30"  # Date of backup to restore (YYYY-MM-DD format)
+  jobHistory:
+    successfulJobsHistoryLimit: 5
+    failedJobsHistoryLimit: 3
 
 generic:
   persistentVolumeClaims:
