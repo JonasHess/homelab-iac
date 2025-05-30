@@ -7,6 +7,8 @@ generic:
       config:
         mountPath: /config
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/homeassistant/config
+        backup:
+          enabled: true
   service:
     ports:
     - name: http
