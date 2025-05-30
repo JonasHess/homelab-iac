@@ -2,15 +2,7 @@ cronjob:
   enabled: true
   schedule: "0 2 * * *"  # Daily at 2 AM
   image: restic/restic:latest
-  command: ["/bin/sh", "/scripts/install-tools-and-backup.sh"]
   restartPolicy: OnFailure
-  configMapMounts:
-    backup-script:
-      name: restic-backup-script
-      mountPath: /scripts
-    backup-paths:
-      name: restic-backup-paths
-      mountPath: /config
   pvcMounts: []
 #    tank0:
 #      mountPath: /mnt/tank0
@@ -25,6 +17,46 @@ cronjob:
       value: "$(ACCESS_KEY_ID)"
     - name: AWS_SECRET_ACCESS_KEY
       value: "$(SECRET_ACCESS_KEY)"
+
+# Global backup exclusion rules (applied to ALL backups)
+globalBackupRules:
+  exclude:
+    # Log files
+    - "**/*.log"
+    - "**/*.log.*"
+    - "**/logs/**"
+    - "**/log/**"
+    
+    # Temporary files  
+    - "**/*.tmp"
+    - "**/*.temp"
+    - "**/tmp/**"
+    - "**/temp/**"
+    
+    # Cache directories
+    - "**/cache/**"
+    - "**/Cache/**"
+    - "**/.cache/**"
+    
+    # Thumbnails and previews
+    - "**/thumbnails/**"
+    - "**/Thumbnails/**"
+    - "**/.thumbnails/**"
+    
+    # System files
+    - "**/.DS_Store"
+    - "**/Thumbs.db"
+    - "**/.Trashes/**"
+    
+    # Build artifacts
+    - "**/node_modules/**"
+    - "**/target/**"
+    - "**/build/**"
+    - "**/dist/**"
+
+# Enable example CRDs for testing
+examples:
+  enabled: false
 
 restoreCronjob:
   date: "2025-05-30"  # Date of backup to restore (YYYY-MM-DD format)

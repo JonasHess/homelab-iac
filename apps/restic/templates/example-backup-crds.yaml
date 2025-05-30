@@ -1,0 +1,62 @@
+{{- if .Values.examples.enabled }}
+---
+# Example: Simple backup for Mealie data
+apiVersion: backup.homelab.dev/v1
+kind: ResticBackup
+metadata:
+  name: mealie-data-backup
+  labels:
+    backup.homelab.dev/enabled: "true"
+spec:
+  pvcName: mealie-data-pvc
+  namespace: argocd
+  exclude:
+    - "**/cache/**"
+    - "**/temp/**"
+  excludeLargerThan: "50M"
+---
+# Example: Photo library backup with includes
+apiVersion: backup.homelab.dev/v1
+kind: ResticBackup
+metadata:
+  name: immich-library-backup
+  labels:
+    backup.homelab.dev/enabled: "true"
+spec:
+  pvcName: immich-library-pvc
+  namespace: app-immich
+  include:
+    - "**/*.jpg"
+    - "**/*.jpeg"
+    - "**/*.png"
+    - "**/*.gif"
+    - "**/*.mp4"
+    - "**/*.mov"
+    - "**/*.avi"
+  exclude:
+    - "**/encoded-video/**"
+    - "**/preview/**"
+    - "**/thumbs/**"
+  excludeLargerThan: "1G"
+  excludeCaches: true
+---
+# Example: Document backup
+apiVersion: backup.homelab.dev/v1
+kind: ResticBackup
+metadata:
+  name: paperless-documents-backup
+  labels:
+    backup.homelab.dev/enabled: "true"
+spec:
+  pvcName: paperless-data-pvc
+  namespace: argocd
+  include:
+    - "**/documents/**"
+    - "**/*.pdf"
+    - "**/*.doc"
+    - "**/*.docx"
+  exclude:
+    - "**/index/**"
+    - "**/search/**"
+  excludeIfPresent: ".nobackup"
+{{- end }}

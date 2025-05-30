@@ -1,0 +1,70 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resticbackups.backup.homelab.dev
+  namespace: {{ $.Release.Namespace }}
+spec:
+  group: backup.homelab.dev
+  versions:
+  - name: v1
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+              - pvcName
+              - namespace
+            properties:
+              pvcName:
+                type: string
+                description: "Name of the PersistentVolumeClaim to backup"
+              namespace:
+                type: string
+                description: "Namespace where the PVC is located"
+              include:
+                type: array
+                description: "Include patterns (restic glob patterns)"
+                items:
+                  type: string
+              exclude:
+                type: array
+                description: "Exclude patterns (restic glob patterns)"
+                items:
+                  type: string
+              excludeLargerThan:
+                type: string
+                description: "Exclude files larger than this size (e.g., '100M', '1G')"
+                pattern: '^[0-9]+[KMGT]?$'
+              excludeCaches:
+                type: boolean
+                description: "Exclude cache directories marked with CACHEDIR.TAG"
+                default: false
+              excludeIfPresent:
+                type: string
+                description: "Exclude directories containing this file"
+          status:
+            type: object
+            properties:
+              lastBackupTime:
+                type: string
+                format: date-time
+                description: "Timestamp of the last successful backup"
+              lastBackupStatus:
+                type: string
+                enum: ["Success", "Failed", "Pending"]
+                description: "Status of the last backup attempt"
+              message:
+                type: string
+                description: "Human-readable message about the backup status"
+  scope: Cluster
+  names:
+    plural: resticbackups
+    singular: resticbackup
+    kind: ResticBackup
+    shortNames:
+    - rb
+    - backup

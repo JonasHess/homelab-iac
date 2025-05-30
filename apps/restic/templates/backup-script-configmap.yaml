@@ -4,7 +4,21 @@ metadata:
   name: restic-backup-script
   namespace: {{ $.Release.Namespace }}
 data:
-  backup-script.sh: |
-{{ .Files.Get "assets/backup-script.sh" | indent 4 }}
-  install-tools-and-backup.sh: |
-{{ .Files.Get "assets/install-tools-and-backup.sh" | indent 4 }}
+  restic-operations.py: |
+{{ .Files.Get "assets/restic-operations.py" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: restic-global-excludes
+  namespace: {{ $.Release.Namespace }}
+data:
+  global-excludes.yaml: |
+    globalExcludes:
+{{- if .Values.globalBackupRules }}
+  {{- if .Values.globalBackupRules.exclude }}
+    {{- range .Values.globalBackupRules.exclude }}
+      - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+{{- end }}

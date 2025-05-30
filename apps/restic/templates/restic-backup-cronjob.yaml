@@ -3,10 +3,11 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ $appName }}
+  name: {{ $appName }}-backup
   namespace: {{ $.Release.Namespace }}
   labels:
     app: {{ $appName }}
+    component: backup
 spec:
   schedule: {{ .Values.cronjob.schedule | quote }}
   jobTemplate:
@@ -15,15 +16,15 @@ spec:
         metadata:
           labels:
             app: {{ $appName }}
+            component: backup
         spec:
+          serviceAccountName: restic-backup-scanner
           restartPolicy: {{ .Values.cronjob.restartPolicy | default "OnFailure" }}
           hostname: {{ $appName }}-backup
           containers:
-          - name: {{ $appName }}
-            image: {{ .Values.cronjob.image }}
-            {{- if .Values.cronjob.command }}
-            command: {{ .Values.cronjob.command | toJson }}
-            {{- end }}
+          - name: backup
+            image: python:3.11-alpine
+            command: ["python", "/scripts/restic-operations.py", "backup", "backup.homelab.dev/enabled=true"]
             {{- if .Values.cronjob.env }}
             env:
             {{- range .Values.cronjob.env }}
@@ -37,27 +38,24 @@ spec:
             - secretRef:
                 name: {{ .Values.cronjob.envFrom.secretRef }}
             {{- end }}
-            {{- if .Values.cronjob.envFrom.configMapRef }}
-            - configMapRef:
-                name: {{ .Values.cronjob.envFrom.configMapRef }}
-            {{- end }}
             {{- end }}
             volumeMounts:
-            {{- range $name, $config := .Values.cronjob.configMapMounts }}
-            - name: {{ $name }}
-              mountPath: {{ $config.mountPath }}
-            {{- end }}
+            - name: scripts
+              mountPath: /scripts
+            - name: global-excludes
+              mountPath: /config
             {{- range $mountName, $mount := .Values.cronjob.pvcMounts }}
             - name: {{ $mountName }}-volume
               mountPath: {{ $mount.mountPath }}
             {{- end }}
           volumes:
-          {{- range $name, $config := .Values.cronjob.configMapMounts }}
-          - name: {{ $name }}
+          - name: scripts
             configMap:
-              name: {{ $config.name }}
+              name: restic-backup-script
               defaultMode: 0755
-          {{- end }}
+          - name: global-excludes
+            configMap:
+              name: restic-global-excludes
           {{- range $mountName, $mount := .Values.cronjob.pvcMounts }}
           - name: {{ $mountName }}-volume
             persistentVolumeClaim:

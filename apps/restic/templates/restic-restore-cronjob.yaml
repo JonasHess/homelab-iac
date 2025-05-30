@@ -6,7 +6,8 @@ metadata:
   name: {{ $appName }}-restore
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: {{ $appName }}-restore
+    app: {{ $appName }}
+    component: restore
 spec:
   suspend: true  # Always suspended - manual execution only
   schedule: "0 0 1 1 *"  # Dummy schedule (never runs)
@@ -15,14 +16,16 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ $appName }}-restore
+            app: {{ $appName }}
+            component: restore
         spec:
+          serviceAccountName: restic-backup-scanner
           restartPolicy: {{ .Values.restoreCronjob.restartPolicy | default "OnFailure" }}
           hostname: {{ $appName }}-restore
           containers:
-          - name: {{ $appName }}-restore
-            image: {{ .Values.restoreCronjob.image | default "restic/restic:latest" }}
-            command: ["/bin/sh", "/scripts/restore-script.sh"]
+          - name: restore
+            image: python:3.11-alpine
+            command: ["python", "/scripts/restic-operations.py", "restore", "backup.homelab.dev/restore=true"]
             env:
             - name: RESTORE_DATE
               value: {{ .Values.restoreCronjob.date | quote }}
@@ -36,20 +39,20 @@ spec:
             - secretRef:
                 name: restic-secret
             volumeMounts:
-            - name: restore-script
+            - name: scripts
               mountPath: /scripts
-            - name: backup-paths
+            - name: global-excludes
               mountPath: /config
             - name: restoreddata
               mountPath: /restored-data
           volumes:
-          - name: restore-script
+          - name: scripts
             configMap:
-              name: restic-restore-script
+              name: restic-backup-script
               defaultMode: 0755
-          - name: backup-paths
+          - name: global-excludes
             configMap:
-              name: restic-backup-paths
+              name: restic-global-excludes
           - name: restoreddata
             persistentVolumeClaim:
               claimName: {{ $appName }}-restoreddata-pvc
