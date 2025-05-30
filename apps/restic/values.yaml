@@ -2,7 +2,6 @@ cronjob:
   enabled: true
   schedule: "0 2 * * *"  # Daily at 2 AM
   image: restic/restic:latest
-  restartPolicy: OnFailure
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 1
   pvcMounts: []
