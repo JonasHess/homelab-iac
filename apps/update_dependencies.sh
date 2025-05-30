@@ -40,6 +40,16 @@ echo -e "${YELLOW}Building the generic chart...${NC}"
 helm package .
 echo -e "${GREEN}✓ Successfully built generic chart${NC}"
 
+# Clean up old generic chart packages
+echo -e "${YELLOW}Cleaning up old generic chart packages...${NC}"
+old_packages=$(find . -name "generic-*.tgz" -not -name "generic-${new_version}.tgz" | wc -l | tr -d ' ')
+if [ "$old_packages" -gt 0 ]; then
+    find . -name "generic-*.tgz" -not -name "generic-${new_version}.tgz" -delete
+    echo -e "${GREEN}✓ Removed ${old_packages} old generic chart package(s)${NC}"
+else
+    echo -e "${GREEN}✓ No old generic chart packages to clean up${NC}"
+fi
+
 # Return to the original directory
 cd "$ORIGINAL_DIR"
 
