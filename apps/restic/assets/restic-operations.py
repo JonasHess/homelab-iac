@@ -177,27 +177,58 @@ class ResticOperations:
         except Exception as e:
             raise ResticOperationsError(f"Error resolving {namespace}/{pvc_name}: {e}")
     
-    def run_restic_command(self, args: List[str], timeout: int = 3600) -> Tuple[bool, str, str]:
+    def run_restic_command(self, args: List[str], timeout: int = 3600, stream_output: bool = False) -> Tuple[bool, str, str]:
         """Execute a restic command with proper error handling"""
         try:
             self.logger.info(f"Executing: restic {' '.join(args)}")
             
-            result = subprocess.run(
-                ["restic"] + args,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False
-            )
+            if stream_output:
+                # Stream output in real-time for long-running operations
+                process = subprocess.Popen(
+                    ["restic"] + args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
+                
+                stdout_lines = []
+                while True:
+                    line = process.stdout.readline()
+                    if not line and process.poll() is not None:
+                        break
+                    if line:
+                        line = line.rstrip()
+                        print(f"[restic] {line}", flush=True)
+                        stdout_lines.append(line)
+                
+                process.wait(timeout=timeout)
+                success = process.returncode == 0
+                stdout = '\n'.join(stdout_lines)
+                stderr = ""
+                
+            else:
+                # Capture output for commands that need parsing
+                result = subprocess.run(
+                    ["restic"] + args,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                    check=False
+                )
+                success = result.returncode == 0
+                stdout = result.stdout
+                stderr = result.stderr
             
-            success = result.returncode == 0
             if success:
                 self.logger.info("Restic command completed successfully")
             else:
-                self.logger.error(f"Restic command failed with code {result.returncode}")
-                self.logger.error(f"Error output: {result.stderr}")
+                self.logger.error(f"Restic command failed with code {process.returncode if stream_output else result.returncode}")
+                if stderr:
+                    self.logger.error(f"Error output: {stderr}")
             
-            return success, result.stdout, result.stderr
+            return success, stdout, stderr
             
         except subprocess.TimeoutExpired:
             self.logger.error(f"Restic command timed out after {timeout} seconds")
@@ -289,7 +320,7 @@ class ResticOperations:
             include_file, exclude_file = self.build_filter_files(item, global_excludes)
             
             # Build restic arguments
-            args = ["backup"]
+            args = ["backup", "--verbose"]
             
             if include_file:
                 args.extend(["--files-from", include_file])
@@ -313,8 +344,8 @@ class ResticOperations:
             # Add standard options
             args.append("--one-file-system")
             
-            # Execute backup
-            success, stdout, stderr = self.run_restic_command(args)
+            # Execute backup with streaming output to show upload progress
+            success, stdout, stderr = self.run_restic_command(args, stream_output=True)
             results[item_name] = success
             
             if success:
