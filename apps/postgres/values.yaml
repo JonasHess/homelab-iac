@@ -7,6 +7,8 @@ generic:
       data:
         mountPath: /var/lib/postgresql/data
         hostPath: ~ # /mnt/somewhere/encrypted/apps/postgres/data
+        backup:
+          enabled: true
     envFrom:
       secretRef: postgres-secret
       configMapRef: postgres-config

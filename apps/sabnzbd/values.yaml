@@ -7,6 +7,8 @@ generic:
       config:
         mountPath: /config
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/sabnzbd/config
+        backup:
+          enabled: true
       media:
         mountPath: /mnt/media
         hostPath: ~ # /mnt/somewhere/encrypted/media

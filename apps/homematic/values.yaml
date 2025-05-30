@@ -1,6 +1,8 @@
 persistence:
   data:
     mountPath: /mnt/somewhere/unencrypted/apps/homematic/ccu_data
+    backup:
+      enabled: true
 generic:
   ingress:
     https:

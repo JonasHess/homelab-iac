@@ -16,6 +16,8 @@ generic:
       data:
         mountPath: /app/data
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/zigbee2mqtt/data
+        backup:
+          enabled: true
     deviceMounts:
       zigbeeusb:
         mountPath: /dev/ttyACM0

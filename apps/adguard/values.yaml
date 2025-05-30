@@ -10,6 +10,9 @@ generic:
       config:
         mountPath: /opt/adguardhome/conf
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/adguard/config
+        backup:
+          enabled: true
+
       data:
         mountPath: /opt/adguardhome/work
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/adguard/data

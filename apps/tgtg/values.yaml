@@ -8,6 +8,8 @@ generic:
       tokens:
         mountPath: /tokens
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/tgtg/tokens
+        backup:
+          enabled: true
   service:
     ports:
     - name: http

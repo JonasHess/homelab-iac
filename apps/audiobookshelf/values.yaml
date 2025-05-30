@@ -7,6 +7,8 @@ generic:
       config:
         mountPath: /config
         hostPath: ~ # /mnt/somewhere/encrypted/apps/audiobookshelf/config
+        backup:
+          enabled: true
       metadata:
         mountPath: /metadata
         hostPath: ~ # /mnt/somewhere/encrypted/apps/audiobookshelf/metadata

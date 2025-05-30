@@ -9,9 +9,13 @@ generic:
       data:
         mountPath: /srv/sftpgo
         hostPath: ~ # /mnt/somewhere/encrypted/apps/sftpgo/data
+        backup:
+          enabled: true
       config:
         mountPath: /var/lib/sftpgo
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/sftpgo/config
+        backup:
+          enabled: true
       stirlingpdf:
         mountPath: /mnt/stirlingpdf/pipeline/
         hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
