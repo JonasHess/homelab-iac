@@ -622,18 +622,6 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy after core services
-      helm:
-        values:
-          generic:
-            deployment:
-              pvcMounts:
-                data:
-                  backup:
-                    enabled: true
-                    exclude:
-                      - "**/cache/**"
-                      - "**/temp/**"
-                    excludeLargerThan: "50M"
 
   whoami:
     enabled: false
