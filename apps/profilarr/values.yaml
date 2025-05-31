@@ -1,0 +1,35 @@
+generic:
+  deployment:
+    image: santiagosayshey/profilarr:latest
+    ports:
+    - containerPort: 6868
+    env:
+    - name: TZ
+      value: "UTC"
+    envFrom:
+    - configMapRef:
+        name: profilarr-config
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/profilarr/config
+        backup:
+          enabled: true
+  service:
+    ports:
+    - name: http
+      port: 6868
+  ingress:
+    https:
+    - subdomain: profilarr
+      port: 6868
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: profilarr
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 6868
+  externalSecrets:
+    profilarr-secret:
+      - RADARR_API_KEY: /profilarr/radarr_api_key   # API key from radarr settings
+      - SONARR_API_KEY: /profilarr/sonarr_api_key   # API key from sonarr settings

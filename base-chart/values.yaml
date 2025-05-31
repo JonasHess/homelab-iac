@@ -528,6 +528,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "14"  # Deploy after Prowlarr
+  profilarr:
+    enabled: false
+    homer:
+      enabled: true
+      group: "starrs"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/sonarr.svg"
+      subtitle: "Quality Profile Manager"
+      displayName: "Profilarr"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after *arr applications
   tautulli:
     enabled: false
     homer:

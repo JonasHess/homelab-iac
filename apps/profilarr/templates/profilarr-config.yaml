@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: profilarr-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  RADARR_URL: "http://radarr.{{ $.Release.Namespace }}.svc.cluster.local:7878"
+  SONARR_URL: "http://sonarr.{{ $.Release.Namespace }}.svc.cluster.local:8989"
