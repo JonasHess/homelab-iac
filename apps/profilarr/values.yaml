@@ -7,8 +7,7 @@ generic:
     - name: TZ
       value: "UTC"
     envFrom:
-    - configMapRef:
-        name: profilarr-config
+      configMapRef: profilarr-config
     pvcMounts:
       config:
         mountPath: /config
