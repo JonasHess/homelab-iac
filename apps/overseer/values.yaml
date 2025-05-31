@@ -1,0 +1,35 @@
+generic:
+  deployment:
+    image: sctx/overseerr:latest
+    ports:
+    - containerPort: 5055
+    env:
+    - name: TZ
+      value: "UTC"
+    envFrom:
+      configMapRef: overseer-config
+    pvcMounts:
+      config:
+        mountPath: /app/config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/overseer/config
+        backup:
+          enabled: true
+  service:
+    ports:
+    - name: http
+      port: 5055
+  ingress:
+    https:
+    - subdomain: overseer
+      port: 5055
+      middlewares:
+      - traefik-forward-auth
+    - subdomain: overseer
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/api`)'
+      port: 5055
+  externalSecrets:
+    overseer-secret:
+      - PLEX_API_KEY: /overseer/plex_api_key         # API key from plex settings > network
+      - RADARR_API_KEY: /overseer/radarr_api_key     # API key from radarr settings
+      - SONARR_API_KEY: /overseer/sonarr_api_key     # API key from sonarr settings

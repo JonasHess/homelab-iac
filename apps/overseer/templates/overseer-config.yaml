@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: overseer-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  PLEX_URL: "http://plex.{{ $.Release.Namespace }}.svc.cluster.local:32400"
+  RADARR_URL: "http://radarr.{{ $.Release.Namespace }}.svc.cluster.local:7878"
+  SONARR_URL: "http://sonarr.{{ $.Release.Namespace }}.svc.cluster.local:8989"
