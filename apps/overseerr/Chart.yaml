@@ -4,7 +4,7 @@ dependencies:
 - name: generic
   repository: file://../generic
   version: 0.1.15
-description: Helm chart for overseer
-name: overseer
+description: Helm chart for overseerr
+name: overseerr
 type: application
 version: 0.1.0

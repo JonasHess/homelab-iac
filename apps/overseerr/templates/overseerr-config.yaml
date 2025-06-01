@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: overseer-config
+  name: overseerr-config
   namespace: {{ $.Release.Namespace }}
 data:
   PLEX_URL: "http://plex.{{ $.Release.Namespace }}.svc.cluster.local:32400"
