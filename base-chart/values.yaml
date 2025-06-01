@@ -389,7 +389,7 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "20"  # Heavy resource usage, deploy later
-  overseer:
+  overseerr:
     enabled: false
     homer:
       enabled: true
