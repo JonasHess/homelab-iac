@@ -2,12 +2,26 @@
   "modno": 2,
   "version": 4,
   "instance": "backrest-homelab-instance",
+  "auth": {
+    "disabled": false,
+    "users": [
+      {
+        "name": "admin",
+        "needsBcrypt": true,
+        "passwordBcrypt": "${RESTIC_PASSWORD}"
+      }
+    ]
+  },
   "repos": [
     {
       "id": "b2-backup",
-      "uri": "s3:${ENDPOINT}/${BUCKET}",
       "guid": "b8c4d8e27f5a4c6b9e3d1a2b3c4d5e6f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
+      "uri": "s3:${ENDPOINT}/${BUCKET}",
       "password": "${RESTIC_PASSWORD}",
+      "env": [
+        "AWS_SHARED_CREDENTIALS_FILE=/config/credentials"
+      ],
+      "flags": [],
       "prunePolicy": {
         "maxUnusedPercent": 10,
         "schedule": {
@@ -22,10 +36,12 @@
           "disabled": true
         }
       },
-      "commandPrefix": {},
-      "env": [
-        "AWS_SHARED_CREDENTIALS_FILE=/config/credentials"
-      ]
+      "commandPrefix": {
+        "ioNice": "IO_DEFAULT",
+        "cpuNice": "CPU_DEFAULT"
+      },
+      "autoUnlock": false,
+      "hooks": []
     }
   ],
   "plans": []
