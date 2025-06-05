@@ -459,11 +459,15 @@ class ResticOperations:
             # Parse lock information to check if it's stale
             if "by root" in stderr and "restic-backup" in stderr:
                 # This appears to be our own lock - check if it's stale (older than 10 minutes)
-                time_match = re.search(r'(\d+)m(\d+\.\d+)s ago', stderr)
+                # Handle both hour and minute formats: "126h2m59s ago" or "15m30s ago"
+                time_match = re.search(r'(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)? ago', stderr)
                 if time_match:
-                    minutes = int(time_match.group(1))
-                    if minutes >= 10:  # Lock is stale (older than 10 minutes)
-                        self.logger.info(f"Found stale lock from {minutes} minutes ago, unlocking...")
+                    hours = int(time_match.group(1)) if time_match.group(1) else 0
+                    minutes = int(time_match.group(2)) if time_match.group(2) else 0
+                    total_minutes = hours * 60 + minutes
+                    
+                    if total_minutes >= 10:  # Lock is stale (older than 10 minutes)
+                        self.logger.info(f"Found stale lock from {total_minutes} minutes ago, unlocking...")
                         unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
                         if not unlock_success:
                             self.logger.error(f"Repository unlock failed: {unlock_stderr}")
