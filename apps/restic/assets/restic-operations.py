@@ -455,6 +455,12 @@ class ResticOperations:
         self.logger.info("Checking repository lock status...")
         success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
         
+        # TEMPORARY DEBUGGING: Log the raw output
+        self.logger.info(f"DEBUG: restic list locks success={success}")
+        self.logger.info(f"DEBUG: stdout length={len(stdout) if stdout else 0}")
+        self.logger.info(f"DEBUG: stdout repr={repr(stdout[:200]) if stdout else 'None'}")
+        self.logger.info(f"DEBUG: stderr={repr(stderr[:200]) if stderr else 'None'}")
+        
         if success and stdout.strip():
             try:
                 # Parse each line as a separate JSON object (restic outputs one lock per line)
@@ -487,6 +493,7 @@ class ResticOperations:
                                 return True
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 self.logger.error(f"Failed to parse lock information: {e}")
+                self.logger.error("FAILING EARLY due to lock parsing error")
                 return False
         elif not success and "repository is already locked" in stderr:
             self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
@@ -515,6 +522,30 @@ class ResticOperations:
         """Main execution function"""
         try:
             self.logger.info(f"Starting {operation} operation with selector: {label_selector}")
+            
+            # TEMPORARY: Test lock parsing at startup for debugging
+            self.logger.info("TESTING lock parsing at startup...")
+            success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
+            self.logger.info(f"DEBUG STARTUP: success={success}")
+            self.logger.info(f"DEBUG STARTUP: stdout length={len(stdout) if stdout else 0}")
+            self.logger.info(f"DEBUG STARTUP: stdout repr={repr(stdout[:200]) if stdout else 'None'}")
+            print("=== RAW LOCK OUTPUT START ===")
+            print(repr(stdout))
+            print("=== RAW LOCK OUTPUT END ===")
+            print("=== RAW STDERR START ===")
+            print(repr(stderr))
+            print("=== RAW STDERR END ===")
+            if success and stdout.strip():
+                try:
+                    locks = []
+                    for line in stdout.strip().split('\n'):
+                        if line.strip():
+                            locks.append(json.loads(line))
+                    self.logger.info(f"DEBUG STARTUP: Successfully parsed {len(locks)} locks")
+                except Exception as e:
+                    self.logger.error(f"DEBUG STARTUP: Lock parsing failed: {e}")
+                    self.logger.error("FAILING EARLY due to startup lock parsing test")
+                    return 1
             
             # Load global configuration
             global_config = self.load_global_config()
