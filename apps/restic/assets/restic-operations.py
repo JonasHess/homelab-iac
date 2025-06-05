@@ -451,36 +451,41 @@ class ResticOperations:
         self.logger.info("Running repository maintenance...")
         maintenance_success = True
         
-        # Check if repository is locked and if it's safe to unlock
+        # Check for existing locks and remove stale ones
         self.logger.info("Checking repository lock status...")
         success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
         
-        if not success and "repository is already locked" in stderr:
-            # Parse lock information to check if it's stale
-            if "by root" in stderr and "restic-backup" in stderr:
-                # This appears to be our own lock - check if it's stale (older than 10 minutes)
-                # Handle both hour and minute formats: "126h2m59s ago" or "15m30s ago"
-                time_match = re.search(r'(?:(\d+)h)?(?:(\d+)m)?(?:(\d+(?:\.\d+)?)s)? ago', stderr)
-                if time_match:
-                    hours = int(time_match.group(1)) if time_match.group(1) else 0
-                    minutes = int(time_match.group(2)) if time_match.group(2) else 0
-                    total_minutes = hours * 60 + minutes
+        if success and stdout.strip():
+            try:
+                locks = json.loads(stdout)
+                if locks:
+                    # Check if any locks are stale (older than 10 minutes)
+                    current_time = datetime.now()
                     
-                    if total_minutes >= 10:  # Lock is stale (older than 10 minutes)
-                        self.logger.info(f"Found stale lock from {total_minutes} minutes ago, unlocking...")
-                        unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
-                        if not unlock_success:
-                            self.logger.error(f"Repository unlock failed: {unlock_stderr}")
-                            return False  # Maintenance failed
-                    else:
-                        self.logger.warning(f"Repository locked by active process, skipping maintenance")
-                        return True  # Not a failure, just skipped
-                else:
-                    self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
-                    return True  # Not a failure, just skipped
-            else:
-                self.logger.warning(f"Repository locked by different process, skipping maintenance: {stderr}")
-                return True  # Not a failure, just skipped
+                    for lock in locks:
+                        lock_time_str = lock.get('time')
+                        if lock_time_str:
+                            # Parse ISO timestamp, removing 'Z' and microseconds for simplicity
+                            clean_time_str = lock_time_str.replace('Z', '').split('.')[0]
+                            lock_time = datetime.fromisoformat(clean_time_str)
+                            age_minutes = (current_time - lock_time).total_seconds() / 60
+                            
+                            if age_minutes >= 10:
+                                self.logger.info(f"Found stale lock from {age_minutes:.1f} minutes ago, unlocking...")
+                                unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
+                                if not unlock_success:
+                                    self.logger.error(f"Repository unlock failed: {unlock_stderr}")
+                                    return False
+                                break
+                            else:
+                                self.logger.warning(f"Repository locked by active process ({age_minutes:.1f} min ago), skipping maintenance")
+                                return True
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                self.logger.error(f"Failed to parse lock information: {e}")
+                return False
+        elif not success and "repository is already locked" in stderr:
+            self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
+            return True
         
         # Integrity check
         self.logger.info("Verifying repository integrity...")
