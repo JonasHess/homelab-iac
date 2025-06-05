@@ -676,6 +676,19 @@ apps:
       namespace: argocd
       project: default
       syncWave: '15'
+  backrest:
+    enabled: false
+    homer:
+      enabled: true
+      group: infrastructure
+      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/restic.svg
+      subtitle: "Backup Management UI"
+      displayName: "Backrest"
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '16'  # Deploy after restic
     # Global backup exclusion rules (applied to ALL backups)
     globalBackupRules:
       exclude:
