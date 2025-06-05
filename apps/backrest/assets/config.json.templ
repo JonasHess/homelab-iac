@@ -9,18 +9,18 @@
       "guid": "b8c4d8e27f5a4c6b9e3d1a2b3c4d5e6f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d",
       "password": "${RESTIC_PASSWORD}",
       "prunePolicy": {
+        "maxUnusedPercent": 10,
         "schedule": {
-          "cron": "0 0 1 * *",
-          "clock": "CLOCK_LAST_RUN_TIME"
-        },
-        "maxUnusedPercent": 10
+          "clock": "CLOCK_LAST_RUN_TIME",
+          "disabled": true
+        }
       },
       "checkPolicy": {
+        "readDataSubsetPercent": 0,
         "schedule": {
-          "cron": "0 3 * * 0",
-          "clock": "CLOCK_LAST_RUN_TIME"
-        },
-        "readDataSubsetPercent": 0
+          "clock": "CLOCK_LAST_RUN_TIME",
+          "disabled": true
+        }
       },
       "commandPrefix": {}
     }
