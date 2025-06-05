@@ -21,9 +21,6 @@ deployment:
   envFrom:
     secretRef: restic-secret
 generic:
-  externalSecrets:
-    backrest-secret:
-      - BACKREST_PASSWORD: "/backrest/passwordBcryp"
   persistentVolumeClaims:
     data: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
     cache: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache

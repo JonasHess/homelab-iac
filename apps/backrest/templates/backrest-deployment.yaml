@@ -23,7 +23,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
-              apk add --no-cache gettext
+              apk add --no-cache gettext apache2-utils
+              export BACKREST_PASSWORD=$(htpasswd -bnBC 10 "" "$RESTIC_PASSWORD" | tr -d ':\n' | base64)
               envsubst < /config-template/config.json.templ > /config/config.json
               envsubst < /config-template/credentials.templ > /config/credentials
           volumeMounts:
@@ -34,8 +35,6 @@ spec:
           envFrom:
             - secretRef:
                 name: restic-secret
-            - secretRef:
-                name: backrest-secret
       containers:
         - name: backrest
           image: {{ .Values.deployment.image }}
@@ -58,8 +57,6 @@ spec:
           envFrom:
             - secretRef:
                 name: restic-secret
-            - secretRef:
-                name: backrest-secret
           env:
             {{- range $env := .Values.deployment.env }}
             - name: {{ $env.name }}
