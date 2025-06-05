@@ -15,6 +15,7 @@ spec:
   failedJobsHistoryLimit: {{ .Values.cronjob.failedJobsHistoryLimit | default 1 }}
   jobTemplate:
     spec:
+      backoffLimit: 0  # Don't retry failed pods
       template:
         metadata:
           labels:

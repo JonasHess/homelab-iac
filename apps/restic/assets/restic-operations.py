@@ -457,7 +457,12 @@ class ResticOperations:
         
         if success and stdout.strip():
             try:
-                locks = json.loads(stdout)
+                # Parse each line as a separate JSON object (restic outputs one lock per line)
+                locks = []
+                for line in stdout.strip().split('\n'):
+                    if line.strip():
+                        locks.append(json.loads(line))
+                
                 if locks:
                     # Check if any locks are stale (older than 10 minutes)
                     current_time = datetime.now()
