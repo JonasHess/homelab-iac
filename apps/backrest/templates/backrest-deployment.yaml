@@ -24,7 +24,7 @@ spec:
           args:
             - |
               apk add --no-cache gettext apache2-utils
-              export BACKREST_PASSWORD=$(htpasswd -bnBC 10 "" "$RESTIC_PASSWORD" | tr -d ':\n' | base64)
+              export BACKREST_PASSWORD=$(htpasswd -bnBC 10 "" "$RESTIC_PASSWORD" | tr -d ':\n' | base64 | tr -d '\n')
               envsubst < /config-template/config.json.templ > /config/config.json
               envsubst < /config-template/credentials.templ > /config/credentials
           volumeMounts:
