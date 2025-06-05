@@ -451,22 +451,6 @@ class ResticOperations:
         self.logger.info("Running repository maintenance...")
         maintenance_success = True
         
-        # Check for existing locks - if any exist, just unlock them (simplified approach)
-        self.logger.info("Checking repository lock status...")
-        success, stdout, stderr = self.run_restic_command(["list", "locks"])
-        
-        if success and stdout.strip():
-            # If any locks exist, try to unlock (simplified - no age checking)
-            lock_ids = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
-            self.logger.info(f"Found {len(lock_ids)} locks, attempting to unlock...")
-            unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
-            if not unlock_success:
-                self.logger.error(f"Repository unlock failed: {unlock_stderr}")
-                return False
-        elif not success and "repository is already locked" in stderr:
-            self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
-            return True
-        
         # Integrity check
         self.logger.info("Verifying repository integrity...")
         success, stdout, stderr = self.run_restic_command(["check", "--read-data-subset=5%"])
@@ -490,18 +474,6 @@ class ResticOperations:
         """Main execution function"""
         try:
             self.logger.info(f"Starting {operation} operation with selector: {label_selector}")
-            
-            # TEMPORARY: Test lock parsing at startup for debugging  
-            self.logger.info("TESTING lock parsing at startup...")
-            # restic list locks doesn't support --json, just return lock IDs
-            # We'll skip lock age checking since we can't get timestamps easily
-            success, stdout, stderr = self.run_restic_command(["list", "locks"])
-            self.logger.info(f"DEBUG STARTUP: success={success}")
-            if success and stdout.strip():
-                lock_ids = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
-                self.logger.info(f"DEBUG STARTUP: Found {len(lock_ids)} locks: {lock_ids}")
-            else:
-                self.logger.info("DEBUG STARTUP: No locks found")
             
             # Load global configuration
             global_config = self.load_global_config()
