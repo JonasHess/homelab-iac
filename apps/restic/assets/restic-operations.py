@@ -451,49 +451,17 @@ class ResticOperations:
         self.logger.info("Running repository maintenance...")
         maintenance_success = True
         
-        # Check for existing locks and remove stale ones
+        # Check for existing locks - if any exist, just unlock them (simplified approach)
         self.logger.info("Checking repository lock status...")
-        success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
-        
-        # TEMPORARY DEBUGGING: Log the raw output
-        self.logger.info(f"DEBUG: restic list locks success={success}")
-        self.logger.info(f"DEBUG: stdout length={len(stdout) if stdout else 0}")
-        self.logger.info(f"DEBUG: stdout repr={repr(stdout[:200]) if stdout else 'None'}")
-        self.logger.info(f"DEBUG: stderr={repr(stderr[:200]) if stderr else 'None'}")
+        success, stdout, stderr = self.run_restic_command(["list", "locks"])
         
         if success and stdout.strip():
-            try:
-                # Parse each line as a separate JSON object (restic outputs one lock per line)
-                locks = []
-                for line in stdout.strip().split('\n'):
-                    if line.strip():
-                        locks.append(json.loads(line))
-                
-                if locks:
-                    # Check if any locks are stale (older than 10 minutes)
-                    current_time = datetime.now()
-                    
-                    for lock in locks:
-                        lock_time_str = lock.get('time')
-                        if lock_time_str:
-                            # Parse ISO timestamp, removing 'Z' and microseconds for simplicity
-                            clean_time_str = lock_time_str.replace('Z', '').split('.')[0]
-                            lock_time = datetime.fromisoformat(clean_time_str)
-                            age_minutes = (current_time - lock_time).total_seconds() / 60
-                            
-                            if age_minutes >= 10:
-                                self.logger.info(f"Found stale lock from {age_minutes:.1f} minutes ago, unlocking...")
-                                unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
-                                if not unlock_success:
-                                    self.logger.error(f"Repository unlock failed: {unlock_stderr}")
-                                    return False
-                                break
-                            else:
-                                self.logger.warning(f"Repository locked by active process ({age_minutes:.1f} min ago), skipping maintenance")
-                                return True
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                self.logger.error(f"Failed to parse lock information: {e}")
-                self.logger.error("FAILING EARLY due to lock parsing error")
+            # If any locks exist, try to unlock (simplified - no age checking)
+            lock_ids = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
+            self.logger.info(f"Found {len(lock_ids)} locks, attempting to unlock...")
+            unlock_success, unlock_stdout, unlock_stderr = self.run_restic_command(["unlock"])
+            if not unlock_success:
+                self.logger.error(f"Repository unlock failed: {unlock_stderr}")
                 return False
         elif not success and "repository is already locked" in stderr:
             self.logger.warning(f"Repository locked, skipping maintenance: {stderr}")
@@ -523,29 +491,17 @@ class ResticOperations:
         try:
             self.logger.info(f"Starting {operation} operation with selector: {label_selector}")
             
-            # TEMPORARY: Test lock parsing at startup for debugging
+            # TEMPORARY: Test lock parsing at startup for debugging  
             self.logger.info("TESTING lock parsing at startup...")
-            success, stdout, stderr = self.run_restic_command(["list", "locks", "--json"])
+            # restic list locks doesn't support --json, just return lock IDs
+            # We'll skip lock age checking since we can't get timestamps easily
+            success, stdout, stderr = self.run_restic_command(["list", "locks"])
             self.logger.info(f"DEBUG STARTUP: success={success}")
-            self.logger.info(f"DEBUG STARTUP: stdout length={len(stdout) if stdout else 0}")
-            self.logger.info(f"DEBUG STARTUP: stdout repr={repr(stdout[:200]) if stdout else 'None'}")
-            print("=== RAW LOCK OUTPUT START ===")
-            print(repr(stdout))
-            print("=== RAW LOCK OUTPUT END ===")
-            print("=== RAW STDERR START ===")
-            print(repr(stderr))
-            print("=== RAW STDERR END ===")
             if success and stdout.strip():
-                try:
-                    locks = []
-                    for line in stdout.strip().split('\n'):
-                        if line.strip():
-                            locks.append(json.loads(line))
-                    self.logger.info(f"DEBUG STARTUP: Successfully parsed {len(locks)} locks")
-                except Exception as e:
-                    self.logger.error(f"DEBUG STARTUP: Lock parsing failed: {e}")
-                    self.logger.error("FAILING EARLY due to startup lock parsing test")
-                    return 1
+                lock_ids = [line.strip() for line in stdout.strip().split('\n') if line.strip()]
+                self.logger.info(f"DEBUG STARTUP: Found {len(lock_ids)} locks: {lock_ids}")
+            else:
+                self.logger.info("DEBUG STARTUP: No locks found")
             
             # Load global configuration
             global_config = self.load_global_config()
