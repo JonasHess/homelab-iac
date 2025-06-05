@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: garethgeorge/backrest:1.8.1
+    image: garethgeorge/backrest:v1.8.1
     ports:
     - containerPort: 9898
     env:
