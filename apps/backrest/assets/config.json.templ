@@ -3,12 +3,12 @@
   "version": 4,
   "instance": "backrest-homelab-instance",
   "auth": {
-    "disabled": false,
+    "disabled": true,
     "users": [
       {
         "name": "admin",
         "needsBcrypt": false,
-        "password": "${RESTIC_PASSWORD}"
+        "passwordBcrypt": "${RESTIC_PASSWORD}"
       }
     ]
   },
