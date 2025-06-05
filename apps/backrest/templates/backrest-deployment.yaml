@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backrest-deployment
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: backrest
+  template:
+    metadata:
+      labels:
+        app: backrest
+    spec:
+      initContainers:
+        - name: init-config
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              apk add --no-cache gettext
+              envsubst < /config-template/config.json.templ > /config/config.json
+              envsubst < /config-template/credentials.templ > /config/credentials
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template
+            - name: config-output
+              mountPath: /config
+          envFrom:
+            - secretRef:
+                name: restic-secret
+      containers:
+        - name: backrest
+          image: {{ .Values.deployment.image }}
+          imagePullPolicy: Always
+          ports:
+            {{- range $port := .Values.deployment.ports }}
+            - containerPort: {{ $port.containerPort }}
+            {{- end }}
+          volumeMounts:
+            - mountPath: /data
+              name: backrest-data-volume
+            - mountPath: /cache
+              name: backrest-cache-volume
+            - mountPath: /tmp
+              name: backrest-tmp-volume
+            - mountPath: /restore
+              name: backrest-restore-volume
+            - name: config-output
+              mountPath: /config
+          envFrom:
+            - secretRef:
+                name: restic-secret
+          env:
+            {{- range $env := .Values.deployment.env }}
+            - name: {{ $env.name }}
+              value: {{ $env.value | quote }}
+            {{- end }}
+      volumes:
+        - name: backrest-data-volume
+          persistentVolumeClaim:
+            claimName: backrest-data-pvc
+        - name: backrest-cache-volume
+          persistentVolumeClaim:
+            claimName: backrest-cache-pvc
+        - name: backrest-tmp-volume
+          persistentVolumeClaim:
+            claimName: backrest-tmp-pvc
+        - name: backrest-restore-volume
+          persistentVolumeClaim:
+            claimName: backrest-restore-pvc
+        - name: config-template
+          configMap:
+            name: backrest-config-map
+        - name: config-output
+          emptyDir: {}
+

@@ -1,49 +1,31 @@
+appName: backrest
+
+# Custom deployment configuration (not using generic chart deployment)
+deployment:
+  image: garethgeorge/backrest:v1.8.1
+  ports:
+  - containerPort: 9898
+  env:
+  - name: TZ
+    value: "UTC"
+  - name: BACKREST_DATA
+    value: "/data"
+  - name: BACKREST_CONFIG
+    value: "/config/config.json"
+  - name: XDG_CACHE_HOME
+    value: "/cache"
+  - name: TMPDIR
+    value: "/tmp"
+  - name: AWS_SHARED_CREDENTIALS_FILE
+    value: "/config/credentials"
+  envFrom:
+    secretRef: restic-secret
 generic:
-  deployment:
-    image: garethgeorge/backrest:v1.8.1
-    ports:
-    - containerPort: 9898
-    env:
-    - name: TZ
-      value: "UTC"
-    - name: BACKREST_DATA
-      value: "/data"
-    - name: BACKREST_CONFIG
-      value: "/config/config.json"
-    - name: XDG_CACHE_HOME
-      value: "/cache"
-    - name: TMPDIR
-      value: "/tmp"
-    - name: RESTIC_REPOSITORY
-      value: "s3:$(ENDPOINT)/$(BUCKET)"
-    - name: AWS_ACCESS_KEY_ID
-      value: "$(ACCESS_KEY_ID)"
-    - name: AWS_SECRET_ACCESS_KEY
-      value: "$(SECRET_ACCESS_KEY)"
-    envFrom:
-      secretRef: restic-secret
-    pvcMounts:
-      data:
-        mountPath: /data
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
-        backup:
-          enabled: true
-      config:
-        mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/config
-        backup:
-          enabled: true
-      cache:
-        mountPath: /cache
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache
-      tmp:
-        mountPath: /tmp
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/tmp
-      restore:
-        mountPath: /restore
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/restore
-        backup:
-          enabled: false
+  persistentVolumeClaims:
+    data: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
+    cache: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache
+    tmp: ~ # /mnt/somewhere/unencrypted/apps/backrest/tmp
+    restore: ~ # /mnt/somewhere/unencrypted/apps/backrest/restore
   service:
     ports:
     - name: http

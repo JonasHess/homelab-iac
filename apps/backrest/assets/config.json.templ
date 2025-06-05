@@ -1,0 +1,27 @@
+{
+  "repos": [
+    {
+      "id": "b2-backup",
+      "uri": "s3:${ENDPOINT}/${BUCKET}",
+      "guid": "b8c4d8e2-7f5a-4c6b-9e3d-1a2b3c4d5e6f",
+      "password": "${RESTIC_PASSWORD}",
+      "prunePolicy": {
+        "schedule": {
+          "cron": "0 0 1 * *",
+          "clock": "CLOCK_LAST_RUN_TIME"
+        },
+        "maxUnusedPercent": 10
+      },
+      "checkPolicy": {
+        "schedule": {
+          "cron": "0 3 * * 0",
+          "clock": "CLOCK_LAST_RUN_TIME"
+        },
+        "readDataSubsetPercent": 0
+      },
+      "commandPrefix": {},
+      "autoUnlock": false,
+      "hooks": []
+    }
+  ]
+}
