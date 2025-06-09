@@ -42,7 +42,7 @@ spec:
               excludeCaches:
                 type: boolean
                 description: "Exclude cache directories marked with CACHEDIR.TAG"
-                default: false
+                default: true
               excludeIfPresent:
                 type: string
                 description: "Exclude directories containing this file"
