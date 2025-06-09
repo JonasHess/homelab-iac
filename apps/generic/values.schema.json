@@ -347,8 +347,55 @@
       "type": "object",
       "description": "Persistent volumes with claims (standalone PVCs)",
       "additionalProperties": {
-        "type": "string",
-        "description": "Path on the host for the persistent volume"
+        "type": "object",
+        "required": ["hostPath"],
+        "properties": {
+          "hostPath": {
+            "type": "string",
+            "description": "Path on the host for the persistent volume"
+          },
+          "backup": {
+            "type": "object",
+            "description": "Backup configuration for this persistent volume",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Enable backup for this persistent volume"
+              },
+              "restore": {
+                "type": "boolean",
+                "description": "Enable restore for this persistent volume (defaults to false)"
+              },
+              "include": {
+                "type": "array",
+                "description": "Include patterns (restic glob patterns)",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "exclude": {
+                "type": "array",
+                "description": "Exclude patterns (restic glob patterns)",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "excludeLargerThan": {
+                "type": "string",
+                "description": "Exclude files larger than this size (e.g., '100M', '1G')"
+              },
+              "excludeCaches": {
+                "type": "boolean",
+                "description": "Exclude cache directories marked with CACHEDIR.TAG"
+              },
+              "excludeIfPresent": {
+                "type": "string",
+                "description": "Exclude directories containing this file"
+              }
+            },
+            "required": ["enabled"]
+          }
+        }
       }
     },
     "externalSecrets": {

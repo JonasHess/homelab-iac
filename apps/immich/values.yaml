@@ -26,10 +26,20 @@ server:
   externalSubDomain: immich
 generic:
   persistentVolumeClaims:
-    library: ~ # /mnt/somewhere/encrypted/apps/immich/library
-    postgresql: ~ # /mnt/somewhere/encrypted/apps/immich/postgresql
-    redis: ~ # /mnt/somewhere/encrypted/apps/immich/redis
-    cli: ~ # null
+    library:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/library
+      backup:
+        enabled: false
+    postgresql:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/postgresql
+      backup:
+        enabled: true
+    redis:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/redis
+      backup:
+        enabled: false
+    cli:
+      hostPath: ~ # null
   ingress:
     https:
     - subdomain: immich

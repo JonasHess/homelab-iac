@@ -18,7 +18,10 @@ additionalExposedPorts:
 loadBalancerIP: null
 generic:
   persistentVolumeClaims:
-    data: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
+    data:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
+      backup:
+        enabled: true
 middlewares:
   cloudflare:
     allowedCIDRs: []

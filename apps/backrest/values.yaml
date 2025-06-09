@@ -22,10 +22,14 @@ deployment:
     secretRef: restic-secret
 generic:
   persistentVolumeClaims:
-    data: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
-    cache: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache
-    tmp: ~ # /mnt/somewhere/unencrypted/apps/backrest/tmp
-    restore: ~ # /mnt/somewhere/unencrypted/apps/backrest/restore
+    data:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
+    cache:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache
+    tmp:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/tmp
+    restore:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/restore
   service:
     ports:
     - name: http

@@ -1,6 +1,7 @@
 generic:
   persistentVolumeClaims:
-    data: ~ # /mnt/somewhere/unencrypted/apps/drone/data
+    data:
+      hostPath: ~ # /mnt/somewhere/unencrypted/apps/drone/data
   ingress:
     https:
     - subdomain: drone

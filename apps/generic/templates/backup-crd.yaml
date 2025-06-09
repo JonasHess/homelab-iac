@@ -1,51 +1,69 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
-{{- if .Values.deployment }}
-{{- if .Values.deployment.pvcMounts }}
-{{- range $mountName, $mount := .Values.deployment.pvcMounts }}
-{{- if and $mount.backup (or $mount.backup.enabled $mount.backup.restore) }}
+
+{{- define "backup.resticBackup" }}
+{{- $appName := .appName }}
+{{- $mountName := .mountName }}
+{{- $backup := .backup }}
+{{- $namespace := .namespace }}
+{{- $releaseName := .releaseName }}
 ---
 apiVersion: backup.homelab.dev/v1
 kind: ResticBackup
 metadata:
   name: {{ $appName }}-{{ $mountName }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $namespace }}
   labels:
     app: {{ $appName }}
     component: backup
-    {{- if $mount.backup.enabled }}
+    {{- if $backup.enabled }}
     restic/backup: "true"
     {{- end }}
-    {{- if $mount.backup.restore }}
+    {{- if $backup.restore }}
     restic/restore: "true"
     {{- end }}
-    argocd.argoproj.io/instance: {{ $.Release.Name }}
+    argocd.argoproj.io/instance: {{ $releaseName }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $namespace }}
   pvcName: {{ $appName }}-{{ $mountName }}-pvc
-  {{- if $mount.backup.include }}
+  {{- if $backup.include }}
   include:
-    {{- range $mount.backup.include }}
+    {{- range $backup.include }}
     - {{ . | quote }}
     {{- end }}
   {{- end }}
-  {{- if $mount.backup.exclude }}
+  {{- if $backup.exclude }}
   exclude:
-    {{- range $mount.backup.exclude }}
+    {{- range $backup.exclude }}
     - {{ . | quote }}
     {{- end }}
   {{- end }}
-  {{- if $mount.backup.excludeLargerThan }}
-  excludeLargerThan: {{ $mount.backup.excludeLargerThan | quote }}
+  {{- if $backup.excludeLargerThan }}
+  excludeLargerThan: {{ $backup.excludeLargerThan | quote }}
   {{- end }}
-  {{- if $mount.backup.excludeCaches }}
-  excludeCaches: {{ $mount.backup.excludeCaches }}
+  {{- if $backup.excludeCaches }}
+  excludeCaches: {{ $backup.excludeCaches }}
   {{- end }}
-  {{- if $mount.backup.excludeIfPresent }}
-  excludeIfPresent: {{ $mount.backup.excludeIfPresent | quote }}
+  {{- if $backup.excludeIfPresent }}
+  excludeIfPresent: {{ $backup.excludeIfPresent | quote }}
   {{- end }}
 {{- end }}
+
+{{- if .Values.deployment }}
+{{- if .Values.deployment.pvcMounts }}
+{{- range $mountName, $mount := .Values.deployment.pvcMounts }}
+{{- if and $mount.backup (or $mount.backup.enabled $mount.backup.restore) }}
+{{- include "backup.resticBackup" (dict "appName" $appName "mountName" $mountName "backup" $mount.backup "namespace" $.Release.Namespace "releaseName" $.Release.Name) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.persistentVolumeClaims }}
+{{- range $pvcName, $pvcConfig := .Values.persistentVolumeClaims }}
+{{- if and $pvcConfig.backup (or $pvcConfig.backup.enabled $pvcConfig.backup.restore) }}
+{{- include "backup.resticBackup" (dict "appName" $appName "mountName" $pvcName "backup" $pvcConfig.backup "namespace" $.Release.Namespace "releaseName" $.Release.Name) }}
 {{- end }}
 {{- end }}
 {{- end }}
