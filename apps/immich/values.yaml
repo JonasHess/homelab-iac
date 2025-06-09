@@ -29,7 +29,7 @@ generic:
     library:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/library
       backup:
-        enabled: false
+        enabled: true
     postgresql:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/postgresql
       backup:
