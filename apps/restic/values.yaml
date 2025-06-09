@@ -40,7 +40,11 @@ globalBackupRules:
     - "**/cache/**"
     - "**/Cache/**"
     - "**/.cache/**"
-    
+    - "**/__pycache__/**"
+    - "**/cachefiles/**"
+    - "**/cachefile/**"
+    - "**/caches/**"
+
     # Thumbnails and previews
     - "**/thumbnails/**"
     - "**/Thumbnails/**"
