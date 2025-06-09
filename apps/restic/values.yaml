@@ -27,6 +27,8 @@ globalBackupRules:
     - "**/*.log.*"
     - "**/logs/**"
     - "**/log/**"
+    - "**/logfile/**"
+    - "**/logfiles/**"
     
     # Temporary files  
     - "**/*.tmp"
@@ -43,6 +45,8 @@ globalBackupRules:
     - "**/thumbnails/**"
     - "**/Thumbnails/**"
     - "**/.thumbnails/**"
+    - "**/thumbs/**"
+    - "**/encoded-video/**"
     
     # System files
     - "**/.DS_Store"
