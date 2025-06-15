@@ -89,3 +89,4 @@ Here are some planned improvements and tasks:
 - \[ \] **Setup Monitoring for all services**
 - \[ \] **Create all missing folders of pvs**
 - \[ \] **Gateway API:** Implement a gateway API instead of IngressRoute
+- \[ \] **Crossplane:** Use Crossplane for managing cloud resources.
