@@ -91,3 +91,4 @@ Here are some planned improvements and tasks:
 - \[ \] **Gateway API:** Implement a gateway API instead of IngressRoute
 - \[ \] **Crossplane:** Use Crossplane for managing cloud resources.
 - \[ \] **AWS Lambda:** Implement AWS Lambda functions for specific tasks.
+- \[ \] **CalDav:** Add CalDAV server for calendar synchronization.
