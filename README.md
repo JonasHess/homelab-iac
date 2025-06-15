@@ -80,20 +80,12 @@ Here are some planned improvements and tasks:
 
 - \[ \] **Restart Pod argocd-server:** Automate the restart of the ArgoCD
   server pod to handle race conditions related to Akeyless secrets.
-- \[ \] **Paperless Config via API:** Configure Paperless-ngx settings through
-  its API for better automation.
 - \[ \] **Apps in Own Namespaces:** Migrate applications to their own
   namespaces (e.g., drone).
-- \[ \] **Improved Directory Structure:** Refine the directory structure for
-  better organization.
-- \[ \] **Heimdall:** Add support for Heimdall (a homepage/dashboard).
-- \[ \] **Jackett:** Add support for Jackett (indexers).
 - \[ \] **Loki:** Add support for Loki (log aggregation system).
-- \[ \] **Ombi:** Add support for Ombi (request management).
 - \[ \] **Watchtower / Argo Image Updater:** Implement automatic image updates
   for containers.
 - \[ \] **SAMBA:** Integrate SAMBA file sharing.
-- \[ \] **Paperless DB Backup:** Implement automatic database backups for
-  Paperless.
-- \[ \] **Improve zfs layout and naming**
 - \[ \] **Setup Monitoring for all services**
+- \[ \] **Create all missing folders of pvs**
+- \[ \] **Gateway API:** Implement a gateway API instead of IngressRoute
