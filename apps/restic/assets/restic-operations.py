@@ -245,18 +245,6 @@ class ResticOperations:
         # Check if repository exists
         success, stdout, stderr = self.run_restic_command(["snapshots", "--json"])
         
-        # Handle lock-related errors
-        if not success and "repository is already locked" in stderr:
-            if self._should_unlock_stale_lock(stderr):
-                self.logger.info("Unlocking stale lock before repository check...")
-                unlock_success, _, unlock_stderr = self.run_restic_command(["unlock"])
-                if unlock_success:
-                    # Retry after unlocking
-                    success, stdout, stderr = self.run_restic_command(["snapshots", "--json"])
-                else:
-                    self.logger.error(f"Failed to unlock repository: {unlock_stderr}")
-                    return False
-        
         if success:
             self.logger.info("Repository already initialized")
             return True
@@ -265,43 +253,12 @@ class ResticOperations:
         self.logger.info("Initializing new repository...")
         success, stdout, stderr = self.run_restic_command(["init"])
         
-        # Handle lock-related errors for init as well
-        if not success and "repository is already locked" in stderr:
-            if self._should_unlock_stale_lock(stderr):
-                self.logger.info("Unlocking stale lock before repository init...")
-                unlock_success, _, unlock_stderr = self.run_restic_command(["unlock"])
-                if unlock_success:
-                    # Retry init after unlocking
-                    success, stdout, stderr = self.run_restic_command(["init"])
-                else:
-                    self.logger.error(f"Failed to unlock repository: {unlock_stderr}")
-                    return False
-        
         if success:
             self.logger.info("Repository initialized successfully")
             return True
         else:
             self.logger.error(f"Failed to initialize repository: {stderr}")
             return False
-    
-    def _should_unlock_stale_lock(self, stderr: str) -> bool:
-        """Check if lock should be unlocked based on age (older than 2 minutes)"""
-        import re
-        
-        # Parse lock age from error message like "(2m0.240692263s ago)"
-        time_match = re.search(r'\((\d+)m[\d.]+s ago\)', stderr)
-        if time_match:
-            minutes = int(time_match.group(1))
-            if minutes >= 2:
-                self.logger.info(f"Lock is {minutes} minutes old, will unlock")
-                return True
-            else:
-                self.logger.info(f"Lock is only {minutes} minutes old, keeping it")
-                return False
-        
-        # If we can't parse the time, be conservative and don't unlock
-        self.logger.warning("Could not parse lock age, keeping lock")
-        return False
     
     def build_filter_files(self, item: Dict[str, Any], global_excludes: List[str]) -> Tuple[Optional[str], Optional[str]]:
         """Build include and exclude filter files for a backup item"""
@@ -519,6 +476,14 @@ class ResticOperations:
         """Main execution function"""
         try:
             self.logger.info(f"Starting {operation} operation with selector: {label_selector}")
+            
+            # Always unlock repository at start to ensure clean state
+            self.logger.info("Unlocking repository to ensure clean state...")
+            unlock_success, _, unlock_stderr = self.run_restic_command(["unlock"])
+            if unlock_success:
+                self.logger.info("Repository unlocked successfully")
+            else:
+                self.logger.warning(f"Failed to unlock repository: {unlock_stderr}")
             
             # Load global configuration
             global_config = self.load_global_config()
