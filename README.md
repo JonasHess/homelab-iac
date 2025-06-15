@@ -90,3 +90,4 @@ Here are some planned improvements and tasks:
 - \[ \] **Create all missing folders of pvs**
 - \[ \] **Gateway API:** Implement a gateway API instead of IngressRoute
 - \[ \] **Crossplane:** Use Crossplane for managing cloud resources.
+- \[ \] **AWS Lambda:** Implement AWS Lambda functions for specific tasks.
