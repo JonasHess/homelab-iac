@@ -32,8 +32,16 @@ spec:
             args:
               - -c
               - |
+                echo "Waiting for network to stabilize..."
+                sleep 5
                 echo "Installing system dependencies..."
-                apk add --no-cache restic jq
+                for i in 1 2 3 4 5; do
+                  if apk add --no-cache restic jq; then
+                    break
+                  fi
+                  echo "Retrying apk add (attempt $i)..."
+                  sleep 5
+                done
                 echo "Installing Python dependencies..."
                 pip install --no-cache-dir -r /scripts/requirements.txt
                 echo "Starting backup operation..."
