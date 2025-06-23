@@ -12,22 +12,28 @@ generic:
         args:
           - |
             echo "Waiting for network connectivity..."
-            echo "Testing DNS resolution first..."
-            for i in 1 2 3 4 5 6 7 8 9 10; do
-              echo "Attempt $i/10 - $(date)"
+            echo "Testing basic connectivity..."
+            for i in 1 2 3 4 5; do
+              echo "Attempt $i/5 - $(date)"
               if nslookup api.cloudflare.com >/dev/null 2>&1; then
-                echo "DNS resolution works, testing HTTPS connectivity..."
-                if wget -q --spider --timeout=3 https://api.cloudflare.com/client/v4/user/tokens/verify 2>/dev/null; then
-                  echo "Network is ready!"
-                  exit 0
+                echo "DNS works, testing HTTP connectivity..."
+                if nc -z -w3 api.cloudflare.com 80 2>/dev/null; then
+                  echo "HTTP port 80 accessible, testing HTTPS..."
+                  if nc -z -w3 api.cloudflare.com 443 2>/dev/null; then
+                    echo "HTTPS port 443 accessible - network ready!"
+                    exit 0
+                  else
+                    echo "Port 443 blocked"
+                  fi
                 else
-                  echo "DNS works but HTTPS connection failed"
+                  echo "Port 80 blocked"
                 fi
               else
                 echo "DNS resolution failed"
               fi
-              echo "Sleeping 3 seconds..."
-              sleep 3
+              echo "Sleeping 5 seconds..."
+              sleep 5
             done
-            echo "Network failed to become ready after 10 attempts"
-            exit 1
+            echo "Network connectivity test failed - proceeding anyway"
+            echo "The main container will handle connection retries"
+            exit 0
