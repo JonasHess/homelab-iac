@@ -5,35 +5,3 @@ generic:
     envFrom:
       secretRef: cloudflare-ddns-api-credentials
       configMapRef: cloudflare-ddns-config-map
-    initContainers:
-      - name: wait-for-network
-        image: busybox:1.36
-        command: ['sh', '-c']
-        args:
-          - |
-            echo "Waiting for network connectivity..."
-            echo "Testing basic connectivity..."
-            for i in 1 2 3 4 5; do
-              echo "Attempt $i/5 - $(date)"
-              if nslookup api.cloudflare.com >/dev/null 2>&1; then
-                echo "DNS works, testing HTTP connectivity..."
-                if nc -z -w3 api.cloudflare.com 80 2>/dev/null; then
-                  echo "HTTP port 80 accessible, testing HTTPS..."
-                  if nc -z -w3 api.cloudflare.com 443 2>/dev/null; then
-                    echo "HTTPS port 443 accessible - network ready!"
-                    exit 0
-                  else
-                    echo "Port 443 blocked"
-                  fi
-                else
-                  echo "Port 80 blocked"
-                fi
-              else
-                echo "DNS resolution failed"
-              fi
-              echo "Sleeping 5 seconds..."
-              sleep 5
-            done
-            echo "Network connectivity test failed - proceeding anyway"
-            echo "The main container will handle connection retries"
-            exit 0
