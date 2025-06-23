@@ -22,6 +22,10 @@ spec:
       labels:
         app: {{ $appName }}
     spec:
+      {{- if $deployment.initContainers }}
+      initContainers:
+        {{- toYaml $deployment.initContainers | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ $appName }}
           image: {{ $image }}

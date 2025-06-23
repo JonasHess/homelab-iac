@@ -3,7 +3,7 @@ appVersion: 1.0.0
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.16
+  version: 0.1.17
 description: Helm chart for duplicatiprometheusexporter
 name: duplicatiprometheusexporter
 type: application

@@ -5,3 +5,20 @@ generic:
     envFrom:
       secretRef: cloudflare-ddns-api-credentials
       configMapRef: cloudflare-ddns-config-map
+    initContainers:
+      - name: wait-for-network
+        image: busybox:1.36
+        command: ['sh', '-c']
+        args:
+          - |
+            echo "Waiting for network connectivity..."
+            for i in 1 2 3 4 5; do
+              if wget -q --spider --timeout=1 https://api.cloudflare.com/client/v4/user/tokens/verify 2>/dev/null; then
+                echo "Network is ready!"
+                exit 0
+              fi
+              echo "Network not ready yet, attempt $i/5"
+              sleep 5
+            done
+            echo "Network failed to become ready after 5 attempts"
+            exit 1
