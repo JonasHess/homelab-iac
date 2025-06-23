@@ -1,4 +1,4 @@
-cron_job: 5 * * * *
+cron_job: 23 * * * *
 generic:
   deployment:
     image: zimmermq/cloudflare-ddns:main
