@@ -12,7 +12,8 @@ data:
           {
             "port": 2222
           }
-        ]
+        ],
+        "host_key_algorithms": ["rsa-sha2-512", "rsa-sha2-256", "ssh-rsa", "ecdsa-sha2-nistp256", "ssh-ed25519"]
       },
      "data_provider": {
         "users_base_dir": "/srv/sftpgo"
