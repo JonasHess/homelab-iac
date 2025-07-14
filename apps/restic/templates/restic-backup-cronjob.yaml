@@ -25,6 +25,15 @@ spec:
           serviceAccountName: restic-backup-scanner
           restartPolicy: {{ .Values.cronjob.restartPolicy | default "Never" }}
           hostname: {{ $appName }}-backup
+          dnsPolicy: "Default"
+          dnsConfig:
+            options:
+            - name: ndots
+              value: "1"
+            - name: timeout
+              value: "5"
+            - name: attempts
+              value: "3"
           containers:
           - name: backup
             image: python:3.11-alpine
@@ -43,7 +52,13 @@ spec:
                   sleep 10
                 done
                 echo "Installing Python dependencies..."
-                pip install --no-cache-dir -r /scripts/requirements.txt
+                for i in 1 2 3 4 5 6 7 8 9 10; do
+                  if pip install --no-cache-dir --retries 3 --timeout 30 -r /scripts/requirements.txt; then
+                    break
+                  fi
+                  echo "Retrying pip install (attempt $i)..."
+                  sleep 10
+                done
                 echo "Starting backup operation..."
                 python /scripts/restic-operations.py backup restic/backup=true
             {{- if .Values.cronjob.env }}
