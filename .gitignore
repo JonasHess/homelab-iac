@@ -5,3 +5,4 @@ environment-secrets.yaml
 node_modules/
 /myenv/
 /charts/
+/base-chart/values/michael-values.yaml
