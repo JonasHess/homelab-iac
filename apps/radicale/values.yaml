@@ -1,0 +1,21 @@
+generic:
+  deployment:
+    image: tomsquest/docker-radicale:latest
+    ports:
+    - containerPort: 5232
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~ # /mnt/storage/radicale/data
+        backup:
+          enabled: true
+  service:
+    ports:
+    - name: http
+      port: 5232
+  ingress:
+    https:
+    - subdomain: radicale
+      port: 5232
+      middlewares:
+      - traefik-forward-auth

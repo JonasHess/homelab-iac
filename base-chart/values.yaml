@@ -649,6 +649,20 @@ apps:
       project: "default"
       syncWave: "15"  # Deploy after core services
 
+  radicale:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/caldav.svg"
+      subtitle: "CalDAV Server"
+      displayName: "Radicale"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after core services
+
   whoami:
     enabled: false
     homer:
