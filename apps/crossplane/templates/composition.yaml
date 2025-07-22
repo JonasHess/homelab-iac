@@ -1,0 +1,32 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: s3-bucket-defaults
+spec:
+  compositeTypeRef:
+    apiVersion: homelab.io/v1alpha1
+    kind: SimpleS3Bucket
+  resources:
+    - name: s3bucket
+      base:
+        apiVersion: s3.aws.upbound.io/v1beta1
+        kind: Bucket
+        spec:
+          forProvider:
+            # --- Enforced Policies ---
+            versioningConfiguration:
+              status: Enabled
+            serverSideEncryptionConfiguration:
+              rule:
+                applyServerSideEncryptionByDefault:
+                  sseAlgorithm: AES256
+      patches:
+        - fromFieldPath: "spec.region"
+          toFieldPath: "spec.forProvider.region"
+          # Default the region if not provided in the claim
+          transforms:
+            - type: map
+              map:
+                '{{ .Values.composition.defaultRegion }}': '{{ .Values.composition.defaultRegion }}' # Default value
+        - fromFieldPath: "metadata.name"
+          toFieldPath: "metadata.name"

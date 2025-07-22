@@ -1,0 +1,17 @@
+# Enable the Crossplane Helm chart dependency
+crossplane:
+  enabled: true
+
+# Configuration for the AWS Provider package
+awsProvider:
+  package: "xpkg.upbound.io/upbound/provider-aws-s3:v1.4.0"
+
+# Akeyless paths for AWS credentials
+externalSecrets:
+  crossplane-aws-creds:
+    - aws_access_key_id: "/crossplane/aws/accessKeyId"
+    - aws_secret_access_key: "/crossplane/aws/secretAccessKey"
+
+# Default settings for our custom S3 bucket Composition
+composition:
+  defaultRegion: "us-east-1"

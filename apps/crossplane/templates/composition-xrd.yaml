@@ -1,0 +1,28 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: CompositeResourceDefinition
+metadata:
+  name: simples3buckets.homelab.io
+spec:
+  group: homelab.io
+  names:
+    kind: SimpleS3Bucket
+    plural: simples3buckets
+  claimNames:
+    kind: SimpleS3BucketClaim
+    plural: simples3bucketclaims
+  versions:
+  - name: v1alpha1
+    served: true
+    referenceable: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            properties:
+              region:
+                description: "The AWS region for the bucket."
+                type: string
+            required:
+            - region
