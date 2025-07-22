@@ -92,3 +92,4 @@ Here are some planned improvements and tasks:
 - \[ \] **Crossplane:** Use Crossplane for managing cloud resources.
 - \[ \] **AWS Lambda:** Implement AWS Lambda functions for specific tasks.
 - \[ \] **CalDav:** Add CalDAV server for calendar synchronization.
+- \[ \] **Smarthome:** make it Kubernetes API ready
