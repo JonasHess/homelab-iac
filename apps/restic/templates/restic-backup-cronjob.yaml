@@ -36,31 +36,12 @@ spec:
               value: "3"
           containers:
           - name: backup
-            image: python:3.11-alpine
-            command: ["/bin/sh"]
+            image: {{ .Values.cronjob.image }}
+            command: ["python"]
             args:
-              - -c
-              - |
-                echo "Waiting for network to stabilize..."
-                sleep 5
-                echo "Installing system dependencies..."
-                for i in 1 2 3 4 5 6 7 8 9 10; do
-                  if apk add --no-cache restic jq; then
-                    break
-                  fi
-                  echo "Retrying apk add (attempt $i)..."
-                  sleep 10
-                done
-                echo "Installing Python dependencies..."
-                for i in 1 2 3 4 5 6 7 8 9 10; do
-                  if pip install --no-cache-dir --retries 3 --timeout 30 -r /scripts/requirements.txt; then
-                    break
-                  fi
-                  echo "Retrying pip install (attempt $i)..."
-                  sleep 10
-                done
-                echo "Starting backup operation..."
-                python /scripts/restic-operations.py backup restic/backup=true
+              - "/usr/local/bin/restic-operations.py"
+              - "backup"
+              - "restic/backup=true"
             {{- if .Values.cronjob.env }}
             env:
             {{- range .Values.cronjob.env }}
@@ -76,8 +57,6 @@ spec:
             {{- end }}
             {{- end }}
             volumeMounts:
-            - name: scripts
-              mountPath: /scripts
             - name: global-excludes
               mountPath: /config
             {{- range $mountName, $mount := .Values.cronjob.pvcMounts }}
@@ -85,10 +64,6 @@ spec:
               mountPath: {{ $mount.mountPath }}
             {{- end }}
           volumes:
-          - name: scripts
-            configMap:
-              name: restic-backup-script
-              defaultMode: 0755
           - name: global-excludes
             configMap:
               name: restic-global-excludes

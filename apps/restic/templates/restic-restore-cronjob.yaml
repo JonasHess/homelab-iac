@@ -26,25 +26,12 @@ spec:
           hostname: {{ $appName }}-restore
           containers:
           - name: restore
-            image: python:3.11-alpine
-            command: ["/bin/sh"]
+            image: {{ .Values.cronjob.image }}
+            command: ["python"]
             args:
-              - -c
-              - |
-                echo "Waiting for network to stabilize..."
-                sleep 5
-                echo "Installing system dependencies..."
-                for i in 1 2 3 4 5; do
-                  if apk add --no-cache restic jq; then
-                    break
-                  fi
-                  echo "Retrying apk add (attempt $i)..."
-                  sleep 5
-                done
-                echo "Installing Python dependencies..."
-                pip install --no-cache-dir -r /scripts/requirements.txt
-                echo "Starting restore operation..."
-                python /scripts/restic-operations.py restore restic/restore=true
+              - "/usr/local/bin/restic-operations.py"
+              - "restore"
+              - "restic/restore=true"
             env:
             - name: RESTORE_DATE
               value: {{ .Values.restoreCronjob.date | quote }}
@@ -58,17 +45,11 @@ spec:
             - secretRef:
                 name: restic-secret
             volumeMounts:
-            - name: scripts
-              mountPath: /scripts
             - name: global-excludes
               mountPath: /config
             - name: restoreddata
               mountPath: /restored-data
           volumes:
-          - name: scripts
-            configMap:
-              name: restic-backup-script
-              defaultMode: 0755
           - name: global-excludes
             configMap:
               name: restic-global-excludes

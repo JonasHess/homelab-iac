@@ -1,0 +1,51 @@
+name: Build and Push Restic Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/restic/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Get commit SHA
+        id: vars
+        run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: homelab-iac/restic
+          IMAGE_TAG_LATEST: latest
+          IMAGE_TAG_SHA: ${{ steps.vars.outputs.sha_short }}
+        run: |
+          cd apps/restic
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST .
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA
+          echo "Pushed images:"
+          echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST"
+          echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA"
