@@ -23,6 +23,8 @@ spec:
             component: backup
         spec:
           serviceAccountName: restic-backup-scanner
+          imagePullSecrets:
+          - name: regcred
           restartPolicy: {{ .Values.cronjob.restartPolicy | default "Never" }}
           hostname: {{ $appName }}-backup
           dnsPolicy: "Default"

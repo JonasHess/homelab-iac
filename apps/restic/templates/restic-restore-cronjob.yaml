@@ -22,6 +22,8 @@ spec:
             component: restore
         spec:
           serviceAccountName: restic-backup-scanner
+          imagePullSecrets:
+          - name: regcred
           restartPolicy: {{ .Values.restoreCronjob.restartPolicy | default "OnFailure" }}
           hostname: {{ $appName }}-restore
           containers:
