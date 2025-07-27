@@ -1323,7 +1323,7 @@
   },
   "timepicker": {},
   "timezone": "utc",
-  "title": "Wonderful HTTP Status and Overview for Blackbox Exporter ",
+  "title": "Blackbox Exporter HTTP Status",
   "uid": "AgileosConsultingHTTPBlackBoxExporter",
   "version": 2,
   "weekStart": "monday",
