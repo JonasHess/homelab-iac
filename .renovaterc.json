@@ -177,31 +177,9 @@
         "major-update"
       ]
     },
-    {
-      "description": "Auto-merge all updates for custom ECR images",
-      "matchPackageNames": [
-        "629099703604.dkr.ecr.eu-central-1.amazonaws.com/homelab-iac/restic"
-      ],
-      "automerge": true,
-      "automergeType": "pr",
-      "automergeStrategy": "merge",
-      "versioning": "loose"
-    },
-    {
-      "description": "Configure ECR registry for Docker datasource",
-      "datasources": ["docker"],
-      "registryUrls": ["https://629099703604.dkr.ecr.eu-central-1.amazonaws.com"]
-    }
   ],
   "ignoreDeps": [],
-  "hostRules": [
-    {
-      "hostType": "docker",
-      "matchHost": "629099703604.dkr.ecr.eu-central-1.amazonaws.com",
-      "username": "AWS",
-      "password": "ECR_TOKEN"
-    }
-  ],
+  "hostRules": [],
   "customManagers": [
     {
       "customType": "regex",
