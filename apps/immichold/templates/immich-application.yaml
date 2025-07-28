@@ -11,7 +11,7 @@ spec:
   source:
     chart: immich
     repoURL: https://immich-app.github.io/immich-charts
-    targetRevision: 0.8.5
+    targetRevision: 0.9.3
     helm:
       # Values file as block file
       valuesObject:
