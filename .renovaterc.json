@@ -198,10 +198,8 @@
     {
       "hostType": "docker",
       "matchHost": "629099703604.dkr.ecr.eu-central-1.amazonaws.com",
-      "encrypted": {
-        "username": "{{ secrets.AWS_ACCESS_KEY_ID }}",
-        "password": "{{ secrets.AWS_SECRET_ACCESS_KEY }}"
-      }
+      "username": "AWS",
+      "password": "ECR_TOKEN"
     }
   ],
   "customManagers": [
