@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'apps/restic/**'
+      - '!apps/restic/values.yaml'
   workflow_dispatch:
 
 jobs:
@@ -38,14 +39,10 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: homelab-iac/restic
-          IMAGE_TAG_LATEST: latest
           IMAGE_TAG_SHA: ${{ steps.vars.outputs.sha_short }}
         run: |
           cd apps/restic
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST .
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA
-          echo "Pushed images:"
-          echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST"
+          echo "Pushed image:"
           echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA"
