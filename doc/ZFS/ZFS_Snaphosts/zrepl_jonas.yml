@@ -17,7 +17,9 @@ jobs:
   type: snap
   filesystems: {
     "tank1<": true,
-    "tank0<": true
+    "tank0<": true,
+    # Exclude the media directory from backups
+    "tank0/encrypted/media<": false
   }
   # create snapshots with prefix `zrepl_` every 15 minutes
   snapshotting:

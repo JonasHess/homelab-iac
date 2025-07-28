@@ -1,0 +1,27 @@
+{
+  "uid": "de7pv6vzydslcb",
+  "title": "Duplicati Backup not successful",
+  "condition": "C",
+  "data": [
+    {
+      "refId": "A",
+      "relativeTimeRange": {
+        "from": 600,
+        "to": 0
+      },
+      "datasourceUid": "prometheus",
+      "model": {
+        "disableTextWrap": false,
+        "editorMode": "builder",
+        "expr": "duplicati_ops_result",
+        "fullMetaSearch": false,
+        "includeNullMetadata": true,
+        "instant": true,
+        "intervalMs": 1000,
+        "legendFormat": "__auto",
+        "maxDataPoints": 43200,
+        "range": false,
+        "refId": "A",
+        "useBackend": false
+      }
+    },
