@@ -322,19 +322,6 @@ apps:
       namespace: "app-immich"
       project: "default"
       syncWave: "18"  # Higher resource usage, deploy later
-  immichold:
-    enabled: false
-    homer:
-      enabled: true
-      group: "media"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/immich.svg"
-      subtitle: ""
-      displayName: "Immich Old"
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "19"  # Deploy after main Immich
   mosquitto:
     enabled: false
     argocd:
