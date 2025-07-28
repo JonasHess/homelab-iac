@@ -132,6 +132,12 @@ apps:
         subtitle: "Cloud Storage"
         logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/backblaze.svg"
         url: "https://www.backblaze.com/"
+      mendDeveloperPortal:
+        name: "Renovate"
+        group: "infrastructure"
+        subtitle: "Mend Developer Portal"
+        logo: "https://docs.renovatebot.com/assets/images/logo.png"
+        url: "https://developer.mend.io/github/JonasHess/homelab-iac"
 
   # Application Definitions
   stirlingpdf:
