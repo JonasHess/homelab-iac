@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base"
+    "config:recommended"
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
@@ -24,28 +24,38 @@
   "packageRules": [
     {
       "description": "Auto-merge patch and minor updates for Helm charts",
-      "matchCategories": ["helm"],
-      "matchUpdateTypes": ["patch", "minor"],
+      "matchCategories": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "merge"
     },
     {
       "description": "Require manual approval for major Helm chart updates",
-      "matchCategories": ["helm"],
-      "matchUpdateTypes": ["major"],
+      "matchCategories": [
+        "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "addLabels": ["major-update"]
+      "addLabels": [
+        "major-update"
+      ]
     }
   ],
-  "ignoreDeps": [
-  ],
+  "ignoreDeps": [],
   "customManagers": [
     {
       "customType": "regex",
       "description": "Update targetRevision in ArgoCD Application templates",
-      "fileMatch": [
-        "apps/.+/templates/.+-application\\.yaml$"
+      "managerFilePatterns": [
+        "/apps/.+/templates/.+-application\\.yaml$/"
       ],
       "matchStrings": [
         "chart:\\s+(?<depName>[^\\s\\n]+)[\\s\\S]*?repoURL:\\s+(?<registryUrl>https://[^\\s\\n]+)[\\s\\S]*?targetRevision:\\s+(?<currentValue>[^\\s\\n]+)"
