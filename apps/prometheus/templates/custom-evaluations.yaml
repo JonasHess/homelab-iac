@@ -14,21 +14,13 @@ spec:
   - name: custom-evaluations
     interval: 1m
     rules:
+    {{- if .Values.alerts.duplicati.enabled }}
     - alert: DuplicatiBackupNotSuccessful
       annotations:
         summary: "Duplicati backup failed"
         description: "The Duplicati backup has not been successful in the last 10 minutes."
       expr: |
         last_over_time(duplicati_ops_result[10m]) > 0
-      for: 1m
-      labels:
-        severity: critical
-    - alert: ZFSPoolUnhealthy
-      annotations:
-        summary: "ZFS pool is unhealthy"
-        description: "A ZFS pool is reporting unhealthy status."
-      expr: |
-        avg_over_time(zfs_pool_health[10m]) > 0
       for: 1m
       labels:
         severity: critical
@@ -41,6 +33,16 @@ spec:
       for: 10m
       labels:
         severity: warning
+    {{- end }}
+    - alert: ZFSPoolUnhealthy
+      annotations:
+        summary: "ZFS pool is unhealthy"
+        description: "A ZFS pool is reporting unhealthy status."
+      expr: |
+        avg_over_time(zfs_pool_health[10m]) > 0
+      for: 1m
+      labels:
+        severity: critical
     - alert: NoZFSMetrics
       annotations:
         summary: "No ZFS metrics found"
