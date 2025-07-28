@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: crossplane-helm
   namespace: {{ $.Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   labels:
     app: {{ .Values.appName }}
 spec:

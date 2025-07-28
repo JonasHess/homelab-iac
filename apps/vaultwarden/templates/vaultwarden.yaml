@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: vaultwarden
   namespace: {{ $.Release.Namespace }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:

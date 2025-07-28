@@ -20,6 +20,8 @@ kind: Application
 metadata:
   name: "argocd-app-{{ $appName }}"
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   labels:
     app.kubernetes.io/name: {{ $appName }}
     app.kubernetes.io/instance: {{ $appName }}
