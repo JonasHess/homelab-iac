@@ -34,6 +34,44 @@ spec:
       labels:
         severity: warning
     {{- end }}
+    {{- if .Values.alerts.probes.enabled }}
+    - alert: DomainProbeDown
+      annotations:
+        summary: "Domain probe is failing"
+        description: "The blackbox probe for {{ .Values.global.domain }} is failing. The domain may be unreachable."
+      expr: |
+        probe_success{job="domain-status-probe"} == 0
+      for: 2m
+      labels:
+        severity: critical
+    - alert: DomainProbeHighLatency
+      annotations:
+        summary: "Domain probe has high latency"
+        description: "The blackbox probe for {{ .Values.global.domain }} is responding slowly (>5s)."
+      expr: |
+        probe_duration_seconds{job="domain-status-probe"} > 5
+      for: 5m
+      labels:
+        severity: warning
+    - alert: GoogleProbeDown
+      annotations:
+        summary: "Internet connectivity probe is failing"  
+        description: "The blackbox probe for google.de is failing. This may indicate internet connectivity issues."
+      expr: |
+        probe_success{job="google-status-probe"} == 0
+      for: 2m
+      labels:
+        severity: warning
+    - alert: GoogleProbeHighLatency
+      annotations:
+        summary: "Internet connectivity probe has high latency"
+        description: "The blackbox probe for google.de is responding slowly (>10s). Internet connectivity may be degraded."
+      expr: |
+        probe_duration_seconds{job="google-status-probe"} > 10
+      for: 5m
+      labels:
+        severity: info
+    {{- end }}
     - alert: ZFSPoolUnhealthy
       annotations:
         summary: "ZFS pool is unhealthy"

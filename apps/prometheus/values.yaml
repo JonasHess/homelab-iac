@@ -2,6 +2,8 @@
 alerts:
   duplicati:
     enabled: false
+  probes:
+    enabled: true  # Set to false to disable probe/blackbox alerts
 
 generic:
   ingress:
