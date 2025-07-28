@@ -1,7 +1,7 @@
 cronjob:
   enabled: true
   schedule: "0 2 * * *"  # Daily at 2 AM
-  image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/homelab-iac/restic:latest
+  image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/homelab-iac/restic:241821e
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
   pvcMounts: []

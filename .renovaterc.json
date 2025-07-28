@@ -184,7 +184,8 @@
       ],
       "automerge": true,
       "automergeType": "pr",
-      "automergeStrategy": "merge"
+      "automergeStrategy": "merge",
+      "versioning": "loose"
     },
     {
       "description": "Configure ECR registry for Docker datasource",
