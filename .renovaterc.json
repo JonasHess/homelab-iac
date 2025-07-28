@@ -1,0 +1,64 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "before 6am every weekday",
+    "every weekend"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "commitMessagePrefix": "chore:",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": "to {{newVersion}}",
+  "branchPrefix": "renovate/",
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "assignees": [],
+  "reviewers": [],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "Auto-merge patch and minor updates for Helm charts",
+      "matchCategories": ["helm"],
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
+      "description": "Require manual approval for major Helm chart updates",
+      "matchCategories": ["helm"],
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "addLabels": ["major-update"]
+    }
+  ],
+  "ignoreDeps": [
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update targetRevision in ArgoCD Application templates",
+      "fileMatch": [
+        "apps/.+/templates/.+-application\\.yaml$"
+      ],
+      "matchStrings": [
+        "chart:\\s+(?<depName>[^\\s\\n]+)[\\s\\S]*?repoURL:\\s+(?<registryUrl>https://[^\\s\\n]+)[\\s\\S]*?targetRevision:\\s+(?<currentValue>[^\\s\\n]+)"
+      ],
+      "datasourceTemplate": "helm"
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/test/**",
+    "**/tests/**"
+  ]
+}
