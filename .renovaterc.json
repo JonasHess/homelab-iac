@@ -48,6 +48,58 @@
       "automergeStrategy": "merge"
     },
     {
+      "description": "Auto-merge patch and minor updates for Python packages",
+      "matchCategories": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
+      "description": "Auto-merge patch and minor updates for JavaScript/Node.js packages",
+      "matchCategories": [
+        "js"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
+      "description": "Auto-merge patch and minor updates for Go modules",
+      "matchCategories": [
+        "golang"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
+      "description": "Auto-merge patch and minor updates for GitHub Actions",
+      "matchCategories": [
+        "ci"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
       "description": "Require manual approval for major Helm chart updates",
       "matchCategories": [
         "helm"
@@ -64,6 +116,58 @@
       "description": "Require manual approval for major Docker image updates",
       "matchCategories": [
         "docker"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major Python package updates",
+      "matchCategories": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major JavaScript/Node.js package updates",
+      "matchCategories": [
+        "js"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major Go module updates",
+      "matchCategories": [
+        "golang"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major GitHub Actions updates",
+      "matchCategories": [
+        "ci"
       ],
       "matchUpdateTypes": [
         "major"
