@@ -5,11 +5,10 @@
   ],
   "timezone": "Europe/Berlin",
   "schedule": [
-    "before 6am every weekday",
-    "every weekend"
+    "at 3pm on sunday"
   ],
-  "prConcurrentLimit": 5,
-  "prHourlyLimit": 2,
+  "prConcurrentLimit": 20,
+  "prHourlyLimit": 20,
   "commitMessagePrefix": "chore:",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
@@ -36,9 +35,35 @@
       "automergeStrategy": "merge"
     },
     {
+      "description": "Auto-merge patch and minor updates for Docker images",
+      "matchCategories": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge"
+    },
+    {
       "description": "Require manual approval for major Helm chart updates",
       "matchCategories": [
         "helm"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major Docker image updates",
+      "matchCategories": [
+        "docker"
       ],
       "matchUpdateTypes": [
         "major"
@@ -69,6 +94,7 @@
     "**/vendor/**",
     "**/examples/**",
     "**/test/**",
-    "**/tests/**"
+    "**/tests/**",
+    "doc/**"
   ]
 }
