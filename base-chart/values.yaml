@@ -495,19 +495,6 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "13"  # Deploy before dependent media apps
-  search:
-    enabled: false
-    homer:
-      enabled: true
-      group: "productivity"
-      logo: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/whoogle.png"
-      subtitle: "Search Engine"
-      displayName: "Search"
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "18"
   sftpgo:
     enabled: false
     homer:

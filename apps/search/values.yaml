@@ -1,9 +1,0 @@
-generic:
-  service:
-    ports:
-    - name: http
-      port: 3000
-  ingress:
-    https:
-    - subdomain: search
-      port: 3000
