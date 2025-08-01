@@ -1,3 +1,10 @@
+# Container image configuration
+image:
+  repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste
+  tag: latest
+  pullPolicy: Always
+
+# Application configuration
 hueIp: NOT_SET
 mqttUrl: tcp://mosquitto-service:1883
 homeAssistantIp: homeassistant-service:8123

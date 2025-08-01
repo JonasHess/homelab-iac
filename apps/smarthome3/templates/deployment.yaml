@@ -22,8 +22,8 @@ spec:
     spec:
       containers:
         - name: smarthome
-          image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste
-          imagePullPolicy: Always
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           envFrom:
             - configMapRef:
                 name: smarthome3-config-map
