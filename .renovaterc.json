@@ -179,12 +179,16 @@
     },
     {
       "description": "Use semantic versioning for qBittorrent and constrain versions",
-      "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
+      "matchPackageNames": [
+        "lscr.io/linuxserver/qbittorrent"
+      ],
       "versioning": "semver",
       "allowedVersions": "<10"
     }
   ],
-  "ignoreDeps": ["629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste"],
+  "ignoreDeps": [
+    "629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste"
+  ],
   "hostRules": [],
   "customManagers": [
     {
@@ -201,7 +205,9 @@
     {
       "customType": "regex",
       "description": "Update Docker image references in YAML files",
-      "fileMatch": ["(^|/)apps/.+\\.yaml$"],
+      "managerFilePatterns": [
+        "/(^|/)apps/.+\\.yaml$/"
+      ],
       "matchStrings": [
         "image:\\s*['\"]?(?<depName>[^:'\"\\s]+):(?<currentValue>[^'\"\\s]+)['\"]?"
       ],
