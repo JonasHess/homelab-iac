@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/qbittorrent:latest
+    image: lscr.io/linuxserver/qbittorrent:5.1.2
     ports:
     - containerPort: 8080
     pvcMounts:
