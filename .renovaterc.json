@@ -176,6 +176,11 @@
       "addLabels": [
         "major-update"
       ]
+    },
+    {
+      "description": "Use semantic versioning for qBittorrent",
+      "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
+      "versioning": "semver"
     }
   ],
   "ignoreDeps": [],
