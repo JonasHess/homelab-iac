@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: sctx/overseerr:latest
+    image: sctx/overseerr:325eecbad173074ce7c175dedeee12e69fc3c93e
     ports:
     - containerPort: 5055
     env:
