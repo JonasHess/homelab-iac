@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/prowlarr:latest
+    image: lscr.io/linuxserver/prowlarr:1.37.0
     ports:
     - containerPort: 9696
     pvcMounts:
