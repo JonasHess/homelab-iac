@@ -23,7 +23,7 @@ spec:
                 claimName: stirlingpdf-scanner-pvc
           containers:
             - name: stirlingpdf-pipeline-job
-              image: "busybox:1.37.0"
+              image: "busybox:1.35.0"
               command: ["sh", "-c"]
               volumeMounts:
                 - name: scanner
