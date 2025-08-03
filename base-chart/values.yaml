@@ -659,12 +659,6 @@ apps:
 
   restic:
     enabled: false
-    homer:
-      enabled: true
-      group: infrastructure
-      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/restic.svg
-      subtitle: backups
-      displayName: Restic
     argocd:
       targetRevision: null
       namespace: argocd
@@ -675,7 +669,7 @@ apps:
     homer:
       enabled: true
       group: infrastructure
-      logo: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/restic.svg
+      logo: https://raw.githubusercontent.com/homarr-labs/dashboard-icons/ecf7b7d385da52219f8d4efce9f9b85d285ea405/svg/backrest.svg
       subtitle: "Backup Management UI"
       displayName: "Backrest"
     argocd:
