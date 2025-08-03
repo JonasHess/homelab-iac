@@ -217,19 +217,7 @@ apps:
       project: "default"
       syncWave: "3"  # Early deployment for DNS services
   
-  drone:
-    enabled: false
-    homer:
-      enabled: true
-      group: "infrastructure"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/drone.svg"
-      subtitle: ""
-      displayName: "Drone CI"
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "8"  # Deploy after core services
+  
   duplicati:
     enabled: false
     homer:

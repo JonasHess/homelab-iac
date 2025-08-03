@@ -1,9 +1,0 @@
-generic:
-  persistentVolumeClaims:
-    data:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/drone/data
-  ingress:
-    https:
-    - subdomain: drone
-      port: 8080
-      service: drone-helm
