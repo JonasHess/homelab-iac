@@ -178,9 +178,10 @@
       ]
     },
     {
-      "description": "Use semantic versioning for qBittorrent",
+      "description": "Use semantic versioning for qBittorrent and constrain versions",
       "matchPackageNames": ["lscr.io/linuxserver/qbittorrent"],
-      "versioning": "semver"
+      "versioning": "semver",
+      "allowedVersions": "<10"
     }
   ],
   "ignoreDeps": ["629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste"],
