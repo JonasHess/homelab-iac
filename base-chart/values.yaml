@@ -257,13 +257,7 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "25"
-  githubarc:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "15"
+  
   gotenberg:
     enabled: false
     argocd:
