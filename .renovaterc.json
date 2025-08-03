@@ -203,7 +203,7 @@
       "description": "Update Docker image references in YAML files",
       "fileMatch": ["(^|/)apps/.+\\.yaml$"],
       "matchStrings": [
-        "image:\s*['"]?(?<depName>[^:]+):(?<currentValue>.+)['"]?"
+        "image:\\s*['\"]?(?<depName>[^:'\"\\s]+):(?<currentValue>[^'\"\\s]+)['\"]?"
       ],
       "datasourceTemplate": "docker"
     }
