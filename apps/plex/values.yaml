@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: ghcr.io/linuxserver/plex:latest
+    image: ghcr.io/linuxserver/plex:1.41.9
     ports:
     - containerPort: 32400
     pvcMounts:
