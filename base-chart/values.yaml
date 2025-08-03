@@ -218,19 +218,7 @@ apps:
       syncWave: "3"  # Early deployment for DNS services
   
   
-  duplicati:
-    enabled: false
-    homer:
-      enabled: true
-      group: "infrastructure"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/duplicati.svg"
-      subtitle: "Backups"
-      displayName: "Duplicati"
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "20"  # Deploy later as it's not critical
+  
   duplicatiprometheusexporter:
     enabled: false
     argocd:
