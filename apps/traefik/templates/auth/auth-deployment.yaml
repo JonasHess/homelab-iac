@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: traefik-forward-auth
-          image: thomseddon/traefik-forward-auth:latest
+          image: thomseddon/traefik-forward-auth:2.2.0
           imagePullPolicy: Always
           livenessProbe:
             failureThreshold: 3
