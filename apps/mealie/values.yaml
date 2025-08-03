@@ -2,7 +2,7 @@ oidc:
   configurationUrl: ~ # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
 generic:
   deployment:
-    image: ghcr.io/mealie-recipes/mealie:latest
+    image: ghcr.io/mealie-recipes/mealie:v3.0.2
     ports:
       - containerPort: 9000
     pvcMounts:
