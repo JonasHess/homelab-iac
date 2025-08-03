@@ -216,13 +216,7 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "3"  # Early deployment for DNS services
-  cnpg:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "4"  # Deploy before apps that need PostgreSQL
+  
   drone:
     enabled: false
     homer:
