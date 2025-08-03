@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/radarr:latest
+    image: lscr.io/linuxserver/radarr:5.26.2
     ports:
     - containerPort: 7878
     pvcMounts:
