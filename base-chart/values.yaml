@@ -194,13 +194,7 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "0"  # Deploy first as it manages other deployments
-  argoimageupdater:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "1"  # Deploy right after ArgoCD
+  
   asn:
     enabled: false
     argocd:
