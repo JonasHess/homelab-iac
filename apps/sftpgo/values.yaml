@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: drakkan/sftpgo:latest
+    image: drakkan/sftpgo:v2.6.6
     ports:
     - containerPort: 8080
     - containerPort: 2222
