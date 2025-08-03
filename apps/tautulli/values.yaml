@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: tautulli/tautulli:latest
+    image: tautulli/tautulli:v2.15.2
     ports:
     - containerPort: 8181
     pvcMounts:
