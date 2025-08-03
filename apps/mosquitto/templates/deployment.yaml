@@ -18,7 +18,7 @@ spec:
     spec:
       initContainers:
         - name: init-permissions
-          image: eclipse-mosquitto:latest
+          image: eclipse-mosquitto:2.0.22
           command:
             - sh
             - -c
@@ -41,7 +41,7 @@ spec:
               readOnly: true
       containers:
         - name: mosquitto
-          image: eclipse-mosquitto:latest
+          image: eclipse-mosquitto:2.0.22
           ports:
             - containerPort: 1883
               name: "tcp1883"
