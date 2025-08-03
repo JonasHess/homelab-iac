@@ -183,7 +183,7 @@
       "versioning": "semver"
     }
   ],
-  "ignoreDeps": [],
+  "ignoreDeps": ["629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste"],
   "hostRules": [],
   "customManagers": [
     {
