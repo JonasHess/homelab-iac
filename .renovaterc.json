@@ -197,6 +197,15 @@
         "chart:\\s+(?<depName>[^\\s\\n]+)[\\s\\S]*?repoURL:\\s+(?<registryUrl>https://[^\\s\\n]+)[\\s\\S]*?targetRevision:\\s+(?<currentValue>[^\\s\\n]+)"
       ],
       "datasourceTemplate": "helm"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Docker image references in YAML files",
+      "fileMatch": ["(^|/)apps/.+\.yaml$"],
+      "matchStrings": [
+        "image:\s+(?<depName>[^/]+/[^:]+):(?<currentValue>.+)"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "ignorePaths": [
