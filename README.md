@@ -27,9 +27,12 @@ This infrastructure currently manages the deployment of the following applicatio
 -   **Radarr:** Movie collection manager.
 -   **Sonarr:** TV show collection manager.
 -   **Readarr:** Ebook collection manager.
-- **Tautulli:** Plex monitoring and statistics.
+-   **Tautulli:** Plex monitoring and statistics.
 -   **SABnzbd:** Usenet binary downloader.
-- **qBittorrent:** Torrent Client.
+-   **qBittorrent:** Torrent Client.
+-   **Overseerr:** Request management and media discovery tool.
+-   **Prowlarr:** Indexer manager for the *arr stack.
+-   **Audiobookshelf:** Self-hosted audiobook and podcast server.
 
 **Home Automation:**
 
@@ -37,6 +40,7 @@ This infrastructure currently manages the deployment of the following applicatio
 -   **Zigbee2MQTT:** Zigbee to MQTT gateway.
 -   **Mosquitto:** MQTT broker for smart home devices.
 -   **HomeMatic:** Home automation controller.
+-   **SmartHome3:** Smart home management system.
 
 **Productivity & Utilities:**
 
@@ -46,33 +50,73 @@ This infrastructure currently manages the deployment of the following applicatio
 -   **Tika:** Content detection and analysis framework.
 -   **Ollama:** Run and deploy local LLMs.
 -   **OpenWebUI:** Chat interface for Ollama.
-- **Redis:** In memory data store.
+-   **Redis:** In memory data store.
 -   **Postgres:** Database server.
--   **Duplicati:** Backup software.
 -   **Stirling-PDF:** Local PDF manipulation tool.
 -   **SFTP Go:** SFTP/FTP server.
-- **AdGuard:** DNS ad-blocker
-- **Cloudflare DDNS:** Dynamic DNS update for cloudflare
-- **Duplicati-Prometheus-Exporter:** Prometheus metrics for duplicati
+-   **AdGuard:** DNS ad-blocker.
+-   **Cloudflare DDNS:** Dynamic DNS update for cloudflare.
+-   **Duplicati-Prometheus-Exporter:** Prometheus metrics for duplicati.
+-   **Vaultwarden:** Self-hosted Bitwarden server written in Rust.
+-   **Mealie:** Recipe manager and meal planner.
+-   **Radicale:** CalDAV and CardDAV server.
+-   **Homer:** Static homepage dashboard.
 
 **Monitoring & Observability:**
 
 -   **Prometheus:** Monitoring and alerting system.
 -   **Grafana:** Data visualization and dashboards.
-- **Alertmanager:** Alert handling for prometheus
+-   **Alertmanager:** Alert handling for prometheus.
 
 **CI/CD & Development:**
 
--   **Drone:** Continuous Integration and Continuous Delivery (CI/CD) platform.
--   **GitHub ARC (Actions Runner Controller):** Self-hosted GitHub Actions runners.
-- **ArgoCD:** GitOps management tool for Kubernetes.
+-   **ArgoCD:** GitOps management tool for Kubernetes.
+
+**Backup & Storage:**
+
+-   **Backrest:** Web UI and orchestrator for restic backup.
+-   **Restic:** Fast, secure, and efficient backup program.
+
+**Infrastructure & Platform:**
+
+-   **Akeyless:** Secrets management platform.
+-   **External Secrets Operator:** Kubernetes operator for external secret management.
+-   **Traefik:** Modern HTTP reverse proxy and load balancer.
+-   **Crossplane:** Infrastructure as code using Kubernetes.
+-   **AWS Controllers:** Kubernetes controllers for AWS services.
+-   **Reloader:** Kubernetes controller to watch changes in ConfigMap and Secrets.
+-   **Profilarr:** Media library profiler and optimizer.
 
 **Other:**
 
 -   **Immich:** Self-hosted photo and video backup solution.
 -   **ASN (Archive Serial Number):** Small Nodejs App to redirect to Paperless via the asn.
 -   **TGTG:** TooGoodToGo Notification tool.
-- **CNPG:** Cloud-native PostgreSQL for managing postgres clusters
+-   **Generic:** Base chart for generic applications.
+-   **Whoami:** Simple HTTP service for testing.
+-   **Test:** Test application deployment.
+
+## Dependency Management with Renovate
+
+This repository uses [Renovate](https://renovatebot.com/) for automated dependency updates. Renovate helps keep all dependencies up-to-date by automatically creating pull requests when new versions are available.
+
+### Configuration Highlights:
+
+- **Schedule**: Updates run at 3pm on Sundays (Europe/Berlin timezone)
+- **Auto-merge**: Enabled for patch and minor updates across all dependency types
+- **Manual approval**: Required for all major version updates
+- **Supported dependency types**:
+  - Helm charts
+  - Docker images
+  - Python packages
+  - JavaScript/Node.js packages
+  - Go modules
+  - GitHub Actions
+- **Custom regex managers**: Configured to detect and update:
+  - ArgoCD Application targetRevisions
+  - Docker image references in YAML files
+
+The full Renovate configuration can be found in `.renovaterc.json`.
 
 ## TODOs & Future Improvements
 
