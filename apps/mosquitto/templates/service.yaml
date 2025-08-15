@@ -12,7 +12,7 @@ spec:
   - name: tcp9001
     port: 9001
     targetPort: 9001
-    nodePort: 39001
+    nodePort: 32001
   selector:
     app: mosquitto
   type: NodePort
