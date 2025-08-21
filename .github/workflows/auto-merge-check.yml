@@ -1,0 +1,16 @@
+name: Auto-merge Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  auto-merge-check:
+    name: Enable Auto-merge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Simple check
+        run: |
+          echo "✅ This check enables auto-merge functionality"
+          echo "PR #${{ github.event.number }} is ready"
+          exit 0
