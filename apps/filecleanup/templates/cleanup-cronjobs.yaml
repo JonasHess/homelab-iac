@@ -41,7 +41,13 @@ spec:
                 echo "  Retention days: {{ $jobConfig.retentionDays }}"
                 echo "  Cleanup empty dirs: {{ $jobConfig.cleanupEmptyDirs }}"
                 echo "  Dry run: {{ $.Values.filecleanup.dryRun }}"
-                echo "  Target path: /mnt/cleanup-target"
+                echo "  Container mount path: /mnt/cleanup-target"
+                {{- $pvcConfig := index $.Values.generic.persistentVolumeClaims $jobName }}
+                {{- if $pvcConfig }}
+                echo "  Host path: {{ $pvcConfig.hostPath }}"
+                {{- else }}
+                echo "  Host path: <PVC {{ $jobName }} not found in generic.persistentVolumeClaims>"
+                {{- end }}
                 echo ""
                 
                 # Check if target directory exists
