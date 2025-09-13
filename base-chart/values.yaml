@@ -622,6 +622,13 @@ apps:
       namespace: argocd
       project: default
       syncWave: '15'
+  filecleanup:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '25'  # Run after all apps are deployed
   backrest:
     enabled: false
     homer:

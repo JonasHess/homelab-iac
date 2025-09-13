@@ -1,0 +1,14 @@
+appName: filecleanup
+
+generic:
+  persistentVolumeClaims: {}
+#    sabnzbd-download:
+#      hostPath: /data/volumes/sabnzbd-downloads
+
+filecleanup:
+  dryRun: true  # Global dry-run toggle for testing
+  cleanupJobs: {}
+#    sabnzbd-download:  # Must match a key in generic.persistentVolumeClaims
+#      retentionDays: 7
+#      cleanupEmptyDirs: true
+#      schedule: "0 2 * * *"  # 2 AM daily

@@ -1,0 +1,136 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if .Values.filecleanup }}
+{{- if .Values.filecleanup.cleanupJobs }}
+{{- range $jobName, $jobConfig := .Values.filecleanup.cleanupJobs }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $appName }}-{{ $jobName }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+    component: cleanup
+    job: {{ $jobName }}
+spec:
+  schedule: {{ required (printf "schedule must be specified for job %s" $jobName) $jobConfig.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app: {{ $appName }}
+            component: cleanup
+            job: {{ $jobName }}
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: cleanup
+            image: alpine:3.19
+            command: ["/bin/sh"]
+            args:
+              - -c
+              - |
+                set -e
+                echo "Starting cleanup job for {{ $jobName }}"
+                echo "Configuration:"
+                echo "  Retention days: {{ $jobConfig.retentionDays }}"
+                echo "  Cleanup empty dirs: {{ $jobConfig.cleanupEmptyDirs }}"
+                echo "  Dry run: {{ $.Values.filecleanup.dryRun }}"
+                echo "  Target path: /mnt/cleanup-target"
+                echo ""
+                
+                # Check if target directory exists
+                if [ ! -d "/mnt/cleanup-target" ]; then
+                  echo "ERROR: Target directory /mnt/cleanup-target does not exist"
+                  exit 1
+                fi
+                
+                # Count files before cleanup
+                echo "Scanning target directory..."
+                total_files=$(find /mnt/cleanup-target -type f 2>/dev/null | wc -l)
+                echo "Total files found: $total_files"
+                
+                # Find and handle old files
+                echo ""
+                echo "Finding files older than {{ $jobConfig.retentionDays }} days..."
+                old_files=$(find /mnt/cleanup-target -type f -mtime +{{ $jobConfig.retentionDays }} 2>/dev/null)
+                
+                if [ -z "$old_files" ]; then
+                  echo "No files older than {{ $jobConfig.retentionDays }} days found."
+                else
+                  old_files_count=$(echo "$old_files" | wc -l)
+                  echo "Found $old_files_count files to clean up:"
+                  echo "$old_files" | head -20
+                  if [ $old_files_count -gt 20 ]; then
+                    echo "... and $((old_files_count - 20)) more files"
+                  fi
+                  
+                  {{- if $.Values.filecleanup.dryRun }}
+                  echo ""
+                  echo "DRY RUN MODE - No files will be deleted"
+                  echo "Files that would be deleted:"
+                  echo "$old_files"
+                  {{- else }}
+                  echo ""
+                  echo "Deleting old files..."
+                  echo "$old_files" | while IFS= read -r file; do
+                    if [ -f "$file" ]; then
+                      rm -f "$file" && echo "Deleted: $file"
+                    fi
+                  done
+                  echo "File cleanup completed."
+                  {{- end }}
+                fi
+                
+                {{- if $jobConfig.cleanupEmptyDirs }}
+                # Find and handle empty directories
+                echo ""
+                echo "Finding empty directories older than {{ $jobConfig.retentionDays }} days..."
+                # Find empty directories (depth-first to handle nested empty dirs)
+                empty_dirs=$(find /mnt/cleanup-target -depth -type d -empty -mtime +{{ $jobConfig.retentionDays }} 2>/dev/null | grep -v "^/mnt/cleanup-target$" || true)
+                
+                if [ -z "$empty_dirs" ]; then
+                  echo "No empty directories older than {{ $jobConfig.retentionDays }} days found."
+                else
+                  empty_dirs_count=$(echo "$empty_dirs" | wc -l)
+                  echo "Found $empty_dirs_count empty directories to clean up:"
+                  echo "$empty_dirs" | head -20
+                  if [ $empty_dirs_count -gt 20 ]; then
+                    echo "... and $((empty_dirs_count - 20)) more directories"
+                  fi
+                  
+                  {{- if $.Values.filecleanup.dryRun }}
+                  echo ""
+                  echo "DRY RUN MODE - No directories will be deleted"
+                  echo "Directories that would be deleted:"
+                  echo "$empty_dirs"
+                  {{- else }}
+                  echo ""
+                  echo "Deleting empty directories..."
+                  echo "$empty_dirs" | while IFS= read -r dir; do
+                    if [ -d "$dir" ]; then
+                      rmdir "$dir" 2>/dev/null && echo "Deleted: $dir" || echo "Could not delete (not empty): $dir"
+                    fi
+                  done
+                  echo "Directory cleanup completed."
+                  {{- end }}
+                fi
+                {{- end }}
+                
+                echo ""
+                echo "Cleanup job completed successfully."
+            volumeMounts:
+            - name: target-volume
+              mountPath: /mnt/cleanup-target
+          volumes:
+          - name: target-volume
+            persistentVolumeClaim:
+              claimName: {{ $appName }}-{{ $jobName }}-pvc
+{{- end }}
+{{- end }}
+{{- end }}
