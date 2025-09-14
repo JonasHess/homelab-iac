@@ -49,6 +49,11 @@ spec:
                 echo "  Host path: <PVC {{ $jobName }} not found in generic.persistentVolumeClaims>"
                 {{- end }}
                 echo ""
+                echo "Cleanup strategy:"
+                echo "  - Files: Using ctime (status change time) to handle extracted archives correctly"
+                echo "  - Files: Only delete if parent directory is also old (safety check)"
+                echo "  - Directories: Using mtime (modification time) for empty directories"
+                echo ""
                 
                 # Check if target directory exists
                 if [ ! -d "/mnt/cleanup-target" ]; then
@@ -63,8 +68,21 @@ spec:
                 
                 # Find and handle old files
                 echo ""
-                echo "Finding files older than {{ $jobConfig.retentionDays }} days..."
-                old_files=$(find /mnt/cleanup-target -type f -mtime +{{ $jobConfig.retentionDays }} 2>/dev/null)
+                echo "Finding files older than {{ $jobConfig.retentionDays }} days (using ctime - last status change)..."
+                # Use ctime (status change time) instead of mtime to handle extracted files correctly
+                # Also check parent directory age as safety check
+                old_files=""
+                for file in $(find /mnt/cleanup-target -type f -ctime +{{ $jobConfig.retentionDays }} 2>/dev/null); do
+                  parent_dir=$(dirname "$file")
+                  # Check if parent directory is also old enough (using mtime for directories)
+                  if [ "$(find "$parent_dir" -maxdepth 0 -type d -mtime +{{ $jobConfig.retentionDays }} 2>/dev/null)" ]; then
+                    old_files="${old_files}${file}"$'\n'
+                  else
+                    echo "Skipping $file - parent directory is too recent"
+                  fi
+                done
+                # Remove trailing newline
+                old_files=$(echo "$old_files" | sed '/^$/d')
                 
                 if [ -z "$old_files" ]; then
                   echo "No files older than {{ $jobConfig.retentionDays }} days found."
@@ -96,8 +114,9 @@ spec:
                 {{- if $jobConfig.cleanupEmptyDirs }}
                 # Find and handle empty directories
                 echo ""
-                echo "Finding empty directories older than {{ $jobConfig.retentionDays }} days..."
+                echo "Finding empty directories older than {{ $jobConfig.retentionDays }} days (using mtime - modification time)..."
                 # Find empty directories (depth-first to handle nested empty dirs)
+                # Note: Using mtime for directories since they don't have the extraction timestamp issue
                 empty_dirs=$(find /mnt/cleanup-target -depth -type d -empty -mtime +{{ $jobConfig.retentionDays }} 2>/dev/null | grep -v "^/mnt/cleanup-target$" || true)
                 
                 if [ -z "$empty_dirs" ]; then
