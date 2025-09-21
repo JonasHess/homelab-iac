@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jellyfin-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  PUID: "1000"
+  PGID: "997"
+  TZ: "Europe/Berlin"

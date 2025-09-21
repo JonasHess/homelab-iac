@@ -32,11 +32,12 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
 ## Architecture
 
 ### Helm Chart Structure
-- **Generic Chart Pattern**: All applications use `apps/generic/` as a base dependency
+- **Generic Chart Pattern**: Most applications use `apps/generic/` as a base dependency
 - **App Structure**: Each app in `apps/<appname>/` contains:
   - `Chart.yaml` - Helm chart metadata with generic chart dependency
   - `values.yaml` - Application-specific configuration
   - `templates/` - Additional Kubernetes resources (if needed)
+- **Custom Template Apps**: Some apps like `restic` and `filecleanup` use custom templates for specialized functionality (e.g., CronJobs)
 
 ### Key Components
 - **ArgoCD**: Manages all deployments via GitOps from `apps/argocd/`
@@ -141,7 +142,7 @@ Centralized group definitions for dashboard organization:
 - **Monitoring**: Grafana, Prometheus dashboards
 - **Productivity**: Document management, passwords
 - **Smart Home**: Home Assistant, Zigbee
-- **Media & Entertainment**: Plex, Immich
+- **Media & Entertainment**: Plex, Jellyfin, Immich
 - **Starrs**: Radarr, Sonarr, Prowlarr (*arr applications)
 - **Downloads**: qBittorrent, SABnzbd
 - **AI & ML**: Ollama, Open WebUI
@@ -213,6 +214,30 @@ cd apps && ./update_dependencies.sh
 ```
 
 The application will be automatically deployed by ArgoCD once pushed to the repository.
+
+## File Cleanup Application
+
+The `filecleanup` app provides automated cleanup of old files and empty directories using CronJobs.
+
+### Features
+- Automated file deletion based on age (retention days)
+- Optional empty directory cleanup
+- Dry-run mode for testing
+- Per-job configuration with individual schedules and retention policies
+- Mounts existing PVCs to clean specific paths
+
+### Configuration
+```yaml
+filecleanup:
+  dryRun: true  # Global dry-run toggle for testing
+  cleanupJobs:
+    job-name:  # Also used as PVC reference
+      retentionDays: 7          # Delete files/dirs older than this
+      cleanupEmptyDirs: true     # Also remove empty directories
+      schedule: "0 2 * * *"      # Cron schedule
+```
+
+The job name must match a PVC defined in `generic.persistentVolumeClaims`.
 
 ## Claude Code Memories
 - Remember to fully understand the apps/generic chart before writing code

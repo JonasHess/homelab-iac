@@ -340,6 +340,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "20"  # Heavy resource usage, deploy later
+  jellyfin:
+    enabled: false
+    homer:
+      enabled: true
+      group: "media"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/jellyfin.svg"
+      subtitle: "Open Source Media Server"
+      displayName: "Jellyfin"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"  # Heavy resource usage, deploy later
   overseerr:
     enabled: false
     homer:
