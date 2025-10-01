@@ -9,7 +9,7 @@ generic:
   deployment:
     securityContext:
       privileged: true
-    image: koenkk/zigbee2mqtt:2.6.0
+    image: koenkk/zigbee2mqtt:2.6.2
     ports:
     - containerPort: 8080
     pvcMounts:
