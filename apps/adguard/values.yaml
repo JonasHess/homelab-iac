@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: adguard/adguardhome:v0.107.64
+    image: adguard/adguardhome:v0.107.67
     ports:
     - containerPort: 3000
     - containerPort: 53
