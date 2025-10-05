@@ -7,8 +7,8 @@
   "schedule": [
     "after 12:00 and before 22:00 every day"
   ],
-  "prConcurrentLimit": 20,
-  "prHourlyLimit": 20,
+  "prConcurrentLimit": 50,
+  "prHourlyLimit": 50,
   "commitMessagePrefix": "chore:",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "to {{newVersion}}",
