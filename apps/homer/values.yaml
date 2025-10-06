@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: b4bz/homer:v25.09.1
+    image: b4bz/homer:v25.10.1
     ports:
      - containerPort: 8080
     configMapMounts:
