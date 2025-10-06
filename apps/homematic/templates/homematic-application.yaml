@@ -10,11 +10,11 @@ metadata:
 spec:
   project: default
   source:
-    chart: raspberrymatic
+    chart: openccu
     # This chart inherits from bjw-s common library chart. You can check the default values/options here:
     # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
     repoURL: https://openccu.github.io/OpenCCU
-    targetRevision: 3.83.6
+    targetRevision: 0.1
     helm:
       # Values file as block file
       valuesObject:
