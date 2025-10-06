@@ -13,8 +13,8 @@ spec:
     chart: raspberrymatic
     # This chart inherits from bjw-s common library chart. You can check the default values/options here:
     # https://github.com/bjw-s/helm-charts/blob/main/charts/library/common/values.yaml
-    repoURL: https://jens-maus.github.io/RaspberryMatic
-    targetRevision: 3.79.6
+    repoURL: https://openccu.github.io/OpenCCU
+    targetRevision: 3.83.6
     helm:
       # Values file as block file
       valuesObject:
