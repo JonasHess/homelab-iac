@@ -8,6 +8,6 @@ generic:
     https:
     - subdomain: homematic
       port: 80
-      service: homematic-raspberrymatic
+      service: homematic-openccu
       middlewares:
       - traefik-forward-auth
