@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: docker.io/gotenberg/gotenberg:8.23
+    image: docker.io/gotenberg/gotenberg:8.24
     ports:
     - containerPort: 3000
   service:
