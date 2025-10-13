@@ -19,8 +19,7 @@
   ],
   "assignees": [],
   "reviewers": [],
-  "platformAutomerge": false,
-  "requiredStatusChecks": null,
+  "platformAutomerge": true,
   "packageRules": [
     {
       "description": "Auto-merge patch and minor updates for Helm charts",
