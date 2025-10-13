@@ -185,6 +185,14 @@
       ],
       "versioning": "semver",
       "allowedVersions": "<10"
+    },
+    {
+      "description": "Use semantic versioning for Jellyfin and ignore old CalVer versions",
+      "matchPackageNames": [
+        "lscr.io/linuxserver/jellyfin"
+      ],
+      "versioning": "semver",
+      "allowedVersions": "<=2000"
     }
   ],
   "ignoreDeps": [
