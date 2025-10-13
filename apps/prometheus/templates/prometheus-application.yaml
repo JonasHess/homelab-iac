@@ -55,6 +55,7 @@ spec:
             userKey: admin-user
             passwordKey: admin-password
           sidecar:
+            skipTlsVerify: true
             dashboards:
               enabled: true
               label: grafana_dashboard
