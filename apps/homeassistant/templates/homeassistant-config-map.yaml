@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeassistant-config-map
+  namespace: {{ $.Release.Namespace }}
+data:
+  TZ: "Europe/Berlin"
