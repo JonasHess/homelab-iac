@@ -175,7 +175,7 @@ spec:
     spec:
       containers:
         - name: machine-learning
-          image: ghcr.io/immich-app/immich-machine-learning:v2.0.1
+          image: ghcr.io/immich-app/immich-machine-learning:v2.1.0
           imagePullPolicy: Always
           resources:
             {{- with .Values.resources.machineLearning }}
