@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: frooodle/s-pdf:1.4.0
+    image: frooodle/s-pdf:1.5.0
     ports:
     - containerPort: 8080
     pvcMounts:
