@@ -9,6 +9,8 @@ generic:
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/homeassistant/config
         backup:
           enabled: true
+    envFrom:
+      configMapRef: homeassistant-config-map
   service:
     ports:
     - name: http
