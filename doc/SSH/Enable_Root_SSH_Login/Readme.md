@@ -2,7 +2,7 @@
 
 ## Copy the public key to the server
 ```bash
-ssh-copy-id root@<server_ip>
+ssh-copy-id myuser@<server_ip>
 ```
 
 or
@@ -11,8 +11,14 @@ curl -fsSL https://raw.githubusercontent.com/JonasHess/SSH_Public_Key/master/set
 
 ## Login to the server
 ```bash
-ssh root@<server_ip>
+ssh myuser@<server_ip>
 ```  
+
+
+## Switch to root user
+```bash
+sudo -i
+```
 
 
 ## Open the sshd_config file
@@ -34,4 +40,4 @@ PasswordAuthentication no
 service ssh restart
 ```
 
-cat authorized_keys >> /root/.ssh/authorized_keys
+cat /home/myuser/.ssh/authorized_keys >> /root/.ssh/authorized_keys

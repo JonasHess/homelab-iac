@@ -64,7 +64,7 @@ ensure_microk8s_installed() {
 
 install_microk8s() {
   echo "Installing microk8s..."
-  snap install microk8s --classic
+  snap install microk8s --classic --channel=1.34/stable
   microk8s enable dns
   microk8s enable metallb:$IP_RANGE
 
