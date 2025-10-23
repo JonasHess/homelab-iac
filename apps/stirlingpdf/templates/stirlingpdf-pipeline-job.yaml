@@ -7,6 +7,7 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
   schedule: "*/3 * * * *"  # Every 10 minutes
+  concurrencyPolicy: Forbid  # Prevent concurrent jobs - skip new job if previous is still running
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5
   jobTemplate:
