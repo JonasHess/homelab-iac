@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: cli
-          image: ghcr.io/immich-app/immich-cli:2.2.97
+          image: ghcr.io/immich-app/immich-cli:2.2.100
           imagePullPolicy: IfNotPresent
           workingDir: /usr/src/app/dist
           command:
