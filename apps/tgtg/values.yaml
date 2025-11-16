@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: derhenning/tgtg:v1.23.1-alpine
+    image: derhenning/tgtg:v1.24.0-alpine
     envFrom:
       secretRef: tgtg-credentials
       configMapRef: tgtg-config-map
