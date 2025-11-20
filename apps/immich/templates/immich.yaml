@@ -61,7 +61,7 @@ spec:
               value: {{ printf "https://%s.%s" .Values.server.externalSubDomain  .Values.global.domain | quote }}
       containers:
         - name: server
-          image: ghcr.io/immich-app/immich-server:v2.2.3
+          image: ghcr.io/immich-app/immich-server:v2.3.1
           imagePullPolicy: Always
           ports:
             - containerPort: 2283
@@ -175,7 +175,7 @@ spec:
     spec:
       containers:
         - name: machine-learning
-          image: ghcr.io/immich-app/immich-machine-learning:v2.2.3
+          image: ghcr.io/immich-app/immich-machine-learning:v2.3.1
           imagePullPolicy: Always
           resources:
             {{- with .Values.resources.machineLearning }}
