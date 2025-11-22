@@ -1,0 +1,29 @@
+# ECR Registry Helper Configuration
+# Manages multiple ECR authentication tokens across different AWS accounts/regions
+
+ecrRegistries:
+  # First ECR account (existing)
+  - name: primary
+    region: eu-central-1
+    namespace: argocd
+    schedule: "0 */10 * * *"  # Refresh every 10 hours
+
+  # Second ECR account (new)
+  # Uncomment and configure when ready
+  # - name: secondary
+  #   region: eu-central-1
+  #   namespace: argocd
+  #   schedule: "0 */10 * * *"
+
+# Global settings
+serviceAccount:
+  name: sa-argocd
+
+image:
+  repository: omarxs/awskctl
+  tag: v1.0
+  pullPolicy: IfNotPresent
+
+cronJob:
+  successfulJobsHistoryLimit: 2
+  suspend: false
