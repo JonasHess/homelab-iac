@@ -86,6 +86,25 @@ For each ECR registry defined in `values.yaml`:
 - ConfigMap: `ecr-registry-helper-cm-{name}`
 - CronJob: `ecr-registry-helper-{name}`
 
+### Global Settings
+
+You can customize the following global settings in `values.yaml`:
+
+```yaml
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "100m"
+  limits:
+    memory: "128Mi"
+    cpu: "200m"
+
+cronJob:
+  successfulJobsHistoryLimit: 2  # Keep last 2 successful job runs
+  suspend: false                   # Set to true to pause all CronJobs
+  backoffLimit: 3                  # Retry failed jobs up to 3 times
+```
+
 ### AWS Credentials in Akeyless
 
 For each registry, store the following in Akeyless:
@@ -167,9 +186,16 @@ kubectl get secrets -n argocd | grep regcred-
 ## Troubleshooting
 
 ### Secret Not Created
-1. Check job logs for errors
-2. Verify AWS credentials are correct
+1. Check job logs for errors:
+   ```bash
+   kubectl logs -n argocd -l job-name=ecr-registry-helper-immediate-primary
+   ```
+2. Verify AWS credentials are correct in Akeyless
 3. Ensure IAM user has `ecr:GetAuthorizationToken` permission
+4. Check if job failed and is being retried (backoffLimit: 3):
+   ```bash
+   kubectl get jobs -n argocd | grep ecr-registry-helper
+   ```
 
 ### Image Pull Errors
 1. Verify the secret exists in the correct namespace

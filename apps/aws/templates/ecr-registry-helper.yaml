@@ -65,6 +65,7 @@ spec:
   suspend: {{ $.Values.cronJob.suspend }}
   jobTemplate:
     spec:
+      backoffLimit: {{ $.Values.cronJob.backoffLimit }}
       template:
         spec:
           serviceAccountName: {{ $.Values.serviceAccount.name }}
@@ -72,6 +73,8 @@ spec:
           - name: ecr-registry-helper
             image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
             imagePullPolicy: {{ $.Values.image.pullPolicy }}
+            resources:
+              {{- toYaml $.Values.resources | nindent 14 }}
             envFrom:
               - secretRef:
                   name: ecr-registry-helper-secrets-{{ .name }}
@@ -98,6 +101,7 @@ metadata:
   name: ecr-registry-helper-immediate-{{ .name }}
   namespace: {{ $.Release.Namespace }}
 spec:
+  backoffLimit: {{ $.Values.cronJob.backoffLimit }}
   template:
     spec:
       serviceAccountName: {{ $.Values.serviceAccount.name }}
@@ -105,6 +109,8 @@ spec:
       - name: ecr-registry-helper
         image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
         imagePullPolicy: {{ $.Values.image.pullPolicy }}
+        resources:
+          {{- toYaml $.Values.resources | nindent 10 }}
         envFrom:
           - secretRef:
               name: ecr-registry-helper-secrets-{{ .name }}

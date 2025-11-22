@@ -24,6 +24,16 @@ image:
   tag: v1.0
   pullPolicy: IfNotPresent
 
+# Resource limits for ECR helper containers
+resources:
+  requests:
+    memory: "64Mi"
+    cpu: "100m"
+  limits:
+    memory: "128Mi"
+    cpu: "200m"
+
 cronJob:
   successfulJobsHistoryLimit: 2
   suspend: false
+  backoffLimit: 3  # Retry failed jobs up to 3 times
