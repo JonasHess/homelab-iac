@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/homeassistant:2025.11.2
+    image: lscr.io/linuxserver/homeassistant:2025.11.3
     ports:
     - containerPort: 8123
     pvcMounts:
