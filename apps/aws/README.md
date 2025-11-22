@@ -28,6 +28,8 @@ For each ECR registry defined in `values.yaml`:
 
 ## Configuration
 
+ECR registries are configured **per-environment** in your `homelab_environments/<environment>/values.yaml` file.
+
 ### Adding a New ECR Registry
 
 1. **Store AWS Credentials in Akeyless**
@@ -37,27 +39,34 @@ For each ECR registry defined in `values.yaml`:
    - `<akeyless-path>/aws/ecr/<registry-name>/AWS_ACCESS_KEY_ID`
    - `<akeyless-path>/aws/ecr/<registry-name>/AWS_SECRET_ACCESS_KEY`
 
-   For example, for a registry named `secondary`:
-   - `<akeyless-path>/aws/ecr/secondary/AWS_ACCOUNT` = `987654321098`
-   - `<akeyless-path>/aws/ecr/secondary/AWS_ACCESS_KEY_ID` = `AKIA...`
-   - `<akeyless-path>/aws/ecr/secondary/AWS_SECRET_ACCESS_KEY` = `...`
+   For example, for environment `zimmermann.lat` with a registry named `primary`:
+   - `/zimmermann.lat/aws/ecr/primary/AWS_ACCOUNT` = `123456789012`
+   - `/zimmermann.lat/aws/ecr/primary/AWS_ACCESS_KEY_ID` = `AKIA...`
+   - `/zimmermann.lat/aws/ecr/primary/AWS_SECRET_ACCESS_KEY` = `...`
 
    The External Secrets Operator will automatically create the Kubernetes secret.
 
-2. **Update values.yaml**
+2. **Update Environment Values File**
 
-   Add the new registry to the `ecrRegistries` list:
+   Edit `homelab_environments/<environment>/values.yaml` and add/update the aws section:
    ```yaml
-   ecrRegistries:
-     - name: primary
-       region: eu-central-1
-       namespace: argocd
-       schedule: "0 */10 * * *"
+   apps:
+     aws:
+       enabled: true
+       argocd:
+         targetRevision: ~
+         helm:
+           values:
+             ecrRegistries:
+               - name: primary
+                 region: eu-central-1
+                 namespace: argocd
+                 schedule: "0 */10 * * *"
 
-     - name: secondary
-       region: eu-central-1
-       namespace: argocd
-       schedule: "0 */10 * * *"
+               - name: secondary
+                 region: eu-central-1
+                 namespace: argocd
+                 schedule: "0 */10 * * *"
    ```
 
    Secret names are auto-generated from the registry name:

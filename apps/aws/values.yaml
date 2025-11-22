@@ -1,19 +1,22 @@
 # ECR Registry Helper Configuration
 # Manages multiple ECR authentication tokens across different AWS accounts/regions
-
-ecrRegistries:
-  # First ECR account (existing)
-  - name: primary
-    region: eu-central-1
-    namespace: argocd
-    schedule: "0 */10 * * *"  # Refresh every 10 hours
-
-  # Second ECR account (new)
-  # Uncomment and configure when ready
-  # - name: secondary
-  #   region: eu-central-1
-  #   namespace: argocd
-  #   schedule: "0 */10 * * *"
+#
+# NOTE: Configure actual ECR registries in your environment-specific values file:
+#       homelab_environments/<environment>/values.yaml
+#
+# Example configuration:
+#   apps:
+#     aws:
+#       helm:
+#         values:
+#           ecrRegistries:
+#             - name: primary
+#               region: eu-central-1
+#               namespace: argocd
+#               schedule: "0 */10 * * *"
+#
+# Default (empty - must be configured per environment)
+ecrRegistries: []
 
 # Global settings
 serviceAccount:
