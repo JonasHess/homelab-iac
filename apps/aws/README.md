@@ -39,10 +39,10 @@ ECR registries are configured **per-environment** in your `homelab_environments/
    - `<akeyless-path>/aws/ecr/<registry-name>/AWS_ACCESS_KEY_ID`
    - `<akeyless-path>/aws/ecr/<registry-name>/AWS_SECRET_ACCESS_KEY`
 
-   For example, for environment `zimmermann.lat` with a registry named `primary`:
-   - `/zimmermann.lat/aws/ecr/primary/AWS_ACCOUNT` = `123456789012`
-   - `/zimmermann.lat/aws/ecr/primary/AWS_ACCESS_KEY_ID` = `AKIA...`
-   - `/zimmermann.lat/aws/ecr/primary/AWS_SECRET_ACCESS_KEY` = `...`
+   For example, with a registry named `primary`:
+   - `<akeyless-path>/aws/ecr/primary/AWS_ACCOUNT` = `123456789012`
+   - `<akeyless-path>/aws/ecr/primary/AWS_ACCESS_KEY_ID` = `AKIA...`
+   - `<akeyless-path>/aws/ecr/primary/AWS_SECRET_ACCESS_KEY` = `...`
 
    The External Secrets Operator will automatically create the Kubernetes secret.
 
