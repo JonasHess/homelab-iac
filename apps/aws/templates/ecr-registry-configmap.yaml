@@ -1,0 +1,12 @@
+{{- range .Values.ecrRegistries }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecr-registry-helper-cm-{{ .name }}
+  namespace: {{ $.Release.Namespace }}
+data:
+  AWS_REGION: {{ .region | quote }}
+  DOCKER_SECRET_NAME: regcred-{{ .name }}
+  NAMESPACE_NAME: {{ .namespace | quote }}
+{{- end }}
