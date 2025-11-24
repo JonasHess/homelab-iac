@@ -642,6 +642,15 @@ apps:
       namespace: argocd
       project: default
       syncWave: '25'  # Run after all apps are deployed
+  treubau-document-downloader:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'  # Deploy after core apps
   backrest:
     enabled: false
     homer:

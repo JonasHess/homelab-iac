@@ -1,0 +1,54 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if .Values.treubauDocumentDownloader }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $appName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+    component: document-downloader
+spec:
+  schedule: {{ .Values.treubauDocumentDownloader.schedule | default "0 0 1 * *" | quote }}
+  suspend: {{ .Values.treubauDocumentDownloader.suspend | default true }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: {{ $appName }}
+            component: document-downloader
+        spec:
+          restartPolicy: OnFailure
+          {{- if .Values.treubauDocumentDownloader.imagePullSecrets }}
+          imagePullSecrets:
+          {{- range .Values.treubauDocumentDownloader.imagePullSecrets }}
+          - name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          containers:
+          - name: downloader
+            image: {{ required "image must be specified" .Values.treubauDocumentDownloader.image }}:{{ .Values.treubauDocumentDownloader.imageTag | default "latest" }}
+            imagePullPolicy: Always
+            env:
+            {{- range $key, $value := .Values.treubauDocumentDownloader.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.treubauDocumentDownloader.externalSecret.enabled }}
+            envFrom:
+            - secretRef:
+                name: {{ $appName }}-credentials
+            {{- end }}
+            volumeMounts:
+            - name: downloads
+              mountPath: {{ .Values.treubauDocumentDownloader.env.TREUBAU_OUTPUT_DIR | default "/downloads" }}
+          volumes:
+          - name: downloads
+            persistentVolumeClaim:
+              claimName: {{ $appName }}-downloads-pvc
+{{- end }}
