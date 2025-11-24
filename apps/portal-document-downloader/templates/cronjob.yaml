@@ -1,16 +1,21 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
-{{- if .Values.treubauDocumentDownloader }}
+{{- if .Values.portalDocumentDownloader }}
+{{- if .Values.portalDocumentDownloader.portals }}
+{{- range $portalName, $portalConfig := .Values.portalDocumentDownloader.portals }}
+{{- if $portalConfig.enabled }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ $appName }}
-  namespace: {{ .Release.Namespace }}
+  name: {{ $appName }}-{{ $portalName }}
+  namespace: {{ $.Release.Namespace }}
   labels:
     app: {{ $appName }}
     component: document-downloader
+    portal: {{ $portalName }}
 spec:
-  schedule: {{ .Values.treubauDocumentDownloader.schedule | default "0 0 1 * *" | quote }}
-  suspend: {{ .Values.treubauDocumentDownloader.suspend | default true }}
+  schedule: {{ required (printf "schedule must be specified for portal %s" $portalName) $portalConfig.schedule | quote }}
+  suspend: {{ $portalConfig.suspend | default true }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
@@ -22,33 +27,41 @@ spec:
           labels:
             app: {{ $appName }}
             component: document-downloader
+            portal: {{ $portalName }}
         spec:
           restartPolicy: OnFailure
-          {{- if .Values.treubauDocumentDownloader.imagePullSecrets }}
+          {{- if $.Values.portalDocumentDownloader.imagePullSecrets }}
           imagePullSecrets:
-          {{- range .Values.treubauDocumentDownloader.imagePullSecrets }}
+          {{- range $.Values.portalDocumentDownloader.imagePullSecrets }}
           - name: {{ .name }}
           {{- end }}
           {{- end }}
           containers:
           - name: downloader
-            image: {{ required "image must be specified" .Values.treubauDocumentDownloader.image }}:{{ .Values.treubauDocumentDownloader.imageTag | default "latest" }}
+            image: {{ required "image must be specified" $.Values.portalDocumentDownloader.image }}:{{ $.Values.portalDocumentDownloader.imageTag | default "latest" }}
             imagePullPolicy: Always
+            {{- if $portalConfig.flat }}
+            args:
+            - "--flat"
+            {{- end }}
             env:
-            {{- range $key, $value := .Values.treubauDocumentDownloader.env }}
+            {{- range $key, $value := $portalConfig.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- if .Values.treubauDocumentDownloader.externalSecret.enabled }}
+            {{- if $.Values.portalDocumentDownloader.externalSecret.enabled }}
             envFrom:
             - secretRef:
-                name: {{ $appName }}-credentials
+                name: {{ $appName }}-{{ $portalName }}-credentials
             {{- end }}
             volumeMounts:
             - name: downloads
-              mountPath: {{ .Values.treubauDocumentDownloader.env.TREUBAU_OUTPUT_DIR | default "/downloads" }}
+              mountPath: /app/downloads
           volumes:
           - name: downloads
             persistentVolumeClaim:
-              claimName: {{ $appName }}-downloads-pvc
+              claimName: {{ $appName }}-downloads-{{ $portalName }}-pvc
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

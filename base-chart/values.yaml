@@ -642,7 +642,7 @@ apps:
       namespace: argocd
       project: default
       syncWave: '25'  # Run after all apps are deployed
-  treubau-document-downloader:
+  portal-document-downloader:
     enabled: false
     homer:
       enabled: false

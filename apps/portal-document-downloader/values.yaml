@@ -1,33 +1,48 @@
-appName: treubau-document-downloader
+appName: portal-document-downloader
 
 generic:
   persistentVolumeClaims:
-    downloads:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/treubau-document-downloader/downloads
+    downloads-treubau:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/treubau
+    downloads-facilioo:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/facilioo
 
-treubauDocumentDownloader:
+portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/treubau-document-downloader"
   imageTag: "v1.1.0"  # Override this with a specific tag if needed
   imagePullSecrets:
     - name: regcred-secondary
 
-  # CronJob configuration - suspended by default for manual execution
-  schedule: "0 0 1 * *"  # Not used when suspended, but required by CronJob spec
-  suspend: true  # Set to false to enable automatic scheduling
+  # Portal-specific CronJob configurations
+  # Each portal creates a separate CronJob with its own schedule and PVC
+  portals:
+    treubau:
+      enabled: false
+      schedule: "0 2 1 * *"  # First day of month at 2 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "treubau"
+        TREUBAU_COMPANY: "treubau"
 
-  # Environment variables (non-sensitive)
-  env:
-    TREUBAU_COMPANY: "treubau"
-    TREUBAU_OUTPUT_DIR: "/downloads"
-    TREUBAU_FLAT_STRUCTURE: "true"
+    facilioo:
+      enabled: false
+      schedule: "0 3 1 * *"  # First day of month at 3 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "facilioo"
 
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
-  # Secrets are fetched from: {global.akeyless.path}/treubau-document-downloader/
-  # Expected keys in Akeyless:
+  # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
+  # Expected keys in Akeyless for Treubau:
   # - TREUBAU_KURZNAME
   # - TREUBAU_PASSWORT
   # - TREUBAU_OBJEKT
+  # Expected keys in Akeyless for Facilioo:
+  # - FACILIOO_EMAIL
+  # - FACILIOO_PASSWORD
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
