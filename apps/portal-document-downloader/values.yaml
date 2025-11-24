@@ -7,7 +7,7 @@ generic:
 
 treubauDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/treubau-document-downloader"
-  imageTag: "v1.1.0"  # Override this with a specific tag if needed
+  imageTag: "v2.0.1"
   imagePullSecrets:
     - name: regcred-secondary
 
