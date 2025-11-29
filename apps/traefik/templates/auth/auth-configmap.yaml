@@ -4,7 +4,7 @@ metadata:
   name: traefik-forward-auth
   namespace: {{ $.Release.Namespace }}
 data:
-  INSECURE_COOKIE: 'true'
+  INSECURE_COOKIE: 'false'
   COOKIE_DOMAIN: {{ .Values.global.domain | quote }}
   DOMAINS: {{ .Values.global.domain | quote }}
   AUTH_HOST: auth.{{ .Values.global.domain }}
