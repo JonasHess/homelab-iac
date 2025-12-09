@@ -22,6 +22,12 @@ spec:
       labels:
         app: {{ $appName }}
     spec:
+      {{- if $deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $deployment.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
       {{- if $deployment.initContainers }}
       initContainers:
         {{- toYaml $deployment.initContainers | nindent 8 }}
