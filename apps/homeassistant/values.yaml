@@ -1,11 +1,6 @@
 generic:
-  ghcrSecret:
-    enabled: true
   deployment:
     image: lscr.io/linuxserver/homeassistant:2025.12.2
-    imagePullPolicy: IfNotPresent
-    imagePullSecrets:
-      - ghcr-registry-secret
     ports:
     - containerPort: 8123
     pvcMounts:
