@@ -3,7 +3,7 @@ admin:
   email: null
 generic:
   deployment:
-    image: ghcr.io/paperless-ngx/paperless-ngx:2.20.0
+    image: ghcr.io/paperless-ngx/paperless-ngx:2.20.1
     ports:
     - containerPort: 8000
     pvcMounts:
