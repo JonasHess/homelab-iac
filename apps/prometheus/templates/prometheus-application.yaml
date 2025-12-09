@@ -28,6 +28,8 @@ spec:
         prometheus:
           prometheusSpec:
             replicas: 1
+            retention: 90d
+            retentionSize: 50GB
             storageSpec:
               volumeClaimTemplate:
                 spec:
