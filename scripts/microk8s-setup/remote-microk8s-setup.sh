@@ -71,45 +71,85 @@ install_microk8s() {
   microk8s enable metrics-server
   microk8s enable hostpath-storage
 
-  if confirm "Do you want to install Nvidia GPU drivers? [y/N]"; then
-
-    echo "Adding Nvidia repository..."
-    distribution=$(. /etc/os-release;echo $ID$VERSION_ID | sed -e 's/\.//g')
-    wget https://developer.download.nvidia.com/compute/cuda/repos/$distribution/x86_64/cuda-keyring_1.1-1_all.deb
-    sudo dpkg -i cuda-keyring_1.1-1_all.deb
-    echo "Updating package list..."
-    sudo apt-get update
-    echo "Installing Nvidia drivers..."
-    sudo apt-get install nvidia-headless-565-server nvidia-utils-565-server
-    echo "Installing CUDA drivers..."
-    sudo apt-get install cuda-drivers
-
-    sudo apt-get install nvidia-container-toolkit
-    sudo nvidia-ctk runtime configure --runtime=containerd
-
-    echo "Nvidia GPU drivers installed."
+  if confirm "Do you want to enable NVIDIA GPU support? [y/N]"; then
+    echo "=== Setting up NVIDIA GPU support ==="
+    
+    # Check for NVIDIA kernel modules
+    echo "Checking for NVIDIA kernel modules..."
+    if ! lsmod | grep -q "^nvidia "; then
+      echo "ERROR: NVIDIA kernel modules not loaded. Please install NVIDIA drivers on the host first."
+      echo "Skipping GPU support."
+    else
+      echo "NVIDIA kernel modules found."
+      
+      # Get driver version from kernel module
+      DRIVER_VERSION=$(cat /proc/driver/nvidia/version | grep "NVIDIA" | head -1 | awk '{print $8}')
+      echo "Detected driver version: $DRIVER_VERSION"
+      
+      # Check if nvidia-smi is available, install if missing
+      if ! command -v nvidia-smi &> /dev/null; then
+        echo "nvidia-smi not found. Installing nvidia-utils..."
+        # Try to detect the driver series from version number
+        DRIVER_SERIES=$(echo $DRIVER_VERSION | cut -d. -f1)
+        sudo apt-get update
+        # Try to install utils matching the driver version
+        sudo apt-get install -y nvidia-utils-${DRIVER_SERIES}-server || sudo apt-get install -y nvidia-utils-${DRIVER_SERIES} || {
+          echo "WARNING: Could not auto-install nvidia-utils. Please install manually."
+        }
+      fi
+      
+      # Verify nvidia-smi works
+      echo "Verifying nvidia-smi..."
+      if ! nvidia-smi &> /dev/null; then
+        echo "WARNING: nvidia-smi failed to run. GPU addon may not work properly."
+      else
+        echo "nvidia-smi working."
+        nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
+      fi
+      
+      # Disable GPU addon if already enabled
+      echo "Disabling GPU addon if previously enabled..."
+      microk8s disable gpu 2>/dev/null || true
+      
+      # Enable GPU addon with host driver
+      echo "Enabling GPU addon with host driver..."
+      microk8s enable gpu --driver host
+      
+      # Wait for pods to start
+      echo "Waiting for GPU operator pods to initialize..."
+      microk8s kubectl wait --for=condition=Ready pods -n gpu-operator-resources --all --timeout=60s || true
+      
+      # Check pod status
+      echo "Checking pod status..."
+      microk8s kubectl get pods -n gpu-operator-resources
+      
+      # Wait for validation to complete (up to 3 minutes)
+      echo "Waiting for validation to complete..."
+      VALIDATION_SUCCESS=false
+      for i in {1..18}; do
+        RESULT=$(microk8s kubectl logs -n gpu-operator-resources -lapp=nvidia-operator-validator -c nvidia-operator-validator 2>/dev/null || echo "waiting")
+        if echo "$RESULT" | grep -q "all validations are successful"; then
+          echo ""
+          echo "=== SUCCESS: GPU addon is ready ==="
+          VALIDATION_SUCCESS=true
+          break
+        fi
+        echo -n "."
+        sleep 10
+      done
+      echo ""
+      
+      if [ "$VALIDATION_SUCCESS" = true ]; then
+        echo "GPU support successfully enabled!"
+        microk8s kubectl get pods -n gpu-operator-resources
+      else
+        echo "WARNING: GPU validation did not complete in time. Check pod status manually:"
+        echo "microk8s kubectl get pods -n gpu-operator-resources"
+        echo "microk8s kubectl logs -n gpu-operator-resources -lapp=nvidia-operator-validator -c nvidia-operator-validator"
+      fi
+    fi
   else
     echo "Skipping GPU support."
-  fi
-
-  if confirm "Do you want to install Nvidia GPU Operator? [y/N]"; then
-    #   microk8s enable nvidia
-    echo "Installing Nvidia GPU Operator..."
-    microk8s helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
-    microk8s helm repo update
-    microk8s helm install gpu-operator -n gpu-operator --create-namespace nvidia/gpu-operator $HELM_OPTIONS --set driver.version=565 --set toolkit.env[0].name=CONTAINERD_CONFIG --set toolkit.env[0].value=/etc/containerd/config.toml --set toolkit.env[1].name=CONTAINERD_SOCKET --set toolkit.env[1].value=/var/snap/microk8s/common/run/containerd.sock --set toolkit.env[2].name=CONTAINERD_RUNTIME_CLASS --set toolkit.env[2].value=nvidia --set toolkit.env[3].name=CONTAINERD_SET_AS_DEFAULT --set-string toolkit.env[3].value=true
-    echo "Nvidia GPU Operator installed."
-  else
-    echo "Skipping Nvidia GPU Operator installation."
-  fi
-
-  if confirm "Do you want to enable microk8s NVIDIA addon? [y/N]"; then
-      #   microk8s enable nvidia
-      echo "Enabling microk8s GPU addon..."
-      microk8s enable nvidia
-      echo "Nvidia GPU addon enabled."
-  else
-      echo "Skipping Nvidia GPU addon installation."
   fi
 
 
