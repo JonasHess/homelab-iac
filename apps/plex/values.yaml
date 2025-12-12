@@ -5,7 +5,7 @@ generic:
     - containerPort: 32400
     resources:
       limits:
-        nvidia.com/gpu: 1
+        nvidia.com/gpu: "1"
     pvcMounts:
       config:
         mountPath: /config
