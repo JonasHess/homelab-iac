@@ -3,6 +3,9 @@ generic:
     image: ghcr.io/linuxserver/plex:1.42.2
     ports:
     - containerPort: 32400
+    resources:
+      limits:
+        nvidia.com/gpu: 1
     pvcMounts:
       config:
         mountPath: /config
