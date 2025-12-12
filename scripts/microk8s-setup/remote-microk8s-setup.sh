@@ -98,6 +98,15 @@ install_microk8s() {
         }
       fi
       
+      # Install encode/decode libraries for video transcoding (e.g., Plex)
+      echo "Installing NVIDIA encode/decode libraries..."
+      DRIVER_SERIES=$(echo $DRIVER_VERSION | cut -d. -f1)
+      sudo apt-get install -y libnvidia-encode-${DRIVER_SERIES}-server libnvidia-decode-${DRIVER_SERIES}-server || \
+        sudo apt-get install -y libnvidia-encode-${DRIVER_SERIES} libnvidia-decode-${DRIVER_SERIES} || {
+          echo "WARNING: Could not install NVIDIA encode/decode libraries. Video transcoding may not work properly."
+          echo "You may need to manually install: libnvidia-encode-${DRIVER_SERIES}-server libnvidia-decode-${DRIVER_SERIES}-server"
+        }
+      
       # Verify nvidia-smi works
       echo "Verifying nvidia-smi..."
       if ! nvidia-smi &> /dev/null; then
