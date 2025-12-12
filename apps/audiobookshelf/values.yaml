@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: ghcr.io/advplyr/audiobookshelf:2.29.0
+    image: ghcr.io/advplyr/audiobookshelf:2.31.0
     ports:
     - containerPort: 80
     pvcMounts:
