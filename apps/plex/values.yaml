@@ -13,6 +13,9 @@ generic:
       media:
         mountPath: /mnt/media
         hostPath: ~ # /mnt/somewhere/encrypted/media
+      transcode:
+        mountPath: /transcode
+        hostPath: /dev/shm
     envFrom:
       secretRef: plex-secret
       configMapRef: plex-config
