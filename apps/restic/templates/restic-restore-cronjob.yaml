@@ -23,7 +23,7 @@ spec:
         spec:
           serviceAccountName: restic-backup-scanner
           imagePullSecrets:
-          - name: regcred
+          - name: regcred-primary
           restartPolicy: {{ .Values.restoreCronjob.restartPolicy | default "OnFailure" }}
           hostname: {{ $appName }}-restore
           containers:
