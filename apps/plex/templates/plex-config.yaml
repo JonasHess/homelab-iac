@@ -10,3 +10,4 @@ data:
   TZ: "Europe/Berlin"
   HOSTNAME: "nudelkiste"
   VERSION: "docker"
+  NVIDIA_VISIBLE_DEVICES: "all"
