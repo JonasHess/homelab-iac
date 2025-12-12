@@ -1,0 +1,18 @@
+{{- if .Values.ecrRegistries }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: role-full-access-to-secrets
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames:
+  {{- range .Values.ecrRegistries }}
+  - regcred-{{ .name }}
+  {{- end }}
+  verbs: ["delete"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
+{{- end }}
