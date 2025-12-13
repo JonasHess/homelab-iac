@@ -9,7 +9,7 @@ generic:
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
-  imageTag: "v2.0.1"  # Override this with a specific tag if needed
+  imageTag: "v3.0.0"
   imagePullSecrets:
     - name: regcred-secondary
 
