@@ -6,6 +6,8 @@ generic:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/treubau
     downloads-facilioo:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/facilioo
+    downloads-vodafone:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/vodafone
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -33,6 +35,14 @@ portalDocumentDownloader:
       env:
         PORTAL: "facilioo"
 
+    vodafone:
+      enabled: false
+      schedule: "0 4 1 * *"  # First day of month at 4 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "vodafone"
+
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
   # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
@@ -43,6 +53,9 @@ portalDocumentDownloader:
   # Expected keys in Akeyless for Facilioo:
   # - FACILIOO_EMAIL
   # - FACILIOO_PASSWORD
+  # Expected keys in Akeyless for Vodafone:
+  # - VODAFONE_EMAIL
+  # - VODAFONE_PASSWORD
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
