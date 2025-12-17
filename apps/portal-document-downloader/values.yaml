@@ -8,6 +8,8 @@ generic:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/facilioo
     downloads-vodafone:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/vodafone
+    downloads-sim24:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/sim24
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -43,6 +45,14 @@ portalDocumentDownloader:
       env:
         PORTAL: "vodafone"
 
+    sim24:
+      enabled: false
+      schedule: "0 5 1 * *"  # First day of month at 5 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "sim24"
+
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
   # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
@@ -56,6 +66,9 @@ portalDocumentDownloader:
   # Expected keys in Akeyless for Vodafone:
   # - VODAFONE_EMAIL
   # - VODAFONE_PASSWORD
+  # Expected keys in Akeyless for Sim24:
+  # - SIM24_USERNAME
+  # - SIM24_PASSWORD
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
