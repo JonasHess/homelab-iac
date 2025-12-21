@@ -80,6 +80,9 @@ spec:
               receiver: 'pagerduty'
               routes:
                 - matchers:
+                    - alertname = "Watchdog"
+                  receiver: "null"
+                - matchers:
                     - alertname = "InfoInhibitor"
                   receiver: "null"
             receivers:
