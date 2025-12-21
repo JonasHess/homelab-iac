@@ -78,6 +78,10 @@ spec:
               group_interval: 5m
               repeat_interval: 12h
               receiver: 'pagerduty'
+              routes:
+                - matchers:
+                    - alertname = "InfoInhibitor"
+                  receiver: "null"
             receivers:
               - name: "null"  # Add this to your config as well
               - name: 'pagerduty'
