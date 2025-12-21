@@ -29,7 +29,7 @@ spec:
             - -c
             - search_path="$user", public, vectors
             - -c
-            - logging_collector=on
+            - logging_collector=off
             - -c
             - max_wal_size=2GB
             - -c
