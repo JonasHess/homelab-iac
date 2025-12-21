@@ -2,7 +2,3 @@ apiVersion: v2
 name: crossplane
 description: A Helm chart for deploying Crossplane and its configurations
 version: 0.1.0
-dependencies:
-  - name: generic
-    version: 0.1.17
-    repository: "file://../generic"
