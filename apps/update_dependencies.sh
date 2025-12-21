@@ -71,15 +71,22 @@ do
         continue
     fi
 
+    # Skip charts that don't have generic as a dependency
+    if ! grep -q "name: generic" "$ORIGINAL_DIR/$dir/Chart.yaml"; then
+        echo -e "\n${YELLOW}Skipping ${dir} (no generic dependency)${NC}"
+        continue
+    fi
+
     echo -e "\n${YELLOW}Processing ${dir}...${NC}"
 
     # Go to chart directory - using absolute path
     cd "$ORIGINAL_DIR/$dir"
 
     # Update the dependency version in Chart.yaml (compatible with both macOS and Linux)
+    # Uses flexible whitespace matching to handle different indentation levels
     echo -e "${YELLOW}Updating generic dependency version to ${new_version}...${NC}"
-    if grep -q "^  version: ${current_version}" Chart.yaml; then
-        sed -i.bak "s/^  version: ${current_version}/  version: ${new_version}/" Chart.yaml && rm -f Chart.yaml.bak
+    if grep -qE "^[[:space:]]+version: ${current_version}" Chart.yaml; then
+        sed -i.bak -E "s/^([[:space:]]+)version: ${current_version}/\1version: ${new_version}/" Chart.yaml && rm -f Chart.yaml.bak
     fi
 
     # Run helm dependency update
