@@ -3,6 +3,22 @@ generic:
     image: postgres:17
     ports:
     - containerPort: 5432
+    readinessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    livenessProbe:
+      exec:
+        command:
+          - /bin/sh
+          - -c
+          - pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+      initialDelaySeconds: 30
+      periodSeconds: 30
     pvcMounts:
       data:
         mountPath: /var/lib/postgresql/data

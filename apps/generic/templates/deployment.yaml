@@ -81,6 +81,14 @@ spec:
                 name: {{ required "envFrom.secretRef must be a valid secret name" $deployment.envFrom.secretRef }}
             {{- end }}
           {{- end }}
+          {{- if $deployment.livenessProbe }}
+          livenessProbe:
+            {{- toYaml $deployment.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if $deployment.readinessProbe }}
+          readinessProbe:
+            {{- toYaml $deployment.readinessProbe | nindent 12 }}
+          {{- end }}
       volumes:
         {{- range $mountName, $mount := $deployment.pvcMounts }}
         - name: {{ $appName }}-{{ $mountName }}-volume
