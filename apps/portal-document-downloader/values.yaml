@@ -10,6 +10,8 @@ generic:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/vodafone
     downloads-sim24:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/sim24
+    downloads-hrworks:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/hrworks
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -53,6 +55,14 @@ portalDocumentDownloader:
       env:
         PORTAL: "sim24"
 
+    hrworks:
+      enabled: false
+      schedule: "0 6 1 * *"  # First day of month at 6 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "hrworks"
+
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
   # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
@@ -69,6 +79,10 @@ portalDocumentDownloader:
   # Expected keys in Akeyless for Sim24:
   # - SIM24_USERNAME
   # - SIM24_PASSWORD
+  # Expected keys in Akeyless for HRworks:
+  # - HRWORKS_EMAIL
+  # - HRWORKS_PASSWORD
+  # - HRWORKS_COMPANY_ID
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
