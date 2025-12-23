@@ -12,6 +12,8 @@ generic:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/sim24
     downloads-hrworks:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/hrworks
+    downloads-fnz:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/fnz
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -63,6 +65,14 @@ portalDocumentDownloader:
       env:
         PORTAL: "hrworks"
 
+    fnz:
+      enabled: false
+      schedule: "0 7 1 * *"  # First day of month at 7 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "fnz"
+
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
   # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
@@ -83,6 +93,10 @@ portalDocumentDownloader:
   # - HRWORKS_EMAIL
   # - HRWORKS_PASSWORD
   # - HRWORKS_COMPANY_ID
+  # Expected keys in Akeyless for FNZ Bank:
+  # - FNZ_USERNAME
+  # - FNZ_PASSWORD
+  # - FNZ_AUTH_METHOD
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
