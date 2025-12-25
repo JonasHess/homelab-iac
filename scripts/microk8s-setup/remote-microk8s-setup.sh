@@ -173,6 +173,8 @@ install_microk8s() {
     chmod 777 -R /data/volumes/sabnzbd-downloads
     mkdir -p /data/volumes/qbittorrent-downloads
     chmod 777 -R /data/volumes/qbittorrent-downloads
+    mkdir -p /data/volumes/nzbget-downloads
+    chmod 777 -R /data/volumes/nzbget-downloads
     echo "Local download directories created."
   else
     echo "Skipping local download directories creation."
