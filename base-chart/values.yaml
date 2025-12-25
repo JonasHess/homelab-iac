@@ -459,6 +459,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "13"  # Deploy before dependent media apps
+  nzbget:
+    enabled: false
+    homer:
+      enabled: true
+      group: "downloads"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/nzbget.svg"
+      subtitle: "Usenet Downloader"
+      displayName: "NZBGet"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "13"  # Deploy before dependent media apps
   sftpgo:
     enabled: false
     homer:

@@ -1,0 +1,24 @@
+generic:
+  deployment:
+    image: lscr.io/linuxserver/nzbget:25.4.20251212
+    ports:
+    - containerPort: 6789
+    pvcMounts:
+      config:
+        mountPath: /config
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/nzbget/config
+        backup:
+          enabled: true
+      downloads:
+        mountPath: /downloads
+        hostPath: ~ # /data/volumes/nzbget-downloads
+  service:
+    ports:
+    - name: http
+      port: 6789
+  ingress:
+    https:
+    - subdomain: nzbget
+      port: 6789
+      middlewares:
+      - traefik-forward-auth
