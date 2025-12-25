@@ -12,6 +12,9 @@ generic:
       downloads:
         mountPath: /downloads
         hostPath: ~ # /data/volumes/nzbget-downloads
+      media:
+        mountPath: /mnt/media
+        hostPath: ~ # /mnt/somewhere/encrypted/media
   service:
     ports:
     - name: http
