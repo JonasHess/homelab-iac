@@ -27,5 +27,5 @@ generic:
       - traefik-forward-auth
     - subdomain: nzbget
       priority: 20
-      matchSuffix: '&& PathPrefix(`/jsonrpc`)'
+      matchSuffix: '&& (PathPrefix(`/jsonrpc`) || PathPrefix(`/xmlrpc`))'
       port: 6789
