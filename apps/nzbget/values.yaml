@@ -28,4 +28,4 @@ generic:
     - subdomain: nzbget
       priority: 20
       matchSuffix: '&& PathPrefix(`/jsonrpc`)'
-      port: 7878
+      port: 6789
