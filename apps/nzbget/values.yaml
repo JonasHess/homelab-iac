@@ -25,3 +25,7 @@ generic:
       port: 6789
       middlewares:
       - traefik-forward-auth
+    - subdomain: nzbget
+      priority: 20
+      matchSuffix: '&& PathPrefix(`/jsonrpc`)'
+      port: 7878
