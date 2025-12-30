@@ -14,6 +14,10 @@ generic:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/hrworks
     downloads-fnz:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/fnz
+    downloads-psdbank-ht:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/psdbank-ht
+    downloads-psdbank-nuernberg:
+      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/psdbank-nuernberg
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -73,6 +77,22 @@ portalDocumentDownloader:
       env:
         PORTAL: "fnz"
 
+    psdbank-ht:
+      enabled: false
+      schedule: "0 8 1 * *"  # First day of month at 8 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "psdbank"
+
+    psdbank-nuernberg:
+      enabled: false
+      schedule: "0 9 1 * *"  # First day of month at 9 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "psdbank"
+
   # Sensitive credentials (from Akeyless External Secret)
   # These will be mounted as environment variables from the external secret
   # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
@@ -97,6 +117,14 @@ portalDocumentDownloader:
   # - FNZ_USERNAME
   # - FNZ_PASSWORD
   # - FNZ_AUTH_METHOD
+  # Expected keys in Akeyless for PSD Bank HT:
+  # - PSDBANK_HT_USERNAME
+  # - PSDBANK_HT_PASSWORD
+  # - PSDBANK_HT_BASE_URL
+  # Expected keys in Akeyless for PSD Bank Nuernberg:
+  # - PSDBANK_NUERNBERG_USERNAME
+  # - PSDBANK_NUERNBERG_PASSWORD
+  # - PSDBANK_NUERNBERG_BASE_URL
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
