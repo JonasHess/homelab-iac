@@ -1,7 +1,7 @@
 # Container image configuration
 image:
   repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste
-  tag: 1.2.0
+  tag: 1.2.1
   pullPolicy: Always
 
 # Application configuration
