@@ -1,0 +1,26 @@
+generic:
+  deployment:
+    image: freshrss/freshrss:1.28.0
+    ports:
+    - containerPort: 80
+    pvcMounts:
+      data:
+        mountPath: /var/www/FreshRSS/data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/freshrss/data
+        backup:
+          enabled: true
+      extensions:
+        mountPath: /var/www/FreshRSS/extensions
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/freshrss/extensions
+        backup:
+          enabled: true
+  service:
+    ports:
+    - name: http
+      port: 80
+  ingress:
+    https:
+    - subdomain: freshrss
+      port: 80
+      middlewares:
+      - traefik-forward-auth

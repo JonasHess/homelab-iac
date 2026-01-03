@@ -1,0 +1,6 @@
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.19
+digest: sha256:4e04369238cea10cef42d245a7bb5cd61ebeeb0a21e71b27629355e30075bbd1
+generated: "2026-01-03T21:48:15.181936+01:00"

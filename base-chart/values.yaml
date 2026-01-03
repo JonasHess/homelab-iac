@@ -154,6 +154,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "10"  # Deploy after monitoring is available
+  freshrss:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/freshrss.svg"
+      subtitle: "RSS Reader"
+      displayName: "FreshRSS"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"  # Deploy after core services
   adguard:
     enabled: false
     homer:
