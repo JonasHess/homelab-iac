@@ -9,11 +9,11 @@ generic:
         hostPath: ~ # /mnt/somewhere/encrypted/apps/freshrss/data
         backup:
           enabled: true
-      extensions:
-        mountPath: /var/www/FreshRSS/extensions
-        hostPath: ~ # /mnt/somewhere/encrypted/apps/freshrss/extensions
-        backup:
-          enabled: true
+#      extensions:
+#        mountPath: /var/www/FreshRSS/extensions
+#        hostPath: ~ # /mnt/somewhere/encrypted/apps/freshrss/extensions
+#        backup:
+#          enabled: true
   service:
     ports:
     - name: http
