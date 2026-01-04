@@ -6,6 +6,8 @@ metadata:
   labels:
     app: smarthome4
     name: smarthome4-deployment
+  annotations:
+    reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
   strategy:
