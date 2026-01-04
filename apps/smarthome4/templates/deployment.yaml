@@ -4,7 +4,7 @@ metadata:
   name: smarthome4-deployment
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: containous
+    app: smarthome4
     name: smarthome4-deployment
 spec:
   replicas: 1
@@ -12,29 +12,53 @@ spec:
     type: Recreate
   selector:
     matchLabels:
-      app: containous
-      task: smarthome4-task
+      app: smarthome4
+      component: backend
   template:
     metadata:
       labels:
-        app: containous
-        task: smarthome4-task
+        app: smarthome4
+        component: backend
     spec:
       containers:
         - name: smarthome4
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+              name: http
           envFrom:
             - configMapRef:
                 name: smarthome4-config-map
             - secretRef:
                 name: smarthome4-secret
-
+          volumeMounts:
+            - name: config
+              mountPath: /config
           livenessProbe:
             httpGet:
               path: /actuator/health
               port: 8080
-            initialDelaySeconds: 10
+            initialDelaySeconds: 60
             periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: config
+          configMap:
+            name: smarthome4-app-config
       imagePullSecrets:
         - name: regcred-primary

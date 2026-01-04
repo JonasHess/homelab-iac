@@ -4,7 +4,24 @@ metadata:
   name: smarthome4-config-map
   namespace: {{ $.Release.Namespace }}
 data:
-  HUE_IP: {{ .Values.hueIp | quote }}
-  MQTT_URL: {{ .Values.mqttUrl | quote }}
-  HOME_ASSISTANT_IP: {{ .Values.homeAssistantIp | quote }}
-  spring.profiles.active: {{ .Values.profilesActive | quote }}
+  # Spring configuration
+  SPRING_PROFILES_ACTIVE: {{ .Values.profilesActive | quote }}
+  
+  # MQTT configuration (matches mqtt.broker.* from application.yaml)
+  MQTT_BROKER_HOST: {{ .Values.mqtt.host | quote }}
+  MQTT_BROKER_PORT: {{ .Values.mqtt.port | quote }}
+  
+  # Home Assistant configuration
+  HOMEASSISTANT_BASEURL: {{ .Values.homeAssistant.baseUrl | quote }}
+  HOMEASSISTANT_CACHE_MAXAGEMS: {{ .Values.homeAssistant.cache.maxAgeMs | quote }}
+  
+  # Application configuration
+  SMARTHOME_CONFIG_PATH: "/config/smarthome-config.yaml"
+  
+  # Device state configuration
+  DEVICE_STATE_TIMEOUT_SECONDS: {{ .Values.device.stateTimeoutSeconds | quote }}
+  
+  # Application model refresh configuration
+  APPLICATION_MODEL_REFRESH_ENABLED: {{ .Values.applicationModel.refresh.enabled | quote }}
+  APPLICATION_MODEL_REFRESH_INTERVAL_MS: {{ .Values.applicationModel.refresh.intervalMs | quote }}
+  APPLICATION_MODEL_REFRESH_INITIAL_DELAY_MS: {{ .Values.applicationModel.refresh.initialDelayMs | quote }}
