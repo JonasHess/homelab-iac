@@ -33,8 +33,36 @@ oauth2-proxy:
   # due to Helm's map replacement behavior (not merged, but replaced entirely)
   # Required args: provider, oidc-issuer-url, upstream, reverse-proxy, cookie-domain,
   #                cookie-samesite, cookie-secure, whitelist-domain, email-domain,
-  #                redirect-url, skip-provider-button
+  #                redirect-url, custom-templates-dir
+  extraVolumes:
+    - name: custom-templates
+      configMap:
+        name: oauth2-proxy-templates
+  extraVolumeMounts:
+    - name: custom-templates
+      mountPath: /templates
   extraObjects:
+    # ConfigMap with custom sign_in.html that auto-redirects
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: oauth2-proxy-templates
+        namespace: '{{ .Release.Namespace }}'
+      data:
+        sign_in.html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Redirecting...</title>
+            <script>
+              // Auto-redirect to OAuth2 provider
+              window.location.href = "https://auth.{{ .Values.global.domain }}/oauth2/start?rd=" + encodeURIComponent(new URLSearchParams(window.location.search).get('rd') || '/');
+            </script>
+          </head>
+          <body>
+            <p>Redirecting to login...</p>
+          </body>
+          </html>
     # ForwardAuth middleware - checks if user is authenticated
     - apiVersion: traefik.io/v1alpha1
       kind: Middleware
@@ -50,7 +78,7 @@ oauth2-proxy:
           authResponseHeaders:
             - X-Auth-Request-User
             - X-Auth-Request-Email
-    # Errors middleware - redirects 401 to sign-in page
+    # Errors middleware - catches 401 and shows sign-in page with auto-redirect
     - apiVersion: traefik.io/v1alpha1
       kind: Middleware
       metadata:
@@ -66,7 +94,7 @@ oauth2-proxy:
           service:
             name: '{{ .Release.Name }}-oauth2-proxy'
             port: 80
-    # Chain middleware - combines auth check with error redirect
+    # Chain middleware - this is what apps should reference
     - apiVersion: traefik.io/v1alpha1
       kind: Middleware
       metadata:
