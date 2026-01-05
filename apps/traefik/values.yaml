@@ -38,7 +38,7 @@ oauth2-proxy:
     cookie-samesite: "none"
     cookie-secure: "true"
     whitelist-domain: ~ # Set in custom-values.yaml (e.g., .example.com)
-    email-domains: "*"
+    email-domain: "*"
     redirect-url: ~ # Set in custom-values.yaml (e.g., https://auth.example.com/oauth2/callback)
     skip-provider-button: "true"
   extraObjects:
