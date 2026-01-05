@@ -29,18 +29,11 @@ middlewares:
 oauth2-proxy:
   config:
     existingSecret: oauth2-proxy
-  extraArgs:
-    provider: oidc
-    oidc-issuer-url: ~ # Set in custom-values.yaml
-    upstream: "static://202"
-    reverse-proxy: "true"
-    cookie-domain: ~ # Set in custom-values.yaml (e.g., .example.com)
-    cookie-samesite: "none"
-    cookie-secure: "true"
-    whitelist-domain: ~ # Set in custom-values.yaml (e.g., .example.com)
-    email-domain: "*"
-    redirect-url: ~ # Set in custom-values.yaml (e.g., https://auth.example.com/oauth2/callback)
-    skip-provider-button: "true"
+  # extraArgs must be fully specified in environment-specific values (homelab_environments)
+  # due to Helm's map replacement behavior (not merged, but replaced entirely)
+  # Required args: provider, oidc-issuer-url, upstream, reverse-proxy, cookie-domain,
+  #                cookie-samesite, cookie-secure, whitelist-domain, email-domain,
+  #                redirect-url, skip-provider-button
   extraObjects:
     - apiVersion: traefik.io/v1alpha1
       kind: Middleware
