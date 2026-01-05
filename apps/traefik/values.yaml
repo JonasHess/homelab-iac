@@ -29,11 +29,17 @@ middlewares:
 oauth2-proxy:
   config:
     existingSecret: oauth2-proxy
-  # extraArgs must be fully specified in environment-specific values (homelab_environments)
-  # due to Helm's map replacement behavior (not merged, but replaced entirely)
-  # Required args: provider, oidc-issuer-url, upstream, reverse-proxy, cookie-domain,
-  #                cookie-samesite, cookie-secure, whitelist-domain, email-domain,
-  #                redirect-url, custom-templates-dir
+    # Static configuration - environment-specific values go in extraArgs
+    configFile: |
+      provider = "oidc"
+      upstreams = ["static://202"]
+      reverse_proxy = true
+      cookie_samesite = "none"
+      cookie_secure = true
+      email_domains = ["*"]
+      custom_templates_dir = "/templates"
+  # Environment-specific extraArgs (in homelab_environments):
+  #   oidc-issuer-url, cookie-domain, whitelist-domain, redirect-url
   deploymentAnnotations:
     reloader.stakater.com/auto: "true"
   extraVolumes:
