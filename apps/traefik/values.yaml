@@ -35,10 +35,11 @@ oauth2-proxy:
   #                cookie-samesite, cookie-secure, whitelist-domain, email-domain,
   #                redirect-url, skip-provider-button
   extraObjects:
+    # ForwardAuth middleware - checks if user is authenticated
     - apiVersion: traefik.io/v1alpha1
       kind: Middleware
       metadata:
-        name: oauth2-proxy
+        name: oauth2-proxy-auth
         namespace: '{{ .Release.Namespace }}'
         annotations:
           argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
@@ -49,6 +50,35 @@ oauth2-proxy:
           authResponseHeaders:
             - X-Auth-Request-User
             - X-Auth-Request-Email
+    # Errors middleware - redirects 401 to sign-in page
+    - apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: oauth2-proxy-errors
+        namespace: '{{ .Release.Namespace }}'
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+      spec:
+        errors:
+          status:
+            - "401"
+          query: /oauth2/sign_in?rd={url}
+          service:
+            name: '{{ .Release.Name }}-oauth2-proxy'
+            port: 80
+    # Chain middleware - combines auth check with error redirect
+    - apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: oauth2-proxy
+        namespace: '{{ .Release.Namespace }}'
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+      spec:
+        chain:
+          middlewares:
+            - name: oauth2-proxy-errors
+            - name: oauth2-proxy-auth
     - apiVersion: traefik.io/v1alpha1
       kind: IngressRoute
       metadata:
