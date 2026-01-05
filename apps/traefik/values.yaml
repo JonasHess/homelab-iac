@@ -54,10 +54,7 @@ oauth2-proxy:
           <html>
           <head>
             <title>Redirecting...</title>
-            <script>
-              // Auto-redirect to OAuth2 provider
-              window.location.href = "https://auth.{{ .Values.global.domain }}/oauth2/start?rd=" + encodeURIComponent(new URLSearchParams(window.location.search).get('rd') || '/');
-            </script>
+            <meta http-equiv="refresh" content="0;url=https://auth.{{ .Values.global.domain }}/oauth2/start?rd={{`{{.Redirect}}`}}">
           </head>
           <body>
             <p>Redirecting to login...</p>
