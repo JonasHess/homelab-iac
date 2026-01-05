@@ -23,7 +23,7 @@ generic:
     - subdomain: profilarr
       port: 6868
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: profilarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

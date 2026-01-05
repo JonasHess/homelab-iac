@@ -31,11 +31,11 @@ generic:
     - subdomain: adguard
       port: 80
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: adguard-admin
       port: 3000
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     udp:
     - port: 53
       traefikEntryPoint: dns

@@ -12,17 +12,17 @@ generic:
       port: 9090
       service: kube-prometheus-stack-prometheus
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: grafana
       port: 80
       service: kube-prometheus-stack-grafana
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: alertmanager
       port: 9093
       service: kube-prometheus-stack-alertmanager
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
   persistentVolume:
     prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
   persistentVolumeClaims:

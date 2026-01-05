@@ -20,7 +20,7 @@ generic:
     - subdomain: homeassistant
       port: 8123
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: homeassistant
       priority: 20
       matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`))'

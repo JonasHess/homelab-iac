@@ -17,7 +17,7 @@ spec:
         - name: api@internal
           kind: TraefikService
       middlewares:
-        - name: traefik-forward-auth
+        - name: oauth2-proxy
           namespace: {{ $.Release.Namespace }}
   tls:
     certResolver: cloudflare

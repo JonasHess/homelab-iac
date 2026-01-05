@@ -39,7 +39,7 @@ generic:
     - subdomain: paperlessngx
       port: 8000
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: paperlessngx
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

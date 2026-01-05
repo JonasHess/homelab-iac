@@ -18,4 +18,4 @@ generic:
     - subdomain: tautulli
       port: 8181
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

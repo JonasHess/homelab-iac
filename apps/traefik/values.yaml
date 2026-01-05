@@ -1,10 +1,10 @@
 global:
   domain: ~ # example.com
-  traefik_forward_auth:
-    oidc_client_id: ~ # traefik-forward-auth
+  oauth2_proxy:
+    oidc_client_id: ~ # your-cognito-client-id
     oidc_issuer_url: ~ # https://accounts.google.com
   akeyless:
-    path: ~ # oidc/traefik-forward-auth
+    path: ~ # /path/to/secrets
 additionalExposedPorts:
   sftpgo:
     port: 2222
@@ -25,3 +25,52 @@ generic:
 middlewares:
   cloudflare:
     allowedCIDRs: []
+
+oauth2-proxy:
+  config:
+    existingSecret: oauth2-proxy
+  extraArgs:
+    provider: oidc
+    oidc-issuer-url: ~ # Set in custom-values.yaml
+    upstream: "static://202"
+    reverse-proxy: "true"
+    cookie-domain: ~ # Set in custom-values.yaml (e.g., .example.com)
+    cookie-samesite: "none"
+    cookie-secure: "true"
+    whitelist-domain: ~ # Set in custom-values.yaml (e.g., .example.com)
+    email-domains: "*"
+    redirect-url: ~ # Set in custom-values.yaml (e.g., https://auth.example.com/oauth2/callback)
+    skip-provider-button: "true"
+  extraObjects:
+    - apiVersion: traefik.io/v1alpha1
+      kind: Middleware
+      metadata:
+        name: oauth2-proxy
+        namespace: '{{ .Release.Namespace }}'
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+      spec:
+        forwardAuth:
+          address: http://{{ .Release.Name }}-oauth2-proxy.{{ .Release.Namespace }}.svc.cluster.local/oauth2/auth
+          trustForwardHeader: true
+          authResponseHeaders:
+            - X-Auth-Request-User
+            - X-Auth-Request-Email
+    - apiVersion: traefik.io/v1alpha1
+      kind: IngressRoute
+      metadata:
+        name: oauth2-proxy
+        namespace: '{{ .Release.Namespace }}'
+        annotations:
+          argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+      spec:
+        entryPoints:
+          - websecure
+        routes:
+          - kind: Rule
+            match: Host(`auth.{{ .Values.global.domain }}`)
+            services:
+              - name: '{{ .Release.Name }}-oauth2-proxy'
+                port: 80
+        tls:
+          certResolver: cloudflare

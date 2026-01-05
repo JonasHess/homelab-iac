@@ -39,7 +39,7 @@ generic:
     - subdomain: backrest
       port: 9898
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: backrest
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

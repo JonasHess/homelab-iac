@@ -19,7 +19,7 @@ generic:
     - subdomain: readarr
       port: 8787
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: readarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

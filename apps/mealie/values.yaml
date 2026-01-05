@@ -23,7 +23,7 @@ generic:
       - subdomain: mealie
         port: 9000
         middlewares:
-          - traefik-forward-auth
+          - oauth2-proxy
   externalSecrets:
     mealie-secret:
       - OIDC_CLIENT_ID: "/mealie/OIDC_CLIENT_ID"
