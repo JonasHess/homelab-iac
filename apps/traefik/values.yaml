@@ -34,6 +34,8 @@ oauth2-proxy:
   # Required args: provider, oidc-issuer-url, upstream, reverse-proxy, cookie-domain,
   #                cookie-samesite, cookie-secure, whitelist-domain, email-domain,
   #                redirect-url, custom-templates-dir
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
   extraVolumes:
     - name: custom-templates
       configMap:
