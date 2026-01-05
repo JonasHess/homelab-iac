@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-proxy-templates
+  namespace: {{ .Release.Namespace }}
+data:
+  sign_in.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Redirecting...</title>
+      <meta http-equiv="refresh" content="0;url=https://auth.{{ .Values.global.domain }}/oauth2/start?rd={{`{{.Redirect}}`}}">
+    </head>
+    <body>
+      <p>Redirecting to login...</p>
+    </body>
+    </html>
