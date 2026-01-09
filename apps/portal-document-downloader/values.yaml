@@ -1,23 +1,7 @@
 appName: portal-document-downloader
 
 generic:
-  persistentVolumeClaims:
-    downloads-treubau:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/treubau
-    downloads-facilioo:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/facilioo
-    downloads-vodafone:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/vodafone
-    downloads-sim24:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/sim24
-    downloads-hrworks:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/hrworks
-    downloads-fnz:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/fnz
-    downloads-psdbank-ht:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/psdbank-ht
-    downloads-psdbank-nuernberg:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/portal-document-downloader/psdbank-nuernberg
+  persistentVolumeClaims: {}
 
 portalDocumentDownloader:
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
@@ -25,114 +9,19 @@ portalDocumentDownloader:
   imagePullSecrets:
     - name: regcred-secondary
 
-  # Portal-specific CronJob configurations
-  # Each portal creates a separate CronJob with its own schedule and PVC
-  portals:
-    treubau:
-      enabled: false
-      schedule: "0 2 1 * *"  # First day of month at 2 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "treubau"
-        TREUBAU_COMPANY: "treubau"
-
-    facilioo:
-      enabled: false
-      schedule: "0 3 1 * *"  # First day of month at 3 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "facilioo"
-
-    vodafone:
-      enabled: false
-      schedule: "0 4 1 * *"  # First day of month at 4 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "vodafone"
-
-    sim24:
-      enabled: false
-      schedule: "0 5 1 * *"  # First day of month at 5 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "sim24"
-
-    hrworks:
-      enabled: false
-      schedule: "0 6 1 * *"  # First day of month at 6 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "hrworks"
-
-    fnz:
-      enabled: false
-      schedule: "0 7 1 * *"  # First day of month at 7 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "fnz"
-
-    fnztati:
-      enabled: false
-      schedule: "0 7 1 * *"  # First day of month at 7 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "fnz"
-
-    psdbank-ht:
-      enabled: false
-      schedule: "0 8 1 * *"  # First day of month at 8 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "psdbank"
-
-    psdbank-nuernberg:
-      enabled: false
-      schedule: "0 9 1 * *"  # First day of month at 9 AM
-      suspend: true  # Set to false to enable automatic scheduling
-      flat: true  # Download to single directory (no category subfolders)
-      env:
-        PORTAL: "psdbank"
-
-  # Sensitive credentials (from Akeyless External Secret)
-  # These will be mounted as environment variables from the external secret
-  # Secrets are fetched from: {global.akeyless.path}/portal-document-downloader/
-  # Expected keys in Akeyless for Treubau:
-  # - TREUBAU_KURZNAME
-  # - TREUBAU_PASSWORT
-  # - TREUBAU_OBJEKT
-  # Expected keys in Akeyless for Facilioo:
-  # - FACILIOO_EMAIL
-  # - FACILIOO_PASSWORD
-  # Expected keys in Akeyless for Vodafone:
-  # - VODAFONE_EMAIL
-  # - VODAFONE_PASSWORD
-  # Expected keys in Akeyless for Sim24:
-  # - SIM24_USERNAME
-  # - SIM24_PASSWORD
-  # Expected keys in Akeyless for HRworks:
-  # - HRWORKS_EMAIL
-  # - HRWORKS_PASSWORD
-  # - HRWORKS_COMPANY_ID
-  # Expected keys in Akeyless for FNZ Bank:
-  # - FNZ_USERNAME
-  # - FNZ_PASSWORD
-  # - FNZ_AUTH_METHOD
-  # Expected keys in Akeyless for PSD Bank HT:
-  # - PSDBANK_HT_USERNAME
-  # - PSDBANK_HT_PASSWORD
-  # - PSDBANK_HT_BASE_URL
-  # Expected keys in Akeyless for PSD Bank Nuernberg:
-  # - PSDBANK_NUERNBERG_USERNAME
-  # - PSDBANK_NUERNBERG_PASSWORD
-  # - PSDBANK_NUERNBERG_BASE_URL
   externalSecret:
     enabled: true
     secretStoreName: akeyless-secret-store
+
+  # Example portal configuration:
+  #   treubau:
+  #     enabled: true
+  #     schedule: "0 2 1 * *"
+  #     suspend: false
+  #     flat: true
+  #     env:
+  #       PORTAL: "treubau"
+  #     secrets:
+  #       TREUBAU_KURZNAME: /portal-document-downloader/TREUBAU_KURZNAME
+  #       TREUBAU_PASSWORT: /portal-document-downloader/TREUBAU_PASSWORT
+  portals: {}
