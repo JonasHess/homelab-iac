@@ -1,7 +1,7 @@
 cron_job: 23 * * * *
 generic:
   deployment:
-    image: zimmermq/cloudflare-ddns:main
+    image: zimmermq/cloudflare-ddns:v0.9.0
     envFrom:
       secretRef: cloudflare-ddns-api-credentials
       configMapRef: cloudflare-ddns-config-map
