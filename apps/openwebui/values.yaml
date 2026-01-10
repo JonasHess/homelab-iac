@@ -18,8 +18,8 @@ generic:
     - subdomain: openwebui
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: chat
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

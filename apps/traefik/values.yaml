@@ -1,10 +1,10 @@
 global:
   domain: ~ # example.com
-  traefik_forward_auth:
-    oidc_client_id: ~ # traefik-forward-auth
+  oauth2_proxy:
+    oidc_client_id: ~ # your-cognito-client-id
     oidc_issuer_url: ~ # https://accounts.google.com
   akeyless:
-    path: ~ # oidc/traefik-forward-auth
+    path: ~ # /path/to/secrets
 additionalExposedPorts:
   sftpgo:
     port: 2222
@@ -25,3 +25,27 @@ generic:
 middlewares:
   cloudflare:
     allowedCIDRs: []
+
+oauth2-proxy:
+  config:
+    existingSecret: oauth2-proxy
+    # Static configuration - environment-specific values go in extraArgs
+    configFile: |
+      provider = "oidc"
+      upstreams = ["static://202"]
+      reverse_proxy = true
+      cookie_samesite = "none"
+      cookie_secure = true
+      email_domains = ["*"]
+      custom_templates_dir = "/templates"
+  # Environment-specific extraArgs (in homelab_environments):
+  #   oidc-issuer-url, cookie-domain, whitelist-domain, redirect-url
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  extraVolumes:
+    - name: custom-templates
+      configMap:
+        name: oauth2-proxy-templates
+  extraVolumeMounts:
+    - name: custom-templates
+      mountPath: /templates

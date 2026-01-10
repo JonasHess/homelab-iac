@@ -12,10 +12,10 @@ generic:
       - subdomain: homer
         port: 8080
         middlewares:
-          - traefik-forward-auth
+          - oauth2-proxy
       - port: 8080
         middlewares:
-          - traefik-forward-auth
+          - oauth2-proxy
   service:
     ports:
       - name: http

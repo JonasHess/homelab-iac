@@ -20,8 +20,9 @@ generic:
     - subdomain: homeassistant
       port: 8123
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
+    # Bypass oauth2-proxy for API, auth endpoints, and Android WebView (companion app)
     - subdomain: homeassistant
       priority: 20
-      matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`))'
+      matchSuffix: '&& (PathPrefix(`/api`) || PathPrefix(`/auth`) || HeaderRegexp(`User-Agent`, `wv`))'
       port: 8123
