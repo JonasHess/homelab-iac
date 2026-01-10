@@ -42,7 +42,7 @@ generic:
     - subdomain: sftpgo
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: sftpgo
       port: 8080
       matchSuffix: '&& PathPrefix(`/web/client/pubshares/`)'

@@ -24,7 +24,7 @@ generic:
     - subdomain: nzbget
       port: 6789
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: nzbget
       priority: 20
       matchSuffix: '&& (PathPrefix(`/jsonrpc`) || PathPrefix(`/xmlrpc`))'

@@ -19,8 +19,8 @@ generic:
     - subdomain: stirling-pdf
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: pdf
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

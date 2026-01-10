@@ -18,4 +18,4 @@ generic:
     - subdomain: radicale
       port: 5232
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
