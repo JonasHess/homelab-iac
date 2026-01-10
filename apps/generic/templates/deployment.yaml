@@ -32,7 +32,7 @@ spec:
           {{- if $deployment.imagePullPolicy }}
           imagePullPolicy: {{ $deployment.imagePullPolicy }}
           {{- else }}
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           {{- end }}
           {{- if $deployment.securityContext }}
           securityContext:
