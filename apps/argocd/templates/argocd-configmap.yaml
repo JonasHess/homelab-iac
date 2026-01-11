@@ -11,8 +11,8 @@ data:
 
   oidc.config: |
     name: Cognito
-    issuer:  {{ .Values.global.traefik_forward_auth.oidc_issuer_url}}
-    clientID: {{ .Values.global.traefik_forward_auth.oidc_client_id}}
+    issuer:  {{ .Values.global.oauth2_proxy.oidc_issuer_url}}
+    clientID: {{ .Values.global.oauth2_proxy.oidc_client_id}}
     clientSecret: $oidc.auth0.clientSecret
     requestedScopes: ["openid", "profile", "email"]
     requestedIDTokenClaims: {"groups": {"essential": true}}

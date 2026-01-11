@@ -23,4 +23,4 @@ generic:
     - subdomain: freshrss
       port: 80
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

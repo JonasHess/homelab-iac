@@ -21,7 +21,7 @@ generic:
     - subdomain: sonarr
       port: 8989
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: sonarr
       priority: 20
       matchSuffix: '&& PathPrefix(`/api`)'

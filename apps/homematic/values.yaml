@@ -10,4 +10,4 @@ generic:
       port: 80
       service: homematic-openccu
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

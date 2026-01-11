@@ -34,4 +34,4 @@ generic:
     - subdomain: zigbee2mqtt
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy

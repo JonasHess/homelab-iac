@@ -27,7 +27,7 @@ generic:
     - subdomain: sabnzbd
       port: 8080
       middlewares:
-      - traefik-forward-auth
+      - oauth2-proxy
     - subdomain: sabnzbd
       matchSuffix: '&& ( Path(`/sabnzbd/api`) || QueryRegexp(`apikey`, `^[a-z0-9]{32}$`))'
       priority: 20

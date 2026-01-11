@@ -77,6 +77,14 @@ portalDocumentDownloader:
       env:
         PORTAL: "fnz"
 
+    fnztati:
+      enabled: false
+      schedule: "0 7 1 * *"  # First day of month at 7 AM
+      suspend: true  # Set to false to enable automatic scheduling
+      flat: true  # Download to single directory (no category subfolders)
+      env:
+        PORTAL: "fnz"
+
     psdbank-ht:
       enabled: false
       schedule: "0 8 1 * *"  # First day of month at 8 AM

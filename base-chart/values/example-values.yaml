@@ -19,7 +19,7 @@ global:
     email: Jonas@Hess.pm
   
   # Authentication provider
-  traefik_forward_auth:
+  oauth2_proxy:
     oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
     oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
   
