@@ -2,7 +2,7 @@
 {{- if .Values.portalDocumentDownloader }}
 {{- if .Values.portalDocumentDownloader.portals }}
 {{- range $portalName, $portalConfig := .Values.portalDocumentDownloader.portals }}
-{{- if $portalConfig.enabled }}
+{{- if  $portalConfig.enabled }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -15,7 +15,7 @@ metadata:
     portal: {{ $portalName }}
 spec:
   schedule: {{ required (printf "schedule must be specified for portal %s" $portalName) $portalConfig.schedule | quote }}
-  suspend: {{ $portalConfig.suspend | default true }}
+  suspend: {{ if hasKey $portalConfig "suspend" }}{{ $portalConfig.suspend }}{{ else }}true{{ end }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
