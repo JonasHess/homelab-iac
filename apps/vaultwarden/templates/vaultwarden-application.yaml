@@ -13,6 +13,9 @@ spec:
     targetRevision: 0.34.4
     helm:
       valuesObject:
+        image:
+          # renovate: depName=vaultwarden/server
+          tag: "1.34.3-alpine"
         domain: "https://vaultwarden.{{ $.Values.global.domain }}"
         signupsAllowed: false
         ingress:
