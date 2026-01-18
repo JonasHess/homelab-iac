@@ -18,6 +18,9 @@ spec:
     helm:
       # Values file as block file
       valuesObject:
+        image:
+          # renovate: depName=ghcr.io/openccu/openccu
+          tag: "3.85.7.20251224-3c17a5b"
         persistence:
           data:
             # -- enabling persistent data. See options at https://bjw-s.github.io/helm-charts/docs/common-library/common-library-storage/
