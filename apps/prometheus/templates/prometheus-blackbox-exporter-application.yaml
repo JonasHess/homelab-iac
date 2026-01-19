@@ -28,6 +28,8 @@ spec:
               timeout: 5s
               http:
                 preferred_ip_protocol: "ip4"
+                follow_redirects: true
+                valid_status_codes: [200, 401, 403]
 
   destination:
     server: "https://kubernetes.default.svc"
