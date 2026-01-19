@@ -49,9 +49,6 @@ spec:
             existingClaim: prometheus-prometheus-pvc
 
         grafana:
-          plugins:
-            - grafana-clock-panel
-            - pierosavi-imageit-panel
           defaultDashboardsTimezone: Europe/Berlin
           adminPassword: ""
           adminUser: admin
