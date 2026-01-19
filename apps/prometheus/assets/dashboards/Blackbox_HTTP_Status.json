@@ -603,6 +603,16 @@
                   "color": "green",
                   "index": 0,
                   "text": "OK"
+                },
+                "401": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "OK (Auth)"
+                },
+                "403": {
+                  "color": "green",
+                  "index": 2,
+                  "text": "OK (Auth)"
                 }
               },
               "type": "value"
@@ -612,7 +622,7 @@
                 "from": 0,
                 "result": {
                   "color": "red",
-                  "index": 1,
+                  "index": 3,
                   "text": "ERROR"
                 },
                 "to": 1000
