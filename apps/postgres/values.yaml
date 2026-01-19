@@ -1,4 +1,7 @@
 generic:
+  externalSecrets:
+    postgres-secret:
+      - POSTGRES_PASSWORD: "/postgres/POSTGRES_PASSWORD"
   deployment:
     image: postgres:17
     ports:

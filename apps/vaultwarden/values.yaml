@@ -1,4 +1,10 @@
 generic:
+  externalSecrets:
+    vaultwarden-secret:
+      - ADMIN_TOKEN: "/vaultwarden/ADMIN_TOKEN"
+    vaultwarden-smtp-secret:
+      - SMTP_USERNAME: "/vaultwarden/SMTP_USERNAME"
+      - SMTP_PASSWORD: "/vaultwarden/SMTP_PASSWORD"
   persistentVolumeClaims:
     data:
       hostPath: ~ # /mnt/somewhere/encrypted/apps/vaultwarden/data

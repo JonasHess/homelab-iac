@@ -6,6 +6,10 @@ homeAssistant: 'true'
 permitJoin: 'false'
 mqttBaseTopic: zigbee2mqtt
 generic:
+  externalSecrets:
+    zigbee2mqtt-secret:
+      - ZIGBEE2MQTT_CONFIG_MQTT_USER: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_USER"
+      - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD"
   deployment:
     securityContext:
       privileged: true

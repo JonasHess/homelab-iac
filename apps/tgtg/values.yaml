@@ -1,4 +1,10 @@
 generic:
+  externalSecrets:
+    tgtg-credentials:
+      - NTFY_TOPIC: "/tgtg/ntfy_topic"
+      - TGTG_USERNAME: "/tgtg/username"
+      - TELEGRAM_TOKEN: "/tgtg/telegram_bot_token"
+      - TELEGRAM_CHAT_IDS: "/tgtg/TELEGRAM_CHAT_IDS"
   deployment:
     image: derhenning/tgtg:v1.24.2-alpine
     envFrom:

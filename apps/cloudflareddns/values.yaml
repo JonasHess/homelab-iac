@@ -1,5 +1,11 @@
 cron_job: 23 * * * *
 generic:
+  externalSecrets:
+    cloudflare-ddns-api-credentials:
+      - AUTH_EMAIL: "/ddns/cloudflare-api-credentials_email"
+      - AUTH_KEY: "/ddns/cloudflare-api-credentials_globalApiKey"
+      - ZONE_IDENTIFIER: "/ddns/cloudflare-api-credentials_zoneId"
+      - NTFYURI: "/ddns/ddns-ntfy-topic"
   deployment:
     image: zimmermq/cloudflare-ddns:v1.0.1
     envFrom:

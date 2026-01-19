@@ -17,6 +17,14 @@ additionalExposedPorts:
     protocol: UDP
 loadBalancerIP: null
 generic:
+  externalSecrets:
+    cloudflare-api-credentials:
+      - email: "/acme/cloudflare-api-credentials_email"
+      - apiKey: "/acme/cloudflare-api-credentials_apiKey"
+    oauth2-proxy:
+      - client-id: "/oidc/oauth2-proxy/client_id"
+      - client-secret: "/oidc/oauth2-proxy/client_secret"
+      - cookie-secret: "/oidc/oauth2-proxy/cookie_secret"
   persistentVolumeClaims:
     data:
       hostPath: ~ # /mnt/somewhere/unencrypted/apps/traefik/data

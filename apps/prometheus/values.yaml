@@ -6,6 +6,12 @@ alerts:
     enabled: true  # Set to false to disable probe/blackbox alerts
 
 generic:
+  externalSecrets:
+    grafana-admin-credentials:
+      - admin-user: "/o11y/grafana/admin-user"
+      - admin-password: "/o11y/grafana/admin-password"
+    pagerduty-secret:
+      - pagerduty_service_key: "/o11y/alertmanager/pagerduty_service_key"
   ingress:
     https:
     - subdomain: prometheus

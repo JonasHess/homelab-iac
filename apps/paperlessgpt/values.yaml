@@ -7,6 +7,15 @@ PROMPT_DOCUMENT_TYPE_EXPLANATION: ''
 PROMPT_CORRESPONDENT_EXPLANATION: ''
 PROMPT_POSTAMBLE: ''
 generic:
+  externalSecrets:
+    paperlessgpt-secret:
+      - PAPERLESS_API_TOKEN: "/paperlessgpt/PAPERLESS_API_TOKEN"
+      - OPENAI_API_KEY: "/paperlessgpt/OPENAI_API_KEY"
+      - AWS_ACCESS_KEY_ID: "/paperlessgpt/AWS_ACCESS_KEY_ID"
+      - AWS_SECRET_ACCESS_KEY: "/paperlessgpt/AWS_SECRET_ACCESS_KEY"
+      - PROMPT_PREAMBLE: "/paperlessgpt/PROMPT_PREAMBLE"
+      - CORRESPONDENT_BLACK_LIST: "/paperlessgpt/CORRESPONDENT_BLACK_LIST"
+      - PROMPT_TAGS_EXPLANATION: "/paperlessgpt/PROMPT_TAGS_EXPLANATION"
   deployment:
     image: jonashess/paperless-gpt:unreleased
     pvcMounts:

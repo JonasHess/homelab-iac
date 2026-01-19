@@ -2,6 +2,11 @@ admin:
   username: admin
   email: null
 generic:
+  externalSecrets:
+    paperlessngx-secret:
+      - PAPERLESS_DBPASS: "/paperlessngx/POSTGRES_PASSWORD"
+      - PAPERLESS_ADMIN_PASSWORD: "/paperlessngx/PAPERLESS_ADMIN_PASSWORD"
+      - PAPERLESS_SOCIALACCOUNT_PROVIDERS: "/paperlessngx/PAPERLESS_SOCIALACCOUNT_PROVIDERS"
   deployment:
     image: ghcr.io/paperless-ngx/paperless-ngx:2.20.4
     ports:
