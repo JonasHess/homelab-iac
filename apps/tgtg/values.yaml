@@ -6,7 +6,7 @@ generic:
       - TELEGRAM_TOKEN: "/tgtg/telegram_bot_token"
       - TELEGRAM_CHAT_IDS: "/tgtg/TELEGRAM_CHAT_IDS"
   deployment:
-    image: derhenning/tgtg:v1.24.2-alpine
+    image: derhenning/tgtg:v1.25.0-alpine
     envFrom:
       secretRef: tgtg-credentials
       configMapRef: tgtg-config-map
