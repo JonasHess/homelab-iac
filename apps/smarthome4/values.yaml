@@ -1,7 +1,7 @@
 # Container image configuration
 image:
   repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4
-  tag: "v0.0.5"
+  tag: "v0.0.7"
   pullPolicy: Always
 
 # Spring configuration
