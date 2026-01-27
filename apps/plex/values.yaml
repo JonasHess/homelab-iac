@@ -3,7 +3,7 @@ generic:
     plex-secret:
       - PLEX_CLAIM: "/plex/PLEX_CLAIM"
   deployment:
-    image: ghcr.io/linuxserver/plex:1.42.2
+    image: ghcr.io/linuxserver/plex:1.43.0
     ports:
     - containerPort: 32400
     resources:
