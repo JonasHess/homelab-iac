@@ -73,7 +73,7 @@
           "description": "Image pull policy"
         },
         "securityContext": {
-          "type": "object",
+          "type": ["object", "null"],
           "description": "Security context for the container"
         },
         "resources": {
@@ -170,7 +170,7 @@
           }
         },
         "deviceMounts": {
-          "type": "object",
+          "type": ["object", "null"],
           "description": "Device mounts from the host into the container",
           "additionalProperties": {
             "type": "object",
