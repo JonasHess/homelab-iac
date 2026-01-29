@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: smarthome4-app-config
-  namespace: {{ $.Release.Namespace }}
-data:
-  smarthome-config.yaml: |
-{{ .Values.appConfig | indent 4 }}

@@ -61,6 +61,6 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: smarthome4-app-config
+            name: {{ .Values.externalConfig.configMapName }}
       imagePullSecrets:
         - name: regcred-primary

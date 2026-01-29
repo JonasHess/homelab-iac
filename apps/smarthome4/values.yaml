@@ -29,12 +29,9 @@ applicationModel:
     intervalMs: "300000"
     initialDelayMs: "60000"
 
-# Application config file content
-appConfig: |
-  version: "1.0"
-  
-  smartHome:
-    conditions: []
-    homeAssistantResources: []
-    sensors: []
-    groups: []
+# External configuration chart (deployed as separate ArgoCD Application)
+externalConfig:
+  repoURL: ""
+  targetRevision: "main"
+  path: ""
+  configMapName: "smarthome4-app-config"

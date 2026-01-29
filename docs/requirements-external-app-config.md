@@ -165,6 +165,44 @@ The solution must handle arbitrary file formats, not just YAML.
 - File content cannot be merged or transformed
 - Content must pass through as opaque data to ConfigMap
 
+## Implementation
+
+The chosen approach uses a **standalone Helm chart in the environments repository** that is deployed via a **child ArgoCD Application** created by the smarthome4 chart itself.
+
+### Architecture
+
+```
+1. base-chart creates ArgoCD Application for smarthome4
+   └── smarthome4 chart renders:
+       ├── Deployment (mounts ConfigMap by configurable name)
+       ├── ConfigMap (env vars)
+       ├── ExternalSecret
+       └── ArgoCD Application → points to homelab-environments/hess.pm/smarthome4-config
+                                 └── Creates ConfigMap with smarthome-config.yaml
+
+2. Two ArgoCD Applications manage smarthome4:
+   ├── argocd-app-smarthome4 (from base-chart) → deploys the app
+   └── smarthome4-config (from smarthome4 chart) → deploys the config
+```
+
+### Key Design Decisions
+
+- **Separate Helm chart** (`homelab-environments/hess.pm/smarthome4-config/`): Contains `Chart.yaml`, `templates/configmap.yaml`, and `values.yaml` with the full app configuration. This gives the config its own sync lifecycle.
+- **Child ArgoCD Application** (`apps/smarthome4/templates/smarthome4-config-application.yaml`): The smarthome4 chart creates an ArgoCD Application that points to the config chart in the environments repo. The repo URL, revision, and path are passed via `externalConfig` values.
+- **Configurable ConfigMap name**: The deployment references `.Values.externalConfig.configMapName` instead of a hardcoded name, ensuring the config chart and deployment agree on the ConfigMap name.
+- **No changes to base-chart**: The base-chart does not need to know about external config. The smarthome4 chart handles it internally.
+
+### Requirements Satisfaction
+
+| Requirement | How It's Met |
+|---|---|
+| R1: Standalone config | Config lives in its own Helm chart with dedicated `values.yaml` |
+| R2: Independent sync | Separate ArgoCD Application syncs independently on config changes |
+| R3: Multi-environment | Each environment directory has its own `smarthome4-config/` chart |
+| R4: Different repos | `externalConfig.repoURL` is configurable per environment |
+| R5: Per app type | Only apps with `externalConfig` values create child Applications |
+| R6: Graceful failure | ArgoCD fails with clear error if chart path doesn't exist |
+
 ## Edge Cases
 
 ### E1: App Disabled

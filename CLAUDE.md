@@ -239,6 +239,15 @@ filecleanup:
 
 The job name must match a PVC defined in `generic.persistentVolumeClaims`.
 
+## External Configuration Pattern (smarthome4)
+
+The `smarthome4` app uses a **child ArgoCD Application** to deploy its configuration separately from the main chart:
+
+- The smarthome4 chart creates an ArgoCD Application (`smarthome4-config-application.yaml`) that points to a standalone Helm chart in the `homelab-environments` repo
+- The config chart (`hess.pm/smarthome4-config/`) renders a ConfigMap with the application's YAML configuration
+- Configuration values (`externalConfig.repoURL`, `targetRevision`, `path`, `configMapName`) are passed from the environment values through to the child Application
+- This pattern gives the config its own ArgoCD sync lifecycle, independent of the main smarthome4 deployment
+
 ## Claude Code Memories
 - Remember to fully understand the apps/generic chart before writing code
 - The generic chart uses JSON schema validation (values.schema.json) for configuration

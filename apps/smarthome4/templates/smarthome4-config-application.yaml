@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: smarthome4-config
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.externalConfig.repoURL }}
+    targetRevision: {{ .Values.externalConfig.targetRevision }}
+    path: {{ .Values.externalConfig.path }}
+    helm:
+      parameters:
+        - name: configMapName
+          value: {{ .Values.externalConfig.configMapName }}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: {{ .Release.Namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
