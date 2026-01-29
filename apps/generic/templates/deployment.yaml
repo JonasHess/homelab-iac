@@ -63,8 +63,10 @@ spec:
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
             {{- range $mountName, $mount := $deployment.deviceMounts }}
+            {{- if $mount.hostPath }}
             - mountPath: "{{ required (printf "mountPath for deviceMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
             {{- end }}
             {{- range $mountName, $mount := $deployment.configMapMounts }}
             - mountPath: "{{ required (printf "mountPath for configMapMount %s must be specified" $mountName) $mount.mountPath }}"
@@ -96,10 +98,12 @@ spec:
             claimName: {{ $appName }}-{{ $mountName }}-pvc
         {{- end }}
         {{- range $mountName, $mount := $deployment.deviceMounts }}
+        {{- if $mount.hostPath }}
         - name: {{ $appName }}-{{ $mountName }}-volume
           hostPath:
-            path: {{ required (printf "hostPath for deviceMount %s must be specified" $mountName) $mount.hostPath | quote }}
+            path: {{ $mount.hostPath | quote }}
             type: CharDevice
+        {{- end }}
         {{- end }}
         {{- range $mountName, $mount := $deployment.configMapMounts }}
         - name: {{ $appName }}-{{ $mountName }}-volume

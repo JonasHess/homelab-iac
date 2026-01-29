@@ -173,15 +173,15 @@
           "type": ["object", "null"],
           "description": "Device mounts from the host into the container",
           "additionalProperties": {
-            "type": "object",
+            "type": ["object", "null"],
             "required": ["mountPath", "hostPath"],
             "properties": {
               "mountPath": {
-                "type": "string",
+                "type": ["string", "null"],
                 "description": "Path where the device should be mounted in the container"
               },
               "hostPath": {
-                "type": "string",
+                "type": ["string", "null"],
                 "description": "Path on the host to the device"
               }
             }
