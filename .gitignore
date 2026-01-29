@@ -1,3 +1,4 @@
+.idea/
 /scripts/secrets
 secrets
 environment-secrets.yaml
