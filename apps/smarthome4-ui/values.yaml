@@ -1,7 +1,3 @@
-image:
-  repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui
-  tag: v0.0.2
-
 mqtt:
   host: mosquitto-service
   port: "1883"
@@ -20,7 +16,7 @@ generic:
       - MQTT_USERNAME: "/smarthome4/MQTT_BROKER_USERNAME"
       - MQTT_PASSWORD: "/smarthome4/MQTT_BROKER_PASSWORD"
   deployment:
-    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui:v0.0.1
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui:v0.0.2
     imagePullSecrets:
     - regcred-primary
     ports:
