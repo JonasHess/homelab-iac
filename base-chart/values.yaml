@@ -520,6 +520,7 @@ apps:
       logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
       subtitle: "Zigbee Scene Manager"
       displayName: "Lights"
+      subdomain: "lights"
     argocd:
       targetRevision: ~
       namespace: "argocd"
