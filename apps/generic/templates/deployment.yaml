@@ -110,6 +110,12 @@ spec:
           configMap:
             name: {{ required (printf "configMapName for configMapMount %s must be specified" $mountName) $mount.configMapName }}
         {{- end }}
+      {{- if $deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $secret := $deployment.imagePullSecrets }}
+        - name: {{ $secret }}
+        {{- end }}
+      {{- end }}
 
 {{- range $mountName, $mount := $deployment.pvcMounts }}
 ---

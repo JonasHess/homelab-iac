@@ -205,6 +205,13 @@
             }
           }
         },
+        "imagePullSecrets": {
+          "type": "array",
+          "description": "List of image pull secret names for pulling private container images",
+          "items": {
+            "type": "string"
+          }
+        },
         "envFrom": {
           "type": "object",
           "description": "References to ConfigMaps or Secrets for environment variables",
