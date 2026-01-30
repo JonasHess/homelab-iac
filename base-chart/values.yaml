@@ -512,6 +512,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "17"  # Deploy after Home Assistant components
+  smarthome4-ui:
+    enabled: false
+    homer:
+      enabled: true
+      group: "smartHome"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/home-assistant.svg"
+      subtitle: "Zigbee Scene Manager"
+      displayName: "Lights"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "17"  # Deploy after Home Assistant components
   sonarr:
     enabled: false
     homer:

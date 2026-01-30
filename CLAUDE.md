@@ -248,6 +248,17 @@ The `smarthome4` app uses a **child ArgoCD Application** to deploy its configura
 - Configuration values (`externalConfig.repoURL`, `targetRevision`, `path`, `configMapName`) are passed from the environment values through to the child Application
 - This pattern gives the config its own ArgoCD sync lifecycle, independent of the main smarthome4 deployment
 
+## smarthome4-ui Application
+
+The `smarthome4-ui` app is a FastAPI + React web UI for managing Zigbee2MQTT scenes. It uses the **generic chart pattern** (like zigbee2mqtt, openwebui).
+
+- **Image**: Private ECR (`hess.pm/smarthome4-ui`)
+- **Port**: 8000
+- **Ingress**: subdomain `lights`, behind oauth2-proxy
+- **Secrets**: Reuses smarthome4's Akeyless paths (`/smarthome4/HOMEASSISTANT_APITOKEN`, `/smarthome4/MQTT_BROKER_USERNAME`, `/smarthome4/MQTT_BROKER_PASSWORD`) with env var names the app expects (`HA_API_TOKEN`, `MQTT_USERNAME`, `MQTT_PASSWORD`)
+- **ConfigMap**: Non-secret env vars (MQTT_HOST, MQTT_PORT, Z2M_TOPIC, HA_BASE_URL, CORS_ORIGINS)
+- **Homer**: Smart Home group
+
 ## Claude Code Memories
 - Remember to fully understand the apps/generic chart before writing code
 - The generic chart uses JSON schema validation (values.schema.json) for configuration

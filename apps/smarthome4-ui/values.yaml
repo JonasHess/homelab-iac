@@ -1,0 +1,38 @@
+image:
+  repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui
+  tag: "v0.0.1"
+
+mqtt:
+  host: mosquitto-service
+  port: "1883"
+
+z2mTopic: zigbee2mqtt
+
+homeAssistant:
+  baseUrl: http://homeassistant-service:8123
+
+corsOrigins: ""
+
+generic:
+  externalSecrets:
+    smarthome4-ui-secret:
+      - HA_API_TOKEN: "/smarthome4/HOMEASSISTANT_APITOKEN"
+      - MQTT_USERNAME: "/smarthome4/MQTT_BROKER_USERNAME"
+      - MQTT_PASSWORD: "/smarthome4/MQTT_BROKER_PASSWORD"
+  deployment:
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui:v0.0.1
+    ports:
+    - containerPort: 8000
+    envFrom:
+      configMapRef: smarthome4-ui-config-map
+      secretRef: smarthome4-ui-secret
+  service:
+    ports:
+    - name: http
+      port: 8000
+  ingress:
+    https:
+    - subdomain: lights
+      port: 8000
+      middlewares:
+      - oauth2-proxy
