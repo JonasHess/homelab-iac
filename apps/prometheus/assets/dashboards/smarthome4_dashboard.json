@@ -57,6 +57,7 @@
           "refId": "A"
         }
       ],
+      "description": "Whether Prometheus can reach the /actuator/prometheus endpoint. DOWN means the app is unreachable or not scraping.",
       "title": "Application Status",
       "type": "stat"
     },
@@ -94,6 +95,7 @@
           "refId": "A"
         }
       ],
+      "description": "Time since the JVM process started. Resets to zero on application restart.",
       "title": "Uptime",
       "type": "stat"
     },
@@ -137,6 +139,7 @@
           "refId": "A"
         }
       ],
+      "description": "All MQTT messages received on the subscribed zigbee2mqtt topics, before any routing or filtering.",
       "title": "Total Messages Received",
       "type": "stat"
     },
@@ -173,6 +176,7 @@
           "refId": "A"
         }
       ],
+      "description": "Messages successfully matched to a configured sensor device via MqttMessageRouter.",
       "title": "Messages Routed (Success)",
       "type": "stat"
     },
@@ -209,6 +213,7 @@
           "refId": "A"
         }
       ],
+      "description": "Messages that did not match any configured sensor. Expected for non-action topics like availability or state updates.",
       "title": "Messages Unmatched",
       "type": "stat"
     },
@@ -246,6 +251,7 @@
           "refId": "A"
         }
       ],
+      "description": "Uncaught exceptions during message processing. Any value above 0 indicates a bug or infrastructure issue.",
       "title": "Message Errors",
       "type": "stat"
     },
@@ -308,6 +314,7 @@
           "refId": "C"
         }
       ],
+      "description": "Per-second rate (displayed as per-minute) over a 5m sliding window. Shows the flow through the MQTT pipeline: received -> routed -> errors.",
       "title": "MQTT Message Rate",
       "type": "timeseries"
     },
@@ -365,6 +372,7 @@
           "refId": "A"
         }
       ],
+      "description": "Successfully processed sensor events per device after routing and profile handler execution. One series per physical device (e.g. dimmer switch, motion sensor).",
       "title": "Sensor Events by Device",
       "type": "timeseries"
     },
@@ -402,6 +410,7 @@
           "refId": "A"
         }
       ],
+      "description": "Cumulative event count grouped by device and its profile (e.g. HUE_DIMMER_SWITCH_LIGHT_DEFAULT). Shows which devices are most active.",
       "title": "Total Events by Device & Profile",
       "type": "bargauge"
     },
@@ -459,6 +468,7 @@
           "refId": "A"
         }
       ],
+      "description": "Rate of trigger executions per device and button type (e.g. BUTTON_1, BUTTON_2). A trigger execution means a matching button press was found and its actions were dispatched.",
       "title": "Trigger Execution Rate",
       "type": "timeseries"
     },
@@ -555,6 +565,7 @@
           "refId": "A"
         }
       ],
+      "description": "Rate of SpEL condition evaluations (e.g. time-of-day, workday checks) during trigger execution. Green = condition met (actions executed), orange = condition not met (actions skipped).",
       "title": "Condition Evaluation Rate",
       "type": "timeseries"
     },
@@ -592,6 +603,7 @@
           "refId": "A"
         }
       ],
+      "description": "Total condition evaluations grouped by condition ID and result. Helps identify conditions that rarely or never evaluate to true.",
       "title": "Condition Evaluations by Result",
       "type": "bargauge"
     },
@@ -651,6 +663,7 @@
           "refId": "A"
         }
       ],
+      "description": "Average HTTP call duration to the Home Assistant REST API, per domain/service/entity. Thresholds: >1s yellow, >3s red.",
       "title": "HA API Call Latency (avg)",
       "type": "timeseries"
     },
@@ -688,6 +701,7 @@
           "refId": "A"
         }
       ],
+      "description": "How often each Home Assistant entity (scene, script, fan, etc.) was activated, grouped by domain and entity_id.",
       "title": "Total Entity Executions",
       "type": "bargauge"
     },
@@ -725,6 +739,7 @@
           "refId": "A"
         }
       ],
+      "description": "Each failed HTTP call to Home Assistant counts as one failure, including individual retry attempts. A single action with 3 retries that all fail counts as 3.",
       "title": "HA API Failures (per-attempt)",
       "type": "stat"
     },
@@ -762,6 +777,7 @@
           "refId": "A"
         }
       ],
+      "description": "Actions where all retry attempts failed and the @Recover fallback was invoked. Each increment means an action was permanently lost.",
       "title": "HA API Retries Exhausted",
       "type": "stat"
     },
@@ -843,6 +859,7 @@
           "refId": "A"
         }
       ],
+      "description": "Current streak of consecutive model refresh failures. Resets to 0 on next successful refresh. Yellow at 1, red at 3+.",
       "title": "Consecutive Failures",
       "type": "stat"
     },
@@ -879,6 +896,7 @@
           "refId": "A"
         }
       ],
+      "description": "Number of times the application model was successfully refreshed from smarthome-config.yaml + Home Assistant entity data.",
       "title": "Total Successful Refreshes",
       "type": "stat"
     },
@@ -916,6 +934,7 @@
           "refId": "A"
         }
       ],
+      "description": "Model refresh failures (config parse errors, Home Assistant unreachable, entity resolution failures).",
       "title": "Total Failed Refreshes",
       "type": "stat"
     },
@@ -966,6 +985,7 @@
           "refId": "A"
         }
       ],
+      "description": "Average duration of successful model refreshes over a 10m window, grouped by reason (scheduled or startup). Includes config loading, HA entity resolution, and model conversion.",
       "title": "Model Refresh Duration (avg)",
       "type": "timeseries"
     }
