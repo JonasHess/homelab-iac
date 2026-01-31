@@ -22,8 +22,84 @@
   "links": [],
   "panels": [
     {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            { "options": { "0": { "color": "red", "index": 1, "text": "DOWN" } , "1": { "color": "green", "index": 0, "text": "UP" } }, "type": "value" }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 0, "y": 0 },
+      "id": 19,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "up{job=~\".*smarthome4.*\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Application Status",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 3, "w": 4, "x": 4, "y": 0 },
+      "id": 20,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "time() - process_start_time_seconds{job=~\".*smarthome4.*\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "title": "Uptime",
+      "type": "stat"
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 3 },
       "id": 100,
       "title": "MQTT Message Pipeline",
       "type": "row"
@@ -43,7 +119,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 4 },
       "id": 1,
       "options": {
         "colorMode": "value",
@@ -79,7 +155,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 4 },
       "id": 2,
       "options": {
         "colorMode": "value",
@@ -115,7 +191,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 4 },
       "id": 3,
       "options": {
         "colorMode": "value",
@@ -152,7 +228,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 4 },
       "id": 4,
       "options": {
         "colorMode": "value",
@@ -206,7 +282,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 5 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 8 },
       "id": 5,
       "options": {
         "legend": { "calcs": ["mean", "max"], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -237,7 +313,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
       "id": 101,
       "title": "Sensor Events",
       "type": "row"
@@ -275,7 +351,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
       "id": 6,
       "options": {
         "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
@@ -307,7 +383,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
       "id": 7,
       "options": {
         "displayMode": "gradient",
@@ -331,7 +407,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
       "id": 102,
       "title": "Trigger Execution",
       "type": "row"
@@ -369,7 +445,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 26 },
       "id": 8,
       "options": {
         "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
@@ -401,7 +477,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 26 },
       "id": 9,
       "options": {
         "displayMode": "gradient",
@@ -424,8 +500,104 @@
       "type": "bargauge"
     },
     {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisLabel": "evaluations/min",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byRegexp", "options": ".*true.*" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byRegexp", "options": ".*false.*" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 34 },
+      "id": 21,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(smarthome_trigger_condition_evaluated_total[5m]) * 60",
+          "legendFormat": "{{condition_id}} = {{result}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Condition Evaluation Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 34 },
+      "id": 22,
+      "options": {
+        "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (condition_id, result) (increase(smarthome_trigger_condition_evaluated_total[$__range]))",
+          "legendFormat": "{{condition_id}} = {{result}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Condition Evaluations by Result",
+      "type": "bargauge"
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
       "id": 103,
       "title": "Home Assistant API",
       "type": "row"
@@ -465,7 +637,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 43 },
       "id": 10,
       "options": {
         "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
@@ -497,7 +669,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 43 },
       "id": 11,
       "options": {
         "displayMode": "gradient",
@@ -535,7 +707,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 40 },
+      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 51 },
       "id": 12,
       "options": {
         "colorMode": "value",
@@ -572,7 +744,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 40 },
+      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 51 },
       "id": 13,
       "options": {
         "colorMode": "value",
@@ -608,7 +780,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 40 },
+      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 51 },
       "id": 14,
       "options": {
         "colorMode": "value",
@@ -631,7 +803,7 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 44 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 },
       "id": 104,
       "title": "Application Model Refresh",
       "type": "row"
@@ -653,7 +825,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 45 },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 56 },
       "id": 15,
       "options": {
         "colorMode": "value",
@@ -689,7 +861,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 45 },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 56 },
       "id": 16,
       "options": {
         "colorMode": "value",
@@ -726,7 +898,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 45 },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 56 },
       "id": 17,
       "options": {
         "colorMode": "value",
@@ -780,7 +952,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 49 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 60 },
       "id": 18,
       "options": {
         "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
