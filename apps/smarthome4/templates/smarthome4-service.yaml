@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: smarthome4-service
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: smarthome4
+spec:
+  selector:
+    app: smarthome4
+    component: backend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
