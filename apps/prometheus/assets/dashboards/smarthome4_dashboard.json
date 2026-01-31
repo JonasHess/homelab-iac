@@ -134,7 +134,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "increase(smarthome_mqtt_messages_received_total[$__range])",
+          "expr": "round(increase(smarthome_mqtt_messages_received_total[$__range]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -171,7 +171,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "increase(smarthome_mqtt_messages_routed_total{outcome=\"success\"}[$__range])",
+          "expr": "round(increase(smarthome_mqtt_messages_routed_total{outcome=\"success\"}[$__range]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -208,7 +208,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "increase(smarthome_mqtt_messages_routed_total{outcome=\"unmatched\"}[$__range])",
+          "expr": "round(increase(smarthome_mqtt_messages_routed_total{outcome=\"unmatched\"}[$__range]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -246,7 +246,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "increase(smarthome_mqtt_messages_errors_total[$__range])",
+          "expr": "round(increase(smarthome_mqtt_messages_errors_total[$__range]))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -405,7 +405,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (device_id, profile) (increase(smarthome_sensor_events_processed_total{outcome=\"success\"}[$__range]))",
+          "expr": "round(sum by (device_id, profile) (increase(smarthome_sensor_events_processed_total{outcome=\"success\"}[$__range])))",
           "legendFormat": "{{device_id}} ({{profile}})",
           "refId": "A"
         }
@@ -501,7 +501,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (device_id, trigger_type) (increase(smarthome_trigger_executed_total[$__range]))",
+          "expr": "round(sum by (device_id, trigger_type) (increase(smarthome_trigger_executed_total[$__range])))",
           "legendFormat": "{{device_id}} / {{trigger_type}}",
           "refId": "A"
         }
@@ -598,7 +598,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (condition_id, result) (increase(smarthome_trigger_condition_evaluated_total[$__range]))",
+          "expr": "round(sum by (condition_id, result) (increase(smarthome_trigger_condition_evaluated_total[$__range])))",
           "legendFormat": "{{condition_id}} = {{result}}",
           "refId": "A"
         }
@@ -696,7 +696,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum by (domain, entity_id) (increase(smarthome_ha_entity_executed_total[$__range]))",
+          "expr": "round(sum by (domain, entity_id) (increase(smarthome_ha_entity_executed_total[$__range])))",
           "legendFormat": "{{domain}} / {{entity_id}}",
           "refId": "A"
         }
@@ -734,7 +734,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(smarthome_ha_api_failures_total[$__range])) or vector(0)",
+          "expr": "round(sum(increase(smarthome_ha_api_failures_total[$__range]))) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -772,7 +772,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(smarthome_ha_api_exhausted_total[$__range])) or vector(0)",
+          "expr": "round(sum(increase(smarthome_ha_api_exhausted_total[$__range]))) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
@@ -809,7 +809,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(smarthome_ha_api_calls_seconds_count[$__range]))",
+          "expr": "round(sum(increase(smarthome_ha_api_calls_seconds_count[$__range])))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -891,7 +891,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(smarthome_model_refresh_seconds_count{outcome=\"success\"}[$__range]))",
+          "expr": "round(sum(increase(smarthome_model_refresh_seconds_count{outcome=\"success\"}[$__range])))",
           "legendFormat": "",
           "refId": "A"
         }
@@ -929,7 +929,7 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(increase(smarthome_model_refresh_seconds_count{outcome=\"failure\"}[$__range])) or vector(0)",
+          "expr": "round(sum(increase(smarthome_model_refresh_seconds_count{outcome=\"failure\"}[$__range]))) or vector(0)",
           "legendFormat": "",
           "refId": "A"
         }
