@@ -9,12 +9,18 @@ homeAssistant:
 
 corsOrigins: ""
 
+github:
+  repo: ""
+  configPath: ""
+  branch: "main"
+
 generic:
   externalSecrets:
     smarthome4-ui-secret:
       - HA_API_TOKEN: "/smarthome4/HOMEASSISTANT_APITOKEN"
       - MQTT_USERNAME: "/smarthome4/MQTT_BROKER_USERNAME"
       - MQTT_PASSWORD: "/smarthome4/MQTT_BROKER_PASSWORD"
+      - GITHUB_TOKEN: "/smarthome4-ui/GITHUB_TOKEN"
   deployment:
     image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui:v0.0.3
     imagePullSecrets:

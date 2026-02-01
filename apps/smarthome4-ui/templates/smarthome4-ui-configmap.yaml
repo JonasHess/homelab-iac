@@ -9,3 +9,6 @@ data:
   Z2M_TOPIC: {{ .Values.z2mTopic | quote }}
   HA_BASE_URL: {{ .Values.homeAssistant.baseUrl | quote }}
   CORS_ORIGINS: {{ .Values.corsOrigins | quote }}
+  GITHUB_REPO: {{ .Values.github.repo | quote }}
+  GITHUB_CONFIG_PATH: {{ .Values.github.configPath | quote }}
+  GITHUB_BRANCH: {{ .Values.github.branch | quote }}
