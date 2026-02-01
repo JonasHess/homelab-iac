@@ -7,6 +7,9 @@ z2mTopic: zigbee2mqtt
 homeAssistant:
   baseUrl: http://homeassistant-service:8123
 
+smartHomeCore:
+  url: http://smarthome4-service:8080
+
 corsOrigins: ""
 
 github:

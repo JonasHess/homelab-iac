@@ -8,6 +8,7 @@ data:
   MQTT_PORT: {{ .Values.mqtt.port | quote }}
   Z2M_TOPIC: {{ .Values.z2mTopic | quote }}
   HA_BASE_URL: {{ .Values.homeAssistant.baseUrl | quote }}
+  SMARTHOME_CORE_URL: {{ .Values.smartHomeCore.url | quote }}
   CORS_ORIGINS: {{ .Values.corsOrigins | quote }}
   GITHUB_REPO: {{ .Values.github.repo | quote }}
   GITHUB_CONFIG_PATH: {{ .Values.github.configPath | quote }}
