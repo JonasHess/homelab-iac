@@ -2,7 +2,7 @@ appName: jellyfin
 
 generic:
   deployment:
-    image: lscr.io/linuxserver/jellyfin:10.11.4
+    image: lscr.io/linuxserver/jellyfin:10.11.6
     ports:
     - containerPort: 8096
     pvcMounts:
