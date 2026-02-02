@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: santiagosayshey/profilarr:v1.1.3
+    image: santiagosayshey/profilarr:v1.1.4
     ports:
     - containerPort: 6868
     env:
