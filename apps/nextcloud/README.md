@@ -77,6 +77,9 @@ nextcloud:
               # External URL (browser -> Collabora)
               - name: COLLABORA_PUBLIC_URL
                 value: "https://office.<your-domain>"
+              # Internal callback URL (Collabora -> Nextcloud)
+              - name: NEXTCLOUD_CALLBACK_URL
+                value: "http://nextcloud:8080"
           collabora:
             collabora:
               domain: nextcloud\\.<your-domain>

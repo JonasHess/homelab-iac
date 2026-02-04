@@ -98,6 +98,9 @@ nextcloud:
       # External URL for browser to access Collabora
       - name: COLLABORA_PUBLIC_URL
         value: "https://office.home-server.dev"
+      # Internal callback URL for Collabora -> Nextcloud communication
+      - name: NEXTCLOUD_CALLBACK_URL
+        value: "http://nextcloud:8080"
 
     # Post-installation hook to install and configure Nextcloud Office (Collabora)
     hooks:
@@ -107,9 +110,10 @@ nextcloud:
         echo "Configuring Collabora server..."
         echo "  Internal URL: ${COLLABORA_URL}"
         echo "  Public URL: ${COLLABORA_PUBLIC_URL}"
+        echo "  Callback URL: ${NEXTCLOUD_CALLBACK_URL}"
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"
         php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="${COLLABORA_PUBLIC_URL}"
-        php /var/www/html/occ richdocuments:activate-config || true
+        php /var/www/html/occ config:app:set richdocuments wopi_callback_url --value="${NEXTCLOUD_CALLBACK_URL}"
         echo "Nextcloud Office configured!"
 
   # Ingress disabled - using generic chart IngressRoute
@@ -166,7 +170,8 @@ nextcloud:
   collabora:
     enabled: true
     collabora:
-      domain: nextcloud\\.home-server\\.dev
+      # Regex pattern: allow both external domain and internal K8s service name
+      domain: nextcloud\\.home-server\\.dev|nextcloud
       extra_params: --o:ssl.enable=false --o:ssl.termination=true
       DONT_GEN_SSL_CERT: true
       server_name: office.home-server.dev
