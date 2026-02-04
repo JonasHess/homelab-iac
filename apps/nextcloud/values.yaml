@@ -178,9 +178,18 @@ nextcloud:
         - host: "https://nextcloud.home-server.dev:443"
         - host: "http://nextcloud:8080"
       # CSP frame-ancestors must include Nextcloud domain to allow iframe embedding
-      extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.home-server.dev
+      # security.capabilities=false disables seccomp/capabilities checks for Kubernetes compatibility
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.home-server.dev --o:security.capabilities=false
       DONT_GEN_SSL_CERT: true
       server_name: office.home-server.dev
+    # Required for Collabora to work in Kubernetes without privileged mode
+    securityContext:
+      allowPrivilegeEscalation: true
+      capabilities:
+        add:
+          - MKNOD
+          - SYS_CHROOT
+          - FOWNER
     ingress:
       enabled: false
 
