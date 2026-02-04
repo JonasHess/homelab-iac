@@ -109,12 +109,14 @@ nextcloud:
         echo "Installing Nextcloud Office app..."
         php /var/www/html/occ app:install richdocuments || true
         echo "Configuring Collabora server..."
-        echo "  Internal URL: ${COLLABORA_URL}"
+        echo "  WOPI URL: ${COLLABORA_URL}"
         echo "  Public URL: ${COLLABORA_PUBLIC_URL}"
         echo "  Callback URL: ${NEXTCLOUD_CALLBACK_URL}"
+        # Set WOPI URL first (activate-config doesn't have an option for this)
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"
-        php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="${COLLABORA_PUBLIC_URL}"
-        php /var/www/html/occ config:app:set richdocuments wopi_callback_url --value="${NEXTCLOUD_CALLBACK_URL}"
+        # Use activate-config to fetch discovery and set callback URL
+        # This command fetches discovery XML, validates connectivity, and configures public_wopi_url
+        php /var/www/html/occ richdocuments:activate-config --callback-url="${NEXTCLOUD_CALLBACK_URL}" || true
         echo "Nextcloud Office configured!"
 
   # Ingress disabled - using generic chart IngressRoute
@@ -175,7 +177,8 @@ nextcloud:
       aliasgroups:
         - host: "https://nextcloud.home-server.dev:443"
         - host: "http://nextcloud:8080"
-      extra_params: --o:ssl.enable=false --o:ssl.termination=true
+      # CSP frame-ancestors must include Nextcloud domain to allow iframe embedding
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.home-server.dev
       DONT_GEN_SSL_CERT: true
       server_name: office.home-server.dev
     ingress:
