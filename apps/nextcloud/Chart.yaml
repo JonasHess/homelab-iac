@@ -6,7 +6,7 @@ dependencies:
   version: 0.1.23
 - name: nextcloud
   repository: https://nextcloud.github.io/helm/
-  version: 6.6.9
+  version: 6.6.10
 description: Helm chart for Nextcloud with Collabora
 name: nextcloud
 type: application
