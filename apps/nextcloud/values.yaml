@@ -92,7 +92,7 @@ nextcloud:
     extraEnv:
       - name: TRUSTED_PROXIES
         value: "10.0.0.0/8"
-      - name: NEXTCLOUD_TRUSTED_DOMAINS
+      - name: NC_TRUSTED_DOMAINS
         valueFrom:
           configMapKeyRef:
             name: nextcloud-collabora-config
@@ -113,9 +113,14 @@ nextcloud:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_CALLBACK_URL
 
-    # Post-installation hook to install and configure Nextcloud Office (Collabora)
+    # Post-installation hook to configure Nextcloud Office and trusted domains
     hooks:
       post-installation: |
+        echo "Configuring trusted domains..."
+        IFS=' ' read -ra DOMAINS <<< "${NC_TRUSTED_DOMAINS}"
+        for i in "${!DOMAINS[@]}"; do
+          php /var/www/html/occ config:system:set trusted_domains "$i" --value="${DOMAINS[$i]}"
+        done
         echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"
