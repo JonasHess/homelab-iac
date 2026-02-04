@@ -42,7 +42,7 @@ Ensure these DNS records point to your server:
 
 ## Environment Configuration
 
-Override these values in your environment's `values.yaml`:
+All domain-specific values are **automatically computed** from `global.domain`. You only need to override storage paths:
 
 ```yaml
 nextcloud:
@@ -57,39 +57,17 @@ nextcloud:
               hostPath: /mnt/tank1/encrypted/apps/nextcloud/data
             postgresql:
               hostPath: /mnt/tank1/encrypted/apps/nextcloud/postgresql
-        nextcloud:
-          nextcloud:
-            host: nextcloud.<your-domain>
-            trustedDomains:
-              - nextcloud.<your-domain>
-              - office.<your-domain>
-              - nextcloud
-            extraEnv:
-              - name: TRUSTED_PROXIES
-                value: "10.0.0.0/8"
-              - name: COLLABORA_URL
-                value: "http://nextcloud-collabora:9980"
-              - name: COLLABORA_PUBLIC_URL
-                value: "https://office.<your-domain>"
-              - name: NEXTCLOUD_CALLBACK_URL
-                value: "http://nextcloud:8080"
-          collabora:
-            collabora:
-              aliasgroups:
-                - host: "https://nextcloud.<your-domain>:443"
-                - host: "http://nextcloud:8080"
-              server_name: office.<your-domain>
-              extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.<your-domain> --o:security.capabilities=false
-            securityContext:
-              allowPrivilegeEscalation: true
-              capabilities:
-                add:
-                  - MKNOD
-                  - SYS_CHROOT
-                  - FOWNER
+        # All domain-specific values computed from global.domain - no overrides needed
 ```
 
+**Auto-computed values** (from `global.domain` via `templates/collabora-configmap.yaml`):
+- `NEXTCLOUD_TRUSTED_DOMAINS` - nextcloud.domain, office.domain, nextcloud
+- `COLLABORA_URL` - internal Collabora service URL
+- `COLLABORA_PUBLIC_URL` - external browser URL
+- `NEXTCLOUD_CALLBACK_URL` - internal callback URL
+- Collabora `server_name`, `aliasgroup1`, `extra_params`
+
 **Notes**:
-- The `extraEnv` array must be specified completely (Helm arrays replace, not merge)
-- `OVERWRITEPROTOCOL` is intentionally not set - Nextcloud relies on `X-Forwarded-Proto` from Traefik, allowing internal Collabora requests to use HTTP
-- The Collabora `securityContext` and `extra_params` are required for Kubernetes compatibility
+- Subdomains default to `nextcloud` and `office` - override via `collaboraConfig.nextcloudSubdomain` / `collaboraConfig.collaboraSubdomain`
+- `OVERWRITEPROTOCOL` is intentionally not set - relies on `X-Forwarded-Proto` from Traefik
+- The Collabora `securityContext` is required for Kubernetes compatibility

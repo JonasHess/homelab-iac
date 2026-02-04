@@ -1,3 +1,8 @@
+# Collabora URL configuration - computed from global.domain
+collaboraConfig:
+  nextcloudSubdomain: nextcloud
+  collaboraSubdomain: office
+
 # Generic chart configuration for external secrets, ingress, and PVCs
 generic:
   externalSecrets:
@@ -52,7 +57,8 @@ nextcloud:
   replicaCount: 1
 
   nextcloud:
-    host: nextcloud.home-server.dev
+    # Host is computed from global.domain - set via NEXTCLOUD_TRUSTED_DOMAINS env var
+    host: localhost
 
     # Admin user - password from external secret
     username: admin
@@ -62,11 +68,9 @@ nextcloud:
       usernameKey: admin-user
       passwordKey: admin-password
 
-    # Trusted domains (include internal K8s service name for Collabora callbacks)
+    # Trusted domains computed from global.domain via ConfigMap
     trustedDomains:
-      - nextcloud.home-server.dev
-      - office.home-server.dev
-      - nextcloud
+      - localhost
 
     # PHP configuration for performance
     phpConfigs:
@@ -83,20 +87,31 @@ nextcloud:
         pm.min_spare_servers = 6
         pm.max_spare_servers = 18
 
-    # Proxy settings via environment variables
-    # NOTE: Environments must override the ENTIRE extraEnv array (Helm arrays replace, not merge)
+    # Environment variables - domain values computed from global.domain via ConfigMap
     # NOTE: OVERWRITEPROTOCOL intentionally not set - relies on X-Forwarded-Proto from Traefik
-    #       This allows internal Collabora requests to use HTTP while external requests use HTTPS
     extraEnv:
       - name: TRUSTED_PROXIES
         value: "10.0.0.0/8"
-      # Collabora URLs for post-installation hook
+      - name: NEXTCLOUD_TRUSTED_DOMAINS
+        valueFrom:
+          configMapKeyRef:
+            name: nextcloud-collabora-config
+            key: NEXTCLOUD_TRUSTED_DOMAINS
       - name: COLLABORA_URL
-        value: "http://nextcloud-collabora:9980"
+        valueFrom:
+          configMapKeyRef:
+            name: nextcloud-collabora-config
+            key: COLLABORA_URL
       - name: COLLABORA_PUBLIC_URL
-        value: "https://office.home-server.dev"
+        valueFrom:
+          configMapKeyRef:
+            name: nextcloud-collabora-config
+            key: COLLABORA_PUBLIC_URL
       - name: NEXTCLOUD_CALLBACK_URL
-        value: "http://nextcloud:8080"
+        valueFrom:
+          configMapKeyRef:
+            name: nextcloud-collabora-config
+            key: NEXTCLOUD_CALLBACK_URL
 
     # Post-installation hook to install and configure Nextcloud Office (Collabora)
     hooks:
@@ -158,16 +173,31 @@ nextcloud:
       persistence:
         enabled: false
 
-  # Collabora (Nextcloud Office)
+  # Collabora (Nextcloud Office) - domain values computed from global.domain via ConfigMap
   collabora:
     enabled: true
     collabora:
+      # Static internal alias (doesn't need domain)
       aliasgroups:
-        - host: "https://nextcloud.home-server.dev:443"
         - host: "http://nextcloud:8080"
-      extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.home-server.dev --o:security.capabilities=false
       DONT_GEN_SSL_CERT: true
-      server_name: office.home-server.dev
+      # Override domain-specific values via env (takes precedence over ConfigMap)
+      env:
+        - name: aliasgroup1
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-collabora-config
+              key: COLLABORA_ALIASGROUP1
+        - name: server_name
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-collabora-config
+              key: COLLABORA_SERVER_NAME
+        - name: extra_params
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-collabora-config
+              key: COLLABORA_EXTRA_PARAMS
     securityContext:
       allowPrivilegeEscalation: true
       capabilities:

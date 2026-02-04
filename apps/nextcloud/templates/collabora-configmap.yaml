@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-collabora-config
+  namespace: {{ .Release.Namespace }}
+data:
+  NEXTCLOUD_TRUSTED_DOMAINS: "{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }} {{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }} {{ .Release.Name }}"
+  COLLABORA_URL: "http://{{ .Release.Name }}-collabora:9980"
+  COLLABORA_PUBLIC_URL: "https://{{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }}"
+  NEXTCLOUD_CALLBACK_URL: "http://{{ .Release.Name }}:8080"
+  COLLABORA_SERVER_NAME: "{{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }}"
+  COLLABORA_ALIASGROUP1: "https://{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }}:443"
+  COLLABORA_EXTRA_PARAMS: "--o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors={{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }} --o:security.capabilities=false"
