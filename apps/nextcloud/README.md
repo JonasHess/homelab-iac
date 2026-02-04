@@ -63,8 +63,24 @@ nextcloud:
             trustedDomains:
               - nextcloud.<your-domain>
               - office.<your-domain>
+            # Environment-specific extraEnv (replaces base values, must include all)
+            extraEnv:
+              - name: TRUSTED_PROXIES
+                value: "10.0.0.0/8"
+              - name: OVERWRITEPROTOCOL
+                value: "https"
+              - name: NC_loglevel
+                value: "2"
+              # Internal K8s service URL (Nextcloud -> Collabora)
+              - name: COLLABORA_URL
+                value: "http://nextcloud-collabora:9980"
+              # External URL (browser -> Collabora)
+              - name: COLLABORA_PUBLIC_URL
+                value: "https://office.<your-domain>"
           collabora:
             collabora:
               domain: nextcloud\\.<your-domain>
               server_name: office.<your-domain>
 ```
+
+**Note**: The `extraEnv` array must be specified completely because Helm arrays replace rather than merge.

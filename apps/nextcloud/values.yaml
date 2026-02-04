@@ -92,7 +92,11 @@ nextcloud:
         value: "https"
       - name: NC_loglevel
         value: "2"
+      # Internal service URL for Nextcloud -> Collabora server communication
       - name: COLLABORA_URL
+        value: "http://nextcloud-collabora:9980"
+      # External URL for browser to access Collabora
+      - name: COLLABORA_PUBLIC_URL
         value: "https://office.home-server.dev"
 
     # Post-installation hook to install and configure Nextcloud Office (Collabora)
@@ -100,9 +104,11 @@ nextcloud:
       post-installation: |
         echo "Installing Nextcloud Office app..."
         php /var/www/html/occ app:install richdocuments || true
-        echo "Configuring Collabora server at ${COLLABORA_URL}..."
+        echo "Configuring Collabora server..."
+        echo "  Internal URL: ${COLLABORA_URL}"
+        echo "  Public URL: ${COLLABORA_PUBLIC_URL}"
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"
-        php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="${COLLABORA_URL}"
+        php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="${COLLABORA_PUBLIC_URL}"
         php /var/www/html/occ richdocuments:activate-config || true
         echo "Nextcloud Office configured!"
 
