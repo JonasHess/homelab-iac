@@ -82,22 +82,14 @@ nextcloud:
         pm.min_spare_servers = 6
         pm.max_spare_servers = 18
 
-    # Default Nextcloud configs
-    configs:
-      proxy.config.php: |-
-        <?php
-        $CONFIG = array(
-          'trusted_proxies' => array('10.0.0.0/8'),
-          'overwriteprotocol' => 'https',
-          'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR'),
-        );
-      logging.config.php: |-
-        <?php
-        $CONFIG = array(
-          'log_type' => 'file',
-          'logfile' => '/var/www/html/data/nextcloud.log',
-          'loglevel' => 2,
-        );
+    # Proxy settings via environment variables (config.php is auto-generated)
+    extraEnv:
+      - name: TRUSTED_PROXIES
+        value: "10.0.0.0/8"
+      - name: OVERWRITEPROTOCOL
+        value: "https"
+      - name: NC_loglevel
+        value: "2"
 
   # Ingress disabled - using generic chart IngressRoute
   ingress:
