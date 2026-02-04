@@ -194,11 +194,11 @@
       "allowedVersions": "<=2000"
     },
     {
-      "description": "Custom versioning for OpenCCU image (format: MAJOR.MINOR.PATCH.YYYYMMDD-gitsha)",
+      "description": "Custom versioning for OpenCCU image - stable releases only (format: MAJOR.MINOR.PATCH.YYYYMMDD, no commit hash)",
       "matchPackageNames": [
         "ghcr.io/openccu/openccu"
       ],
-      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d{8})-(?<revision>[a-f0-9]+)$"
+      "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d{8})$"
     }
   ],
   "ignoreDeps": [
