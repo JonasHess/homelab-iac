@@ -62,10 +62,11 @@ nextcloud:
       usernameKey: admin-user
       passwordKey: admin-password
 
-    # Trusted domains
+    # Trusted domains (include internal K8s service name for Collabora callbacks)
     trustedDomains:
       - nextcloud.home-server.dev
       - office.home-server.dev
+      - nextcloud
 
     # PHP configuration for performance
     phpConfigs:
