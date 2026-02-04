@@ -91,6 +91,17 @@ nextcloud:
       - name: NC_loglevel
         value: "2"
 
+    # Post-installation hook to install and configure Nextcloud Office (Collabora)
+    hooks:
+      post-installation: |
+        echo "Installing Nextcloud Office app..."
+        php /var/www/html/occ app:install richdocuments || true
+        echo "Configuring Collabora server..."
+        php /var/www/html/occ config:app:set richdocuments wopi_url --value="https://office.{{ .Values.global.domain }}"
+        php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="https://office.{{ .Values.global.domain }}"
+        php /var/www/html/occ richdocuments:activate-config || true
+        echo "Nextcloud Office configured!"
+
   # Ingress disabled - using generic chart IngressRoute
   ingress:
     enabled: false
