@@ -764,3 +764,17 @@ apps:
       namespace: argocd
       project: default
       syncWave: '2'  # Deploy early for infrastructure provisioning
+
+  nextcloud:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/nextcloud.svg"
+      subtitle: "Cloud Storage & Office"
+      displayName: "Nextcloud"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"

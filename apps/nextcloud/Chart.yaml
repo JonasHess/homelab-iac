@@ -1,0 +1,13 @@
+apiVersion: v2
+appVersion: 30.0.6
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.23
+- name: nextcloud
+  repository: https://nextcloud.github.io/helm/
+  version: 6.6.9
+description: Helm chart for Nextcloud with Collabora
+name: nextcloud
+type: application
+version: 0.1.0

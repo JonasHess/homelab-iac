@@ -1,0 +1,193 @@
+# Generic chart configuration for external secrets, ingress, and PVCs
+generic:
+  externalSecrets:
+    nextcloud-credentials:
+      - admin-user: "/nextcloud/admin-user"
+      - admin-password: "/nextcloud/admin-password"
+      - postgres-user: "/nextcloud/postgres-user"
+      - postgres-password: "/nextcloud/postgres-password"
+
+  ingress:
+    https:
+      # API routes that bypass OAuth (for mobile apps, sync clients, WebDAV)
+      - subdomain: nextcloud
+        port: 8080
+        service: nextcloud
+        matchSuffix: "&& (PathPrefix(`/remote.php`) || PathPrefix(`/ocs`) || PathPrefix(`/status.php`) || PathPrefix(`/cron.php`) || PathPrefix(`/apps/richdocuments/wopi`))"
+        priority: 20
+      # Main Nextcloud UI with OAuth protection
+      - subdomain: nextcloud
+        port: 8080
+        service: nextcloud
+        middlewares:
+          - oauth2-proxy
+        priority: 10
+      # Collabora WOPI discovery and document endpoints (needed for Nextcloud integration)
+      - subdomain: office
+        port: 9980
+        service: nextcloud-collabora
+        matchSuffix: "&& (PathPrefix(`/hosting/discovery`) || PathPrefix(`/hosting/capabilities`) || PathPrefix(`/cool`) || PathPrefix(`/browser`) || PathPrefix(`/lool`) || PathPrefix(`/loleaflet`))"
+        priority: 20
+      # Collabora fallback with OAuth protection
+      - subdomain: office
+        port: 9980
+        service: nextcloud-collabora
+        middlewares:
+          - oauth2-proxy
+        priority: 10
+
+  persistentVolumeClaims:
+    data:
+      hostPath: /mnt/storage/nextcloud/data
+    postgresql:
+      hostPath: /mnt/storage/nextcloud/postgresql
+
+# Nextcloud upstream chart configuration
+nextcloud:
+  image:
+    repository: nextcloud
+    tag: 30.0.6-apache
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  nextcloud:
+    host: nextcloud.home-server.dev
+
+    # Admin user - password from external secret
+    username: admin
+    existingSecret:
+      enabled: true
+      secretName: nextcloud-credentials
+      usernameKey: admin-user
+      passwordKey: admin-password
+
+    # Trusted domains
+    trustedDomains:
+      - nextcloud.home-server.dev
+      - office.home-server.dev
+
+    # PHP configuration for performance
+    phpConfigs:
+      uploadLimit.ini: |
+        upload_max_filesize = 16G
+        post_max_size = 16G
+        max_input_time = 3600
+        max_execution_time = 3600
+      www.conf: |
+        [www]
+        pm = dynamic
+        pm.max_children = 120
+        pm.start_servers = 12
+        pm.min_spare_servers = 6
+        pm.max_spare_servers = 18
+
+    # Default Nextcloud configs
+    configs:
+      proxy.config.php: |-
+        <?php
+        $CONFIG = array(
+          'trusted_proxies' => array('10.0.0.0/8'),
+          'overwriteprotocol' => 'https',
+          'forwarded_for_headers' => array('HTTP_X_FORWARDED_FOR'),
+        );
+      logging.config.php: |-
+        <?php
+        $CONFIG = array(
+          'log_type' => 'file',
+          'logfile' => '/var/www/html/data/nextcloud.log',
+          'loglevel' => 2,
+        );
+
+  # Ingress disabled - using generic chart IngressRoute
+  ingress:
+    enabled: false
+
+  # Persistence - use generic chart PVC
+  persistence:
+    enabled: true
+    existingClaim: nextcloud-data-pvc
+
+  # Internal database disabled
+  internalDatabase:
+    enabled: false
+
+  # External PostgreSQL from subchart
+  externalDatabase:
+    enabled: true
+    type: postgresql
+    host: nextcloud-postgresql
+    database: nextcloud
+    existingSecret:
+      enabled: true
+      secretName: nextcloud-credentials
+      usernameKey: postgres-user
+      passwordKey: postgres-password
+
+  # PostgreSQL subchart
+  postgresql:
+    enabled: true
+    global:
+      postgresql:
+        auth:
+          existingSecret: nextcloud-credentials
+          secretKeys:
+            userPasswordKey: postgres-password
+            adminPasswordKey: postgres-password
+    primary:
+      persistence:
+        enabled: true
+        existingClaim: nextcloud-postgresql-pvc
+
+  # Redis subchart for caching
+  redis:
+    enabled: true
+    auth:
+      enabled: false
+    architecture: standalone
+    master:
+      persistence:
+        enabled: false
+
+  # Collabora (Nextcloud Office)
+  collabora:
+    enabled: true
+    collabora:
+      domain: nextcloud\\.home-server\\.dev
+      extra_params: --o:ssl.enable=false --o:ssl.termination=true
+      DONT_GEN_SSL_CERT: true
+      server_name: office.home-server.dev
+    ingress:
+      enabled: false
+
+  # Cron job for background tasks
+  cronjob:
+    enabled: true
+
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 2Gi
+
+  # Probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 15
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startupProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
