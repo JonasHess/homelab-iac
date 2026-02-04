@@ -113,13 +113,15 @@ nextcloud:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_CALLBACK_URL
 
-    # Post-installation hook to configure Nextcloud Office and trusted domains
+    # Post-installation hook to configure trusted domains and Collabora
     hooks:
       post-installation: |
+        #!/bin/sh
         echo "Configuring trusted domains..."
-        IFS=' ' read -ra DOMAINS <<< "${NC_TRUSTED_DOMAINS}"
-        for i in "${!DOMAINS[@]}"; do
-          php /var/www/html/occ config:system:set trusted_domains "$i" --value="${DOMAINS[$i]}"
+        i=0
+        for DOMAIN in ${NC_TRUSTED_DOMAINS}; do
+          php /var/www/html/occ config:system:set trusted_domains "$i" --value="$DOMAIN"
+          i=$((i+1))
         done
         echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
