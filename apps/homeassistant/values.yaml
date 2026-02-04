@@ -1,3 +1,10 @@
+# External configuration chart (opt-in, leave repoURL empty to disable)
+externalConfig:
+  repoURL: ""
+  targetRevision: "main"
+  path: ""
+  configMapName: "homeassistant-app-config"
+
 generic:
   deployment:
     image: lscr.io/linuxserver/homeassistant:2026.1.3
