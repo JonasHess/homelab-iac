@@ -170,8 +170,10 @@ nextcloud:
   collabora:
     enabled: true
     collabora:
-      # Regex pattern: allow both external domain and internal K8s service name
-      domain: nextcloud\\.home-server\\.dev|nextcloud
+      # Allow both external domain and internal K8s service for WOPI callbacks
+      aliasgroups:
+        - host: "https://nextcloud.home-server.dev:443"
+        - host: "http://nextcloud:8080"
       extra_params: --o:ssl.enable=false --o:ssl.termination=true
       DONT_GEN_SSL_CERT: true
       server_name: office.home-server.dev

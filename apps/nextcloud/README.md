@@ -82,7 +82,10 @@ nextcloud:
                 value: "http://nextcloud:8080"
           collabora:
             collabora:
-              domain: nextcloud\\.<your-domain>
+              # Allow both external domain and internal K8s service for WOPI callbacks
+              aliasgroups:
+                - host: "https://nextcloud.<your-domain>:443"
+                - host: "http://nextcloud:8080"
               server_name: office.<your-domain>
 ```
 
