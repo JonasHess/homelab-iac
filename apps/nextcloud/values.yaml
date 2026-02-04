@@ -182,17 +182,19 @@ nextcloud:
   collabora:
     enabled: true
     collabora:
-      # Static internal alias (doesn't need domain)
-      aliasgroups:
-        - host: "http://nextcloud:8080"
       DONT_GEN_SSL_CERT: true
-      # Override domain-specific values via env (takes precedence over ConfigMap)
+      # Domain-specific values via env from ConfigMap
       env:
         - name: aliasgroup1
           valueFrom:
             configMapKeyRef:
               name: nextcloud-collabora-config
               key: COLLABORA_ALIASGROUP1
+        - name: aliasgroup2
+          valueFrom:
+            configMapKeyRef:
+              name: nextcloud-collabora-config
+              key: COLLABORA_ALIASGROUP2
         - name: server_name
           valueFrom:
             configMapKeyRef:
