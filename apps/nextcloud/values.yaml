@@ -86,11 +86,11 @@ nextcloud:
     # Proxy settings via environment variables (config.php is auto-generated)
     # NOTE: Environments should override the ENTIRE extraEnv array in their values.yaml
     # because Helm arrays replace (not merge). Include all vars when overriding.
+    # NOTE: OVERWRITEPROTOCOL is NOT set - Nextcloud relies on X-Forwarded-Proto from Traefik
+    # This allows internal requests (from Collabora) to use HTTP while external requests use HTTPS
     extraEnv:
       - name: TRUSTED_PROXIES
         value: "10.0.0.0/8"
-      - name: OVERWRITEPROTOCOL
-        value: "https"
       - name: NC_loglevel
         value: "2"
       # Internal service URL for Nextcloud -> Collabora server communication
