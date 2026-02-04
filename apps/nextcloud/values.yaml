@@ -83,39 +83,28 @@ nextcloud:
         pm.min_spare_servers = 6
         pm.max_spare_servers = 18
 
-    # Proxy settings via environment variables (config.php is auto-generated)
-    # NOTE: Environments should override the ENTIRE extraEnv array in their values.yaml
-    # because Helm arrays replace (not merge). Include all vars when overriding.
-    # NOTE: OVERWRITEPROTOCOL is NOT set - Nextcloud relies on X-Forwarded-Proto from Traefik
-    # This allows internal requests (from Collabora) to use HTTP while external requests use HTTPS
+    # Proxy settings via environment variables
+    # NOTE: Environments must override the ENTIRE extraEnv array (Helm arrays replace, not merge)
+    # NOTE: OVERWRITEPROTOCOL intentionally not set - relies on X-Forwarded-Proto from Traefik
+    #       This allows internal Collabora requests to use HTTP while external requests use HTTPS
     extraEnv:
       - name: TRUSTED_PROXIES
         value: "10.0.0.0/8"
-      - name: NC_loglevel
-        value: "2"
-      # Internal service URL for Nextcloud -> Collabora server communication
+      # Collabora URLs for post-installation hook
       - name: COLLABORA_URL
         value: "http://nextcloud-collabora:9980"
-      # External URL for browser to access Collabora
       - name: COLLABORA_PUBLIC_URL
         value: "https://office.home-server.dev"
-      # Internal callback URL for Collabora -> Nextcloud communication
       - name: NEXTCLOUD_CALLBACK_URL
         value: "http://nextcloud:8080"
 
     # Post-installation hook to install and configure Nextcloud Office (Collabora)
     hooks:
       post-installation: |
-        echo "Installing Nextcloud Office app..."
+        echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
-        echo "Configuring Collabora server..."
-        echo "  WOPI URL: ${COLLABORA_URL}"
-        echo "  Public URL: ${COLLABORA_PUBLIC_URL}"
-        echo "  Callback URL: ${NEXTCLOUD_CALLBACK_URL}"
-        # Set WOPI URL first (activate-config doesn't have an option for this)
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"
-        # Use activate-config to fetch discovery and set callback URL
-        # This command fetches discovery XML, validates connectivity, and configures public_wopi_url
+        php /var/www/html/occ config:app:set richdocuments public_wopi_url --value="${COLLABORA_PUBLIC_URL}"
         php /var/www/html/occ richdocuments:activate-config --callback-url="${NEXTCLOUD_CALLBACK_URL}" || true
         echo "Nextcloud Office configured!"
 
@@ -173,16 +162,12 @@ nextcloud:
   collabora:
     enabled: true
     collabora:
-      # Allow both external domain and internal K8s service for WOPI callbacks
       aliasgroups:
         - host: "https://nextcloud.home-server.dev:443"
         - host: "http://nextcloud:8080"
-      # CSP frame-ancestors must include Nextcloud domain to allow iframe embedding
-      # security.capabilities=false disables seccomp/capabilities checks for Kubernetes compatibility
       extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.home-server.dev --o:security.capabilities=false
       DONT_GEN_SSL_CERT: true
       server_name: office.home-server.dev
-    # Required for Collabora to work in Kubernetes without privileged mode
     securityContext:
       allowPrivilegeEscalation: true
       capabilities:

@@ -63,30 +63,33 @@ nextcloud:
             trustedDomains:
               - nextcloud.<your-domain>
               - office.<your-domain>
-            # Environment-specific extraEnv (replaces base values, must include all)
+              - nextcloud
             extraEnv:
               - name: TRUSTED_PROXIES
                 value: "10.0.0.0/8"
-              - name: OVERWRITEPROTOCOL
-                value: "https"
-              - name: NC_loglevel
-                value: "2"
-              # Internal K8s service URL (Nextcloud -> Collabora)
               - name: COLLABORA_URL
                 value: "http://nextcloud-collabora:9980"
-              # External URL (browser -> Collabora)
               - name: COLLABORA_PUBLIC_URL
                 value: "https://office.<your-domain>"
-              # Internal callback URL (Collabora -> Nextcloud)
               - name: NEXTCLOUD_CALLBACK_URL
                 value: "http://nextcloud:8080"
           collabora:
             collabora:
-              # Allow both external domain and internal K8s service for WOPI callbacks
               aliasgroups:
                 - host: "https://nextcloud.<your-domain>:443"
                 - host: "http://nextcloud:8080"
               server_name: office.<your-domain>
+              extra_params: --o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=nextcloud.<your-domain> --o:security.capabilities=false
+            securityContext:
+              allowPrivilegeEscalation: true
+              capabilities:
+                add:
+                  - MKNOD
+                  - SYS_CHROOT
+                  - FOWNER
 ```
 
-**Note**: The `extraEnv` array must be specified completely because Helm arrays replace rather than merge.
+**Notes**:
+- The `extraEnv` array must be specified completely (Helm arrays replace, not merge)
+- `OVERWRITEPROTOCOL` is intentionally not set - Nextcloud relies on `X-Forwarded-Proto` from Traefik, allowing internal Collabora requests to use HTTP
+- The Collabora `securityContext` and `extra_params` are required for Kubernetes compatibility
