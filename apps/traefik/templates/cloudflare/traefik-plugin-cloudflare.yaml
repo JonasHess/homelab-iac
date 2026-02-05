@@ -15,4 +15,4 @@ spec:
         - {{ . }}
         {{- end }}
       {{- end }}
-      overwriteRequestHeader: true
+      overwriteRequestHeader: false

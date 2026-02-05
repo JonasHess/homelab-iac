@@ -117,7 +117,7 @@ nextcloud:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_CALLBACK_URL
 
-    # Post-installation hook to configure trusted domains and Collabora
+    # Post-installation hook to configure trusted domains, URL overrides, and Collabora
     hooks:
       post-installation: |
         #!/bin/sh
@@ -128,8 +128,9 @@ nextcloud:
           i=$((i+1))
         done
 
-        echo "Configuring overwrite.cli.url..."
+        echo "Configuring URL overrides for reverse proxy..."
         php /var/www/html/occ config:system:set overwrite.cli.url --value="${NEXTCLOUD_URL}"
+        php /var/www/html/occ config:system:set overwriteprotocol --value="https"
 
         echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
