@@ -88,7 +88,6 @@ nextcloud:
         pm.max_spare_servers = 18
 
     # Environment variables - domain values computed from global.domain via ConfigMap
-    # NOTE: OVERWRITEPROTOCOL intentionally not set - relies on X-Forwarded-Proto from Traefik
     extraEnv:
       - name: TRUSTED_PROXIES
         value: "10.0.0.0/8"
@@ -97,6 +96,11 @@ nextcloud:
           configMapKeyRef:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_URL
+      - name: NEXTCLOUD_HOST
+        valueFrom:
+          configMapKeyRef:
+            name: nextcloud-collabora-config
+            key: NEXTCLOUD_HOST
       - name: NC_TRUSTED_DOMAINS
         valueFrom:
           configMapKeyRef:
@@ -118,7 +122,7 @@ nextcloud:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_CALLBACK_URL
 
-    # Post-installation hook to configure trusted domains and Collabora
+    # Post-installation hook to configure trusted domains, URL overrides, and Collabora
     hooks:
       post-installation: |
         #!/bin/sh
@@ -128,8 +132,12 @@ nextcloud:
           php /var/www/html/occ config:system:set trusted_domains "$i" --value="$DOMAIN"
           i=$((i+1))
         done
-        echo "Configuring overwrite.cli.url..."
+
+        echo "Configuring URL overrides for reverse proxy..."
         php /var/www/html/occ config:system:set overwrite.cli.url --value="${NEXTCLOUD_URL}"
+        php /var/www/html/occ config:system:set overwritehost --value="${NEXTCLOUD_HOST}"
+        php /var/www/html/occ config:system:set overwriteprotocol --value="https"
+
         echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
         php /var/www/html/occ config:app:set richdocuments wopi_url --value="${COLLABORA_URL}"

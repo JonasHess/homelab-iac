@@ -5,6 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   NEXTCLOUD_URL: "https://{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }}"
+  NEXTCLOUD_HOST: "{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }}"
   NEXTCLOUD_TRUSTED_DOMAINS: "{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }} {{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }} {{ .Release.Name }}"
   COLLABORA_URL: "http://{{ .Release.Name }}-collabora:9980"
   COLLABORA_PUBLIC_URL: "https://{{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }}"
