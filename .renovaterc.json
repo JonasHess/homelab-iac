@@ -228,6 +228,17 @@
         "#\\s*renovate:\\s*depName=(?<depName>[^\\s]+)\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update Helm chart image repository/tag pattern",
+      "managerFilePatterns": [
+        "/(^|/)apps/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "repository:\\s*['\"]?(?<depName>[^'\"\\s]+)['\"]?\\s*\\n\\s*tag:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "ignorePaths": [
