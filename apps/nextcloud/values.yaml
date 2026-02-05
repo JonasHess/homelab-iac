@@ -230,6 +230,13 @@ nextcloud:
           - MKNOD
           - SYS_CHROOT
           - FOWNER
+    probes:
+      startup:
+        path: /collabora/
+      liveness:
+        path: /collabora/
+      readiness:
+        path: /collabora/
     ingress:
       enabled: false
 
