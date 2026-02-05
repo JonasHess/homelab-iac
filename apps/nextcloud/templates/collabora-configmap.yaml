@@ -12,4 +12,4 @@ data:
   COLLABORA_SERVER_NAME: "{{ .Values.collaboraConfig.collaboraSubdomain }}.{{ .Values.global.domain }}"
   COLLABORA_ALIASGROUP1: "https://{{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }}:443"
   COLLABORA_ALIASGROUP2: "http://{{ .Release.Name }}:8080"
-  COLLABORA_EXTRA_PARAMS: "--o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors={{ .Values.collaboraConfig.nextcloudSubdomain }}.{{ .Values.global.domain }} --o:security.capabilities=false"
+  COLLABORA_EXTRA_PARAMS: "--o:ssl.enable=false --o:ssl.termination=true --o:net.frame_ancestors=https://*.{{ .Values.global.domain }} --o:security.capabilities=false"
