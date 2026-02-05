@@ -18,7 +18,7 @@ generic:
       - subdomain: nextcloud
         port: 8080
         service: nextcloud
-        matchSuffix: "&& (PathPrefix(`/remote.php`) || PathPrefix(`/ocs`) || PathPrefix(`/status.php`) || PathPrefix(`/cron.php`) || PathPrefix(`/apps/richdocuments/wopi`) || PathPrefix(`/index.php/login/v2`) || PathPrefix(`/index.php/login/flow`))"
+        matchSuffix: "&& (PathPrefix(`/remote.php`) || PathPrefix(`/ocs`) || PathPrefix(`/status.php`) || PathPrefix(`/cron.php`) || PathPrefix(`/apps/richdocuments/wopi`) || PathPrefix(`/index.php/login`) || PathPrefix(`/login/v2`))"
         priority: 20
       # Main Nextcloud UI with OAuth protection
       - subdomain: nextcloud
