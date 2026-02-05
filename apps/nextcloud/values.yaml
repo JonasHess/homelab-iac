@@ -90,7 +90,7 @@ nextcloud:
     # Environment variables - domain values computed from global.domain via ConfigMap
     extraEnv:
       - name: TRUSTED_PROXIES
-        value: "10.0.0.0/8"
+        value: "0.0.0.0/0"
       - name: NEXTCLOUD_URL
         valueFrom:
           configMapKeyRef:
@@ -117,7 +117,7 @@ nextcloud:
             name: nextcloud-collabora-config
             key: NEXTCLOUD_CALLBACK_URL
 
-    # Post-installation hook to configure trusted domains, URL overrides, and Collabora
+    # Post-installation hook to configure trusted domains and Collabora
     hooks:
       post-installation: |
         #!/bin/sh
@@ -130,7 +130,6 @@ nextcloud:
 
         echo "Configuring URL overrides for reverse proxy..."
         php /var/www/html/occ config:system:set overwrite.cli.url --value="${NEXTCLOUD_URL}"
-        php /var/www/html/occ config:system:set overwriteprotocol --value="https"
 
         echo "Configuring Nextcloud Office (Collabora)..."
         php /var/www/html/occ app:install richdocuments || true
