@@ -14,6 +14,7 @@ import io
 import json
 import os
 import sys
+import time
 import urllib.request
 import urllib.parse
 import zipfile
@@ -116,28 +117,36 @@ def update_manifest(token, skill_id):
 # 4. Update account linking
 # ---------------------------------------------------------------------------
 
-def update_account_linking(token, skill_id):
+def update_account_linking(token, skill_id, retries=3, delay=5):
     print("4. Updating account linking...")
     url = f"https://api.amazonalexa.com/v1/skills/{skill_id}/stages/development/accountLinkingClient"
-    # GET current to obtain ETag
-    etag = ""
-    try:
-        status, resp_headers, current = _json_request(url, method="GET", headers={
-            "Authorization": f"Bearer {token}",
-        })
-        etag = resp_headers.get("ETag") or resp_headers.get("etag", "")
-        print(f"   Existing config: {json.dumps(current)}")
-    except urllib.request.HTTPError:
-        print("   No existing account linking config.")
-
-    # PUT account linking
     account_linking = json.loads(_read_file("account-linking.json"))
-    print(f"   Sending: {json.dumps(account_linking)}")
-    headers = {"Authorization": f"Bearer {token}"}
-    if etag:
-        headers["If-Match"] = etag
-    _json_request(url, data=account_linking, method="PUT", headers=headers)
-    print("   Account linking updated.")
+
+    for attempt in range(1, retries + 1):
+        # GET current to obtain ETag
+        etag = ""
+        try:
+            status, resp_headers, current = _json_request(url, method="GET", headers={
+                "Authorization": f"Bearer {token}",
+            })
+            etag = resp_headers.get("ETag") or resp_headers.get("etag", "")
+        except urllib.request.HTTPError:
+            pass
+
+        # PUT account linking
+        headers = {"Authorization": f"Bearer {token}"}
+        if etag:
+            headers["If-Match"] = etag
+        try:
+            _json_request(url, data=account_linking, method="PUT", headers=headers)
+            print("   Account linking updated.")
+            return
+        except urllib.request.HTTPError:
+            if attempt < retries:
+                print(f"   Retry {attempt}/{retries} - waiting {delay}s for skill version to settle...")
+                time.sleep(delay)
+            else:
+                raise
 
 
 # ---------------------------------------------------------------------------
