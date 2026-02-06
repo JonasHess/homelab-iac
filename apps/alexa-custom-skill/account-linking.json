@@ -3,10 +3,11 @@
     "skipOnEnablement": false,
     "type": "AUTH_CODE",
     "authorizationUrl": "{{ .Values.homeAssistantUrl }}/auth/authorize",
+    "domains": [],
     "accessTokenUrl": "{{ .Values.homeAssistantUrl }}/auth/token",
     "clientId": "https://layla.amazon.com/",
-    "clientSecret": " ",
+    "clientSecret": "not_used",
     "accessTokenScheme": "REQUEST_BODY_CREDENTIALS",
-    "scopes": ["intent"]
+    "scopes": []
   }
 }
