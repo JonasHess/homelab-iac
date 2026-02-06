@@ -5,6 +5,8 @@
     "accessTokenUrl": "{{ .Values.homeAssistantUrl }}/auth/token",
     "clientId": "https://layla.amazon.com/",
     "clientSecret": "NA",
-    "accessTokenScheme": "REQUEST_BODY_CREDENTIALS"
+    "accessTokenScheme": "REQUEST_BODY_CREDENTIALS",
+    "skipOnEnablement": true,
+    "scopes": ["intent"]
   }
 }
