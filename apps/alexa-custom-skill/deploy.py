@@ -120,16 +120,19 @@ def update_account_linking(token, skill_id):
     print("4. Updating account linking...")
     url = f"https://api.amazonalexa.com/v1/skills/{skill_id}/stages/development/accountLinkingClient"
     # GET current to obtain ETag
+    etag = ""
     try:
-        status, resp_headers, _ = _json_request(url, method="GET", headers={
+        status, resp_headers, current = _json_request(url, method="GET", headers={
             "Authorization": f"Bearer {token}",
         })
         etag = resp_headers.get("ETag") or resp_headers.get("etag", "")
+        print(f"   Existing config: {json.dumps(current)}")
     except urllib.request.HTTPError:
-        etag = ""
+        print("   No existing account linking config.")
 
-    # PUT updated account linking
+    # PUT account linking
     account_linking = json.loads(_read_file("account-linking.json"))
+    print(f"   Sending: {json.dumps(account_linking)}")
     headers = {"Authorization": f"Bearer {token}"}
     if etag:
         headers["If-Match"] = etag

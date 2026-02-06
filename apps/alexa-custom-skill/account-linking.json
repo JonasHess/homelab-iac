@@ -1,13 +1,10 @@
 {
   "accountLinkingRequest": {
-    "skipOnEnablement": "false",
     "type": "AUTH_CODE",
     "authorizationUrl": "{{ .Values.homeAssistantUrl }}/auth/authorize",
     "accessTokenUrl": "{{ .Values.homeAssistantUrl }}/auth/token",
     "clientId": "https://layla.amazon.com/",
-    "clientSecret": " ",
-    "accessTokenScheme": "REQUEST_BODY_CREDENTIALS",
-    "defaultTokenExpirationInSeconds": 3600,
-    "scopes": ["intent"]
+    "clientSecret": "NA",
+    "accessTokenScheme": "REQUEST_BODY_CREDENTIALS"
   }
 }
