@@ -765,6 +765,14 @@ apps:
       project: default
       syncWave: '2'  # Deploy early for infrastructure provisioning
 
+  alexa-custom-skill:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: "16"
+
   nextcloud:
     enabled: false
     homer:

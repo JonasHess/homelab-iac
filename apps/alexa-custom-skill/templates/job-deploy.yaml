@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: alexa-skill-deploy
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: deploy
+          image: python:3.12-slim
+          command:
+            - /bin/sh
+            - -c
+            - pip install --quiet boto3 && python /config/deploy.py
+          env:
+            - name: SKILL_ID
+              value: {{ .Values.skillId | quote }}
+            - name: LAMBDA_ARN
+              value: {{ .Values.lambdaArn | quote }}
+            - name: LAMBDA_REGION
+              value: {{ .Values.lambdaRegion | quote }}
+            - name: LWA_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: LWA_CLIENT_ID
+            - name: LWA_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: LWA_CLIENT_SECRET
+            - name: LWA_REFRESH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: LWA_REFRESH_TOKEN
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secretName }}
+                  key: AWS_SECRET_ACCESS_KEY
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.configMapName }}
