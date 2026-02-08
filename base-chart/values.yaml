@@ -773,6 +773,14 @@ apps:
       project: default
       syncWave: "16"
 
+  alexa-smarthome-skill:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: "16"
+
   nextcloud:
     enabled: false
     homer:

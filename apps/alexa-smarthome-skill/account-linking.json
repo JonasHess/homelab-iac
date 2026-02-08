@@ -1,0 +1,10 @@
+{
+  "accountLinkingRequest": {
+    "type": "AUTH_CODE",
+    "authorizationUrl": "{{ .Values.homeAssistantUrl }}/auth/authorize",
+    "accessTokenUrl": "{{ .Values.homeAssistantUrl }}/auth/token",
+    "clientId": "https://layla.amazon.com/",
+    "accessTokenScheme": "REQUEST_BODY_CREDENTIALS",
+    "scopes": ["smart_home"]
+  }
+}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.configMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+  skill.json: |
+{{ tpl .Values.files.skillJson . | indent 4 }}
+  lambda_function.py: |
+{{ .Files.Get "lambda_function.py" | indent 4 }}
+  account-linking.json: |
+{{ tpl (.Files.Get "account-linking.json") . | indent 4 }}
+  deploy.py: |
+{{ .Files.Get "deploy.py" | indent 4 }}

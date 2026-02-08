@@ -1,0 +1,11 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: Alexa Smart Home Skill - deploys skill manifest to Alexa via SMAPI and updates Lambda code
+name: alexa-smarthome-skill
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: generic
+    repository: file://../generic
+    version: 0.1.27
