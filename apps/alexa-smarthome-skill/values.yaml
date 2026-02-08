@@ -12,8 +12,8 @@ files:
 generic:
   externalSecrets:
     alexa-smarthome-deploy-credentials:
-      - LWA_CLIENT_ID: /alexa-smarthome-skill/LWA_CLIENT_ID
-      - LWA_CLIENT_SECRET: /alexa-smarthome-skill/LWA_CLIENT_SECRET
-      - LWA_REFRESH_TOKEN: /alexa-smarthome-skill/LWA_REFRESH_TOKEN
-      - AWS_ACCESS_KEY_ID: /alexa-smarthome-skill/AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY: /alexa-smarthome-skill/AWS_SECRET_ACCESS_KEY
+      - LWA_CLIENT_ID: /alexa-custom-skill/LWA_CLIENT_ID
+      - LWA_CLIENT_SECRET: /alexa-custom-skill/LWA_CLIENT_SECRET
+      - LWA_REFRESH_TOKEN: /alexa-custom-skill/LWA_REFRESH_TOKEN
+      - AWS_ACCESS_KEY_ID: /alexa-custom-skill/AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY: /alexa-custom-skill/AWS_SECRET_ACCESS_KEY

@@ -22,6 +22,21 @@ Unlike the Custom Skill, there is no interaction model update — Smart Home ski
 
 ### 2. Create the Alexa Skill
 
+#### Option A: Via Alexa Developer Console (recommended)
+
+1. Go to https://developer.amazon.com/alexa/console/ask
+2. Click **"Create Skill"**
+3. Set **Name** (e.g. `HomeAssistant`), **Locale** to `German (DE)`, and **Type** to **Smart Home**
+4. Click **"Create Skill"**
+
+> **Important**: Before setting the endpoint in the Alexa console, you must first add the **Alexa Smart Home** trigger to the Lambda function. Otherwise saving the endpoint will fail.
+
+5. Go to the Lambda function in the AWS Console
+6. Click **"Add trigger"** → select **"Alexa Smart Home"** → paste the **skill ID** (visible in the Alexa console URL or overview page) → click **"Add"**
+7. Back in the Alexa Developer Console, paste the Lambda ARN into the **Default endpoint** field and click **"Save"**
+
+#### Option B: Via ASK CLI
+
 - Install ASK CLI:
   ```bash
   npm install -g ask-cli
@@ -34,7 +49,7 @@ Unlike the Custom Skill, there is no interaction model update — Smart Home ski
   ```bash
   ask smapi create-skill-for-vendor \
     --manifest "$(cat <<'JSON'
-      {"manifest":{"manifestVersion":"1.0","publishingInformation":{"locales":{"de-DE":{"name":"HomeAssistant2"}}},"apis":{"smartHome":{"endpoint":{"uri":"<lambdaArn>"},"protocolVersion":"3"}}}}
+      {"manifest":{"manifestVersion":"1.0","publishingInformation":{"locales":{"de-DE":{"name":"HomeAssistant"}}},"apis":{"smartHome":{"endpoint":{"uri":"<lambdaArn>"},"protocolVersion":"3"}}}}
   JSON
   )"
   ```
