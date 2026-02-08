@@ -127,7 +127,24 @@ Store these under `<akeyless-path>/alexa-custom-skill/` (shared with the Custom 
 | `AWS_ACCESS_KEY_ID` | Step 5 |
 | `AWS_SECRET_ACCESS_KEY` | Step 5 |
 
-### 7. Configure the environment values
+### 7. Configure Home Assistant
+
+Home Assistant needs the `alexa` integration to expose entities. Add the following to your `configuration.yaml`:
+
+```yaml
+alexa:
+  smart_home:
+    filter:
+      include_entities:
+        - light.buero_jonas
+        # add more entities as needed
+```
+
+Without the `filter` section, all entities are exposed. Restart Home Assistant after editing.
+
+> **Important**: If you had another Alexa Smart Home skill (e.g. Home Assistant Cloud / Nabu Casa) linked before, you must **disable** that skill and **delete** the old devices from the Alexa app first. Otherwise Alexa will route control requests to the old skill and devices will appear unresponsive.
+
+### 8. Configure the environment values
 
 Add the following to your environment values file (e.g. `homelab-environments/<env>/values.yaml`):
 
@@ -169,14 +186,14 @@ alexa-smarthome-skill:
 
 Push both repos. ArgoCD will deploy the app and the PostSync job will configure the skill automatically.
 
-### 8. Enable the skill and link your account
+### 9. Enable the skill and link your account
 
 1. Open the **Alexa app** on your phone
 2. Go to **Mehr** > **Skills & Spiele** > **Deine Skills** > **Entwickler**
 3. Tap your skill (e.g. "HomeAssistant") > **Aktivieren**
 4. Log in to Home Assistant when prompted to link your account
 
-### 9. Discover devices
+### 10. Discover devices
 
 After account linking, tell Alexa to find your devices:
 
@@ -184,3 +201,23 @@ After account linking, tell Alexa to find your devices:
 - Or in the Alexa app: **Geräte** > **+** > **Gerät hinzufügen** > **Sonstiges** > **Geräte suchen**
 
 After this one-time setup, all future changes are deployed automatically via ArgoCD.
+
+## Debugging
+
+To debug issues, set the `DEBUG` environment variable to `1` on the Lambda function:
+
+1. Go to https://console.aws.amazon.com/lambda/ > your function > **Configuration** > **Environment variables**
+2. Add `DEBUG` = `1`
+3. Check **CloudWatch Logs** (Monitor > View CloudWatch logs) after triggering a discovery or control request
+
+The logs will show the incoming Alexa directive and the Home Assistant response. Remember to remove `DEBUG` after troubleshooting.
+
+## Troubleshooting
+
+| Problem | Cause | Fix |
+|---------|-------|-----|
+| Devices not found during discovery | `alexa: smart_home:` missing from HA `configuration.yaml` | Add the config and restart HA |
+| Devices unresponsive | Old skill still linked to devices | Disable old skill, delete old devices, re-discover |
+| Saving endpoint fails in Alexa console | Lambda trigger not added first | Add Alexa Smart Home trigger to Lambda before setting endpoint |
+| Account linking fails (HTTP 400) | Missing `clientSecret` in account-linking.json | Must include `"clientSecret": "NA"` (required by SMAPI even though HA doesn't use it) |
+| Deploy job retries account linking | Normal — skill version needs time to settle after manifest update | The job retries automatically (up to 3 times) |
