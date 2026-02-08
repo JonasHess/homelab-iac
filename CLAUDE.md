@@ -13,9 +13,9 @@ This is a Kubernetes/Helm-based Infrastructure as Code (IaC) repository for mana
 ./scripts/setup.sh  # Bootstrap ArgoCD and initial applications
 ```
 
-### Update Helm Dependencies
+### Bump Generic Chart & Update Dependencies
 ```bash
-cd apps && ./update_dependencies.sh  # Updates all Helm chart dependencies
+cd apps && ./bump_generic_chart.sh  # Bumps generic chart version and propagates to all app charts
 ```
 
 ### Create New Application
@@ -68,7 +68,7 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
 When modifying or adding applications:
 1. Each app uses the generic chart as a dependency - check `apps/generic/values.yaml` for available options
 2. Application-specific templates go in `apps/<appname>/templates/`
-3. After modifying Chart.yaml, run `cd apps && ./update_dependencies.sh`
+3. After modifying Chart.yaml, run `cd apps && ./bump_generic_chart.sh`
 4. Changes are automatically deployed by ArgoCD once pushed to the repository
 
 ## Important Configurations
@@ -78,8 +78,14 @@ When modifying or adding applications:
 - **Secrets**: Stored in Akeyless, accessed via External Secrets Operator
 - **Ingress**: HTTPS endpoints configured with Traefik middleware for authentication
 
-## Helm Dependency Notes
-- The `update_dependencies.sh` script only needs to be run after changes were made in the "generic" helm chart. 
+## Helm Dependency Notes — When to Run `bump_generic_chart.sh`
+
+**Run it ONLY** when you changed files inside `apps/generic/` (templates, helpers, `values.schema.json`, default `values.yaml`).
+
+**Do NOT run it** when:
+- Editing an app's own `values.yaml` or `templates/` — ArgoCD deploys those changes automatically on push.
+- Adding a new app that already references the current generic chart version.
+- Changing anything outside `apps/generic/` (e.g., `base-chart/`, `bootstrap-chart/`, `scripts/`).
 
 ## Generic Chart Capabilities
 
@@ -162,7 +168,7 @@ appVersion: 1.0.0
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.17
+  version: X.X.X  # look up current version in apps/generic/Chart.yaml
 description: Helm chart for <appname>
 name: <appname>
 type: application
@@ -210,7 +216,7 @@ apps:
 
 ### 5. Update Dependencies
 ```bash
-cd apps && ./update_dependencies.sh
+cd apps && ./bump_generic_chart.sh
 ```
 
 The application will be automatically deployed by ArgoCD once pushed to the repository.
