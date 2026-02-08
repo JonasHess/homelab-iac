@@ -43,6 +43,9 @@ def lambda_handler(event, context):
         body=json.dumps(event).encode('utf-8'),
     )
 
+    _logger.debug('Response status: %s', response.status)
+    _logger.debug('Response body: %s', response.data.decode('utf-8'))
+
     if response.status >= 400:
         return {
             'event': {
