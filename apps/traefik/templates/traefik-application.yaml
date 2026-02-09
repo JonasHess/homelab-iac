@@ -36,8 +36,6 @@ spec:
             nodePort: 32080
             expose:
               default: true
-            middlewares:
-              - "argocd-cloudflare@kubernetescrd"
             transport:
               respondingTimeouts:
                 readTimeout: 30m
@@ -83,10 +81,26 @@ spec:
           - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1
           - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
 
+        # Health probes using Traefik's /ping endpoint
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          failureThreshold: 1
+
         # Traefik logs settings
         logs:
           general:
-            level: DEBUG
+            level: INFO
           access:
             enabled: true
             fields:
