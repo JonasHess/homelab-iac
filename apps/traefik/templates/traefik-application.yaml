@@ -81,21 +81,19 @@ spec:
           - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1
           - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
 
-        # Health probes using Traefik's /ping endpoint
-        livenessProbe:
-          httpGet:
-            path: /ping
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 10
-          failureThreshold: 3
+        # Health probes (uses /ping endpoint automatically)
         readinessProbe:
-          httpGet:
-            path: /ping
-            port: 8080
+          failureThreshold: 1
           initialDelaySeconds: 10
           periodSeconds: 10
-          failureThreshold: 1
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
 
         # Traefik logs settings
         logs:
