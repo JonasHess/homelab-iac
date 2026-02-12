@@ -15,6 +15,7 @@ corsOrigins: ""
 github:
   repo: ""
   configPath: ""
+  alexaConfigPath: ""
   branch: "main"
 
 generic:
