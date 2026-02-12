@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: docker.io/library/redis:7
+    image: docker.io/library/redis:8
     ports:
     - containerPort: 6379
     pvcMounts:
