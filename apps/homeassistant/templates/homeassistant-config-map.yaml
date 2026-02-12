@@ -5,3 +5,5 @@ metadata:
   namespace: {{ $.Release.Namespace }}
 data:
   TZ: "Europe/Berlin"
+  PUID: "911"
+  PGID: "911"
