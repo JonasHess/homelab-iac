@@ -34,8 +34,7 @@
   "panels": [
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$Prometheus_server"
       },
       "fieldConfig": {
         "defaults": {
@@ -137,13 +136,12 @@
           "refId": "A"
         }
       ],
-      "title": "zfs_pool_health",
+      "title": "Pool Health Status",
       "type": "status-history"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$Prometheus_server"
       },
       "fieldConfig": {
         "defaults": {
@@ -210,14 +208,20 @@
       "id": 53,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "width": 400
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "pluginVersion": "11.4.0",
@@ -228,15 +232,14 @@
           "expr": "zfs_pool_free_bytes",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "__auto",
+          "legendFormat": "{{pool}} - Free",
           "range": true,
           "refId": "A",
           "useBackend": false
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "$Prometheus_server"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
@@ -245,15 +248,14 @@
           "hide": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{name}} - Available",
           "range": true,
           "refId": "B",
           "useBackend": false
         },
         {
           "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
+            "uid": "$Prometheus_server"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
@@ -262,19 +264,18 @@
           "hide": false,
           "includeNullMetadata": true,
           "instant": false,
-          "legendFormat": "__auto",
+          "legendFormat": "{{pool}} - Total Size",
           "range": true,
           "refId": "C",
           "useBackend": false
         }
       ],
-      "title": "Panel Title",
+      "title": "Pool Storage Capacity",
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$Prometheus_server"
       },
       "fieldConfig": {
         "defaults": {
@@ -341,14 +342,20 @@
       "id": 54,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "width": 400
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "pluginVersion": "11.4.0",
@@ -365,13 +372,12 @@
           "useBackend": false
         }
       ],
-      "title": "Panel Title",
+      "title": "Dataset Used Space",
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
+        "uid": "$Prometheus_server"
       },
       "fieldConfig": {
         "defaults": {
@@ -438,14 +444,20 @@
       "id": 55,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "width": 400
         },
         "tooltip": {
-          "mode": "single",
-          "sort": "none"
+          "mode": "multi",
+          "sort": "desc"
         }
       },
       "pluginVersion": "11.4.0",
@@ -456,13 +468,13 @@
           "expr": "node_zfs_zpool_dataset_writes",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "__auto",
+          "legendFormat": "{{zpool}} - Writes",
           "range": true,
           "refId": "A",
           "useBackend": false
         }
       ],
-      "title": "Panel Title",
+      "title": "Dataset Write Rate",
       "type": "timeseries"
     },
     {
@@ -561,7 +573,7 @@
           "refId": "A"
         }
       ],
-      "title": "Arc Percentage",
+      "title": "ARC Usage Percentage",
       "type": "stat"
     },
     {
@@ -648,7 +660,7 @@
           "refId": "A"
         }
       ],
-      "title": "Arc Value",
+      "title": "ARC Target Size",
       "type": "stat"
     },
     {
@@ -888,7 +900,7 @@
               "target": ""
             }
           ],
-          "title": "dmu_tx_dmu_tx - 1",
+          "title": "DMU Transactions - Throttle & Errors",
           "type": "timeseries"
         },
         {
@@ -992,7 +1004,7 @@
               "target": ""
             }
           ],
-          "title": "dmu_tx_dmu_tx - 2",
+          "title": "DMU Transactions - Assigned Rate",
           "type": "timeseries"
         },
         {
@@ -1130,7 +1142,7 @@
               "target": ""
             }
           ],
-          "title": "fm",
+          "title": "Fault Management Errors",
           "type": "timeseries"
         },
         {
@@ -1262,7 +1274,7 @@
               "target": ""
             }
           ],
-          "title": "vdev",
+          "title": "VDEV Cache Hit/Miss Rate",
           "type": "timeseries"
         },
         {
@@ -1436,7 +1448,7 @@
               "target": ""
             }
           ],
-          "title": "xuio",
+          "title": "XUIO Buffer Statistics",
           "type": "timeseries"
         },
         {
@@ -1568,7 +1580,7 @@
               "target": ""
             }
           ],
-          "title": "zfetch",
+          "title": "Prefetch (zfetch) Hit/Miss Rate",
           "type": "timeseries"
         },
         {
@@ -1728,7 +1740,7 @@
               "target": ""
             }
           ],
-          "title": "zil - bytes",
+          "title": "ZIL Throughput (Bytes/sec)",
           "type": "timeseries"
         },
         {
@@ -1930,7 +1942,7 @@
               "target": ""
             }
           ],
-          "title": "zil - count",
+          "title": "ZIL Transaction Counts",
           "type": "timeseries"
         },
         {
@@ -2076,7 +2088,7 @@
               "target": ""
             }
           ],
-          "title": "ZPOOL",
+          "title": "ZPool I/O Operations",
           "type": "timeseries"
         },
         {
@@ -2236,11 +2248,11 @@
               "target": ""
             }
           ],
-          "title": "ZPOOL - Time",
+          "title": "ZPool I/O Latency",
           "type": "timeseries"
         }
       ],
-      "title": "Misc Stats",
+      "title": "ZFS Internals",
       "type": "row"
     },
     {
@@ -2478,7 +2490,7 @@
               "target": ""
             }
           ],
-          "title": "arc_c",
+          "title": "ARC Target Size (Min/Current/Max)",
           "type": "timeseries"
         },
         {
@@ -2582,7 +2594,7 @@
               "target": ""
             }
           ],
-          "title": "arc_size",
+          "title": "ARC Actual Size",
           "type": "timeseries"
         },
         {
@@ -2712,7 +2724,7 @@
               "target": ""
             }
           ],
-          "title": "arc_anon",
+          "title": "ARC Anonymous Data",
           "type": "timeseries"
         },
         {
@@ -2926,7 +2938,7 @@
               "target": ""
             }
           ],
-          "title": "arc_arc",
+          "title": "ARC Metadata & Limits",
           "type": "timeseries"
         },
         {
@@ -3030,7 +3042,7 @@
               "target": ""
             }
           ],
-          "title": "arc_data_size",
+          "title": "ARC Data Size",
           "type": "timeseries"
         },
         {
@@ -3134,7 +3146,7 @@
               "target": ""
             }
           ],
-          "title": "arc_deleted",
+          "title": "ARC Deleted Entries",
           "type": "timeseries"
         },
         {
@@ -3331,7 +3343,7 @@
               "refId": "E"
             }
           ],
-          "title": "arc_demand",
+          "title": "ARC Demand Hits & Misses",
           "type": "timeseries"
         },
         {
@@ -3497,7 +3509,7 @@
               "target": ""
             }
           ],
-          "title": "arc_evict",
+          "title": "ARC Eviction Statistics",
           "type": "timeseries"
         },
         {
@@ -3639,7 +3651,7 @@
               "target": ""
             }
           ],
-          "title": "arc_hash",
+          "title": "ARC Hash Table Statistics",
           "type": "timeseries"
         },
         {
@@ -3741,7 +3753,7 @@
               "target": ""
             }
           ],
-          "title": "arc_hash_collisions",
+          "title": "ARC Hash Collision Rate",
           "type": "timeseries"
         },
         {
@@ -3845,7 +3857,7 @@
               "target": ""
             }
           ],
-          "title": "arc_hdr_size",
+          "title": "ARC Header Size",
           "type": "timeseries"
         },
         {
@@ -3949,7 +3961,7 @@
               "target": ""
             }
           ],
-          "title": "arc_hits",
+          "title": "ARC Hit Rate",
           "type": "timeseries"
         },
         {
@@ -4127,7 +4139,7 @@
               "target": ""
             }
           ],
-          "title": "arc_l2 - 1",
+          "title": "L2ARC - Compression & Errors",
           "type": "timeseries"
         },
         {
@@ -4329,7 +4341,7 @@
               "target": ""
             }
           ],
-          "title": "arc_l2 - 2",
+          "title": "L2ARC - Eviction & Hits/Misses",
           "type": "timeseries"
         },
         {
@@ -4519,7 +4531,7 @@
               "target": ""
             }
           ],
-          "title": "arc_l2 - 3",
+          "title": "L2ARC - I/O & Size",
           "type": "timeseries"
         },
         {
@@ -4649,7 +4661,7 @@
               "target": ""
             }
           ],
-          "title": "arc_memory",
+          "title": "ARC Memory Pressure",
           "type": "timeseries"
         },
         {
@@ -4753,7 +4765,7 @@
               "target": ""
             }
           ],
-          "title": "arc_metadata_size",
+          "title": "ARC Metadata Size",
           "type": "timeseries"
         },
         {
@@ -4919,7 +4931,7 @@
               "target": ""
             }
           ],
-          "title": "arc_mfu",
+          "title": "ARC MFU (Most Frequently Used) - Sizes",
           "type": "timeseries"
         },
         {
@@ -5033,7 +5045,7 @@
               "target": ""
             }
           ],
-          "title": "arc_mfu -2",
+          "title": "ARC MFU - Hit Rate",
           "type": "timeseries"
         },
         {
@@ -5129,13 +5141,13 @@
               "expr": "rate(node_zfs_arc_misses{instance=~\"$Host\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "ghost_hits",
+              "legendFormat": "arc_misses",
               "refId": "D",
               "step": 2,
               "target": ""
             }
           ],
-          "title": "arc_misses",
+          "title": "ARC Miss Rate",
           "type": "timeseries"
         },
         {
@@ -5301,7 +5313,7 @@
               "target": ""
             }
           ],
-          "title": "arc_mru - 1",
+          "title": "ARC MRU (Most Recently Used) - Sizes",
           "type": "timeseries"
         },
         {
@@ -5415,7 +5427,7 @@
               "target": ""
             }
           ],
-          "title": "arc_mru -2",
+          "title": "ARC MRU - Hit Rate",
           "type": "timeseries"
         },
         {
@@ -5517,7 +5529,7 @@
               "target": ""
             }
           ],
-          "title": "arc_mutex_miss",
+          "title": "ARC Mutex Miss Rate",
           "type": "timeseries"
         },
         {
@@ -5621,7 +5633,7 @@
               "target": ""
             }
           ],
-          "title": "arc_p",
+          "title": "ARC Target MRU Size (p)",
           "type": "timeseries"
         },
         {
@@ -5814,11 +5826,11 @@
               "refId": "E"
             }
           ],
-          "title": "arc_prefetch",
+          "title": "ARC Prefetch Hits & Misses",
           "type": "timeseries"
         }
       ],
-      "title": "Arc Stats",
+      "title": "ARC Detailed Stats",
       "type": "row"
     }
   ],
