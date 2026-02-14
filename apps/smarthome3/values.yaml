@@ -1,3 +1,10 @@
+generic:
+  appName: smarthome3
+  externalSecrets:
+    smarthome3-secret:
+      - HUE_API_KEY: "/smarthome3/HUE_API_KEY"
+      - HOME_ASSISTANT_TOKEN: "/smarthome3/HOME_ASSISTANT_TOKEN"
+
 # Container image configuration
 image:
   repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste
