@@ -138,7 +138,8 @@
         }
       ],
       "title": "Pool Health Status",
-      "type": "status-history"
+      "type": "status-history",
+      "description": "Shows the health state of each ZFS pool. ONLINE means the pool is fully operational. Any other state (DEGRADED, FAULTED, OFFLINE, UNAVAILABLE, REMOVED, SUSPENDED) indicates a problem that needs attention."
     },
     {
       "datasource": {
@@ -274,6 +275,7 @@
           "useBackend": false
         }
       ],
+      "description": "Free: Raw unused space in the pool at the vdev level.\nAvailable: Space a dataset can actually use, after accounting for metadata overhead, snapshot space, and reservations.\nThe gap between Free and Available is consumed by ZFS metadata, snapshots, and refreservation.",
       "title": "Pool Storage Capacity",
       "type": "timeseries"
     },
@@ -378,7 +380,8 @@
         }
       ],
       "title": "Dataset Used Space",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Bytes used by each ZFS dataset, including data, metadata, and snapshots referenced by the dataset."
     },
     {
       "datasource": {
@@ -481,7 +484,8 @@
         }
       ],
       "title": "Dataset Write Rate",
-      "type": "timeseries"
+      "type": "timeseries",
+      "description": "Rate of write operations per second to ZFS datasets, broken down by zpool."
     },
     {
       "collapsed": false,
@@ -571,7 +575,7 @@
           "datasource": {
             "uid": "$Prometheus_server"
           },
-          "expr": "node_zfs_arc_c{instance=~\"$Host\"} / node_zfs_arc_c_max{instance=~\"$Host\"} * 100",
+          "expr": "max(node_zfs_arc_c{instance=~\"$Host\"}) / max(node_zfs_arc_c_max{instance=~\"$Host\"}) * 100",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -580,7 +584,8 @@
         }
       ],
       "title": "ARC Usage Percentage",
-      "type": "stat"
+      "type": "stat",
+      "description": "The ARC (Adaptive Replacement Cache) is ZFS's main in-memory read cache. This shows what percentage of the maximum allowed ARC size is currently being targeted. High values mean ZFS is actively caching data to speed up reads."
     },
     {
       "datasource": {
@@ -623,7 +628,7 @@
               }
             ]
           },
-          "unit": "decbytes"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -658,7 +663,7 @@
           "datasource": {
             "uid": "$Prometheus_server"
           },
-          "expr": "node_zfs_arc_c{instance=~\"$Host\"}",
+          "expr": "max(node_zfs_arc_c{instance=~\"$Host\"})",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -667,7 +672,8 @@
         }
       ],
       "title": "ARC Target Size",
-      "type": "stat"
+      "type": "stat",
+      "description": "The current target size (arc_c) of the ARC. ZFS dynamically adjusts this value between arc_c_min and arc_c_max based on memory pressure and workload. This is the target, not the actual size \u2014 the actual ARC may be slightly above or below this value."
     },
     {
       "collapsed": true,
@@ -907,7 +913,8 @@
             }
           ],
           "title": "DMU Transactions - Throttle & Errors",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "DMU (Data Management Unit) transaction statistics. Delays and throttles indicate ZFS is slowing down incoming writes because dirty data hasn't been flushed to disk fast enough. Frequent throttling may indicate slow disks or too much write load."
         },
         {
           "datasource": {
@@ -1011,7 +1018,8 @@
             }
           ],
           "title": "DMU Transactions - Assigned Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Rate of DMU transactions being assigned. A sudden drop may indicate write stalls."
         },
         {
           "datasource": {
@@ -1149,7 +1157,8 @@
             }
           ],
           "title": "Fault Management Errors",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZFS Fault Management error counters. Non-zero values indicate internal errors in ZFS error reporting. These should normally be zero \u2014 any activity here warrants investigation."
         },
         {
           "datasource": {
@@ -1281,7 +1290,8 @@
             }
           ],
           "title": "VDEV Cache Hit/Miss Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "VDEV-level cache hit/miss rate. The VDEV cache sits below the ARC and caches recently read blocks at the device level. High miss rates may indicate random I/O patterns that defeat caching."
         },
         {
           "datasource": {
@@ -1455,7 +1465,8 @@
             }
           ],
           "title": "XUIO Buffer Statistics",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "XUIO (eXtended Unified I/O) buffer statistics. Tracks zero-copy I/O buffer usage for reads and writes. 'nocopy' operations are more efficient than 'copied' ones."
         },
         {
           "datasource": {
@@ -1587,7 +1598,8 @@
             }
           ],
           "title": "Prefetch (zfetch) Hit/Miss Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZFS speculative prefetch (zfetch) statistics. Zfetch detects sequential read patterns and prefetches upcoming blocks into the ARC. High hit rates indicate effective prefetching; high miss rates suggest random I/O patterns."
         },
         {
           "datasource": {
@@ -1747,7 +1759,8 @@
             }
           ],
           "title": "ZIL Throughput (Bytes/sec)",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZFS Intent Log (ZIL) byte throughput. The ZIL journals synchronous writes to ensure data integrity on crash. 'slog' bytes go to a dedicated log device (faster), 'normal' bytes go to the main pool."
         },
         {
           "datasource": {
@@ -1949,7 +1962,8 @@
             }
           ],
           "title": "ZIL Transaction Counts",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZIL transaction and commit counts. High commit counts indicate many synchronous write operations (e.g., NFS, databases). The ratio of itx_copied vs itx_indirect shows whether data is inlined in the log or referenced indirectly."
         },
         {
           "datasource": {
@@ -2095,7 +2109,8 @@
             }
           ],
           "title": "ZPool I/O Operations",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZPool I/O operation rates. 'reads'/'writes' are completed operations per second. 'rcnt'/'wcnt' are the number of operations currently in the queue \u2014 high values indicate I/O congestion."
         },
         {
           "datasource": {
@@ -2255,7 +2270,8 @@
             }
           ],
           "title": "ZPool I/O Latency",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ZPool I/O timing statistics. 'rlentime'/'wlentime' measure queue length over time. 'wtime' is the cumulative time spent waiting. 'rupdate'/'wupdate' track when statistics were last updated."
         }
       ],
       "title": "ZFS Internals",
@@ -2497,7 +2513,8 @@
             }
           ],
           "title": "ARC Target Size (Min/Current/Max)",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ARC target size boundaries. 'arc current' (arc_c) is the current target that ZFS dynamically adjusts. 'arc_max' is the upper limit (typically ~50% of RAM). 'arc_min' is the lower bound ZFS tries not to shrink below."
         },
         {
           "datasource": {
@@ -2601,7 +2618,8 @@
             }
           ],
           "title": "ARC Actual Size",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "The actual amount of memory currently used by the ARC. This may differ from the target size (arc_c) as ZFS adjusts to memory pressure."
         },
         {
           "datasource": {
@@ -2731,7 +2749,8 @@
             }
           ],
           "title": "ARC Anonymous Data",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Anonymous ARC data \u2014 blocks that have been modified but not yet synced to a transaction group. Large anonymous data volumes indicate heavy write activity."
         },
         {
           "datasource": {
@@ -2945,7 +2964,8 @@
             }
           ],
           "title": "ARC Metadata & Limits",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ARC metadata limits and usage. 'meta_limit' caps how much ARC can be used for metadata vs data. 'meta_used' is current metadata in ARC. 'loaned_bytes' are ARC memory temporarily given to other kernel subsystems. 'need_free'/'sys_free' indicate memory pressure."
         },
         {
           "datasource": {
@@ -3049,7 +3069,8 @@
             }
           ],
           "title": "ARC Data Size",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Total size of cached data blocks (not metadata) in the ARC."
         },
         {
           "datasource": {
@@ -3153,7 +3174,8 @@
             }
           ],
           "title": "ARC Deleted Entries",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Cumulative count of entries deleted from the ARC. A steadily increasing counter \u2014 use rate() to see deletion frequency."
         },
         {
           "datasource": {
@@ -3350,7 +3372,8 @@
             }
           ],
           "title": "ARC Demand Hits & Misses",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Demand (application-requested) cache hits and misses, with hit ratio shown as a dashed line (right axis). Data hits/misses are for file content; metadata hits/misses are for filesystem structure. Higher hit percentages mean better cache efficiency."
         },
         {
           "datasource": {
@@ -3516,7 +3539,8 @@
             }
           ],
           "title": "ARC Eviction Statistics",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ARC eviction statistics. 'l2_eligible'/'l2_cached' show how much evicted data could be or was sent to L2ARC. 'not_enough' means eviction couldn't free sufficient space. Frequent eviction activity indicates the ARC is under memory pressure."
         },
         {
           "datasource": {
@@ -3658,7 +3682,8 @@
             }
           ],
           "title": "ARC Hash Table Statistics",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ARC hash table statistics. The hash table provides O(1) lookups for cached blocks. 'elements' is the current entry count. 'chain_max' is the longest hash chain \u2014 high values indicate poor hash distribution."
         },
         {
           "datasource": {
@@ -3760,7 +3785,8 @@
             }
           ],
           "title": "ARC Hash Collision Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Rate of hash table collisions in the ARC. Some collisions are normal, but a sharp increase may indicate the hash table needs resizing."
         },
         {
           "datasource": {
@@ -3864,7 +3890,8 @@
             }
           ],
           "title": "ARC Header Size",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Memory used by ARC block headers (metadata about cached blocks, not the cached data itself). Grows proportionally with the number of cached blocks."
         },
         {
           "datasource": {
@@ -3968,7 +3995,8 @@
             }
           ],
           "title": "ARC Hit Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Total ARC hit rate across all request types (demand + prefetch, data + metadata)."
         },
         {
           "datasource": {
@@ -4146,7 +4174,8 @@
             }
           ],
           "title": "L2ARC - Compression & Errors",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "L2ARC (Level 2 ARC) is an optional disk-based read cache (typically on an SSD) that extends the in-memory ARC. This panel shows compression statistics and error counts. 'cksum_bad' indicates data corruption on the L2ARC device."
         },
         {
           "datasource": {
@@ -4348,7 +4377,8 @@
             }
           ],
           "title": "L2ARC - Eviction & Hits/Misses",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "L2ARC eviction and access statistics. 'hits'/'misses' show L2ARC cache effectiveness. 'evict_*' counters show how entries are removed. 'io_error' indicates problems with the L2ARC device."
         },
         {
           "datasource": {
@@ -4538,7 +4568,8 @@
             }
           ],
           "title": "L2ARC - I/O & Size",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "L2ARC size and I/O statistics. 'size' is the current L2ARC usage. 'read_bytes'/'write_bytes' show I/O throughput. 'writes_error' indicates failed write attempts to the cache device."
         },
         {
           "datasource": {
@@ -4668,7 +4699,8 @@
             }
           ],
           "title": "ARC Memory Pressure",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "ARC memory pressure indicators. 'direct_count' = times ARC was directly asked to free memory. 'indirect_count' = times it freed memory due to system pressure. 'throttle_count' = times new allocations were throttled. High values indicate the system is under memory pressure."
         },
         {
           "datasource": {
@@ -4772,7 +4804,8 @@
             }
           ],
           "title": "ARC Metadata Size",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Total size of cached metadata (directory entries, file attributes, block pointers) in the ARC."
         },
         {
           "datasource": {
@@ -4938,7 +4971,8 @@
             }
           ],
           "title": "ARC MFU (Most Frequently Used) - Sizes",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "MFU (Most Frequently Used) list sizes. The MFU holds blocks accessed more than once \u2014 the 'hot' working set. 'ghost' lists track recently evicted entries to inform future caching decisions. Larger ghost lists help ZFS make better eviction choices."
         },
         {
           "datasource": {
@@ -5052,7 +5086,8 @@
             }
           ],
           "title": "ARC MFU - Hit Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "MFU hit rates. 'hits' are served from the MFU cache. 'ghost_hits' indicate a recently evicted MFU entry was requested again \u2014 ZFS uses this signal to grow the MFU at the expense of MRU."
         },
         {
           "datasource": {
@@ -5154,7 +5189,8 @@
             }
           ],
           "title": "ARC Miss Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Total ARC miss rate. Every miss requires a disk read, so this directly impacts I/O latency."
         },
         {
           "datasource": {
@@ -5320,7 +5356,8 @@
             }
           ],
           "title": "ARC MRU (Most Recently Used) - Sizes",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "MRU (Most Recently Used) list sizes. The MRU holds blocks accessed only once recently \u2014 potential candidates for the MFU if accessed again. 'ghost' lists track recently evicted entries to help ZFS auto-tune the MRU/MFU balance."
         },
         {
           "datasource": {
@@ -5434,7 +5471,8 @@
             }
           ],
           "title": "ARC MRU - Hit Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "MRU hit rates. 'hits' are served from the MRU cache. 'ghost_hits' indicate a recently evicted MRU entry was requested again \u2014 ZFS uses this signal to grow the MRU at the expense of MFU."
         },
         {
           "datasource": {
@@ -5536,7 +5574,8 @@
             }
           ],
           "title": "ARC Mutex Miss Rate",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Rate of ARC mutex (lock) misses. High values indicate lock contention in the ARC, which can reduce throughput on highly concurrent workloads."
         },
         {
           "datasource": {
@@ -5640,7 +5679,8 @@
             }
           ],
           "title": "ARC Target MRU Size (p)",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "The 'p' parameter controls the target size split between MRU and MFU lists. A larger p means more space allocated to MRU (recently accessed data). ZFS adjusts p dynamically based on ghost list hit patterns."
         },
         {
           "datasource": {
@@ -5833,7 +5873,8 @@
             }
           ],
           "title": "ARC Prefetch Hits & Misses",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Prefetch (speculative read-ahead) cache hits and misses, with hit ratio on the right axis. Unlike demand requests, prefetch is initiated by ZFS itself. High prefetch hit rates indicate ZFS is successfully predicting sequential access patterns."
         }
       ],
       "title": "ARC Detailed Stats",
