@@ -1,6 +1,28 @@
-oidc:
-  configurationUrl: ~ # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
+global:
+  oidcConfigurationUrl: ~ # https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX/.well-known/openid-configuration
+
 generic:
+  configMaps:
+    mealie-config:
+      BASE_URL: "https://mealie.{{ .Values.global.domain }}"
+      ALLOW_SIGNUP: "false"
+      DB_ENGINE: "sqlite"
+      IS_DEMO: "false"
+      DEFAULT_GROUP: "Home"
+      DEFAULT_HOUSEHOLD: "Family"
+      DAILY_SCHEDULE_TIME: "23:45"
+      SMTP_PORT: "587"
+      SMTP_FROM_NAME: "Mealie"
+      SMTP_AUTH_STRATEGY: "TLS"
+      OIDC_AUTH_ENABLED: "true"
+      OIDC_CONFIGURATION_URL: '{{ required "global.oidcConfigurationUrl is required" .Values.global.oidcConfigurationUrl }}'
+      OIDC_SIGNUP_ENABLED: "true"
+      OIDC_PROVIDER_NAME: "Cognito"
+      OIDC_AUTO_REDIRECT: "true"
+      OIDC_REMEMBER_ME: "true"
+      OIDC_USER_CLAIM: "email"
+      OIDC_NAME_CLAIM: "name"
+      OIDC_GROUPS_CLAIM: "groups"
   deployment:
     image: ghcr.io/mealie-recipes/mealie:v3.10.2
     ports:

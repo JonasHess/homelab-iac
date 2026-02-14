@@ -7,6 +7,6 @@ metadata:
   name: {{ $cmName }}
   namespace: {{ $.Release.Namespace }}
 data:
-{{- toYaml $cmData | nindent 2 }}
+{{- tpl (toYaml $cmData) $ | nindent 2 }}
   {{- end }}
 {{- end }}

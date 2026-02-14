@@ -1,5 +1,14 @@
-cron_job: 23 * * * *
 generic:
+  configMaps:
+    cloudflare-ddns-config-map:
+      CRON_JOB: "23 * * * *"
+      AUTH_METHOD: "global"
+      RECORD_NAME: "{{ .Values.global.domain }}"
+      RECORD_TYPE: "A"
+      TTL: "60"
+      PROXY: "false"
+      SITENAME: "{{ .Values.global.domain }}"
+      NOTIFICATION_LEVEL: "on_success_or_error"
   externalSecrets:
     cloudflare-ddns-api-credentials:
       - AUTH_EMAIL: "/ddns/cloudflare-api-credentials_email"

@@ -8,4 +8,4 @@ version: 0.1.0
 dependencies:
   - name: generic
     repository: file://../generic
-    version: 0.1.28
+    version: 0.1.30
