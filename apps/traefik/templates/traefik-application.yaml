@@ -46,8 +46,17 @@ spec:
             nodePort: 32443
             expose:
               default: true
-            middlewares:
-              - "argocd-cloudflare@kubernetescrd"
+            http:
+              middlewares:
+                - "argocd-cloudflare@kubernetescrd"
+              tls:
+                enabled: true
+                options: ""
+                certResolver: "cloudflare"
+                domains:
+                  - main: {{.Values.global.domain}}
+                    sans:
+                      - "*.{{.Values.global.domain}}"
             transport:
               respondingTimeouts:
                 readTimeout: 30m
@@ -63,14 +72,7 @@ spec:
             protocol: {{ $value.protocol }}
           {{- end }}
 
-        # Enabling Traefik's access logs for monitoring traffic
-        accessLogs:
-          enabled: true
-
         additionalArguments:
-          - --entrypoints.websecure.http.tls.certresolver=cloudflare
-          - --entrypoints.websecure.http.tls.domains[0].main={{.Values.global.domain}}
-          - --entrypoints.websecure.http.tls.domains[0].sans=*.{{.Values.global.domain}}
           - --entryPoints.web.proxyProtocol.insecure
           - --entryPoints.web.forwardedHeaders.insecure
           - --entrypoints.web.http.redirections.entrypoint.to=websecure
@@ -80,6 +82,7 @@ spec:
           - --certificatesresolvers.cloudflare.acme.email={{.Values.global.letsencrypt.email}}
           - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1
           - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
+          - --serversTransport.insecureSkipVerify=true
 
         # Health probes (uses /ping endpoint automatically)
         readinessProbe:
@@ -109,12 +112,6 @@ spec:
             enabled: true
             insecure: true
 
-        tls:
-          enabled: true
-          # this is the name of a TLSOption definition
-          options: ""
-          certResolver: "cloudflare"
-
         persistence:
           enabled: true
           name: traefik-data
@@ -130,16 +127,6 @@ spec:
           externalIPs:
             - {{.Values.loadBalancerIP}}
   {{- end }}
-
-        # Configure SSL settings
-        ssl:
-          insecureSkipVerify: true
-
-        # Configure Server Transport settings
-        serversTransport:
-          insecureSkipVerify: true
-
-
 
         # Environment variables for the Cloudflare API token
         env:
