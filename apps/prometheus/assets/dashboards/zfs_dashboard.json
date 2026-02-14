@@ -130,7 +130,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "zfs_pool_health",
+          "expr": "zfs_pool_health{instance=~\"$Host\"}",
           "legendFormat": "{{pool}}",
           "range": true,
           "refId": "A"
@@ -229,7 +229,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_pool_free_bytes",
+          "expr": "zfs_pool_free_bytes{instance=~\"$Host\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{pool}} - Free",
@@ -243,7 +243,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_dataset_available_bytes",
+          "expr": "zfs_dataset_available_bytes{instance=~\"$Host\"}",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -259,7 +259,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_pool_size_bytes",
+          "expr": "zfs_pool_size_bytes{instance=~\"$Host\"}",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -363,7 +363,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_dataset_used_bytes",
+          "expr": "zfs_dataset_used_bytes{instance=~\"$Host\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{name}}",
@@ -431,7 +431,7 @@
               }
             ]
           },
-          "unit": "binBps"
+          "unit": "ops"
         },
         "overrides": []
       },
@@ -465,7 +465,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "node_zfs_zpool_dataset_writes",
+          "expr": "rate(node_zfs_zpool_dataset_writes{instance=~\"$Host\"}[5m])",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{zpool}} - Writes",
@@ -617,7 +617,7 @@
               }
             ]
           },
-          "unit": "decbytes"
+          "unit": "bytes"
         },
         "overrides": []
       },
@@ -728,7 +728,7 @@
                   }
                 ]
               },
-              "unit": "bytes"
+              "unit": "none"
             },
             "overrides": []
           },
@@ -2588,7 +2588,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "arc_size",
+              "legendFormat": "Size",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -3036,7 +3036,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "arc_data_size",
+              "legendFormat": "Data Size",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -3140,7 +3140,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "arc_deleted",
+              "legendFormat": "Deleted",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -3747,7 +3747,7 @@
               "expr": "rate(node_zfs_arc_hash_collisions{instance=~\"$Host\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "collisions",
+              "legendFormat": "Collisions/sec",
               "refId": "A",
               "step": 2,
               "target": ""
@@ -3851,7 +3851,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "hdr_size",
+              "legendFormat": "Header Size",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -3955,7 +3955,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "arc_hits",
+              "legendFormat": "Hits/sec",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -4759,7 +4759,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "arc_metadata_size",
+              "legendFormat": "Metadata Size",
               "refId": "B",
               "step": 2,
               "target": ""
@@ -5141,7 +5141,7 @@
               "expr": "rate(node_zfs_arc_misses{instance=~\"$Host\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "arc_misses",
+              "legendFormat": "Misses/sec",
               "refId": "D",
               "step": 2,
               "target": ""
@@ -5523,7 +5523,7 @@
               "expr": "rate(node_zfs_arc_mutex_miss{instance=~\"$Host\"}[5m])",
               "format": "time_series",
               "intervalFactor": 2,
-              "legendFormat": "arc_mutex_miss",
+              "legendFormat": "Mutex Misses/sec",
               "refId": "D",
               "step": 2,
               "target": ""
@@ -5627,7 +5627,7 @@
               "hide": false,
               "interval": "",
               "intervalFactor": 2,
-              "legendFormat": "p",
+              "legendFormat": "Target MRU Size",
               "refId": "B",
               "step": 2,
               "target": ""
