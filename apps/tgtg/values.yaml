@@ -1,4 +1,13 @@
 generic:
+  configMaps:
+    tgtg-config-map:
+      SLEEP_TIME: "15"
+      TZ: "Europe/Berlin"
+      LOCALE: "de_DE"
+      NTFY: "true"
+      TELEGRAM: "true"
+      TELEGRAM_ONLY_RESERVATIONS: "true"
+      METRICS: "true"
   externalSecrets:
     tgtg-credentials:
       - NTFY_TOPIC: "/tgtg/ntfy_topic"

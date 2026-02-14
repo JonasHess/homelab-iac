@@ -1,24 +1,16 @@
-mqtt:
-  host: mosquitto-service
-  port: "1883"
-
-z2mTopic: zigbee2mqtt
-
-homeAssistant:
-  baseUrl: http://homeassistant-service:8123
-
-smartHomeCore:
-  url: http://smarthome4-service:8080
-
-corsOrigins: ""
-
-github:
-  repo: ""
-  configPath: ""
-  alexaConfigPath: ""
-  branch: "main"
-
 generic:
+  configMaps:
+    smarthome4-ui-config-map:
+      MQTT_HOST: "mosquitto-service"
+      MQTT_PORT: "1883"
+      Z2M_TOPIC: "zigbee2mqtt"
+      HA_BASE_URL: "http://homeassistant-service:8123"
+      SMARTHOME_CORE_URL: "http://smarthome4-service:8080"
+      CORS_ORIGINS: ""
+      GITHUB_REPO: ""
+      GITHUB_CONFIG_PATH: ""
+      GITHUB_ALEXA_CONFIG_PATH: ""
+      GITHUB_BRANCH: "main"
   externalSecrets:
     smarthome4-ui-secret:
       - HA_API_TOKEN: "/smarthome4/HOMEASSISTANT_APITOKEN"
