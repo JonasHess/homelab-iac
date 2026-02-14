@@ -689,6 +689,20 @@ apps:
       namespace: argocd
       project: default
       syncWave: '25'  # Run after all apps are deployed
+  prompt-util:
+    enabled: false
+    homer:
+      enabled: true
+      group: "ai"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/openai.svg"
+      subtitle: "LLM Prompt Templates"
+      displayName: "Prompt Util"
+      subdomain: "prompt-util"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "16"
   portal-document-downloader:
     enabled: false
     homer:
