@@ -5,12 +5,45 @@ generic:
       - HOMEASSISTANT_APITOKEN: "/smarthome4/HOMEASSISTANT_APITOKEN"
       - MQTT_BROKER_USERNAME: "/smarthome4/MQTT_BROKER_USERNAME"
       - MQTT_BROKER_PASSWORD: "/smarthome4/MQTT_BROKER_PASSWORD"
-
-# Container image configuration
-image:
-  repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4
-  tag: "v0.0.14"
-  pullPolicy: Always
+  deployment:
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4:v0.0.14
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 8080
+    envFrom:
+      configMapRef: smarthome4-config-map
+      secretRef: smarthome4-secret
+    configMapMounts:
+      config:
+        mountPath: /config
+        configMapName: smarthome4-app-config
+    livenessProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 10
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    imagePullSecrets:
+    - regcred-primary
+  service:
+    ports:
+    - name: http
+      port: 8080
 
 # Spring configuration
 profilesActive: prod

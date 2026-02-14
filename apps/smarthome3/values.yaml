@@ -4,14 +4,24 @@ generic:
     smarthome3-secret:
       - HUE_API_KEY: "/smarthome3/HUE_API_KEY"
       - HOME_ASSISTANT_TOKEN: "/smarthome3/HOME_ASSISTANT_TOKEN"
+  deployment:
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste:1.2.1
+    imagePullPolicy: Always
+    ports:
+    - containerPort: 8080
+    envFrom:
+      configMapRef: smarthome3-config-map
+      secretRef: smarthome3-secret
+    livenessProbe:
+      httpGet:
+        path: /actuator/health
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 30
+    imagePullSecrets:
+    - regcred-primary
 
-# Container image configuration
-image:
-  repository: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste
-  tag: 1.2.1
-  pullPolicy: Always
-
-# Application configuration
+# Application configuration (used by smarthome3-configmap.yaml)
 hueIp: NOT_SET
 mqttUrl: tcp://mosquitto-service:1883
 homeAssistantIp: homeassistant-service:8123
