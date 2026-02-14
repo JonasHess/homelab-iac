@@ -477,7 +477,7 @@
           "expr": "rate(node_zfs_zpool_dataset_writes[5m])",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "{{zpool}} - Writes",
+          "legendFormat": "{{dataset}} - Writes",
           "range": true,
           "refId": "A",
           "useBackend": false
