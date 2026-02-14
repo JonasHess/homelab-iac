@@ -1,5 +1,17 @@
 generic:
   appName: smarthome4
+  configMaps:
+    smarthome4-config-map:
+      SPRING_PROFILES_ACTIVE: "prod"
+      MQTT_BROKER_HOST: "mosquitto-service"
+      MQTT_BROKER_PORT: "1883"
+      HOMEASSISTANT_BASEURL: "http://homeassistant-service:8123"
+      HOMEASSISTANT_CACHE_MAXAGEMS: "300000"
+      SMARTHOME_CONFIG_PATH: "/config/smarthome-config.yaml"
+      DEVICE_STATE_TIMEOUT_SECONDS: "300"
+      APPLICATION_MODEL_REFRESH_ENABLED: "true"
+      APPLICATION_MODEL_REFRESH_INTERVAL_MS: "300000"
+      APPLICATION_MODEL_REFRESH_INITIAL_DELAY_MS: "60000"
   externalSecrets:
     smarthome4-secret:
       - HOMEASSISTANT_APITOKEN: "/smarthome4/HOMEASSISTANT_APITOKEN"
@@ -44,31 +56,6 @@ generic:
     ports:
     - name: http
       port: 8080
-
-# Spring configuration
-profilesActive: prod
-
-# MQTT configuration
-mqtt:
-  host: mosquitto-service
-  port: "1883"
-
-# Home Assistant configuration
-homeAssistant:
-  baseUrl: http://homeassistant-service:8123
-  cache:
-    maxAgeMs: "300000"
-
-# Device state configuration
-device:
-  stateTimeoutSeconds: "300"
-
-# Application model refresh configuration
-applicationModel:
-  refresh:
-    enabled: "true"
-    intervalMs: "300000"
-    initialDelayMs: "60000"
 
 # External configuration chart (deployed as separate ArgoCD Application)
 externalConfig:

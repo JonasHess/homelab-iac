@@ -1,5 +1,11 @@
 generic:
   appName: mosquitto
+  configMaps:
+    mosquitto-config-cm:
+      mosquitto.conf: |-
+        allow_anonymous true
+        listener 1883
+        password_file /mosquitto/config/auth.txt
   externalSecrets:
     mosquitto-secret:
       - auth.txt: "/mosquitto/auth.txt"

@@ -405,6 +405,18 @@
         }
       }
     },
+    "configMaps": {
+      "type": "object",
+      "description": "ConfigMap definitions. Each key is the ConfigMap name, value is an object of key-value data.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "ConfigMap data entries (key-value pairs)",
+        "additionalProperties": {
+          "type": "string",
+          "description": "Value for this ConfigMap data entry"
+        }
+      }
+    },
     "externalSecrets": {
       "type": "object",
       "description": "External Secrets configuration for integrating with external secret management systems",

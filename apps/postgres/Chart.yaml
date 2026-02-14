@@ -3,7 +3,7 @@ appVersion: 1.0.0
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.27
+  version: 0.1.28
 description: Helm chart for postgres
 name: postgres
 type: application

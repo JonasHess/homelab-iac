@@ -1,5 +1,11 @@
 generic:
   appName: smarthome3
+  configMaps:
+    smarthome3-config-map:
+      HUE_IP: "NOT_SET"
+      MQTT_URL: "tcp://mosquitto-service:1883"
+      HOME_ASSISTANT_IP: "homeassistant-service:8123"
+      spring.profiles.active: "NOT_SET"
   externalSecrets:
     smarthome3-secret:
       - HUE_API_KEY: "/smarthome3/HUE_API_KEY"
@@ -20,9 +26,3 @@ generic:
       periodSeconds: 30
     imagePullSecrets:
     - regcred-primary
-
-# Application configuration (used by smarthome3-configmap.yaml)
-hueIp: NOT_SET
-mqttUrl: tcp://mosquitto-service:1883
-homeAssistantIp: homeassistant-service:8123
-profilesActive: NOT_SET
