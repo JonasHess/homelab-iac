@@ -571,7 +571,7 @@
           "datasource": {
             "uid": "$Prometheus_server"
           },
-          "expr": "node_zfs_arc_c{instance=\"$Host\"} / node_zfs_arc_c_max{instance=\"$Host\"} * 100",
+          "expr": "node_zfs_arc_c{instance=~\"$Host\"} / node_zfs_arc_c_max{instance=~\"$Host\"} * 100",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
@@ -623,7 +623,7 @@
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "decbytes"
         },
         "overrides": []
       },
@@ -658,7 +658,7 @@
           "datasource": {
             "uid": "$Prometheus_server"
           },
-          "expr": "node_zfs_arc_c{instance=\"$Host\"}",
+          "expr": "node_zfs_arc_c{instance=~\"$Host\"}",
           "format": "time_series",
           "instant": false,
           "intervalFactor": 1,
