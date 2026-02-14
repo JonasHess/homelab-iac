@@ -34,7 +34,8 @@
   "panels": [
     {
       "datasource": {
-        "uid": "$Prometheus_server"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -130,7 +131,7 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "zfs_pool_health{instance=~\"$Host\"}",
+          "expr": "zfs_pool_health",
           "legendFormat": "{{pool}}",
           "range": true,
           "refId": "A"
@@ -141,7 +142,8 @@
     },
     {
       "datasource": {
-        "uid": "$Prometheus_server"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -229,7 +231,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_pool_free_bytes{instance=~\"$Host\"}",
+          "expr": "zfs_pool_free_bytes",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{pool}} - Free",
@@ -239,11 +241,12 @@
         },
         {
           "datasource": {
-            "uid": "$Prometheus_server"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_dataset_available_bytes{instance=~\"$Host\"}",
+          "expr": "zfs_dataset_available_bytes",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -255,11 +258,12 @@
         },
         {
           "datasource": {
-            "uid": "$Prometheus_server"
+            "type": "prometheus",
+            "uid": "prometheus"
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_pool_size_bytes{instance=~\"$Host\"}",
+          "expr": "zfs_pool_size_bytes",
           "fullMetaSearch": false,
           "hide": false,
           "includeNullMetadata": true,
@@ -275,7 +279,8 @@
     },
     {
       "datasource": {
-        "uid": "$Prometheus_server"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -363,7 +368,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "zfs_dataset_used_bytes{instance=~\"$Host\"}",
+          "expr": "zfs_dataset_used_bytes",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{name}}",
@@ -377,7 +382,8 @@
     },
     {
       "datasource": {
-        "uid": "$Prometheus_server"
+        "type": "prometheus",
+        "uid": "prometheus"
       },
       "fieldConfig": {
         "defaults": {
@@ -465,7 +471,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "rate(node_zfs_zpool_dataset_writes{instance=~\"$Host\"}[5m])",
+          "expr": "rate(node_zfs_zpool_dataset_writes[5m])",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{zpool}} - Writes",
