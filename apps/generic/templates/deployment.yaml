@@ -22,6 +22,12 @@ spec:
       labels:
         app: {{ $appName }}
     spec:
+      {{- if $deployment.hostNetwork }}
+      hostNetwork: {{ $deployment.hostNetwork }}
+      {{- end }}
+      {{- if $deployment.dnsPolicy }}
+      dnsPolicy: {{ $deployment.dnsPolicy }}
+      {{- end }}
       {{- if $deployment.initContainers }}
       initContainers:
         {{- toYaml $deployment.initContainers | nindent 8 }}
