@@ -12,7 +12,6 @@ generic:
       - HOME_ASSISTANT_TOKEN: "/smarthome3/HOME_ASSISTANT_TOKEN"
   deployment:
     image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste:1.2.1
-    imagePullPolicy: Always
     ports:
     - containerPort: 8080
     envFrom:

@@ -39,7 +39,6 @@ spec:
           containers:
           - name: downloader
             image: {{ required "image must be specified" $.Values.portalDocumentDownloader.image }}:{{ $.Values.portalDocumentDownloader.imageTag | default "latest" }}
-            imagePullPolicy: Always
             {{- if $portalConfig.flat }}
             args:
             - "--flat"
