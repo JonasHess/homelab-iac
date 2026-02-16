@@ -1,0 +1,30 @@
+generic:
+  configMaps:
+    prompt-util-config-map:
+      LLM_ENDPOINT: "https://api.openai.com/v1"
+      LLM_MODEL: "gpt-4o"
+      LLM_TEMPERATURE: "0.7"
+      TEMPLATES_DIR: "./templates"
+      CORS_ORIGINS: ""
+  externalSecrets:
+    prompt-util-secret:
+      - LLM_API_KEY: "/prompt-util/LLM_API_KEY"
+  deployment:
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/prompt-util:v0.0.1
+    imagePullSecrets:
+    - regcred-primary
+    ports:
+    - containerPort: 8000
+    envFrom:
+      configMapRef: prompt-util-config-map
+      secretRef: prompt-util-secret
+  service:
+    ports:
+    - name: http
+      port: 8000
+  ingress:
+    https:
+    - subdomain: prompt-util
+      port: 8000
+      middlewares:
+      - oauth2-proxy
