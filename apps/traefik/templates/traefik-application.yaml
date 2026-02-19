@@ -93,7 +93,7 @@ spec:
               - sh
               - -c
               - |
-                DATA=$(wget -qO- http://localhost:9000/api/overview) || { echo "startup-probe: traefik API not reachable"; exit 1; }
+                DATA=$(wget -qO- http://localhost:8080/api/overview) || { echo "startup-probe: traefik API not reachable"; exit 1; }
                 TOTAL=$(echo "$DATA" | sed -n 's/.*"routers":{[^}]*"total":\([0-9]*\).*/\1/p')
                 ERRORS=$(echo "$DATA" | sed -n 's/.*"routers":{[^}]*"errors":\([0-9]*\).*/\1/p')
                 if [ "${ERRORS:-0}" -gt 0 ]; then
