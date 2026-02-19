@@ -84,7 +84,28 @@ spec:
           - --certificatesresolvers.cloudflare.acme.storage=/data/dns_acme.json
           - --serversTransport.insecureSkipVerify=true
 
-        # Health probes (uses /ping endpoint automatically)
+        # Health probes
+        # readiness/liveness use the chart's hardcoded httpGet /ping (process-level check)
+        # startupProbe uses exec to verify routers are healthy (catches plugin download failures)
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - |
+                DATA=$(wget -qO- http://localhost:9000/api/overview) || { echo "startup-probe: traefik API not reachable"; exit 1; }
+                TOTAL=$(echo "$DATA" | sed -n 's/.*"routers":{[^}]*"total":\([0-9]*\).*/\1/p')
+                ERRORS=$(echo "$DATA" | sed -n 's/.*"routers":{[^}]*"errors":\([0-9]*\).*/\1/p')
+                if [ "${ERRORS:-0}" -gt 0 ]; then
+                  echo "startup-probe: ${ERRORS}/${TOTAL} routers have errors (plugin may not have loaded)"
+                  exit 1
+                fi
+                echo "startup-probe: all ${TOTAL} routers healthy"
+                exit 0
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 18
+          timeoutSeconds: 5
         readinessProbe:
           failureThreshold: 1
           initialDelaySeconds: 10
