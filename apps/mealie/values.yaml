@@ -24,7 +24,7 @@ generic:
       OIDC_NAME_CLAIM: "name"
       OIDC_GROUPS_CLAIM: "groups"
   deployment:
-    image: ghcr.io/mealie-recipes/mealie:v3.10.2
+    image: ghcr.io/mealie-recipes/mealie:v3.11.0
     ports:
       - containerPort: 9000
     pvcMounts:
