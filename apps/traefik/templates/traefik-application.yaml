@@ -13,7 +13,7 @@ spec:
   source:
     chart: traefik
     repoURL: https://helm.traefik.io/traefik
-    targetRevision: 39.0.1
+    targetRevision: 39.0.2
     helm:
       # Values file as block file
       valuesObject:
