@@ -25,8 +25,8 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: profilarr
-      priority: 20
-      matchSuffix: '&& PathPrefix(`/api`)'
+      pathPrefixes:
+        - /api
       port: 6868
   externalSecrets:
     profilarr-secret:

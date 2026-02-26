@@ -21,6 +21,6 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: readarr
-      priority: 20
-      matchSuffix: '&& PathPrefix(`/api`)'
+      pathPrefixes:
+        - /api
       port: 8787

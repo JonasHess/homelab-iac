@@ -14,12 +14,17 @@
           "type": "string",
           "description": "Domain name for HTTPS ingress routes (required if ingress.https is defined)."
         },
-        "traefik": {
+        "gateway": {
           "type": "object",
+          "description": "Gateway API configuration",
           "properties": {
-            "middlewareNamespace": {
+            "name": {
               "type": "string",
-              "description": "Namespace where Traefik middlewares are defined"
+              "description": "Name of the Gateway resource"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Namespace where the Gateway resource is deployed"
             }
           }
         },
@@ -277,7 +282,7 @@
       "properties": {
         "https": {
           "type": "array",
-          "description": "HTTPS ingress routes (requires global.domain to be set)",
+          "description": "HTTPS ingress routes via Gateway API HTTPRoute (requires global.domain to be set)",
           "items": {
             "type": "object",
             "required": ["port"],
@@ -288,15 +293,21 @@
               },
               "subdomain": {
                 "type": "string",
-                "description": "Subdomain for the ingress route (will be combined with global.domain). If not specified, the bare domain will be used."
+                "description": "Subdomain for the route (will be combined with global.domain). If not specified, the bare domain will be used."
               },
-              "matchSuffix": {
-                "type": "string",
-                "description": "Additional matching criteria for the route"
+              "pathPrefixes": {
+                "type": "array",
+                "description": "List of path prefixes to match (OR'd together). Replaces matchSuffix.",
+                "items": {
+                  "type": "string"
+                }
               },
-              "priority": {
-                "type": "integer",
-                "description": "Priority of the route (defaults to 10 if not specified)"
+              "rawMatch": {
+                "type": "array",
+                "description": "Raw Gateway API HTTPRouteMatch objects for complex matching (headers, etc.)",
+                "items": {
+                  "type": "object"
+                }
               },
               "service": {
                 "type": "string",
@@ -304,10 +315,10 @@
               },
               "middlewares": {
                 "type": "array",
-                "description": "Traefik middlewares to apply to the route (array of middleware names)",
+                "description": "Traefik middlewares to apply to the route via ExtensionRef filters",
                 "items": {
                   "type": "string",
-                  "description": "Name of the middleware"
+                  "description": "Name of the Traefik Middleware CRD"
                 }
               }
             }
@@ -315,36 +326,36 @@
         },
         "tcp": {
           "type": "array",
-          "description": "TCP ingress routes",
+          "description": "TCP ingress routes via Gateway API TCPRoute",
           "items": {
             "type": "object",
-            "required": ["port", "traefikEntryPoint"],
+            "required": ["port", "listener"],
             "properties": {
               "port": {
                 "type": "integer",
                 "description": "Port on the service to route traffic to"
               },
-              "traefikEntryPoint": {
+              "listener": {
                 "type": "string",
-                "description": "Traefik entry point for the route"
+                "description": "Gateway listener name for the route"
               }
             }
           }
         },
         "udp": {
           "type": "array",
-          "description": "UDP ingress routes",
+          "description": "UDP ingress routes via Gateway API UDPRoute",
           "items": {
             "type": "object",
-            "required": ["port", "traefikEntryPoint"],
+            "required": ["port", "listener"],
             "properties": {
               "port": {
                 "type": "integer",
                 "description": "Port on the service to route traffic to"
               },
-              "traefikEntryPoint": {
+              "listener": {
                 "type": "string",
-                "description": "Traefik entry point for the route"
+                "description": "Gateway listener name for the route"
               }
             }
           }

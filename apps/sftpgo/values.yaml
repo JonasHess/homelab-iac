@@ -48,12 +48,12 @@ generic:
       - oauth2-proxy
     - subdomain: sftpgo
       port: 8080
-      matchSuffix: '&& PathPrefix(`/web/client/pubshares/`)'
-      priority: 20
+      pathPrefixes:
+        - /web/client/pubshares/
     - subdomain: webdav
       port: 8081
     tcp:
     - port: 2222
-      traefikEntryPoint: sftpgo
+      listener: sftpgo
     - port: 2121
-      traefikEntryPoint: ftp
+      listener: ftp

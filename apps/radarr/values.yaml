@@ -23,6 +23,6 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: radarr
-      priority: 20
-      matchSuffix: '&& PathPrefix(`/api`)'
+      pathPrefixes:
+        - /api
       port: 7878

@@ -42,7 +42,8 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
 ### Key Components
 - **ArgoCD**: Manages all deployments via GitOps from `apps/argocd/`
 - **Akeyless**: Secrets management, integrated via External Secrets Operator
-- **Traefik**: Ingress controller handling HTTP/HTTPS routing
+- **Traefik**: Gateway API controller handling HTTP/HTTPS/TCP/UDP routing via Gateway API resources
+- **cert-manager**: TLS certificate management with Let's Encrypt wildcard certificates via DNS-01 challenge
 - **Base Chart**: Located in `base-chart/`, manages overall ArgoCD applications
 - **Bootstrap Chart**: Initial ArgoCD setup in `bootstrap-chart/`
 
@@ -53,9 +54,10 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
    # Example: apps/*/templates/*-external-secret.yaml
    ```
 
-2. **Ingress Configuration**: Apps expose services via Traefik IngressRoutes
+2. **Ingress Configuration**: Apps expose services via Gateway API HTTPRoutes (with Traefik as controller)
    ```yaml
-   # Configured in values.yaml under ingress.https section
+   # Configured in values.yaml under ingress.https/tcp/udp sections
+   # HTTPRoutes use ExtensionRef filters for Traefik Middleware CRDs (cloudflare, oauth2-proxy)
    ```
 
 3. **Persistent Storage**: Apps use PVCs with local-path storage class
@@ -76,7 +78,8 @@ When modifying or adding applications:
 - **Namespace**: Most apps deploy to `services` namespace
 - **Storage**: Uses `local-path` storage class for persistent volumes
 - **Secrets**: Stored in Akeyless, accessed via External Secrets Operator
-- **Ingress**: HTTPS endpoints configured with Traefik middleware for authentication
+- **Ingress**: HTTPS endpoints via Gateway API HTTPRoutes with Traefik Middleware ExtensionRef filters for authentication
+- **TLS**: Wildcard certificate managed by cert-manager (ClusterIssuer with Cloudflare DNS-01)
 
 ## Helm Dependency Notes — When to Run `bump_generic_chart.sh`
 
@@ -94,7 +97,7 @@ The `apps/generic/` chart provides comprehensive Kubernetes resource templating 
 ### Core Resources
 - **Deployment**: Container orchestration with init containers, resource limits, security contexts, and volume mounts
 - **Service**: Multi-port service definitions with TCP/UDP protocol support
-- **Ingress**: HTTPS (Traefik IngressRoute), TCP, and UDP ingress configurations
+- **Ingress**: HTTPS (Gateway API HTTPRoute), TCP (TCPRoute), and UDP (UDPRoute) ingress configurations
 - **PVC/PV**: Persistent storage with automatic PV/PVC creation for hostPath volumes
 
 ### Advanced Features
@@ -108,7 +111,7 @@ The `apps/generic/` chart provides comprehensive Kubernetes resource templating 
 - **Security**: Container security contexts and privileged access
 - **Networking**: Multi-port services with named ports and protocols
 - **Storage**: Manual storage class with ReadWriteMany access, backup annotations
-- **Ingress**: Cloudflare cert resolver, middleware support, subdomain/domain routing
+- **Ingress**: Gateway API routing with Traefik Middleware ExtensionRef filters, subdomain/domain routing, pathPrefixes matching
 
 ### Backup System
 - Automatic ResticBackup CRD generation for PVC mounts with backup.enabled=true
@@ -135,7 +138,7 @@ Each application is defined under `apps.<appname>` with:
 ### Sync Wave Ordering
 Applications are deployed in phases using `syncWave`:
 - **Wave 0**: ArgoCD (core GitOps)
-- **Wave 1**: Traefik, Reloader (ingress & core services)
+- **Wave 1**: Traefik, cert-manager, Reloader (ingress, TLS & core services)
 - **Wave 2**: Prometheus, Crossplane (monitoring & infrastructure)
 - **Wave 3-5**: DNS, Auth, Database services
 - **Wave 10-15**: Core applications

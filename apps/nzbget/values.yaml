@@ -26,6 +26,7 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: nzbget
-      priority: 20
-      matchSuffix: '&& (PathPrefix(`/jsonrpc`) || PathPrefix(`/xmlrpc`))'
+      pathPrefixes:
+        - /jsonrpc
+        - /xmlrpc
       port: 6789

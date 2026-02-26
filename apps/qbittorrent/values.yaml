@@ -29,6 +29,6 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: qbittorrent
-      matchSuffix: '&& PathPrefix(`/api`)'
-      priority: 20
+      pathPrefixes:
+        - /api
       port: 8080

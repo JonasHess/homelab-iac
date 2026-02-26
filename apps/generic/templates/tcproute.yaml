@@ -1,0 +1,25 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+
+{{- if and .Values.ingress .Values.ingress.tcp }}
+  {{- $gatewayName := required "global.gateway.name must be set" $.Values.global.gateway.name }}
+  {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
+  {{- range $ingress := .Values.ingress.tcp }}
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: {{ $appName }}-tcp-{{ required "port must be specified for each TCP ingress" $ingress.port }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      namespace: {{ $gatewayNamespace }}
+      sectionName: {{ required "listener must be specified for each TCP ingress" $ingress.listener }}
+  rules:
+    - backendRefs:
+        - name: {{ $appName }}-service
+          port: {{ $ingress.port }}
+  {{- end }}
+{{- end }}

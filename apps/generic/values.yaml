@@ -1,7 +1,8 @@
 global:
   domain: ~
-  traefik:
-    middlewareNamespace: ~
+  gateway:
+    name: traefik-gateway
+    namespace: argocd
 appName: ~
 
 # Example deployment configuration with PVC mounts and backup

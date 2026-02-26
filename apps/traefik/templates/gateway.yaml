@@ -1,0 +1,47 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: traefik-gateway
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: web
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: websecure
+      port: 443
+      protocol: HTTPS
+      hostname: "*.{{ .Values.global.domain }}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: websecure-apex
+      port: 443
+      protocol: HTTPS
+      hostname: "{{ .Values.global.domain }}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    {{- range $key, $value := .Values.additionalExposedPorts }}
+    - name: {{ $key }}
+      port: {{ $value.port }}
+      protocol: {{ $value.protocol }}
+      allowedRoutes:
+        namespaces:
+          from: All
+    {{- end }}

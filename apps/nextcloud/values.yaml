@@ -18,28 +18,37 @@ generic:
       - subdomain: nextcloud
         port: 8080
         service: nextcloud
-        matchSuffix: "&& (PathPrefix(`/remote.php`) || PathPrefix(`/ocs`) || PathPrefix(`/status.php`) || PathPrefix(`/cron.php`) || PathPrefix(`/apps/richdocuments`) || PathPrefix(`/index.php/login`) || PathPrefix(`/login/v2`))"
-        priority: 20
+        pathPrefixes:
+          - /remote.php
+          - /ocs
+          - /status.php
+          - /cron.php
+          - /apps/richdocuments
+          - /index.php/login
+          - /login/v2
       # Main Nextcloud UI with OAuth protection
       - subdomain: nextcloud
         port: 8080
         service: nextcloud
         middlewares:
           - oauth2-proxy
-        priority: 10
       # Collabora WOPI discovery and document endpoints (needed for Nextcloud integration)
       - subdomain: office
         port: 9980
         service: nextcloud-collabora
-        matchSuffix: "&& (PathPrefix(`/hosting/discovery`) || PathPrefix(`/hosting/capabilities`) || PathPrefix(`/cool`) || PathPrefix(`/browser`) || PathPrefix(`/lool`) || PathPrefix(`/loleaflet`))"
-        priority: 20
+        pathPrefixes:
+          - /hosting/discovery
+          - /hosting/capabilities
+          - /cool
+          - /browser
+          - /lool
+          - /loleaflet
       # Collabora fallback with OAuth protection
       - subdomain: office
         port: 9980
         service: nextcloud-collabora
         middlewares:
           - oauth2-proxy
-        priority: 10
 
   persistentVolumeClaims:
     data:

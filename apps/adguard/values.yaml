@@ -38,4 +38,4 @@ generic:
       - oauth2-proxy
     udp:
     - port: 53
-      traefikEntryPoint: dns
+      listener: dns

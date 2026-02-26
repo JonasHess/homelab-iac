@@ -32,4 +32,4 @@ generic:
       port: 32400
     tcp:
     - port: 32400
-      traefikEntryPoint: plex
+      listener: plex

@@ -1,5 +1,5 @@
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
   name: traefik-dashboard
   namespace: {{ $.Release.Namespace }}
@@ -7,17 +7,24 @@ metadata:
     argocd.argoproj.io/sync-wave: "10"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
-  entryPoints:
-    - websecure
-
-  routes:
-    - match: Host(`traefik.{{ .Values.global.domain }}`)
-      kind: Rule
-      services:
-        - name: api@internal
-          kind: TraefikService
-      middlewares:
-        - name: oauth2-proxy
-          namespace: {{ $.Release.Namespace }}
-  tls:
-    certResolver: cloudflare
+  parentRefs:
+    - name: traefik-gateway
+      namespace: {{ $.Release.Namespace }}
+      sectionName: websecure
+  hostnames:
+    - traefik.{{ .Values.global.domain }}
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: cloudflare
+        - type: ExtensionRef
+          extensionRef:
+            group: traefik.io
+            kind: Middleware
+            name: oauth2-proxy
+      backendRefs:
+        - name: traefik-ingress-controller
+          port: 9000

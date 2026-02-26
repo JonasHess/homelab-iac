@@ -25,8 +25,9 @@ global:
   letsencrypt:
     email: Jonas@Hess.pm
 
-  traefik:
-    middlewareNamespace: argocd
+  gateway:
+    name: traefik-gateway
+    namespace: argocd
 
   # Authentication provider
   oauth2_proxy:
@@ -794,6 +795,14 @@ apps:
       namespace: argocd
       project: default
       syncWave: "16"
+
+  cert-manager:
+    enabled: true
+    argocd:
+      targetRevision: ~
+      namespace: "cert-manager"
+      project: "default"
+      syncWave: "1"
 
   nextcloud:
     enabled: false

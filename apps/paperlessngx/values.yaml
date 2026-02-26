@@ -46,6 +46,6 @@ generic:
       middlewares:
       - oauth2-proxy
     - subdomain: paperlessngx
-      priority: 20
-      matchSuffix: '&& PathPrefix(`/api`)'
+      pathPrefixes:
+        - /api
       port: 8000
