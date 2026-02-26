@@ -1,4 +1,5 @@
 .idea/
+.worktrees/
 /scripts/secrets
 secrets
 environment-secrets.yaml
