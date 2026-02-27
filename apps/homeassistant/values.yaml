@@ -10,7 +10,7 @@ generic:
     homeassistant-config-map:
       TZ: "Europe/Berlin"
   deployment:
-    image: ghcr.io/home-assistant/home-assistant:2026.2.2
+    image: ghcr.io/home-assistant/home-assistant:2026.2.3
     ports:
     - containerPort: 8123
     pvcMounts:
