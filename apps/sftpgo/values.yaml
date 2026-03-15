@@ -3,7 +3,7 @@ generic:
     sftpgo-secret:
       - SFTPGO_HTTPD__BINDINGS__0__OIDC__CLIENT_SECRET: "/oidc/oauth2-proxy/client_secret"
   deployment:
-    image: drakkan/sftpgo:v2.7.0
+    image: drakkan/sftpgo:v2.7.1
     ports:
     - containerPort: 8080
     - containerPort: 2222
