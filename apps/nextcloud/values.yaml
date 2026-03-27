@@ -51,7 +51,7 @@ generic:
 nextcloud:
   image:
     repository: nextcloud
-    tag: 33.0.0-apache
+    tag: 33.0.1-apache
     pullPolicy: IfNotPresent
 
   replicaCount: 1
