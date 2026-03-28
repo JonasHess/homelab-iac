@@ -6,7 +6,7 @@ appName: ~
 
 # Example deployment configuration with PVC mounts and backup
 # deployment:
-#   image: postgres:15-alpine
+#   image: postgres:18-alpine
 #   pvcMounts:
 #     data:
 #       mountPath: "/var/lib/postgresql/data"
