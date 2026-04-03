@@ -11,6 +11,7 @@ generic:
     paperlessgpt-secret:
       - PAPERLESS_API_TOKEN: "/paperlessgpt/PAPERLESS_API_TOKEN"
       - OPENAI_API_KEY: "/paperlessgpt/OPENAI_API_KEY"
+      - ANTHROPIC_API_KEY: "/paperlessgpt/ANTHROPIC_API_KEY"
       - AWS_ACCESS_KEY_ID: "/paperlessgpt/AWS_ACCESS_KEY_ID"
       - AWS_SECRET_ACCESS_KEY: "/paperlessgpt/AWS_SECRET_ACCESS_KEY"
       - PROMPT_PREAMBLE: "/paperlessgpt/PROMPT_PREAMBLE"
