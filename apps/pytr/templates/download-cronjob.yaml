@@ -36,7 +36,9 @@ spec:
                 mkdir -p /home/pytr/.pytr && \
                 printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /home/pytr/.pytr/credentials && \
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
-                pytr dl_docs -path /downloads
+                pytr dl_docs -path /downloads && \
+                chown -R 1000:1000 /downloads && \
+                chmod -R u+rwX /downloads
             volumeMounts:
             - name: pytr-credentials
               mountPath: /home/pytr/.pytr
