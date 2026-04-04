@@ -25,7 +25,7 @@ spec:
           restartPolicy: Never
           containers:
           - name: login
-            image: python:3-slim
+            image: python:3.12-slim
             command: ["sh", "-c"]
             args:
               - |
