@@ -94,8 +94,8 @@ data:
             print("Debug - curl_cffi: not available", flush=True)
         print(f"Debug - Session type: {type(TR_API._websession).__name__}", flush=True)
         print(f"Debug - WAF token: {TR_API._waf_token[:50] if TR_API._waf_token else 'None'}...", flush=True)
-        print(f"Debug - Cookies: {dict(TR_API._websession.cookies)}", flush=True)
-        print(f"Debug - Headers: {dict(TR_API._websession.headers)}", flush=True)
+        print(f"Debug - Cookies: {[(c.name, c.domain) for c in TR_API._websession.cookies]}", flush=True)
+        print(f"Debug - Headers: {TR_API._websession.headers}", flush=True)
         print(f"Debug - Host: {TR_API._host}", flush=True)
 
         # Try resuming existing session first
