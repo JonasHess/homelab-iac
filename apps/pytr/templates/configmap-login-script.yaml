@@ -98,6 +98,24 @@ data:
         print(f"Debug - Headers: {TR_API._websession.headers}", flush=True)
         print(f"Debug - Host: {TR_API._host}", flush=True)
 
+        # Network diagnostics
+        import socket
+        try:
+            api_ips = socket.getaddrinfo("api.traderepublic.com", 443)
+            print(f"Debug - api.traderepublic.com resolves to: {set(a[4][0] for a in api_ips)}", flush=True)
+        except Exception as e:
+            print(f"Debug - DNS resolution failed: {e}", flush=True)
+        try:
+            import urllib3
+            print(f"Debug - urllib3: {urllib3.__version__}", flush=True)
+        except Exception:
+            pass
+        try:
+            import ssl
+            print(f"Debug - OpenSSL: {ssl.OPENSSL_VERSION}", flush=True)
+        except Exception:
+            pass
+
         # Try resuming existing session first
         try:
             if TR_API.resume_websession():
