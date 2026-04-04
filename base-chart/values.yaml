@@ -712,6 +712,15 @@ apps:
       namespace: argocd
       project: default
       syncWave: '20'  # Deploy after core apps
+  pytr:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'
   backrest:
     enabled: false
     homer:

@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-login
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: login
+spec:
+  schedule: {{ .Values.pytr.login.schedule | quote }}
+  suspend: {{ .Values.pytr.login.suspend }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.appName }}
+            component: login
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: login
+            image: python:3-slim
+            command: ["sh", "-c"]
+            args:
+              - |
+                pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
+                python3 /scripts/login.py
+            ports:
+            - containerPort: 8080
+              name: http
+            envFrom:
+            - secretRef:
+                name: {{ .Values.appName }}-credentials
+            volumeMounts:
+            - name: login-script
+              mountPath: /scripts
+              readOnly: true
+            - name: pytr-credentials
+              mountPath: /home/pytr/.pytr
+          volumes:
+          - name: login-script
+            configMap:
+              name: {{ .Values.appName }}-login-script
+          - name: pytr-credentials
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-credentials-pvc

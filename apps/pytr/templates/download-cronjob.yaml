@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-download
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: download
+spec:
+  schedule: {{ .Values.pytr.download.schedule | quote }}
+  suspend: {{ .Values.pytr.download.suspend }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.appName }}
+            component: download
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: download
+            image: python:3-slim
+            command: ["sh", "-c"]
+            args:
+              - |
+                export HOME=/home/pytr
+                pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
+                pytr dl_docs --output /downloads
+            volumeMounts:
+            - name: pytr-credentials
+              mountPath: /home/pytr/.pytr
+            - name: pytr-downloads
+              mountPath: /downloads
+          volumes:
+          - name: pytr-credentials
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-credentials-pvc
+          - name: pytr-downloads
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-downloads-pvc
