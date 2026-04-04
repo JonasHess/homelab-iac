@@ -82,19 +82,21 @@ data:
 
         TR_API = TradeRepublicApi(phone_no=phone, pin=pin, save_cookies=True)
 
-        # Monkey-patch _websession to use curl_cffi with Chrome impersonation.
-        # Plain requests.Session gets blocked by AWS WAF Bot Control (HTTP 405)
-        # because its TLS fingerprint doesn't match a real browser.
+        # Debug: environment info
+        import platform
+        import requests as req_lib
+        print(f"Debug - Python: {platform.python_version()}", flush=True)
+        print(f"Debug - requests: {req_lib.__version__}", flush=True)
         try:
-            from curl_cffi import requests as cffi_requests
-            new_session = cffi_requests.Session(impersonate="chrome")
-            # Transfer WAF cookie manually since cookie jar APIs differ
-            if TR_API._waf_token:
-                new_session.cookies.set("aws-waf-token", TR_API._waf_token, domain=".traderepublic.com")
-            TR_API._websession = new_session
-            print("Patched session to use curl_cffi (Chrome impersonation)", flush=True)
-        except ImportError:
-            print("WARNING: curl_cffi not available, login may fail", flush=True)
+            import curl_cffi
+            print(f"Debug - curl_cffi: {curl_cffi.__version__}", flush=True)
+        except Exception:
+            print("Debug - curl_cffi: not available", flush=True)
+        print(f"Debug - Session type: {type(TR_API._websession).__name__}", flush=True)
+        print(f"Debug - WAF token: {TR_API._waf_token[:50] if TR_API._waf_token else 'None'}...", flush=True)
+        print(f"Debug - Cookies: {dict(TR_API._websession.cookies)}", flush=True)
+        print(f"Debug - Headers: {dict(TR_API._websession.headers)}", flush=True)
+        print(f"Debug - Host: {TR_API._host}", flush=True)
 
         # Try resuming existing session first
         try:
@@ -104,66 +106,29 @@ data:
         except Exception as e:
             print(f"Session resume failed: {e}", flush=True)
 
-        # Initiate web login — call the API directly for debug visibility
+        # Use pytr's own login flow — no patches
         print("No valid session found. Initiating web login...", flush=True)
-
-        # Debug: show cookies and session info
-        print(f"Debug - WAF token: {TR_API._waf_token[:50] if TR_API._waf_token else 'None'}...", flush=True)
-        print(f"Debug - Session type: {type(TR_API._websession).__name__}", flush=True)
-        print(f"Debug - Cookies: {dict(TR_API._websession.cookies)}", flush=True)
-        print(f"Debug - Host: {TR_API._host}", flush=True)
-
         try:
-            r = TR_API._websession.post(
-                f"{TR_API._host}/api/v1/auth/web/login",
-                json={"phoneNumber": phone, "pin": pin},
-            )
-            print(f"Debug - HTTP status: {r.status_code}", flush=True)
-            print(f"Debug - Response headers: {dict(r.headers)}", flush=True)
-            print(f"Debug - Body (first 1000 chars): {r.text[:1000]}", flush=True)
-            j = r.json()
-            TR_API._process_id = j["processId"]
-            countdown = int(j["countdownInSeconds"]) + 1
+            countdown = TR_API.initiate_weblogin()
             print(f"Login initiated. Countdown: {countdown}s", flush=True)
         except Exception as e:
-            print(f"Login initiation error: {type(e).__name__}: {e}", flush=True)
+            print(f"Login failed: {type(e).__name__}: {e}", flush=True)
             import traceback
             traceback.print_exc()
 
-            # Retry: fetch a fresh WAF token with this same session and try again
-            print("Retrying with fresh WAF token from this session...", flush=True)
+            # Debug: make the same request manually to see raw response
+            print("Debug - Retrying raw POST for diagnostics...", flush=True)
             try:
-                from curl_cffi import requests as cffi_requests
-                login_url = f"{TR_API._host}/login"
-                import re
-                resp = TR_API._websession.get(login_url)
-                print(f"Debug retry - Login page status: {resp.status_code}", flush=True)
-                m = re.search(r'src="(https://[^"]+/challenge\.js)"', resp.text)
-                if m:
-                    print(f"Debug retry - Found challenge.js: {m.group(1)}", flush=True)
-                else:
-                    print(f"Debug retry - No challenge.js found in login page", flush=True)
-                    print(f"Debug retry - Page snippet: {resp.text[:500]}", flush=True)
-
-                # Try the login POST again after visiting the login page
-                r2 = TR_API._websession.post(
+                r = TR_API._websession.post(
                     f"{TR_API._host}/api/v1/auth/web/login",
                     json={"phoneNumber": phone, "pin": pin},
                 )
-                print(f"Debug retry - HTTP status: {r2.status_code}", flush=True)
-                print(f"Debug retry - Headers: {dict(r2.headers)}", flush=True)
-                print(f"Debug retry - Body: {r2.text[:1000]}", flush=True)
-                if r2.status_code == 200:
-                    j = r2.json()
-                    TR_API._process_id = j["processId"]
-                    countdown = int(j["countdownInSeconds"]) + 1
-                    print(f"Login initiated on retry. Countdown: {countdown}s", flush=True)
-                else:
-                    print("Retry also failed.", flush=True)
-                    sys.exit(1)
+                print(f"Debug - HTTP {r.status_code}", flush=True)
+                print(f"Debug - Response headers: {dict(r.headers)}", flush=True)
+                print(f"Debug - Body: {r.text[:1000]}", flush=True)
             except Exception as e2:
-                print(f"Retry failed: {type(e2).__name__}: {e2}", flush=True)
-                sys.exit(1)
+                print(f"Debug - Raw request also failed: {e2}", flush=True)
+            sys.exit(1)
 
         print("OTP code sent to your phone. Waiting for code via HTTP...", flush=True)
         print("Submit your code at: /code/XXXX", flush=True)
