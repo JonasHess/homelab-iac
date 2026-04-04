@@ -29,7 +29,7 @@ spec:
             command: ["sh", "-c"]
             args:
               - |
-                export HOME=/home/pytr
+                export HOME=/home/pytr && \
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
                 pytr dl_docs -path /downloads
             volumeMounts:
