@@ -21,6 +21,10 @@ data:
     import time
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
+    # Set HOME before pytr import — pytr resolves BASE_DIR at import time
+    os.environ["HOME"] = "/home/pytr"
+    os.makedirs("/home/pytr/.pytr", exist_ok=True)
+
     from pytr.api import TradeRepublicApi
     from pytr.utils import get_logger
 
@@ -74,24 +78,9 @@ data:
             print("ERROR: PHONE_NUMBER and PIN environment variables must be set", flush=True)
             sys.exit(1)
 
-        pytr_home = os.environ.get("PYTR_HOME", "/home/pytr/.pytr")
-        os.makedirs(pytr_home, exist_ok=True)
-        os.environ["HOME"] = os.path.dirname(pytr_home)
-
-        # Also create /root/.pytr -> pytr_home symlink in case pytr resolved
-        # paths before our HOME change (module-level constants)
-        root_pytr = "/root/.pytr"
-        if not os.path.exists(root_pytr):
-            os.symlink(pytr_home, root_pytr)
-
         print(f"Starting pytr login for {phone}...", flush=True)
 
-        credentials_file = os.path.join(pytr_home, "credentials")
-        cookies_file = os.path.join(pytr_home, f"cookies.{phone}.txt")
-        TR_API = TradeRepublicApi(
-            phone_no=phone, pin=pin, save_cookies=True,
-            credentials_file=credentials_file, cookies_file=cookies_file,
-        )
+        TR_API = TradeRepublicApi(phone_no=phone, pin=pin, save_cookies=True)
 
         # Debug: environment info
         import platform
