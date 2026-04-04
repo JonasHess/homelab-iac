@@ -34,20 +34,26 @@ spec:
               - |
                 export HOME=/home/pytr && \
                 mkdir -p /home/pytr/.pytr && \
-                printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /home/pytr/.pytr/credentials && \
+                printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /tmp/credentials && \
+                ln -sf /tmp/credentials /home/pytr/.pytr/credentials && \
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
                 pytr dl_docs -path /downloads && \
                 chown -R 1000:1000 /downloads && \
                 chmod -R u+rwX /downloads
             volumeMounts:
-            - name: pytr-credentials
+            - name: pytr-session
               mountPath: /home/pytr/.pytr
             - name: pytr-downloads
               mountPath: /downloads
+            - name: tmp
+              mountPath: /tmp
           volumes:
-          - name: pytr-credentials
+          - name: pytr-session
             persistentVolumeClaim:
               claimName: {{ .Values.appName }}-credentials-pvc
           - name: pytr-downloads
             persistentVolumeClaim:
               claimName: {{ .Values.appName }}-downloads-pvc
+          - name: tmp
+            emptyDir:
+              medium: Memory
