@@ -31,7 +31,7 @@ spec:
               - |
                 export HOME=/home/pytr
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
-                pytr dl_docs --output /downloads
+                pytr dl_docs -path /downloads
             volumeMounts:
             - name: pytr-credentials
               mountPath: /home/pytr/.pytr
