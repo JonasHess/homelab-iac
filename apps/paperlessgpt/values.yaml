@@ -18,7 +18,7 @@ generic:
       - CORRESPONDENT_BLACK_LIST: "/paperlessgpt/CORRESPONDENT_BLACK_LIST"
       - PROMPT_TAGS_EXPLANATION: "/paperlessgpt/PROMPT_TAGS_EXPLANATION"
   deployment:
-    image: jonashess/paperless-gpt:v1.1.0
+    image: jonashess/paperless-gpt:v1.2.0
     pvcMounts:
       prompts:
         mountPath: /app/prompts
