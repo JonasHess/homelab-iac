@@ -9,8 +9,8 @@ data:
     """
     pytr login wrapper with HTTP OTP code endpoint.
 
-    Starts pytr login as a subprocess, then serves an HTTP endpoint
-    that accepts the OTP code and feeds it to pytr's stdin.
+    Uses pytr's Python API directly (not CLI) for better error visibility.
+    Starts the login flow, then serves an HTTP endpoint for OTP code submission.
 
     Usage: python3 login.py
     Env vars: PHONE_NUMBER, PIN
@@ -18,68 +18,42 @@ data:
     """
     import os
     import sys
-    import subprocess
-    import threading
+    import time
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
-    LOGIN_PROCESS = None
+    from pytr.api import TradeRepublicApi
+    from pytr.utils import get_logger
+
+    TR_API = None
     LOGIN_RESULT = None
+    log = get_logger(__name__)
 
 
     class CodeHandler(BaseHTTPRequestHandler):
         def do_GET(self):
-            global LOGIN_PROCESS, LOGIN_RESULT
+            global TR_API, LOGIN_RESULT
 
-            # Parse /code/XXXX
             parts = self.path.strip("/").split("/")
             if len(parts) == 2 and parts[0] == "code" and parts[1].isdigit() and len(parts[1]) == 4:
                 code = parts[1]
-
-                if LOGIN_PROCESS is None or LOGIN_PROCESS.poll() is not None:
-                    self.send_response(500)
-                    self.send_header("Content-Type", "text/plain")
-                    self.end_headers()
-                    self.wfile.write(b"Login process is not running.\n")
-                    return
-
                 try:
-                    LOGIN_PROCESS.stdin.write(code.encode() + b"\n")
-                    LOGIN_PROCESS.stdin.flush()
-
-                    # Wait for pytr to finish (timeout 60s)
-                    LOGIN_PROCESS.wait(timeout=60)
-                    rc = LOGIN_PROCESS.returncode
-
-                    if rc == 0:
-                        self.send_response(200)
-                        self.send_header("Content-Type", "text/plain")
-                        self.end_headers()
-                        self.wfile.write(b"Login successful!\n")
-                        LOGIN_RESULT = "success"
-                    else:
-                        self.send_response(500)
-                        self.send_header("Content-Type", "text/plain")
-                        self.end_headers()
-                        self.wfile.write(f"Login failed with exit code {rc}.\n".encode())
-                        LOGIN_RESULT = "failure"
-                except subprocess.TimeoutExpired:
-                    self.send_response(500)
+                    TR_API.complete_weblogin(code)
+                    self.send_response(200)
                     self.send_header("Content-Type", "text/plain")
                     self.end_headers()
-                    self.wfile.write(b"Login timed out.\n")
-                    LOGIN_RESULT = "failure"
+                    self.wfile.write(b"Login successful!\n")
+                    LOGIN_RESULT = "success"
                 except Exception as e:
                     self.send_response(500)
                     self.send_header("Content-Type", "text/plain")
                     self.end_headers()
-                    self.wfile.write(f"Error: {e}\n".encode())
+                    self.wfile.write(f"Login failed: {e}\n".encode())
                     LOGIN_RESULT = "failure"
             elif self.path == "/health":
                 self.send_response(200)
                 self.send_header("Content-Type", "text/plain")
                 self.end_headers()
-                running = LOGIN_PROCESS is not None and LOGIN_PROCESS.poll() is None
-                self.wfile.write(f"Login process running: {running}\n".encode())
+                self.wfile.write(b"Waiting for OTP code.\n")
             else:
                 self.send_response(404)
                 self.send_header("Content-Type", "text/plain")
@@ -91,7 +65,7 @@ data:
 
 
     def main():
-        global LOGIN_PROCESS, LOGIN_RESULT
+        global TR_API, LOGIN_RESULT
 
         phone = os.environ.get("PHONE_NUMBER")
         pin = os.environ.get("PIN")
@@ -106,36 +80,50 @@ data:
 
         print(f"Starting pytr login for {phone}...", flush=True)
 
-        LOGIN_PROCESS = subprocess.Popen(
-            ["pytr", "login", "--phone_no", phone, "--pin", pin],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        TR_API = TradeRepublicApi(phone_no=phone, pin=pin, save_cookies=True)
 
-        # Print pytr output in a background thread
-        def stream_output():
-            for line in LOGIN_PROCESS.stdout:
-                print(f"[pytr] {line.decode().rstrip()}", flush=True)
+        # Try resuming existing session first
+        try:
+            if TR_API.resume_websession():
+                print("Web session resumed from saved cookies. Already logged in!", flush=True)
+                sys.exit(0)
+        except Exception as e:
+            print(f"Session resume failed: {e}", flush=True)
 
-        output_thread = threading.Thread(target=stream_output, daemon=True)
-        output_thread.start()
+        # Initiate web login
+        print("No valid session found. Initiating web login...", flush=True)
+        try:
+            countdown = TR_API.initiate_weblogin()
+            print(f"Login initiated. Countdown: {countdown}s", flush=True)
+        except ValueError as e:
+            print(f"Login initiation failed: {e}", flush=True)
+            sys.exit(1)
+        except Exception as e:
+            # Debug: print the full exception details
+            print(f"Login initiation error: {type(e).__name__}: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
 
-        # Give pytr a moment to start and send the auth request
-        import time
-        time.sleep(3)
+            # Try to get more details about the HTTP response
+            try:
+                r = TR_API._websession.post(
+                    f"{TR_API._host}/api/v1/auth/web/login",
+                    json={"phoneNumber": phone, "pin": pin},
+                )
+                print(f"Debug - HTTP status: {r.status_code}", flush=True)
+                print(f"Debug - Headers: {dict(r.headers)}", flush=True)
+                print(f"Debug - Body (first 500 chars): {r.text[:500]}", flush=True)
+            except Exception as debug_e:
+                print(f"Debug request also failed: {debug_e}", flush=True)
 
-        if LOGIN_PROCESS.poll() is not None:
-            print(f"ERROR: pytr exited early with code {LOGIN_PROCESS.returncode}", flush=True)
             sys.exit(1)
 
-        print("pytr login initiated. Waiting for OTP code via HTTP...", flush=True)
+        print("OTP code sent to your phone. Waiting for code via HTTP...", flush=True)
         print("Submit your code at: /code/XXXX", flush=True)
 
         server = HTTPServer(("0.0.0.0", 8080), CodeHandler)
         print("HTTP server listening on port 8080", flush=True)
 
-        # Serve until we get a result
         while LOGIN_RESULT is None:
             server.handle_request()
 
