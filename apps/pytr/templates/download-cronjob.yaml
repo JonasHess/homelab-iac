@@ -37,9 +37,12 @@ spec:
                 printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /tmp/credentials && \
                 ln -sf /tmp/credentials /home/pytr/.pytr/credentials && \
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
-                pytr dl_docs -path /downloads && \
+                pytr dl_docs -path /downloads ; \
+                rc=$? && \
+                rm -f /home/pytr/.pytr/credentials && \
                 chown -R 1000:1000 /downloads && \
-                chmod -R u+rwX /downloads
+                chmod -R u+rwX /downloads && \
+                exit $rc
             volumeMounts:
             - name: pytr-session
               mountPath: /home/pytr/.pytr
