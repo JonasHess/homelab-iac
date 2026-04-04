@@ -90,32 +90,24 @@ data:
         except Exception as e:
             print(f"Session resume failed: {e}", flush=True)
 
-        # Initiate web login
+        # Initiate web login — call the API directly for debug visibility
         print("No valid session found. Initiating web login...", flush=True)
         try:
-            countdown = TR_API.initiate_weblogin()
+            r = TR_API._websession.post(
+                f"{TR_API._host}/api/v1/auth/web/login",
+                json={"phoneNumber": phone, "pin": pin},
+            )
+            print(f"Debug - HTTP status: {r.status_code}", flush=True)
+            print(f"Debug - Headers: {dict(r.headers)}", flush=True)
+            print(f"Debug - Body (first 1000 chars): {r.text[:1000]}", flush=True)
+            j = r.json()
+            TR_API._process_id = j["processId"]
+            countdown = int(j["countdownInSeconds"]) + 1
             print(f"Login initiated. Countdown: {countdown}s", flush=True)
-        except ValueError as e:
-            print(f"Login initiation failed: {e}", flush=True)
-            sys.exit(1)
         except Exception as e:
-            # Debug: print the full exception details
             print(f"Login initiation error: {type(e).__name__}: {e}", flush=True)
             import traceback
             traceback.print_exc()
-
-            # Try to get more details about the HTTP response
-            try:
-                r = TR_API._websession.post(
-                    f"{TR_API._host}/api/v1/auth/web/login",
-                    json={"phoneNumber": phone, "pin": pin},
-                )
-                print(f"Debug - HTTP status: {r.status_code}", flush=True)
-                print(f"Debug - Headers: {dict(r.headers)}", flush=True)
-                print(f"Debug - Body (first 500 chars): {r.text[:500]}", flush=True)
-            except Exception as debug_e:
-                print(f"Debug request also failed: {debug_e}", flush=True)
-
             sys.exit(1)
 
         print("OTP code sent to your phone. Waiting for code via HTTP...", flush=True)
