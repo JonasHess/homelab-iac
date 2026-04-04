@@ -27,9 +27,14 @@ spec:
           - name: download
             image: python:3.12-slim-bookworm
             command: ["sh", "-c"]
+            envFrom:
+            - secretRef:
+                name: {{ .Values.appName }}-credentials
             args:
               - |
                 export HOME=/home/pytr && \
+                mkdir -p /home/pytr/.pytr && \
+                printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /home/pytr/.pytr/credentials && \
                 pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
                 pytr dl_docs -path /downloads
             volumeMounts:
