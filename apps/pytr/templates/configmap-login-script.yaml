@@ -82,6 +82,20 @@ data:
 
         TR_API = TradeRepublicApi(phone_no=phone, pin=pin, save_cookies=True)
 
+        # Monkey-patch _websession to use curl_cffi with Chrome impersonation.
+        # Plain requests.Session gets blocked by AWS WAF Bot Control (HTTP 405)
+        # because its TLS fingerprint doesn't match a real browser.
+        try:
+            from curl_cffi import requests as cffi_requests
+            old_cookies = TR_API._websession.cookies
+            TR_API._websession = cffi_requests.Session(impersonate="chrome")
+            TR_API._websession.cookies = old_cookies
+            if TR_API._waf_token:
+                TR_API._set_waf_cookie(TR_API._waf_token)
+            print("Patched session to use curl_cffi (Chrome impersonation)", flush=True)
+        except ImportError:
+            print("WARNING: curl_cffi not available, login may fail", flush=True)
+
         # Try resuming existing session first
         try:
             if TR_API.resume_websession():
