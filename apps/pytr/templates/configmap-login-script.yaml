@@ -87,11 +87,11 @@ data:
         # because its TLS fingerprint doesn't match a real browser.
         try:
             from curl_cffi import requests as cffi_requests
-            old_cookies = TR_API._websession.cookies
-            TR_API._websession = cffi_requests.Session(impersonate="chrome")
-            TR_API._websession.cookies = old_cookies
+            new_session = cffi_requests.Session(impersonate="chrome")
+            # Transfer WAF cookie manually since cookie jar APIs differ
             if TR_API._waf_token:
-                TR_API._set_waf_cookie(TR_API._waf_token)
+                new_session.cookies.set("aws-waf-token", TR_API._waf_token, domain=".traderepublic.com")
+            TR_API._websession = new_session
             print("Patched session to use curl_cffi (Chrome impersonation)", flush=True)
         except ImportError:
             print("WARNING: curl_cffi not available, login may fail", flush=True)
