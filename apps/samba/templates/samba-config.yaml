@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: samba-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  SAMBA_CONF_WORKGROUP: {{ .Values.samba.workgroup | default "WORKGROUP" | quote }}
+  SAMBA_CONF_SERVER_STRING: {{ .Values.samba.serverString | default "Server" | quote }}
+  {{- range $share := .Values.samba.shares }}
+  {{- $guest := ternary $share.guest false (hasKey $share "guest") }}
+  {{- $readOnly := ternary $share.readOnly true (hasKey $share "readOnly") }}
+  {{- $browseable := ternary $share.browseable true (hasKey $share "browseable") }}
+  SAMBA_VOLUME_CONFIG_{{ $share.name }}: "path = {{ $share.path }}; guest ok = {{ if $guest }}yes{{ else }}no{{ end }}; read only = {{ if $readOnly }}yes{{ else }}no{{ end }}; browseable = {{ if $browseable }}yes{{ else }}no{{ end }}"
+  {{- end }}

@@ -15,6 +15,9 @@ additionalExposedPorts:
   dns:
     port: 53
     protocol: UDP
+  samba:
+    port: 445
+    protocol: TCP
 loadBalancerIP: null
 generic:
   externalSecrets:

@@ -1,0 +1,38 @@
+generic:
+  deployment:
+    image: ghcr.io/servercontainers/samba:smbd-wsdd2-a3.23.3-s4.22.8-r0
+    ports:
+      - containerPort: 445
+    # Shares and their backing pvcMounts are defined per-environment in
+    # homelab-environments/<env>/values.yaml. Example:
+    # pvcMounts:
+    #   media:
+    #     mountPath: /shares/media
+    #     hostPath: /mnt/tank0/encrypted/media
+    envFrom:
+      configMapRef: samba-config
+      # secretRef: samba-secret  # uncomment when samba.users is non-empty
+  service:
+    ports:
+      - name: smb
+        port: 445
+        protocol: TCP
+  ingress:
+    tcp:
+      - port: 445
+        traefikEntryPoint: samba
+
+samba:
+  workgroup: WORKGROUP
+  serverString: "Server"
+  # Each share entry must have a matching generic.deployment.pvcMounts key of
+  # the same name. Defined per-environment in homelab-environments/<env>/values.yaml.
+  # Example:
+  # shares:
+  #   - name: media
+  #     path: /shares/media
+  #     guest: true
+  #     readOnly: true
+  #     browseable: true
+  shares: []
+  users: []  # future: [{ name: alice, akeylessPath: "/samba/alice/password" }]

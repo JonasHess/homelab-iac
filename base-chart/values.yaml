@@ -498,6 +498,15 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "10"
+  samba:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
   smarthome3:
     enabled: false
     argocd:
