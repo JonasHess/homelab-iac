@@ -22,3 +22,8 @@ generic:
       port: 5678
       middlewares:
       - oauth2-proxy
+    # Bypass oauth2-proxy for webhooks and API
+    - subdomain: n8n
+      priority: 20
+      matchSuffix: '&& (PathPrefix(`/webhook`) || PathPrefix(`/webhook-test`) || PathPrefix(`/api`))'
+      port: 5678
