@@ -7,6 +7,11 @@ generic:
       data:
         mountPath: /home/node/.n8n
         hostPath: ~ # /mnt/somewhere/encrypted/apps/n8n/data
+    envFrom:
+      configMapRef: n8n-config
+  configMaps:
+    n8n-config:
+      WEBHOOK_URL: "https://n8n.{{ .Values.global.domain }}"
   service:
     ports:
     - name: http
