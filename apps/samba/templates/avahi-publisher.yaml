@@ -40,9 +40,9 @@ spec:
             - name: PUBLISH_IP
               value: {{ required "samba.avahi.publishIP is required when avahi is enabled" .Values.samba.avahi.publishIP | quote }}
             - name: AVAHI_HOSTNAME
-              value: {{ .Values.samba.avahi.hostname | default "samba" | quote }}
+              value: {{ .Values.samba.avahi.hostname | default (.Values.samba.serverString | lower) | default "samba" | quote }}
             - name: SERVICE_NAME
-              value: {{ .Values.samba.avahi.serviceName | default "Samba" | quote }}
+              value: {{ .Values.samba.avahi.serviceName | default .Values.samba.serverString | default "Samba" | quote }}
             - name: SERVICE_PORT
               value: {{ .Values.samba.avahi.servicePort | default "445" | quote }}
           resources:
