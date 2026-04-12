@@ -36,3 +36,12 @@ samba:
   #     browseable: true
   shares: []
   users: []  # future: [{ name: alice, akeylessPath: "/samba/alice/password" }]
+  # mDNS/Bonjour publisher for macOS Finder autodiscovery.
+  # Runs a separate hostNetwork pod that advertises _smb._tcp
+  # pointing at the Traefik LoadBalancer IP.
+  avahi:
+    enabled: false
+    # publishIP: "192.168.1.80"  # REQUIRED: Traefik LB IP reachable on LAN
+    # hostname: samba             # becomes <hostname>.local in mDNS
+    # serviceName: Samba          # display name shown in Finder
+    # servicePort: "445"

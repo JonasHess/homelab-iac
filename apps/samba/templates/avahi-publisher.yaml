@@ -1,0 +1,55 @@
+{{- if .Values.samba.avahi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samba-avahi-publisher
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: samba-avahi-publisher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: samba-avahi-publisher
+  template:
+    metadata:
+      labels:
+        app: samba-avahi-publisher
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: avahi-publisher
+          image: alpine:3.21
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              apk add --no-cache avahi avahi-tools dbus >/dev/null 2>&1
+              mkdir -p /var/run/dbus
+              rm -f /var/run/dbus/pid
+              dbus-daemon --system
+              sleep 1
+              avahi-daemon --daemonize --no-drop-root --no-chroot
+              sleep 1
+              # Publish mDNS A record: <hostname>.local -> LB IP
+              avahi-publish-address "${AVAHI_HOSTNAME}.local" "${PUBLISH_IP}" &
+              # Publish SMB service on that hostname
+              exec avahi-publish-service --host="${AVAHI_HOSTNAME}.local" "${SERVICE_NAME}" _smb._tcp "${SERVICE_PORT}"
+          env:
+            - name: PUBLISH_IP
+              value: {{ required "samba.avahi.publishIP is required when avahi is enabled" .Values.samba.avahi.publishIP | quote }}
+            - name: AVAHI_HOSTNAME
+              value: {{ .Values.samba.avahi.hostname | default "samba" | quote }}
+            - name: SERVICE_NAME
+              value: {{ .Values.samba.avahi.serviceName | default "Samba" | quote }}
+            - name: SERVICE_PORT
+              value: {{ .Values.samba.avahi.servicePort | default "445" | quote }}
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 32Mi
+{{- end }}
