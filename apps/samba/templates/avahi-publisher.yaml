@@ -25,8 +25,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              set -e
-              apk add --no-cache avahi avahi-tools dbus >/dev/null 2>&1
+              apk add --no-cache avahi avahi-tools dbus
               mkdir -p /var/run/dbus
               rm -f /var/run/dbus/pid
               dbus-daemon --system
@@ -35,7 +34,7 @@ spec:
               sleep 1
               # Publish mDNS A record: <hostname>.local -> LB IP
               avahi-publish-address "${AVAHI_HOSTNAME}.local" "${PUBLISH_IP}" &
-              # Publish SMB service on that hostname
+              # Publish SMB service on that hostname — runs as PID 1
               exec avahi-publish-service --host="${AVAHI_HOSTNAME}.local" "${SERVICE_NAME}" _smb._tcp "${SERVICE_PORT}"
           env:
             - name: PUBLISH_IP
