@@ -11,7 +11,7 @@ generic:
     #     hostPath: /mnt/tank0/encrypted/media
     envFrom:
       configMapRef: samba-config
-      # secretRef: samba-secret  # uncomment when samba.users is non-empty
+      secretRef: samba-secret
   service:
     ports:
       - name: smb
@@ -31,11 +31,26 @@ samba:
   # shares:
   #   - name: media
   #     path: /shares/media
-  #     guest: true
-  #     readOnly: true
+  #     guest: false
+  #     readOnly: false
   #     browseable: true
+  #     validUsers: ["@family"]
+  #     writeList: ["@admin"]
   shares: []
-  users: []  # future: [{ name: alice, akeylessPath: "/samba/alice/password" }]
+  # Groups for share-level ACLs. Rendered as GROUP_<name>=<gid> env vars.
+  # Example:
+  # groups:
+  #   - name: family
+  #     gid: 1500
+  groups: []
+  # Samba user accounts. Passwords are fetched from Akeyless via ExternalSecret.
+  # Example:
+  # users:
+  #   - name: alice
+  #     akeylessPath: "/samba/alice/password"
+  #     uid: 1000              # optional, sets UID_<name>
+  #     groups: [family, admin] # optional, sets GROUPS_<name>
+  users: []
   # mDNS/Bonjour publisher for macOS Finder autodiscovery.
   # Runs a separate hostNetwork pod that advertises _smb._tcp
   # pointing at the Traefik LoadBalancer IP.
