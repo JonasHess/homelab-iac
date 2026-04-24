@@ -20,7 +20,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: avahi-publisher
-          image: alpine:3.21
+          image: alpine:3.23
           command:
             - /bin/sh
             - -c
