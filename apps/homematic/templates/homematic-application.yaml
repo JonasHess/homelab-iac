@@ -20,7 +20,7 @@ spec:
       valuesObject:
         image:
           # renovate: depName=ghcr.io/openccu/openccu
-          tag: "3.87.6.20260313"
+          tag: "3.87.6.20260404"
         persistence:
           data:
             # -- enabling persistent data. See options at https://bjw-s.github.io/helm-charts/docs/common-library/common-library-storage/
