@@ -26,5 +26,5 @@ spec:
             kind: Middleware
             name: oauth2-proxy
       backendRefs:
-        - name: traefik-ingress-controller
-          port: 9000
+        - name: traefik-dashboard
+          port: 8080
