@@ -1,7 +1,2 @@
-generic:
-  externalSecrets:
-    cloudflare-api-credentials:
-      - api-token: "/acme/cloudflare-api-credentials_apiKey"
-
 certManager:
   version: "v1.17.2"
