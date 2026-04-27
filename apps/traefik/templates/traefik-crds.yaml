@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: gateway-api-crds
+  name: traefik-crds
   namespace: {{ $.Release.Namespace }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
@@ -11,9 +11,15 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/kubernetes-sigs/gateway-api.git
-    targetRevision: v1.5.1
-    path: config/crd/experimental
+    chart: traefik-crds
+    repoURL: https://traefik.github.io/charts
+    targetRevision: 1.17.0
+    helm:
+      valuesObject:
+        traefik: true
+        gatewayAPI: false
+        gatewayAPIExperimental: true
+        hub: false
   destination:
     server: "https://kubernetes.default.svc"
     namespace: default

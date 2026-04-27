@@ -15,6 +15,7 @@ spec:
     repoURL: https://helm.traefik.io/traefik
     targetRevision: 39.0.8
     helm:
+      skipCrds: true
       valuesObject:
         deployment:
           enabled: true
