@@ -19,6 +19,8 @@ spec:
         crds:
           enabled: true
         featureGates: "ExperimentalGatewayAPISupport=true"
+        dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+        dns01RecursiveNameserversOnly: true
   destination:
     server: "https://kubernetes.default.svc"
     namespace: cert-manager
