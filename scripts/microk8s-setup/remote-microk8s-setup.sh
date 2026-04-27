@@ -65,6 +65,15 @@ ensure_microk8s_installed() {
 install_microk8s() {
   echo "Installing microk8s..."
   snap install microk8s --classic --channel=1.34/stable
+
+  # Add the calling user to the microk8s group so they can run microk8s without sudo
+  if [ -n "$SUDO_USER" ]; then
+    echo "Adding user $SUDO_USER to the microk8s group..."
+    usermod -a -G microk8s "$SUDO_USER"
+    mkdir -p /home/"$SUDO_USER"/.kube
+    chown -R "$SUDO_USER":"$SUDO_USER" /home/"$SUDO_USER"/.kube
+  fi
+
   microk8s enable dns
   microk8s enable metallb:$IP_RANGE
 

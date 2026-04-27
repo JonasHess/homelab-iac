@@ -486,6 +486,19 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "13"  # Deploy before dependent media apps
+  n8n:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/n8n.svg"
+      subtitle: "Workflow Automation"
+      displayName: "n8n"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
   sftpgo:
     enabled: false
     homer:
@@ -499,6 +512,15 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "10"
+  samba:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
   smarthome3:
     enabled: false
     argocd:
@@ -713,6 +735,15 @@ apps:
       namespace: argocd
       project: default
       syncWave: '20'  # Deploy after core apps
+  pytr:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'
   backrest:
     enabled: false
     homer:

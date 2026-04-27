@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-login-script
+  namespace: {{ .Release.Namespace }}
+data:
+  login.py: |
+    #!/usr/bin/env python3
+    """
+    pytr login wrapper with HTTP OTP code endpoint.
+
+    Uses pytr's Python API directly (not CLI) for better error visibility.
+    Starts the login flow, then serves an HTTP endpoint for OTP code submission.
+
+    Usage: python3 login.py
+    Env vars: PHONE_NUMBER, PIN
+    Endpoint: GET /code/<4-digit-code>
+    """
+    import os
+    import sys
+    import time
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    # Set HOME before pytr import — pytr resolves BASE_DIR at import time
+    os.environ["HOME"] = "/home/pytr"
+    os.makedirs("/home/pytr/.pytr", exist_ok=True)
+
+    from pytr.api import TradeRepublicApi
+    from pytr.utils import get_logger
+
+    TR_API = None
+    LOGIN_RESULT = None
+    log = get_logger(__name__)
+
+
+    class CodeHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            global TR_API, LOGIN_RESULT
+
+            parts = self.path.strip("/").split("/")
+            if len(parts) == 2 and parts[0] == "code" and parts[1].isdigit() and len(parts[1]) == 4:
+                code = parts[1]
+                try:
+                    TR_API.complete_weblogin(code)
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(b"Login successful!\n")
+                    LOGIN_RESULT = "success"
+                except Exception as e:
+                    self.send_response(500)
+                    self.send_header("Content-Type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(f"Login failed: {e}\n".encode())
+                    LOGIN_RESULT = "failure"
+            elif self.path == "/health":
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Waiting for OTP code.\n")
+            else:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"Use /code/XXXX to submit your 4-digit code.\n")
+
+        def log_message(self, format, *args):
+            print(f"[HTTP] {format % args}", flush=True)
+
+
+    def main():
+        global TR_API, LOGIN_RESULT
+
+        phone = os.environ.get("PHONE_NUMBER")
+        pin = os.environ.get("PIN")
+
+        if not phone or not pin:
+            print("ERROR: PHONE_NUMBER and PIN environment variables must be set", flush=True)
+            sys.exit(1)
+
+        print(f"Starting pytr login for {phone}...", flush=True)
+
+        TR_API = TradeRepublicApi(phone_no=phone, pin=pin, save_cookies=True)
+
+        # Debug: environment info
+        import platform
+        import requests as req_lib
+        print(f"Debug - Python: {platform.python_version()}", flush=True)
+        print(f"Debug - requests: {req_lib.__version__}", flush=True)
+        try:
+            import curl_cffi
+            print(f"Debug - curl_cffi: {curl_cffi.__version__}", flush=True)
+        except Exception:
+            print("Debug - curl_cffi: not available", flush=True)
+        print(f"Debug - Session type: {type(TR_API._websession).__name__}", flush=True)
+        print(f"Debug - WAF token: {TR_API._waf_token[:50] if TR_API._waf_token else 'None'}...", flush=True)
+        print(f"Debug - Cookies: {[(c.name, c.domain) for c in TR_API._websession.cookies]}", flush=True)
+        print(f"Debug - Headers: {TR_API._websession.headers}", flush=True)
+        print(f"Debug - Host: {TR_API._host}", flush=True)
+
+        # Network diagnostics
+        import socket
+        try:
+            api_ips = socket.getaddrinfo("api.traderepublic.com", 443)
+            print(f"Debug - api.traderepublic.com resolves to: {set(a[4][0] for a in api_ips)}", flush=True)
+        except Exception as e:
+            print(f"Debug - DNS resolution failed: {e}", flush=True)
+        try:
+            import urllib3
+            print(f"Debug - urllib3: {urllib3.__version__}", flush=True)
+        except Exception:
+            pass
+        try:
+            import ssl
+            print(f"Debug - OpenSSL: {ssl.OPENSSL_VERSION}", flush=True)
+        except Exception:
+            pass
+
+        # Try resuming existing session first
+        try:
+            if TR_API.resume_websession():
+                print("Web session resumed from saved cookies. Already logged in!", flush=True)
+                sys.exit(0)
+        except Exception as e:
+            print(f"Session resume failed: {e}", flush=True)
+
+        # Use pytr's own login flow — no patches
+        print("No valid session found. Initiating web login...", flush=True)
+        try:
+            countdown = TR_API.initiate_weblogin()
+            print(f"Login initiated. Countdown: {countdown}s", flush=True)
+        except Exception as e:
+            print(f"Login failed: {type(e).__name__}: {e}", flush=True)
+            import traceback
+            traceback.print_exc()
+
+            # Debug: make the same request manually to see raw response
+            print("Debug - Retrying raw POST for diagnostics...", flush=True)
+            try:
+                r = TR_API._websession.post(
+                    f"{TR_API._host}/api/v1/auth/web/login",
+                    json={"phoneNumber": phone, "pin": pin},
+                )
+                print(f"Debug - HTTP {r.status_code}", flush=True)
+                print(f"Debug - Response headers: {dict(r.headers)}", flush=True)
+                print(f"Debug - Body: {r.text[:1000]}", flush=True)
+            except Exception as e2:
+                print(f"Debug - Raw request also failed: {e2}", flush=True)
+            sys.exit(1)
+
+        print("OTP code sent to your phone. Waiting for code via HTTP...", flush=True)
+        print("Submit your code at: /code/XXXX", flush=True)
+
+        server = HTTPServer(("0.0.0.0", 8080), CodeHandler)
+        print("HTTP server listening on port 8080", flush=True)
+
+        while LOGIN_RESULT is None:
+            server.handle_request()
+
+        server.server_close()
+        print(f"Login {LOGIN_RESULT}. Exiting.", flush=True)
+
+        if LOGIN_RESULT == "success":
+            sys.exit(0)
+        else:
+            sys.exit(1)
+
+
+    if __name__ == "__main__":
+        main()

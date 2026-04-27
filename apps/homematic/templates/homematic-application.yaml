@@ -20,7 +20,7 @@ spec:
       valuesObject:
         image:
           # renovate: depName=ghcr.io/openccu/openccu
-          tag: "3.85.7.20260131"
+          tag: "3.87.6.20260404"
         persistence:
           data:
             # -- enabling persistent data. See options at https://bjw-s.github.io/helm-charts/docs/common-library/common-library-storage/
@@ -180,3 +180,10 @@ spec:
   destination:
     server: "https://kubernetes.default.svc"
     namespace: {{ $.Release.Namespace }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true

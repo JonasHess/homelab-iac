@@ -1,0 +1,29 @@
+generic:
+  deployment:
+    image: n8nio/n8n:2.18.3
+    ports:
+    - containerPort: 5678
+    pvcMounts:
+      data:
+        mountPath: /home/node/.n8n
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/n8n/data
+    envFrom:
+      configMapRef: n8n-config
+  configMaps:
+    n8n-config:
+      WEBHOOK_URL: "https://n8n.{{ .Values.global.domain }}"
+  service:
+    ports:
+    - name: http
+      port: 5678
+  ingress:
+    https:
+    - subdomain: n8n
+      port: 5678
+      middlewares:
+      - oauth2-proxy
+    # Bypass oauth2-proxy for webhooks and API
+    - subdomain: n8n
+      priority: 20
+      matchSuffix: '&& (PathPrefix(`/webhook`) || PathPrefix(`/webhook-test`) || PathPrefix(`/api`) || PathPrefix(`/mcp-server/http`))'
+      port: 5678

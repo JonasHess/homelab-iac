@@ -1,0 +1,18 @@
+appName: pytr
+
+generic:
+  persistentVolumeClaims: {}
+  externalSecrets: {}
+
+pytr:
+  pytrVersion: "0.4.9"
+
+  subdomain: tr
+
+  login:
+    schedule: "0 0 1 1 *"
+    suspend: true
+
+  download:
+    schedule: "0 2 1 * *"
+    suspend: false

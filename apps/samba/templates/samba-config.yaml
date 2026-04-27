@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: samba-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  SAMBA_CONF_WORKGROUP: {{ .Values.samba.workgroup | default "WORKGROUP" | quote }}
+  SAMBA_CONF_SERVER_STRING: {{ .Values.samba.serverString | default "Server" | quote }}
+  {{- range $group := .Values.samba.groups }}
+  GROUP_{{ $group.name }}: {{ $group.gid | quote }}
+  {{- end }}
+  {{- range $user := .Values.samba.users }}
+  {{- if $user.uid }}
+  UID_{{ $user.name }}: {{ $user.uid | quote }}
+  {{- end }}
+  {{- if $user.groups }}
+  GROUPS_{{ $user.name }}: {{ join "," $user.groups | quote }}
+  {{- end }}
+  {{- end }}
+  {{- range $share := .Values.samba.shares }}
+  {{- $guest := ternary $share.guest false (hasKey $share "guest") }}
+  {{- $readOnly := ternary $share.readOnly true (hasKey $share "readOnly") }}
+  {{- $browseable := ternary $share.browseable true (hasKey $share "browseable") }}
+  {{- $shareConf := printf "[%s]; path = %s; guest ok = %s; read only = %s; browseable = %s" $share.name $share.path (ternary "yes" "no" $guest) (ternary "yes" "no" $readOnly) (ternary "yes" "no" $browseable) }}
+  {{- if $share.validUsers }}
+  {{- $shareConf = printf "%s; valid users = %s" $shareConf (join ", " $share.validUsers) }}
+  {{- end }}
+  {{- if $share.writeList }}
+  {{- $shareConf = printf "%s; write list = %s" $shareConf (join ", " $share.writeList) }}
+  {{- end }}
+  SAMBA_VOLUME_CONFIG_{{ $share.name }}: {{ $shareConf | quote }}
+  {{- end }}
