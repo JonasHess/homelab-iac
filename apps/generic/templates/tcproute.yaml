@@ -9,7 +9,7 @@ apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TCPRoute
 metadata:
   name: {{ $appName }}-tcp-{{ required "port must be specified for each TCP ingress" $ingress.port }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $gatewayNamespace }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
 spec:
@@ -20,6 +20,7 @@ spec:
   rules:
     - backendRefs:
         - name: {{ $appName }}-service
+          namespace: {{ $.Release.Namespace }}
           port: {{ $ingress.port }}
   {{- end }}
 {{- end }}

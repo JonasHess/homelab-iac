@@ -1,0 +1,38 @@
+{{- if .Values.ingress }}
+{{- $hasHttps := and .Values.ingress.https (gt (len .Values.ingress.https) 0) }}
+{{- $hasTcp := and .Values.ingress.tcp (gt (len .Values.ingress.tcp) 0) }}
+{{- $hasUdp := and .Values.ingress.udp (gt (len .Values.ingress.udp) 0) }}
+{{- if or $hasHttps $hasTcp $hasUdp }}
+{{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
+{{- if ne $gatewayNamespace $.Release.Namespace }}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: route-to-services
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  from:
+    {{- if $hasHttps }}
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: {{ $gatewayNamespace }}
+    {{- end }}
+    {{- if $hasTcp }}
+    - group: gateway.networking.k8s.io
+      kind: TCPRoute
+      namespace: {{ $gatewayNamespace }}
+    {{- end }}
+    {{- if $hasUdp }}
+    - group: gateway.networking.k8s.io
+      kind: UDPRoute
+      namespace: {{ $gatewayNamespace }}
+    {{- end }}
+  to:
+    - group: ""
+      kind: Service
+{{- end }}
+{{- end }}
+{{- end }}

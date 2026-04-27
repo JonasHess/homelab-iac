@@ -12,7 +12,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: {{ $appName }}-https-{{ required "port must be specified for each HTTPS ingress" $ingress.port }}-{{ $index }}
-  namespace: {{ $.Release.Namespace }}
+  namespace: {{ $gatewayNamespace }}
   annotations:
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
 spec:
@@ -46,6 +46,7 @@ spec:
         {{- end }}
       backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
+          namespace: {{ $.Release.Namespace }}
           port: {{ $ingress.port }}
     {{- end }}
     {{- end }}
@@ -80,6 +81,7 @@ spec:
         {{- end }}
       backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
+          namespace: {{ $.Release.Namespace }}
           port: {{ $ingress.port }}
     {{- end }}
     {{- end }}
@@ -100,6 +102,7 @@ spec:
         {{- end }}
       backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
+          namespace: {{ $.Release.Namespace }}
           port: {{ $ingress.port }}
     {{- end }}
     {{- end }}
