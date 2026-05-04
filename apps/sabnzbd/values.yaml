@@ -30,5 +30,5 @@ generic:
       - oauth2-proxy
     - subdomain: sabnzbd
       pathPrefixes:
-        - /sabnzbd/api
+        - /api
       port: 8080
