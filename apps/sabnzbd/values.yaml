@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/sabnzbd:4.5.5
+    image: lscr.io/linuxserver/sabnzbd:5.0.1
     ports:
     - containerPort: 8080
     pvcMounts:
