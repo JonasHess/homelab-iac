@@ -53,9 +53,6 @@ spec:
               name: backrest-restore-volume
             - name: config-output
               mountPath: /config
-          envFrom:
-            - secretRef:
-                name: restic-secret
           env:
             {{- range $env := .Values.deployment.env }}
             - name: {{ $env.name }}
