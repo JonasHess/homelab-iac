@@ -1,9 +1,5 @@
 global:
   domain: ~
-  oidc:
-    issuerUrl: ~
-    clientId: ~
-    cookieDomain: ~
   akeyless:
     path: ~
 
@@ -38,7 +34,3 @@ envoyGateway:
 # source IP directly.
 clientIPDetection:
   numTrustedHops: 1
-
-# OIDC client secret is fetched from Akeyless and exposed as a Kubernetes Secret with
-# the key `client-secret`, referenced by every SecurityPolicy that enables oidc.
-oidcClientSecretAkeylessPath: /oidc/oauth2-proxy/client_secret

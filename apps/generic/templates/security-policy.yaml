@@ -2,9 +2,8 @@
 
 {{- if .Values.ingress }}
   {{- if .Values.ingress.https }}
-    {{- $domain := required "global.domain must be set in values.yaml" $.Values.global.domain }}
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
-    {{- $oidc := $.Values.global.oidc | default dict }}
+    {{- $oauth2Proxy := $.Values.global.oauth2Proxy | default dict }}
     {{- $security := $.Values.global.security | default dict }}
     {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
     {{- $lanCIDRs := $security.lanCIDRs | default (list) }}
@@ -13,7 +12,6 @@
     {{- $access := $ingress.access | default "cloudflare-only" }}
     {{- $needsAuthz := ne $access "public" }}
     {{- if or $ingress.oauth $needsAuthz }}
-    {{- $host := ternary (printf "%s.%s" ($ingress.subdomain | toString) $domain) $domain (hasKey $ingress "subdomain") }}
 
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -29,21 +27,16 @@ spec:
       kind: HTTPRoute
       name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
   {{- if $ingress.oauth }}
-  oidc:
-    provider:
-      issuer: {{ required "global.oidc.issuerUrl must be set when oauth: true" $oidc.issuerUrl | quote }}
-    clientID: {{ required "global.oidc.clientId must be set when oauth: true" $oidc.clientId | quote }}
-    clientSecret:
-      name: oidc-client-secret
-    redirectURL: "https://{{ $host }}/oauth2/callback"
-    logoutPath: /oauth2/logout
-    scopes:
-      - openid
-      - email
-      - profile
-    {{- if $oidc.cookieDomain }}
-    cookieDomain: {{ $oidc.cookieDomain | quote }}
-    {{- end }}
+  extAuth:
+    http:
+      backendRefs:
+        - name: {{ required "global.oauth2Proxy.service must be set when oauth: true" $oauth2Proxy.service }}
+          namespace: {{ required "global.oauth2Proxy.namespace must be set when oauth: true" $oauth2Proxy.namespace }}
+          port: {{ $oauth2Proxy.port | default 80 }}
+      path: /oauth2/auth
+      headersToBackend:
+        - X-Auth-Request-User
+        - X-Auth-Request-Email
   {{- end }}
   {{- if $needsAuthz }}
   authorization:

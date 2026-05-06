@@ -29,9 +29,17 @@ global:
     name: envoy-gateway
     namespace: argocd
 
-  # OIDC provider for Envoy SecurityPolicy.oidc — per-environment overrides go in
-  # homelab-environments/<env>/values.yaml. Setting these here (with placeholder
-  # values) gives the schema a default; envs MUST override.
+  # Where the oauth2-proxy Service lives. SecurityPolicy.extAuth on every
+  # oauth-protected route points at this Service. The chart that runs the
+  # oauth2-proxy Deployment is apps/oauth2-proxy/.
+  oauth2Proxy:
+    service: oauth2-proxy
+    namespace: argocd
+    port: 80
+
+  # OIDC provider settings consumed by app-internal OIDC clients (argocd-cm,
+  # immich, sftpgo). NOT used by the gateway-layer auth — that's centralized
+  # in oauth2-proxy. Per-environment overrides go in homelab-environments/.
   oidc:
     issuerUrl: ~
     clientId: ~
@@ -620,6 +628,15 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "1"  # Deploy early for ingress management
+  oauth2-proxy:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "2"  # Deploy after envoy-gateway; protected app routes call its Service via extAuth
   vaultwarden:
     enabled: false
     homer:

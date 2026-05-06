@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- name: oauth2-proxy
+  repository: https://oauth2-proxy.github.io/manifests
+  version: 10.4.3
+description: Centralized OIDC auth proxy for Envoy SecurityPolicy.extAuth
+name: oauth2-proxy
+type: application
+version: 0.1.0

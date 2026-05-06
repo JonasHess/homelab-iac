@@ -1,0 +1,46 @@
+global:
+  domain: ~
+  gateway:
+    name: envoy-gateway
+    namespace: argocd
+  externalSecrets:
+    refreshInterval: "1h"
+    clusterSecretStoreRef:
+      name: ~
+  akeyless:
+    path: ~
+
+# Akeyless path (relative to global.akeyless.path) for the three oauth2-proxy
+# secret keys. Layout was already in place from the previous oauth2-proxy
+# deployment, so we reuse it verbatim.
+oauth2ProxyAkeylessPath: /oidc/oauth2-proxy
+
+# IP allowlist policy for the auth.<domain> HTTPRoute. Same enum as the
+# generic chart's per-route `access` flag.
+access: cloudflare-only
+
+# Upstream chart values. Per-environment overrides supply `extraArgs` (issuer
+# URL, cookie-domain, whitelist-domain, redirect-url).
+oauth2-proxy:
+  fullnameOverride: oauth2-proxy
+  config:
+    existingSecret: oauth2-proxy
+    # Static configuration shared across environments.
+    # Environment-specific values go in extraArgs (per-env values.yaml).
+    configFile: |
+      provider = "oidc"
+      upstreams = ["static://202"]
+      reverse_proxy = true
+      cookie_samesite = "lax"
+      cookie_secure = true
+      email_domains = ["*"]
+      custom_templates_dir = "/templates"
+  deploymentAnnotations:
+    reloader.stakater.com/auto: "true"
+  extraVolumes:
+    - name: custom-templates
+      configMap:
+        name: oauth2-proxy-templates
+  extraVolumeMounts:
+    - name: custom-templates
+      mountPath: /templates
