@@ -20,6 +20,12 @@ spec:
           envoyGateway:
             provider:
               type: Kubernetes
+            # Required so apps/argocd/templates/argocd-server-backend.yaml
+            # (Backend CR with insecureSkipVerify: true) is reconciled. Without
+            # this flag the Backend is ignored and HTTPRoutes that target it
+            # have no upstream → 404 from Envoy.
+            extensionApis:
+              enableBackend: true
         deployment:
           envoyGateway:
             resources:

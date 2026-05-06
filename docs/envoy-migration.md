@@ -79,7 +79,11 @@ global:
   oidc:
     issuerUrl: "<same as oidc_issuer_url>"
     clientId: "<same as oidc_client_id>"
-    cookieDomain: ".<env-domain>"   # was oauth2-proxy extraArgs.cookie-domain
+    cookieDomain: "<env-domain>"    # was oauth2-proxy extraArgs.cookie-domain
+                                    # NOTE: drop the RFC 6265 leading dot — Envoy's
+                                    # SecurityPolicy schema rejects ".example.com".
+                                    # Modern browsers treat "example.com" identically
+                                    # for cookie scope, so behaviour is unchanged.
 ```
 
 ### 2. Add the `security:` global
