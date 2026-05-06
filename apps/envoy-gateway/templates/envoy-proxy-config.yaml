@@ -12,7 +12,6 @@ spec:
     kubernetes:
       envoyService:
         externalTrafficPolicy: Local
-        {{- if .Values.loadBalancerIP }}
-        externalIPs:
-          - {{ .Values.loadBalancerIP }}
-        {{- end }}
+        # Note: the static external IP is set on the Gateway resource via
+        # spec.addresses (see envoy-gateway.yaml). The EnvoyProxy CRD's
+        # envoyService schema does not expose Service.spec.externalIPs.
