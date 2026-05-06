@@ -17,9 +17,7 @@ generic:
     https:
     - subdomain: openwebui
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: chat
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true

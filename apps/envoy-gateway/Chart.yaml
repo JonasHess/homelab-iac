@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: Helm chart for Envoy Gateway controller, Gateway resource, and wildcard TLS certificate
+name: envoy-gateway
+type: application
+version: 0.1.0

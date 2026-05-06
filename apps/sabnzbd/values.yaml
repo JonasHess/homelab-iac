@@ -26,8 +26,7 @@ generic:
     https:
     - subdomain: sabnzbd
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: sabnzbd
       pathPrefixes:
         - /api

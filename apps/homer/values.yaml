@@ -11,11 +11,9 @@ generic:
     https:
       - subdomain: homer
         port: 8080
-        middlewares:
-          - oauth2-proxy
+        oauth: true
       - port: 8080
-        middlewares:
-          - oauth2-proxy
+        oauth: true
   service:
     ports:
       - name: http

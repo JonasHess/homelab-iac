@@ -26,5 +26,4 @@ generic:
     https:
     - subdomain: prompt-util
       port: 8000
-      middlewares:
-      - oauth2-proxy
+      oauth: true

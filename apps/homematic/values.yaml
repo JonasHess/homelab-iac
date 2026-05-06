@@ -9,5 +9,4 @@ generic:
     - subdomain: homematic
       port: 80
       service: homematic-openccu
-      middlewares:
-      - oauth2-proxy
+      oauth: true

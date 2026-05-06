@@ -30,12 +30,10 @@ generic:
     https:
     - subdomain: adguard
       port: 80
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: adguard-admin
       port: 3000
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     udp:
     - port: 53
       listener: dns

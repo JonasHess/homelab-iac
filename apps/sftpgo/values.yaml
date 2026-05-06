@@ -44,8 +44,7 @@ generic:
     https:
     - subdomain: sftpgo
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: sftpgo
       port: 8080
       pathPrefixes:

@@ -1,0 +1,44 @@
+global:
+  domain: ~
+  oidc:
+    issuerUrl: ~
+    clientId: ~
+    cookieDomain: ~
+  akeyless:
+    path: ~
+
+# LoadBalancer external IP for the Envoy data-plane Service.
+# Set per-environment in homelab-environments/<env>/values.yaml.
+loadBalancerIP: null
+
+# Additional listener ports beyond HTTP/HTTPS, exposed via the Gateway resource.
+# Each entry adds a listener with the given port + protocol.
+additionalExposedPorts:
+  sftpgo:
+    port: 2222
+    protocol: TCP
+  ftp:
+    port: 2121
+    protocol: TCP
+  dns:
+    port: 53
+    protocol: UDP
+  samba:
+    port: 445
+    protocol: TCP
+
+envoyGateway:
+  # Upstream Envoy Gateway helm chart version (oci://docker.io/envoyproxy/gateway-helm).
+  chartVersion: v1.7.2
+  # Namespace where the controller installs (data plane is provisioned here too by default).
+  namespace: envoy-gateway-system
+
+# X-Forwarded-For trust depth for client IP detection. Set 1 if traffic comes through
+# a single trusted proxy (e.g. cloud LB or Cloudflare tunnel); 0 to use the connection
+# source IP directly.
+clientIPDetection:
+  numTrustedHops: 1
+
+# OIDC client secret is fetched from Akeyless and exposed as a Kubernetes Secret with
+# the key `client-secret`, referenced by every SecurityPolicy that enables oidc.
+oidcClientSecretAkeylessPath: /oidc/oauth2-proxy/client_secret

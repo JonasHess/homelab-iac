@@ -22,8 +22,7 @@ generic:
     https:
     - subdomain: profilarr
       port: 6868
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: profilarr
       pathPrefixes:
         - /api

@@ -22,5 +22,4 @@ generic:
     https:
     - subdomain: freshrss
       port: 80
-      middlewares:
-      - oauth2-proxy
+      oauth: true

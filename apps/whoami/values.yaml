@@ -11,5 +11,4 @@ generic:
     https:
     - subdomain: whoami
       port: 80
-      middlewares:
-      - oauth2-proxy
+      oauth: true

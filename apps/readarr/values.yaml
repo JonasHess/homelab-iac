@@ -18,8 +18,7 @@ generic:
     https:
     - subdomain: readarr
       port: 8787
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: readarr
       pathPrefixes:
         - /api

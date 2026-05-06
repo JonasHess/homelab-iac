@@ -38,8 +38,7 @@ generic:
     https:
     - subdomain: backrest
       port: 9898
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: backrest
       pathPrefixes:
         - /api

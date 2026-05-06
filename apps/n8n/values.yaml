@@ -20,8 +20,7 @@ generic:
     https:
     - subdomain: n8n
       port: 5678
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     # Bypass oauth2-proxy for webhooks and API
     - subdomain: n8n
       priority: 20

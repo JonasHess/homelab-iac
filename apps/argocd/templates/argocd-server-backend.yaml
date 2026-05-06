@@ -1,0 +1,19 @@
+{{- /*
+  Envoy Backend CR with insecureSkipVerify so Envoy can connect to argocd-server's
+  HTTPS port (443) without validating its self-signed cert. Replaces the previous
+  Traefik ServersTransport.
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: argocd-server-tls
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  endpoints:
+    - fqdn:
+        hostname: argocd-server.{{ $.Release.Namespace }}.svc.cluster.local
+        port: 443
+  tls:
+    insecureSkipVerify: true

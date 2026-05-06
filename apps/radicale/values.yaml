@@ -17,5 +17,4 @@ generic:
     https:
     - subdomain: radicale
       port: 5232
-      middlewares:
-      - oauth2-proxy
+      oauth: true

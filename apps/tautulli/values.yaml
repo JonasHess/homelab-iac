@@ -17,5 +17,4 @@ generic:
     https:
     - subdomain: tautulli
       port: 8181
-      middlewares:
-      - oauth2-proxy
+      oauth: true

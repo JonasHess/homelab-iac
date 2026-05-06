@@ -1,0 +1,61 @@
+{{- $oidc := $.Values.global.oidc | default dict }}
+{{- $security := $.Values.global.security | default dict }}
+{{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: argocd-securitypolicy-webhook
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-https-webhook
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs:
+            {{- range $cloudflareCIDRs }}
+            - {{ . }}
+            {{- end }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: argocd-securitypolicy-main
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-https-main
+  oidc:
+    provider:
+      issuer: {{ required "global.oidc.issuerUrl must be set" $oidc.issuerUrl | quote }}
+    clientID: {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+    clientSecret:
+      name: oidc-client-secret
+    redirectURL: "https://argocd.{{ .Values.global.domain }}/oauth2/callback"
+    logoutPath: /oauth2/logout
+    scopes:
+      - openid
+      - email
+      - profile
+    {{- if $oidc.cookieDomain }}
+    cookieDomain: {{ $oidc.cookieDomain | quote }}
+    {{- end }}
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs:
+            {{- range $cloudflareCIDRs }}
+            - {{ . }}
+            {{- end }}

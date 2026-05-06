@@ -49,5 +49,4 @@ generic:
     https:
     - subdomain: zigbee2mqtt
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true

@@ -30,8 +30,7 @@ generic:
       - subdomain: nextcloud
         port: 8080
         service: nextcloud
-        middlewares:
-          - oauth2-proxy
+        oauth: true
       # Collabora WOPI discovery and document endpoints (needed for Nextcloud integration)
       - subdomain: office
         port: 9980
@@ -47,8 +46,7 @@ generic:
       - subdomain: office
         port: 9980
         service: nextcloud-collabora
-        middlewares:
-          - oauth2-proxy
+        oauth: true
 
   persistentVolumeClaims:
     data:

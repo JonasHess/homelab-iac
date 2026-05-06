@@ -43,8 +43,7 @@ generic:
     https:
     - subdomain: paperlessngx
       port: 8000
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: paperlessngx
       pathPrefixes:
         - /api

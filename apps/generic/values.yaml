@@ -1,7 +1,7 @@
 global:
   domain: ~
   gateway:
-    name: traefik-gateway
+    name: envoy-gateway
     namespace: argocd
 appName: ~
 

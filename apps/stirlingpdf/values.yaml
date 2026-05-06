@@ -18,9 +18,7 @@ generic:
     https:
     - subdomain: stirling-pdf
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: pdf
       port: 8080
-      middlewares:
-      - oauth2-proxy
+      oauth: true

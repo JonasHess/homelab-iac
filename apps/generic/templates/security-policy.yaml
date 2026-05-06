@@ -1,0 +1,68 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+
+{{- if .Values.ingress }}
+  {{- if .Values.ingress.https }}
+    {{- $domain := required "global.domain must be set in values.yaml" $.Values.global.domain }}
+    {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
+    {{- $oidc := $.Values.global.oidc | default dict }}
+    {{- $security := $.Values.global.security | default dict }}
+    {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
+    {{- $lanCIDRs := $security.lanCIDRs | default (list) }}
+
+    {{- range $index, $ingress := .Values.ingress.https }}
+    {{- $access := $ingress.access | default "cloudflare-only" }}
+    {{- $needsAuthz := ne $access "public" }}
+    {{- if or $ingress.oauth $needsAuthz }}
+    {{- $host := ternary (printf "%s.%s" ($ingress.subdomain | toString) $domain) $domain (hasKey $ingress "subdomain") }}
+
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $appName }}-securitypolicy-{{ $ingress.port }}-{{ $index }}
+  namespace: {{ $gatewayNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
+  {{- if $ingress.oauth }}
+  oidc:
+    provider:
+      issuer: {{ required "global.oidc.issuerUrl must be set when oauth: true" $oidc.issuerUrl | quote }}
+    clientID: {{ required "global.oidc.clientId must be set when oauth: true" $oidc.clientId | quote }}
+    clientSecret:
+      name: oidc-client-secret
+    redirectURL: "https://{{ $host }}/oauth2/callback"
+    logoutPath: /oauth2/logout
+    scopes:
+      - openid
+      - email
+      - profile
+    {{- if $oidc.cookieDomain }}
+    cookieDomain: {{ $oidc.cookieDomain | quote }}
+    {{- end }}
+  {{- end }}
+  {{- if $needsAuthz }}
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs:
+            {{- if eq $access "cloudflare-only" }}
+            {{- range $cloudflareCIDRs }}
+            - {{ . }}
+            {{- end }}
+            {{- else if eq $access "cloudflare-and-lan" }}
+            {{- range (concat $cloudflareCIDRs $lanCIDRs) }}
+            - {{ . }}
+            {{- end }}
+            {{- end }}
+  {{- end }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

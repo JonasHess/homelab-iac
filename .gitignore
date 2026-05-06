@@ -8,3 +8,5 @@ node_modules/
 /myenv/
 /charts/
 /base-chart/values/custom-values.yaml
+settings.local.json
+/.claude/

@@ -26,13 +26,22 @@ global:
     email: Jonas@Hess.pm
 
   gateway:
-    name: traefik-gateway
+    name: envoy-gateway
     namespace: argocd
 
-  # Authentication provider
-  oauth2_proxy:
-    oidc_client_id: 6e1bl5i55ao7bhhcufk85ussm
-    oidc_issuer_url: https://cognito-idp.eu-central-1.amazonaws.com/eu-central-1_t9DQfKlSX
+  # OIDC provider for Envoy SecurityPolicy.oidc — per-environment overrides go in
+  # homelab-environments/<env>/values.yaml. Setting these here (with placeholder
+  # values) gives the schema a default; envs MUST override.
+  oidc:
+    issuerUrl: ~
+    clientId: ~
+    cookieDomain: ~
+
+  # Shared CIDR allowlists referenced by SecurityPolicy.authorization. Populated
+  # per-environment in homelab-environments/<env>/values.yaml.
+  security:
+    cloudflareCIDRs: []
+    lanCIDRs: []
 
   argocd:
     targetRevision: ~ # main
@@ -602,14 +611,10 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy before document processing apps
-  traefik:
+  envoy-gateway:
     enabled: false
     homer:
-      enabled: true
-      group: "infrastructure"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/traefik.svg"
-      subtitle: "Edge Router"
-      displayName: "Traefik"
+      enabled: false
     argocd:
       targetRevision: ~
       namespace: "argocd"

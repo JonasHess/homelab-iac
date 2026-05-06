@@ -23,5 +23,4 @@ generic:
     https:
     - subdomain: audiobookshelf
       port: 80
-#      middlewares:
-#        - oauth2-proxy
+#      oauth: true

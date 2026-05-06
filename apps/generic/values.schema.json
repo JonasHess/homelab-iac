@@ -60,6 +60,40 @@
             }
           },
           "required": ["path"]
+        },
+        "oidc": {
+          "type": "object",
+          "description": "OIDC provider configuration for Envoy SecurityPolicy.oidc (required when any route sets oauth: true)",
+          "properties": {
+            "issuerUrl": {
+              "type": "string",
+              "description": "OIDC issuer URL (e.g. AWS Cognito user pool URL)"
+            },
+            "clientId": {
+              "type": "string",
+              "description": "OIDC client ID registered with the issuer"
+            },
+            "cookieDomain": {
+              "type": "string",
+              "description": "Cookie domain for OIDC session cookies (e.g. .example.com to share across subdomains)"
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "description": "Shared CIDR lists used by SecurityPolicy.authorization for IP allowlisting",
+          "properties": {
+            "cloudflareCIDRs": {
+              "type": "array",
+              "description": "CIDR ranges allowed for routes with access: cloudflare-only (typically Cloudflare published IPs)",
+              "items": { "type": "string" }
+            },
+            "lanCIDRs": {
+              "type": "array",
+              "description": "Additional CIDR ranges allowed for routes with access: cloudflare-and-lan (typically internal LAN ranges)",
+              "items": { "type": "string" }
+            }
+          }
         }
       }
     },
@@ -313,13 +347,16 @@
                 "type": "string",
                 "description": "Name of the service to route to (defaults to {appName}-service if not specified)"
               },
-              "middlewares": {
-                "type": "array",
-                "description": "Traefik middlewares to apply to the route via ExtensionRef filters",
-                "items": {
-                  "type": "string",
-                  "description": "Name of the Traefik Middleware CRD"
-                }
+              "oauth": {
+                "type": "boolean",
+                "default": false,
+                "description": "Require OAuth2 authentication for this route"
+              },
+              "access": {
+                "type": "string",
+                "default": "cloudflare-only",
+                "enum": ["cloudflare-only", "cloudflare-and-lan", "public"],
+                "description": "IP allowlist policy: cloudflare-only (default), cloudflare-and-lan, or public (no allowlist)"
               }
             }
           }

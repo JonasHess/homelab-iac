@@ -22,8 +22,7 @@ generic:
     https:
     - subdomain: overseerr
       port: 5055
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: overseerr
       pathPrefixes:
         - /api

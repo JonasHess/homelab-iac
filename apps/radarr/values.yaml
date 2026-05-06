@@ -20,8 +20,7 @@ generic:
     https:
     - subdomain: radarr
       port: 7878
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     - subdomain: radarr
       pathPrefixes:
         - /api

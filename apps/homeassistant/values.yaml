@@ -29,8 +29,7 @@ generic:
     https:
     - subdomain: homeassistant
       port: 8123
-      middlewares:
-      - oauth2-proxy
+      oauth: true
     # Bypass oauth2-proxy for API, auth endpoints, and Android WebView (companion app)
     - subdomain: homeassistant
       port: 8123

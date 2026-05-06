@@ -24,26 +24,12 @@ spec:
     - {{ if $ingress.subdomain }}{{ $ingress.subdomain }}.{{ $domain }}{{ else }}{{ $domain }}{{ end }}
   rules:
     {{- if or $ingress.pathPrefixes $ingress.rawMatch }}
-    {{- /* Routes with explicit path or raw matching */}}
     {{- if $ingress.pathPrefixes }}
     {{- range $prefix := $ingress.pathPrefixes }}
     - matches:
         - path:
             type: PathPrefix
             value: {{ $prefix }}
-      filters:
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: cloudflare
-        {{- range $middleware := $ingress.middlewares }}
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: {{ $middleware }}
-        {{- end }}
       backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
           namespace: {{ $.Release.Namespace }}
@@ -66,19 +52,6 @@ spec:
               value: {{ $header.value | quote }}
             {{- end }}
           {{- end }}
-      filters:
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: cloudflare
-        {{- range $middleware := $ingress.middlewares }}
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: {{ $middleware }}
-        {{- end }}
       backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
           namespace: {{ $.Release.Namespace }}
@@ -86,21 +59,7 @@ spec:
     {{- end }}
     {{- end }}
     {{- else }}
-    {{- /* Catch-all route (no path matching) */}}
-    - filters:
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: cloudflare
-        {{- range $middleware := $ingress.middlewares }}
-        - type: ExtensionRef
-          extensionRef:
-            group: traefik.io
-            kind: Middleware
-            name: {{ $middleware }}
-        {{- end }}
-      backendRefs:
+    - backendRefs:
         - name: {{ if $ingress.service }}{{ $ingress.service }}{{ else }}{{ $appName }}-service{{ end }}
           namespace: {{ $.Release.Namespace }}
           port: {{ $ingress.port }}

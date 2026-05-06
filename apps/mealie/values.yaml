@@ -44,8 +44,7 @@ generic:
     https:
       - subdomain: mealie
         port: 9000
-        middlewares:
-          - oauth2-proxy
+        oauth: true
   externalSecrets:
     mealie-secret:
       - OIDC_CLIENT_ID: "/mealie/OIDC_CLIENT_ID"

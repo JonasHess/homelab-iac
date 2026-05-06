@@ -34,5 +34,4 @@ generic:
     https:
     - subdomain: lights
       port: 8000
-      middlewares:
-      - oauth2-proxy
+      oauth: true
