@@ -1,139 +1,160 @@
 # Infrastructure as Code for Home Lab
 
-This repository contains the Infrastructure as Code configuration for a home lab environment. It leverages Kubernetes, Helm, and other tools to automate the deployment and management of various services and applications.
+Kubernetes/Helm-based Infrastructure as Code for a self-hosted home lab, managed declaratively with GitOps via ArgoCD. Push to the repo and the cluster reconciles itself.
 
-## Overview
+## Architecture
 
-This project aims to create a self-hosted, automated home lab environment. It employs best practices for configuration management, security, and ease of deployment. The infrastructure is defined declaratively, allowing for reproducible and consistent setups.
+- **GitOps with ArgoCD** — every application is an ArgoCD `Application` rendered from this repository. Changes merged to `main` are picked up and reconciled automatically.
+- **Generic chart pattern** — most apps in `apps/` are thin wrappers around a single shared Helm chart at `apps/generic/`. App charts only declare the values they need (image, ports, ingress, mounts, secrets, backup); the generic chart renders the Deployment, Service, Ingress, PVCs, ExternalSecrets, and Restic backup CRDs. Validated via `values.schema.json`.
+- **Application registry** — `base-chart/values.yaml` is the central registry: which apps are enabled, their Homer dashboard metadata, ArgoCD project/namespace, and `syncWave` ordering. The `base-chart` itself is an ArgoCD app-of-apps that fans out to every enabled application.
+- **Bootstrap** — `bootstrap-chart/` performs the initial ArgoCD install and registers `base-chart` so the rest of the cluster comes up under GitOps from there.
+- **Secrets** — Akeyless is the source of truth; the External Secrets Operator pulls secrets into Kubernetes on demand. No secrets are stored in this repo.
+- **Environment overrides** — environment-specific values (e.g. `zimmermann.lat`) live in a separate `homelab-environments` repo and are layered on top of `base-chart` defaults.
+
+## Repository Layout
+
+```
+apps/                    # Per-application Helm charts (one folder per app)
+  generic/               # Shared base chart consumed by most apps
+  bump_generic_chart.sh  # Bumps the generic chart version everywhere it's referenced
+base-chart/              # App registry + ArgoCD app-of-apps
+bootstrap-chart/         # Initial ArgoCD bootstrap
+scripts/
+  setup.sh               # Bootstrap entrypoint
+  helm-tools/            # create_app.py — interactive new-app scaffolder
+  kind-setup/            # Local Kind cluster for testing
+  microk8s-setup/        # MicroK8s setup helpers
+  zfs-exporter/          # Prometheus ZFS exporter installer
+doc/                     # Operational notes (Cognito, Homematic, ZFS, Paperless, ...)
+```
 
 ## Core Technologies
 
--   **Kubernetes:** The container orchestration platform that runs all the services.
--   **Helm:** The package manager for Kubernetes, used to define and manage applications.
--   **Akeyless:** Secure vault for storing secrets and credentials.
--   **Traefik:** A modern HTTP reverse proxy and load balancer.
-- **ArgoCD:** A declarative, GitOps continuous delivery tool for Kubernetes.
--   **Cloudflare:** Used for DNS management and Dynamic DNS.
--   **ZFS:** File system for data storage with encryption, compression, and deduplication.
-- **External Secrets Operator:** Used for accessing akeyless secrets.
+- **Kubernetes** — container orchestration runtime
+- **Helm** — packaging and templating for all applications
+- **ArgoCD** — declarative GitOps continuous delivery
+- **Akeyless** + **External Secrets Operator** — secrets management
+- **Traefik** — ingress controller (HTTPS via `IngressRoute`, TCP/UDP supported)
+- **Crossplane** + **AWS controllers** — Kubernetes-managed cloud resources
+- **Prometheus** / **Grafana** / **Alertmanager** — monitoring stack
+- **Restic** + **Backrest** — backup orchestration
+- **Renovate** — automated dependency updates
+- **Cloudflare** — DNS and DDNS
+- **ZFS** — underlying storage with compression and snapshots
 
-## Deployed Applications and Services
+## Getting Started
 
-This infrastructure currently manages the deployment of the following applications and services:
+### Bootstrap a cluster
+```bash
+./scripts/setup.sh        # Installs ArgoCD and registers the base-chart
+```
 
-**Media & Entertainment:**
+### Local testing with Kind
+```bash
+./scripts/kind-setup/deploy_kind_cluster.sh
+./scripts/kind-setup/install_cloud-provider-kind.sh
+```
 
--   **Plex:** Media server for streaming movies and TV shows.
--   **Radarr:** Movie collection manager.
--   **Sonarr:** TV show collection manager.
--   **Readarr:** Ebook collection manager.
--   **Tautulli:** Plex monitoring and statistics.
--   **SABnzbd:** Usenet binary downloader.
--   **qBittorrent:** Torrent Client.
--   **Overseerr:** Request management and media discovery tool.
--   **Prowlarr:** Indexer manager for the *arr stack.
--   **Audiobookshelf:** Self-hosted audiobook and podcast server.
+### Add a new application
+```bash
+python scripts/helm-tools/create_app.py   # Interactive scaffolder
+```
+Then enable the app in `base-chart/values.yaml` under `apps.<name>` with its `homer`, `argocd`, and `syncWave` settings. See `CLAUDE.md` for the full template.
 
-**Home Automation:**
+### Bump the generic chart
+Run **only** when you change something inside `apps/generic/`:
+```bash
+cd apps && ./bump_generic_chart.sh
+```
+This bumps the version and updates every dependent app chart. Editing an app's own `values.yaml` or `templates/` does **not** require this — ArgoCD picks those up on push.
 
--   **Home Assistant:** Open-source home automation platform.
--   **Zigbee2MQTT:** Zigbee to MQTT gateway.
--   **Mosquitto:** MQTT broker for smart home devices.
--   **HomeMatic:** Home automation controller.
--   **SmartHome3:** Smart home management system.
+## Deployed Applications & Services
 
-**Productivity & Utilities:**
+Apps are organised by their dashboard group in `base-chart/values.yaml`.
 
--   **Paperless-ngx:** Document management system.
--   **Paperless-GPT:** An extension for paperless using LLMs for Document-Classification.
--   **Gotenberg:** API for converting HTML, Markdown, and Office documents to PDF.
--   **Tika:** Content detection and analysis framework.
--   **Ollama:** Run and deploy local LLMs.
--   **OpenWebUI:** Chat interface for Ollama.
--   **Redis:** In memory data store.
--   **Postgres:** Database server.
--   **Stirling-PDF:** Local PDF manipulation tool.
--   **SFTP Go:** SFTP/FTP server.
--   **AdGuard:** DNS ad-blocker.
--   **Cloudflare DDNS:** Dynamic DNS update for cloudflare.
--   **Duplicati-Prometheus-Exporter:** Prometheus metrics for duplicati.
--   **Vaultwarden:** Self-hosted Bitwarden server written in Rust.
--   **Mealie:** Recipe manager and meal planner.
--   **Radicale:** CalDAV and CardDAV server.
--   **Homer:** Static homepage dashboard.
+### Media & Entertainment
+- **Plex** / **Jellyfin** — media servers
+- **Tautulli** — Plex monitoring
+- **Overseerr** — request management and discovery
+- **Audiobookshelf** — audiobook and podcast server
+- **Immich** — self-hosted photo and video backup
+- **SFTPGo** — SFTP/FTP server
 
-**Monitoring & Observability:**
+### *arr Stack
+- **Radarr** — movies
+- **Sonarr** — TV
+- **Readarr** — ebooks
+- **Prowlarr** — indexer manager
+- **Profilarr** — *arr profile management
 
--   **Prometheus:** Monitoring and alerting system.
--   **Grafana:** Data visualization and dashboards.
--   **Alertmanager:** Alert handling for prometheus.
+### Downloads
+- **qBittorrent** — torrent client
+- **SABnzbd** / **NZBGet** — Usenet downloaders
 
-**CI/CD & Development:**
+### Smart Home
+- **Home Assistant** — automation platform
+- **HomeMatic** — automation controller
+- **Zigbee2MQTT** — Zigbee → MQTT gateway
+- **Mosquitto** — MQTT broker
+- **smarthome3** / **smarthome4** — custom smart-home services
+- **smarthome4-ui** — FastAPI + React UI for Zigbee2MQTT scenes
+- **alexa-custom-skill** / **alexa-smarthome-skill** — Alexa integrations
 
--   **ArgoCD:** GitOps management tool for Kubernetes.
+### Productivity
+- **Paperless-ngx** + **Paperless-GPT** — document management with LLM classification
+- **ASN** — small redirector to Paperless via archive serial numbers
+- **Gotenberg** / **Tika** — document conversion and content analysis
+- **Stirling-PDF** — local PDF manipulation
+- **Vaultwarden** — self-hosted Bitwarden
+- **Mealie** — recipe manager
+- **Radicale** — CalDAV / CardDAV server
+- **Nextcloud** — file sync and collaboration
+- **FreshRSS** — RSS aggregator
+- **n8n** — workflow automation
+- **portal-document-downloader** / **pytr** — automated document fetchers
 
-**Backup & Storage:**
+### AI & ML
+- **Ollama** — local LLM runtime
+- **OpenWebUI** — chat UI for Ollama
+- **prompt-util** — prompt utility service
 
--   **Backrest:** Web UI and orchestrator for restic backup.
--   **Restic:** Fast, secure, and efficient backup program.
+### Infrastructure
+- **ArgoCD** — GitOps controller
+- **Traefik** — ingress / reverse proxy
+- **Akeyless** + **External Secrets Operator** — secrets
+- **Reloader** — restarts pods on ConfigMap/Secret changes
+- **Crossplane** + **AWS controllers** — cloud resource management
+- **AdGuard** — DNS-based ad blocking
+- **Cloudflare DDNS** — dynamic DNS updates
+- **Postgres** / **Redis** — shared datastores
+- **Homer** — dashboard
+- **Backrest** / **Restic** — backups
+- **filecleanup** — scheduled cleanup of old files / empty dirs
+- **samba** — file sharing
+- **Whoami** — debug HTTP service
 
-**Infrastructure & Platform:**
+### Monitoring & Observability
+- **Prometheus** — metrics
+- **Grafana** — dashboards
+- **Alertmanager** — alert routing
+- **Duplicati Prometheus Exporter** — backup metrics
+- **TGTG** — TooGoodToGo notifications
 
--   **Akeyless:** Secrets management platform.
--   **External Secrets Operator:** Kubernetes operator for external secret management.
--   **Traefik:** Modern HTTP reverse proxy and load balancer.
--   **Crossplane:** Infrastructure as code using Kubernetes.
--   **AWS Controllers:** Kubernetes controllers for AWS services.
--   **Reloader:** Kubernetes controller to watch changes in ConfigMap and Secrets.
--   **Profilarr:** Media library profiler and optimizer.
+## Dependency Management
 
-**Other:**
+Renovate keeps Helm chart versions, Docker images, and language packages up to date. Highlights:
 
--   **Immich:** Self-hosted photo and video backup solution.
--   **ASN (Archive Serial Number):** Small Nodejs App to redirect to Paperless via the asn.
--   **TGTG:** TooGoodToGo Notification tool.
--   **Generic:** Base chart for generic applications.
--   **Whoami:** Simple HTTP service for testing.
--   **Test:** Test application deployment.
-
-## Dependency Management with Renovate
-
-This repository uses [Renovate](https://renovatebot.com/) for automated dependency updates. Renovate helps keep all dependencies up-to-date by automatically creating pull requests when new versions are available.
-
-### Configuration Highlights:
-
-- **Schedule**: Updates run at 3pm on Sundays (Europe/Berlin timezone)
-- **Auto-merge**: Enabled for patch and minor updates across all dependency types
-- **Manual approval**: Required for all major version updates
-- **Supported dependency types**:
-  - Helm charts
-  - Docker images
-  - Python packages
-  - JavaScript/Node.js packages
-  - Go modules
-  - GitHub Actions
-- **Custom regex managers**: Configured to detect and update:
-  - ArgoCD Application targetRevisions
-  - Docker image references in YAML files
-
-The full Renovate configuration can be found in `.renovaterc.json`.
+- Patch and minor updates auto-merge; major updates require manual approval.
+- Custom regex managers detect ArgoCD `targetRevision` and inline image references.
+- Configuration: `.renovaterc.json`. See [`RENOVATE.md`](RENOVATE.md) for usage and how to exclude charts.
 
 ## TODOs & Future Improvements
 
-Here are some planned improvements and tasks:
-
-- \[ \] **Restart Pod argocd-server:** Automate the restart of the ArgoCD
-  server pod to handle race conditions related to Akeyless secrets.
-- \[ \] **Apps in Own Namespaces:** Migrate applications to their own
-  namespaces (e.g., drone).
-- \[ \] **Loki:** Add support for Loki (log aggregation system).
-- \[ \] **Watchtower / Argo Image Updater:** Implement automatic image updates
-  for containers.
-- \[ \] **SAMBA:** Integrate SAMBA file sharing.
-- \[ \] **Setup Monitoring for all services**
-- \[ \] **Create all missing folders of pvs**
-- \[ \] **Gateway API:** Implement a gateway API instead of IngressRoute
-- \[ \] **Crossplane:** Use Crossplane for managing cloud resources.
-- \[ \] **AWS Lambda:** Implement AWS Lambda functions for specific tasks.
-- \[ \] **CalDav:** Add CalDAV server for calendar synchronization.
-- \[ \] **Smarthome:** make it Kubernetes API ready
+- [ ] **Restart Pod argocd-server** — automate restart to handle Akeyless secret race conditions
+- [ ] **Per-app namespaces** — migrate apps off the shared `services` namespace
+- [ ] **Loki** — log aggregation
+- [ ] **Monitoring coverage** — dashboards/alerts for every service
+- [ ] **PV folder bootstrapping** — auto-create missing host paths
+- [ ] **Gateway API** — replace Traefik `IngressRoute` with Gateway API
+- [ ] **AWS Lambda** — provision via Crossplane for specific tasks
+- [ ] **Smart home** — make the smarthome stack Kubernetes-API-native
