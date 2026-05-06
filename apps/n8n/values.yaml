@@ -12,6 +12,9 @@ generic:
   configMaps:
     n8n-config:
       WEBHOOK_URL: "https://n8n.{{ .Values.global.domain }}"
+      # Node.js default 16 KB header limit is too small for the Envoy OAuth2
+      # filter's session cookie (Cognito ID + access tokens encrypted).
+      NODE_OPTIONS: "--max-http-header-size=32768"
   service:
     ports:
     - name: http
