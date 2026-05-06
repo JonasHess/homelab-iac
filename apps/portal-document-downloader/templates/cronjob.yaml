@@ -52,7 +52,7 @@ spec:
             {{- if $.Values.portalDocumentDownloader.externalSecret.enabled }}
             envFrom:
             - secretRef:
-                name: {{ $appName }}-{{ $portalName }}-credentials
+                name: {{ $portalName }}-credentials
             {{- end }}
             volumeMounts:
             - name: downloads
