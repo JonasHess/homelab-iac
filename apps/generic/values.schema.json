@@ -350,13 +350,7 @@
               "oauth": {
                 "type": "boolean",
                 "default": false,
-                "description": "Require OAuth2 authentication for this route"
-              },
-              "access": {
-                "type": "string",
-                "default": "cloudflare-only",
-                "enum": ["cloudflare-only", "cloudflare-and-lan", "public"],
-                "description": "IP allowlist policy: cloudflare-only (default), cloudflare-and-lan, or public (no allowlist)"
+                "description": "When true: route inherits the Gateway-level SecurityPolicy (OIDC + IP allowlist). When false/absent: a route-level SP overrides the Gateway-level one with IP allowlist only — no OIDC enforced."
               }
             }
           }

@@ -1,11 +1,18 @@
 {{- /*
-  Per-route SecurityPolicy carrying only IP authorization rules. OIDC is
-  applied to the whole Gateway by apps/envoy-gateway/templates/oidc-security-policy.yaml
-  with a single shared HMAC, so cookies survive across subdomains and Cognito
-  only needs one callback URL registered.
+  Per-route SecurityPolicy that OPTS THIS ROUTE OUT of the Gateway-level OIDC.
 
-  Emitted only when `access != public`. `oauth` is no longer a per-route knob
-  (the Gateway-level SP enforces OIDC for every route by default).
+  Envoy Gateway uses full-replace precedence: a route-level SP completely
+  overrides the Gateway-level SP attached to the parent Gateway. So we emit
+  a route-level SP only for routes that should NOT require OIDC (e.g. /api
+  paths, webhooks, intentionally public routes). The body re-states the
+  IP-allowlist (cloudflareCIDRs) since that's mandatory everywhere; OIDC is
+  omitted, which is the whole point.
+
+  Routes that should require OIDC don't emit anything from this template —
+  they inherit the Gateway-level SP, which has both oidc and authorization.
+
+  Trigger: `oauth: false` (or `oauth` absent) on the route. Routes meant to
+  be auth-protected set `oauth: true`.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
@@ -14,11 +21,9 @@
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
     {{- $security := $.Values.global.security | default dict }}
     {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
-    {{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 
     {{- range $index, $ingress := .Values.ingress.https }}
-    {{- $access := $ingress.access | default "cloudflare-only" }}
-    {{- if ne $access "public" }}
+    {{- if not $ingress.oauth }}
 
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -39,14 +44,8 @@ spec:
       - action: Allow
         principal:
           clientCIDRs:
-            {{- if eq $access "cloudflare-only" }}
             {{- range $cloudflareCIDRs }}
             - {{ . }}
-            {{- end }}
-            {{- else if eq $access "cloudflare-and-lan" }}
-            {{- range (concat $cloudflareCIDRs $lanCIDRs) }}
-            - {{ . }}
-            {{- end }}
             {{- end }}
     {{- end }}
     {{- end }}

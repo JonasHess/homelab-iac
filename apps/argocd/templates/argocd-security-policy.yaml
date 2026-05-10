@@ -1,10 +1,9 @@
 {{- /*
-  Per-route SecurityPolicies for the two argocd HTTPRoutes, IP allowlist only.
-  OIDC is applied at the Gateway level by apps/envoy-gateway, so both routes
-  inherit it. The webhook route is on the same Gateway and will also be
-  OIDC-protected — webhooks from external services that don't carry the
-  session cookie need a follow-up (e.g. moving the webhook to a separate
-  listener without OIDC).
+  Per-route SP only for the webhook route, which must NOT require OIDC
+  (external services posting webhooks can't carry an OIDC session cookie).
+
+  The main route inherits the Gateway-level SP (oidc + cloudflareCIDRs) from
+  apps/envoy-gateway, so no per-route SP is emitted for it.
 */ -}}
 {{- $security := $.Values.global.security | default dict }}
 {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
@@ -20,28 +19,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: argocd-https-webhook
-  authorization:
-    defaultAction: Deny
-    rules:
-      - action: Allow
-        principal:
-          clientCIDRs:
-            {{- range $cloudflareCIDRs }}
-            - {{ . }}
-            {{- end }}
----
-apiVersion: gateway.envoyproxy.io/v1alpha1
-kind: SecurityPolicy
-metadata:
-  name: argocd-securitypolicy-main
-  namespace: {{ $.Release.Namespace }}
-  annotations:
-    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-spec:
-  targetRefs:
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      name: argocd-https-main
   authorization:
     defaultAction: Deny
     rules:

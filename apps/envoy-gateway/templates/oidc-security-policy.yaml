@@ -12,6 +12,8 @@
 */ -}}
 {{- $domain := required "global.domain must be set" .Values.global.domain }}
 {{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
+{{- $security := .Values.global.security | default dict }}
+{{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -39,3 +41,16 @@ spec:
     {{- if $oidc.cookieDomain }}
     cookieDomain: {{ $oidc.cookieDomain | quote }}
     {{- end }}
+  # IP allowlist is mandatory for every route. Routes that opt out of OIDC
+  # (via a per-route SP) MUST also re-include this authorization block since
+  # Envoy Gateway uses full-replace precedence between Gateway-level and
+  # route-level SPs.
+  authorization:
+    defaultAction: Deny
+    rules:
+      - action: Allow
+        principal:
+          clientCIDRs:
+            {{- range $cloudflareCIDRs }}
+            - {{ . }}
+            {{- end }}
