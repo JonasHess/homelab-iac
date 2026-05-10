@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: freshrss/freshrss:1.28.1
+    image: freshrss/freshrss:1.29.0
     ports:
     - containerPort: 80
     pvcMounts:
