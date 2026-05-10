@@ -27,6 +27,9 @@ oauth2-proxy:
     existingSecret: oauth2-proxy
     # Static configuration shared across environments.
     # Environment-specific values go in extraArgs (per-env values.yaml).
+    # No custom_templates_dir: the EnvoyExtensionPolicy Lua filter handles the
+    # 401→302 redirect inline, so oauth2-proxy's sign-in HTML page is never hit
+    # and we can use its default template.
     configFile: |
       provider = "oidc"
       upstreams = ["static://202"]
@@ -34,13 +37,5 @@ oauth2-proxy:
       cookie_samesite = "lax"
       cookie_secure = true
       email_domains = ["*"]
-      custom_templates_dir = "/templates"
   deploymentAnnotations:
     reloader.stakater.com/auto: "true"
-  extraVolumes:
-    - name: custom-templates
-      configMap:
-        name: oauth2-proxy-templates
-  extraVolumeMounts:
-    - name: custom-templates
-      mountPath: /templates

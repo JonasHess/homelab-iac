@@ -56,12 +56,17 @@ spec:
         end
 
         function envoy_on_response(handle)
-          if handle:headers():get(":status") ~= "401" then return end
+          local status = handle:headers():get(":status")
+          -- Envoy converts oauth2-proxy's 401 from extAuth into 403
+          -- (ext_authz_denied). Handle both so the rewrite works whichever
+          -- code Envoy emits.
+          if status ~= "401" and status ~= "403" then return end
           local md = handle:streamInfo():dynamicMetadata():get("homelab.oauth_redirect")
           local rd = (md and md.rd) or ""
           handle:headers():replace(":status", "302")
           handle:headers():replace("location", AUTH_URL .. "?rd=" .. rd)
           handle:headers():replace("content-length", "0")
+          handle:headers():replace("content-type", "text/plain")
           handle:body():setBytes("")
         end
     {{- end }}
