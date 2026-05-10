@@ -28,25 +28,6 @@
             }
           }
         },
-        "oauth2Proxy": {
-          "type": "object",
-          "description": "Where the oauth2-proxy Service lives. Required when any route sets oauth: true.",
-          "properties": {
-            "service": {
-              "type": "string",
-              "description": "oauth2-proxy Service name"
-            },
-            "namespace": {
-              "type": "string",
-              "description": "Namespace where the oauth2-proxy Service runs"
-            },
-            "port": {
-              "type": "integer",
-              "default": 80,
-              "description": "oauth2-proxy Service port"
-            }
-          }
-        },
         "externalSecrets": {
           "type": "object",
           "description": "Global configuration for External Secrets",

@@ -1,0 +1,60 @@
+{{- /*
+  Strip the Envoy OAuth2 filter's cookies from the Cookie header before the
+  request reaches the upstream pod. Pods don't need IdToken/AccessToken/etc.
+  — Envoy validates them locally — and these cookies are large enough to
+  bust Node.js (16 KB) and Tomcat (~8 KB) default header limits, producing
+  HTTP 431.
+
+  Attached to the Gateway so every route inherits the stripper. The Lua only
+  touches the request path and doesn't depend on filter ordering or any
+  inter-phase state, so it's robust to Envoy Gateway upgrades.
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyExtensionPolicy
+metadata:
+  name: strip-oauth-cookies
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-gateway
+  lua:
+    - type: Inline
+      inline: |
+        -- Cookie names set by Envoy's OAuth2 filter. Listed explicitly so we
+        -- don't drop app-defined cookies that happen to share a prefix.
+        local STRIP = {
+          IdToken      = true,
+          AccessToken  = true,
+          RefreshToken = true,
+          BearerToken  = true,
+          OauthHMAC    = true,
+          OauthExpires = true,
+          OauthNonce   = true,
+        }
+
+        local function trim(s)
+          return (s:gsub("^%s*(.-)%s*$", "%1"))
+        end
+
+        function envoy_on_request(req)
+          local cookie = req:headers():get("cookie")
+          if not cookie then return end
+          local kept = {}
+          for piece in string.gmatch(cookie, "([^;]+)") do
+            local p = trim(piece)
+            local name = p:match("^([^=]+)")
+            if name and not STRIP[trim(name)] then
+              kept[#kept + 1] = p
+            end
+          end
+          if #kept == 0 then
+            req:headers():remove("cookie")
+          else
+            req:headers():replace("cookie", table.concat(kept, "; "))
+          end
+        end

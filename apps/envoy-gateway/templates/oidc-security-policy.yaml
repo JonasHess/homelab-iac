@@ -1,0 +1,41 @@
+{{- /*
+  Gateway-attached OIDC SecurityPolicy. One SP for the whole Gateway means a
+  single HMAC, single set of cookie names, single Cognito callback URL, and
+  cookies that work across all *.{{ .Values.global.domain }} subdomains via
+  cookieDomain. Native OAuth2 filter handles redirect-to-IDP and original-URL
+  preservation (via the OIDC `state` parameter) without any Lua dance.
+
+  The redirectURL only needs to match ONE HTTPRoute. We point it at
+  auth.<domain>/oauth2/callback — that HTTPRoute is provided by this same
+  chart (templates/auth-callback-httproute.yaml) and is just a sink because
+  the OAuth2 filter intercepts /oauth2/callback inline.
+*/ -}}
+{{- $domain := required "global.domain must be set" .Values.global.domain }}
+{{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: gateway-oidc
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-gateway
+  oidc:
+    provider:
+      issuer: {{ required "global.oidc.issuerUrl must be set" $oidc.issuerUrl | quote }}
+    clientID: {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+    clientSecret:
+      name: oidc-client-secret
+    redirectURL: "https://auth.{{ $domain }}/oauth2/callback"
+    logoutPath: /oauth2/logout
+    scopes:
+      - openid
+      - email
+    {{- if $oidc.cookieDomain }}
+    cookieDomain: {{ $oidc.cookieDomain | quote }}
+    {{- end }}

@@ -1,0 +1,46 @@
+{{- /*
+  Sink HTTPRoute for auth.<domain>. The Gateway-level OIDC SecurityPolicy's
+  OAuth2 filter intercepts /oauth2/callback and /oauth2/logout on this host
+  before they reach any backend; the route just needs to exist so Envoy
+  programs the listener for auth.<domain>. We use a tiny ConfigMap-served
+  text response from the gateway itself via a DirectResponse HTTPRouteFilter,
+  but the simpler form is to route to the Envoy admin/healthcheck or any
+  available "always-200" target — here we use Envoy's own Service via the
+  default 404 (good enough; the user never sees it because /oauth2/* is
+  handled by the filter and unrelated paths shouldn't be hit on auth.<domain>).
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: auth-callback-sink
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  directResponse:
+    statusCode: 200
+    body:
+      type: Inline
+      inline: "OK"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auth-callback
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  parentRefs:
+    - name: envoy-gateway
+      namespace: {{ $.Release.Namespace }}
+      sectionName: websecure
+  hostnames:
+    - auth.{{ .Values.global.domain }}
+  rules:
+    - filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: auth-callback-sink

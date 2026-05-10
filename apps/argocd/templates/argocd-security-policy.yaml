@@ -1,4 +1,11 @@
-{{- $oauth2Proxy := $.Values.global.oauth2Proxy | default dict }}
+{{- /*
+  Per-route SecurityPolicies for the two argocd HTTPRoutes, IP allowlist only.
+  OIDC is applied at the Gateway level by apps/envoy-gateway, so both routes
+  inherit it. The webhook route is on the same Gateway and will also be
+  OIDC-protected — webhooks from external services that don't carry the
+  session cookie need a follow-up (e.g. moving the webhook to a separate
+  listener without OIDC).
+*/ -}}
 {{- $security := $.Values.global.security | default dict }}
 {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
@@ -35,16 +42,6 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: argocd-https-main
-  extAuth:
-    http:
-      backendRefs:
-        - name: {{ required "global.oauth2Proxy.service must be set" $oauth2Proxy.service }}
-          namespace: {{ required "global.oauth2Proxy.namespace must be set" $oauth2Proxy.namespace }}
-          port: {{ $oauth2Proxy.port | default 80 }}
-      path: /oauth2/auth
-      headersToBackend:
-        - X-Auth-Request-User
-        - X-Auth-Request-Email
   authorization:
     defaultAction: Deny
     rules:

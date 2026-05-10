@@ -2,10 +2,20 @@ global:
   domain: ~
   akeyless:
     path: ~
+  # OIDC config for the Gateway-level SecurityPolicy. Per-environment
+  # overrides live in homelab-environments/<env>/values.yaml.
+  oidc:
+    issuerUrl: ~
+    clientId: ~
+    cookieDomain: ~
 
 # LoadBalancer external IP for the Envoy data-plane Service.
 # Set per-environment in homelab-environments/<env>/values.yaml.
 loadBalancerIP: null
+
+# Akeyless path (relative to global.akeyless.path) for the Cognito client
+# secret. Same layout the previous oauth2-proxy deployment used.
+oidcClientSecretAkeylessPath: /oidc/oauth2-proxy/client_secret
 
 # Additional listener ports beyond HTTP/HTTPS, exposed via the Gateway resource.
 # Each entry adds a listener with the given port + protocol.
