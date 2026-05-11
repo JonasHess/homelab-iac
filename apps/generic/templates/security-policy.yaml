@@ -1,26 +1,24 @@
 {{- /*
-  Per-route SecurityPolicy that OPTS THIS ROUTE OUT of the Gateway-level OIDC.
+  Per-route SecurityPolicy that opts THIS route out of the Gateway-level OIDC.
 
-  Envoy Gateway uses full-replace precedence: a route-level SP completely
-  overrides the Gateway-level SP attached to the parent Gateway. So we emit
-  a route-level SP only for routes that should NOT require OIDC (e.g. /api
-  paths, webhooks, intentionally public routes). The body re-states the
-  IP-allowlist (cloudflareCIDRs) since that's mandatory everywhere; OIDC is
-  omitted, which is the whole point.
+  Envoy Gateway uses full-replace precedence — a route-level SP completely
+  overrides the Gateway-level SP for that route, including its
+  `authorization` block. So this override has to re-emit the LAN Allow rule.
 
-  Routes that should require OIDC don't emit anything from this template —
-  they inherit the Gateway-level SP, which has both oidc and authorization.
+  Trigger: `oauth: false` (or absent) on the route. Routes meant to be
+  auth-protected set `oauth: true` and emit nothing here.
 
-  Trigger: `oauth: false` (or `oauth` absent) on the route. Routes meant to
-  be auth-protected set `oauth: true`.
+  Cloudflare-proxied traffic for these routes still arrives via the mTLS
+  listener (port 4443); that gate runs before the route's SP, so the
+  authorization block here only needs to cover LAN traffic.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.ingress }}
   {{- if .Values.ingress.https }}
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
-    {{- $security := $.Values.global.security | default dict }}
-    {{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
+    {{- $security := required "global.security must be set" $.Values.global.security }}
+    {{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 
     {{- range $index, $ingress := .Values.ingress.https }}
     {{- if not $ingress.oauth }}
@@ -41,10 +39,11 @@ spec:
   authorization:
     defaultAction: Deny
     rules:
-      - action: Allow
+      - name: lan
+        action: Allow
         principal:
           clientCIDRs:
-            {{- range $cloudflareCIDRs }}
+            {{- range $lanCIDRs }}
             - {{ . }}
             {{- end }}
     {{- end }}

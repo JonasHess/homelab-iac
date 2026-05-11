@@ -1,3 +1,17 @@
+{{- /*
+  Tell Envoy where to find the real client IP. Cloudflare-proxied requests
+  carry the original visitor IP in `CF-Connecting-IP`; LAN-direct requests
+  don't carry this header and fall back to the TCP source IP.
+
+  `failClosed: false` is deliberate — LAN clients legitimately won't have
+  the header. Spoofing CF-Connecting-IP isn't a concern because any request
+  reaching this listener has already been gated by the Gateway-level SP
+  (LAN source IP OR shared-secret header), and the shared-secret check is
+  what proves the request transited our Cloudflare zone.
+
+  This is also Cloudflare's documented recommendation for Envoy Gateway —
+  see https://developers.cloudflare.com/support/troubleshooting/restoring-visitor-ips/restoring-original-visitor-ips/
+*/ -}}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy
 metadata:
@@ -12,5 +26,6 @@ spec:
       kind: Gateway
       name: envoy-gateway
   clientIPDetection:
-    xForwardedFor:
-      numTrustedHops: {{ .Values.clientIPDetection.numTrustedHops }}
+    customHeader:
+      name: CF-Connecting-IP
+      failClosed: false

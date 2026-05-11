@@ -38,9 +38,3 @@ envoyGateway:
   chartVersion: v1.7.2
   # Namespace where the controller installs (data plane is provisioned here too by default).
   namespace: envoy-gateway-system
-
-# X-Forwarded-For trust depth for client IP detection. Set 1 if traffic comes through
-# a single trusted proxy (e.g. cloud LB or Cloudflare tunnel); 0 to use the connection
-# source IP directly.
-clientIPDetection:
-  numTrustedHops: 1

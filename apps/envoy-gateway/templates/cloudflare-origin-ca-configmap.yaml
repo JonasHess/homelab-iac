@@ -1,0 +1,24 @@
+{{- /*
+  CA cert used to validate Cloudflare's client cert on the mTLS listener
+  (port 4443). The matching leaf cert + key are uploaded to Cloudflare's
+  zone-level Authenticated Origin Pulls. The CA cert itself is public
+  information — fine to commit to homelab-environments.
+
+  When the env hasn't set cloudflareOriginCA yet, this template renders
+  nothing and the websecure-public listener (in envoy-gateway.yaml) is also
+  omitted. That makes it safe to push the chart change ahead of running the
+  openssl + Cloudflare setup steps.
+*/ -}}
+{{- if .Values.global.security.cloudflareOriginCA }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudflare-origin-ca
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+data:
+  ca.crt: |
+{{ .Values.global.security.cloudflareOriginCA | indent 4 }}
+{{- end }}

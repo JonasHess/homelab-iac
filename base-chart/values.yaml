@@ -39,11 +39,15 @@ global:
     clientId: ~
     cookieDomain: ~
 
-  # Shared CIDR allowlists referenced by SecurityPolicy.authorization. Populated
-  # per-environment in homelab-environments/<env>/values.yaml.
+  # Gateway-level authorization. Two paths into the gateway:
+  #   - LAN listener (port 443): source IP must be in lanCIDRs.
+  #   - Cloudflare listener (port 4443): mTLS, client cert must validate
+  #     against cloudflareOriginCA (Cloudflare presents the matching leaf
+  #     cert via Authenticated Origin Pulls on the zone).
+  # Populated per-environment in homelab-environments/<env>/values.yaml.
   security:
-    cloudflareCIDRs: []
     lanCIDRs: []
+    cloudflareOriginCA: ~
 
   argocd:
     targetRevision: ~ # main

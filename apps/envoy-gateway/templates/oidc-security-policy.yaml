@@ -1,19 +1,23 @@
 {{- /*
-  Gateway-attached OIDC SecurityPolicy. One SP for the whole Gateway means a
-  single HMAC, single set of cookie names, single Cognito callback URL, and
-  cookies that work across all *.{{ .Values.global.domain }} subdomains via
-  cookieDomain. Native OAuth2 filter handles redirect-to-IDP and original-URL
-  preservation (via the OIDC `state` parameter) without any Lua dance.
+  Gateway-attached SecurityPolicy:
+   - native OIDC against Cognito (one HMAC, one cookie set scoped to
+     global.oidc.cookieDomain, one Cognito callback URL).
+   - authorization with a single Allow rule for LAN source IPs.
 
-  The redirectURL only needs to match ONE HTTPRoute. We point it at
-  auth.<domain>/oauth2/callback — that HTTPRoute is provided by this same
-  chart (templates/auth-callback-httproute.yaml) and is just a sink because
-  the OAuth2 filter intercepts /oauth2/callback inline.
+  Cloudflare-proxied traffic does NOT pass this authorization rule — it
+  enters via the dedicated mTLS listener (port 4443 / Authenticated Origin
+  Pulls), where the listener-level cert validation gates the connection
+  before any HTTP filter runs. That's why we don't need a second Allow rule
+  here.
+
+  Per-route opt-out SPs must re-emit this `authorization` block (Envoy
+  Gateway uses full-replace precedence between Gateway-level and route-level
+  SPs).
 */ -}}
 {{- $domain := required "global.domain must be set" .Values.global.domain }}
 {{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
-{{- $security := .Values.global.security | default dict }}
-{{- $cloudflareCIDRs := $security.cloudflareCIDRs | default (list) }}
+{{- $security := required "global.security must be set" .Values.global.security }}
+{{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -41,16 +45,13 @@ spec:
     {{- if $oidc.cookieDomain }}
     cookieDomain: {{ $oidc.cookieDomain | quote }}
     {{- end }}
-  # IP allowlist is mandatory for every route. Routes that opt out of OIDC
-  # (via a per-route SP) MUST also re-include this authorization block since
-  # Envoy Gateway uses full-replace precedence between Gateway-level and
-  # route-level SPs.
   authorization:
     defaultAction: Deny
     rules:
-      - action: Allow
+      - name: lan
+        action: Allow
         principal:
           clientCIDRs:
-            {{- range $cloudflareCIDRs }}
+            {{- range $lanCIDRs }}
             - {{ . }}
             {{- end }}

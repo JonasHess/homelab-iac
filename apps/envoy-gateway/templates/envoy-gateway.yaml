@@ -42,6 +42,47 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    {{- if .Values.global.security.cloudflareOriginCA }}
+    # Cloudflare-only listener (port 4443). The router NATs WAN:443 to this
+    # port; LAN clients use the regular `websecure` listener on 443 instead.
+    # mTLS is required: Cloudflare presents the leaf cert configured under
+    # zone-level Authenticated Origin Pulls; Envoy validates it against the
+    # CA in `cloudflare-origin-ca` ConfigMap. Requests reaching this listener
+    # without a valid Cloudflare-signed client cert are rejected at the TLS
+    # handshake before any HTTP filter runs.
+    - name: websecure-public
+      port: 4443
+      protocol: HTTPS
+      hostname: "*.{{ .Values.global.domain }}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: wildcard-tls
+        frontendValidation:
+          caCertificateRefs:
+            - group: ""
+              kind: ConfigMap
+              name: cloudflare-origin-ca
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: websecure-public-apex
+      port: 4443
+      protocol: HTTPS
+      hostname: "{{ .Values.global.domain }}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: wildcard-tls
+        frontendValidation:
+          caCertificateRefs:
+            - group: ""
+              kind: ConfigMap
+              name: cloudflare-origin-ca
+      allowedRoutes:
+        namespaces:
+          from: All
+    {{- end }}
     {{- range $key, $value := .Values.additionalExposedPorts }}
     - name: {{ $key }}
       port: {{ $value.port }}

@@ -6,9 +6,13 @@ How HTTPS traffic is terminated, authenticated and authorised in this homelab.
 
 - **Envoy Gateway** (upstream `oci://docker.io/envoyproxy/gateway-helm` v1.7.2) is the Gateway-API controller. Installed by `apps/envoy-gateway/`.
 - One `Gateway` resource, `envoy-gateway` in the `argocd` namespace, terminates TLS for `*.<domain>` and `<domain>` using a wildcard cert managed by cert-manager.
-- One **Gateway-level `SecurityPolicy`** (`gateway-oidc`) attaches **two** policies to that Gateway: native Envoy OIDC against AWS Cognito, and an IP allowlist (`cloudflareCIDRs`). Every route inherits both by default.
-- Per-route `SecurityPolicy` resources are emitted **only to opt a route out of OIDC** (e.g. `/api`, webhooks, public routes). They carry only the IP allowlist; per Envoy Gateway's full-replace precedence, that removes OIDC for the route while keeping the allowlist.
+- One **Gateway-level `SecurityPolicy`** (`gateway-oidc`) attaches three things to that Gateway:
+  - Native Envoy OIDC against AWS Cognito (browser auth).
+  - **Two `authorization` Allow rules** — a request is admitted if **either** its TCP source IP is in `global.security.lanCIDRs` **or** it carries the shared-secret header `global.security.originAuthHeader.name` set to `originAuthHeader.secret`. The latter is injected by a Cloudflare Transform Rule on every request the zone proxies, so its presence proves the request transited *our* zone (defeats the "any Cloudflare zone can reach the origin IP" attack).
+  - The Gateway-level SP is the default that every route inherits.
+- Per-route `SecurityPolicy` resources are emitted **only to opt a route out of OIDC** (e.g. `/api`, webhooks). They re-emit the same two `authorization` Allow rules (LAN OR shared-secret) — required because Envoy Gateway uses full-replace precedence between Gateway-level and route-level SPs.
 - A Gateway-level **`EnvoyExtensionPolicy`** (`strip-oauth-cookies`) runs a Lua filter that strips Envoy's encrypted OIDC cookies from the request before it reaches the upstream pod, so Node.js (16 KB) and Tomcat (~8 KB) header limits never see them.
+- Client IP detection uses `customHeader: CF-Connecting-IP, failClosed: false` (Cloudflare's documented Envoy Gateway recipe). Cloudflare-proxied requests yield the real visitor IP from the header; LAN-direct requests fall back to the TCP source IP.
 - One Cognito callback URL: `https://auth.<domain>/oauth2/callback`. Cookies are scoped to the parent domain (`cookieDomain: <domain>`), so one Cognito sign-in covers every subdomain.
 
 ## Components
@@ -23,7 +27,7 @@ The chart that owns everything gateway-side. Resources it emits:
 | `envoy-gatewayclass.yaml` | `GatewayClass envoy-gateway` | Names the controller. |
 | `envoy-proxy-config.yaml` | `EnvoyProxy` | Customises the Envoy data-plane Service (`externalTrafficPolicy: Local`). |
 | `envoy-gateway.yaml` | `Gateway envoy-gateway` | The actual Gateway resource. Listeners: `web` (HTTP 80), `websecure` (HTTPS 443, `*.<domain>`), `websecure-apex` (HTTPS 443, `<domain>`), plus per-env extras (sftpgo 2222/TCP, ftp 2121/TCP, dns 53/UDP, samba 445/TCP). `spec.addresses` pins the LoadBalancer IP. |
-| `envoy-client-traffic-policy.yaml` | `ClientTrafficPolicy` | `clientIPDetection.xForwardedFor.numTrustedHops: 1` so Envoy treats the first proxy hop as trusted for real-client-IP detection. |
+| `envoy-client-traffic-policy.yaml` | `ClientTrafficPolicy` | `clientIPDetection.customHeader: { name: CF-Connecting-IP, failClosed: false }` — real client IP comes from Cloudflare's header when present, falls back to TCP source IP for LAN-direct traffic. |
 | `wildcard-certificate.yaml` | cert-manager `Certificate` | Wildcard `*.<domain>` + apex `<domain>` cert (issuer: `letsencrypt-production`). |
 | `oidc-client-secret-external-secret.yaml` | `ExternalSecret` → `Secret oidc-client-secret` | Pulls the Cognito client secret from Akeyless. |
 | `oidc-security-policy.yaml` | **`SecurityPolicy gateway-oidc`** | The Gateway-level SP. See below. |
@@ -55,15 +59,30 @@ spec:
   authorization:
     defaultAction: Deny
     rules:
-      - action: Allow
+      - name: lan
+        action: Allow
         principal:
           clientCIDRs:
-            - <cidrs from global.security.cloudflareCIDRs>
+            - <cidrs from global.security.lanCIDRs>
+      - name: cloudflare-shared-secret
+        action: Allow
+        principal:
+          headers:
+            - name: <global.security.originAuthHeader.name>     # e.g. X-Origin-Auth
+              values:
+                - <global.security.originAuthHeader.secret>
 ```
 
 The OIDC block makes Envoy's native OAuth2 HTTP filter handle the entire OIDC dance — redirect-to-IDP, callback parsing, token cookies, refresh, logout. Because it's attached to the Gateway (not a route), **one** HMAC is used to sign all session cookies, and `cookieDomain` makes them visible across every `*.<domain>` subdomain. That's the SSO mechanism.
 
-The authorization block is the IP allowlist. Mandatory everywhere — there is no "public" tier in this setup.
+The authorization block has **two Allow rules** that are OR'd together — a request is admitted if **either** matches:
+
+1. **LAN rule** — TCP source IP is in `lanCIDRs`. Catches LAN-direct clients (split-horizon DNS resolves `*.<domain>` to the in-cluster LoadBalancer IP, so they reach Envoy without going through Cloudflare).
+2. **Cloudflare shared-secret rule** — the request carries `originAuthHeader.name` set to `originAuthHeader.secret`. A Cloudflare Transform Rule on the zone injects this header on every request the zone proxies, so its presence cryptographically (well, opaquely) proves the request transited *our* WAF.
+
+Why two rules instead of one IP allowlist that includes Cloudflare's edge ranges: a CIDR-only allowlist admits traffic from *any* Cloudflare zone (the Workers bypass — an attacker can spin up their own zone pointing at our origin IP, or a free Workers script can re-proxy from inside CF's network, and the CIDR check passes). The shared-secret header is set only by our zone's Transform Rule, so it binds the check to our zone specifically.
+
+Mandatory: every route is gated by one of these two rules. No "public" tier.
 
 #### `strip-oauth-cookies`
 
@@ -91,9 +110,9 @@ The filter only mutates the request path, doesn't depend on inter-phase state or
 
 ### `apps/generic/templates/security-policy.yaml`
 
-Emits a **route-level** `SecurityPolicy` **only when a route opts out of OIDC**. Trigger: `oauth: false` (or `oauth` absent) on the `ingress.https[]` entry. Body: only `authorization` (cloudflareCIDRs).
+Emits a **route-level** `SecurityPolicy` **only when a route opts out of OIDC**. Trigger: `oauth: false` (or `oauth` absent) on the `ingress.https[]` entry. Body re-emits the same two `authorization` Allow rules (LAN OR shared-secret header) and omits `oidc:`.
 
-This works because Envoy Gateway uses **full-replace precedence**: a route-level SP completely replaces the Gateway-level SP for that route. Omitting `oidc:` in the route-level SP therefore *removes* OIDC enforcement for that route while preserving the mandatory IP allowlist.
+This works because Envoy Gateway uses **full-replace precedence**: a route-level SP completely replaces the Gateway-level SP for that route. Omitting `oidc:` in the route-level SP removes OIDC enforcement for that route — but the same full-replace rule means **we have to re-emit the `authorization` block** in the override, otherwise the route would be wide-open from the public IP.
 
 ```yaml
 # Excerpt — per-route opt-out emission
@@ -107,9 +126,16 @@ spec:
   authorization:
     defaultAction: Deny
     rules:
-      - action: Allow
+      - name: lan
+        action: Allow
         principal:
-          clientCIDRs: [<cloudflareCIDRs>]
+          clientCIDRs: [<lanCIDRs>]
+      - name: cloudflare-shared-secret
+        action: Allow
+        principal:
+          headers:
+            - name: <originAuthHeader.name>
+              values: [<originAuthHeader.secret>]
 {{- end }}
 ```
 
@@ -120,7 +146,7 @@ Routes with `oauth: true` (or no override needed) emit **nothing** here and inhe
 ArgoCD doesn't use the generic chart (it has bespoke HTTPRoutes). The same opt-out pattern is hand-applied:
 
 - `argocd-https-main` (the UI) — no per-route SP → inherits Gateway-level → OIDC + allowlist.
-- `argocd-https-webhook` (GitHub webhooks, etc.) — per-route SP `argocd-securitypolicy-webhook` with `authorization` only → no OIDC, allowlist only.
+- `argocd-https-webhook` (GitHub webhooks, etc.) — per-route SP `argocd-securitypolicy-webhook` re-emits the LAN-or-secret authorization rules without OIDC. GitHub's webhook request has to traverse our Cloudflare zone (so it picks up the shared-secret header from the Transform Rule) for the webhook to be admitted.
 
 ## Request flow
 
@@ -131,7 +157,7 @@ ArgoCD doesn't use the generic chart (it has bespoke HTTPRoutes). The same opt-o
 3. Envoy's OAuth2 filter (inherited from `gateway-oidc`) reads the `IdToken` cookie, validates HMAC + expiry, decodes the claims.
 4. Filter sets `X-Auth-Request-User` / `X-Auth-Request-Email` headers on the upstream request.
 5. `strip-oauth-cookies` Lua strips `IdToken`, `AccessToken`, `OauthHMAC`, etc. from the `Cookie` header.
-6. Envoy's authorization rule (also inherited) checks the client IP against `cloudflareCIDRs`. Allow.
+6. Envoy's authorization rules (also inherited) check the request: source IP in `lanCIDRs` OR `X-Origin-Auth` header equals the configured secret. Allow on either match.
 7. Forwarded to `argocd-server-tls` Backend (with `insecureSkipVerify: true` against argocd-server's self-signed cert).
 
 ### Unauthenticated user hitting a protected route
@@ -145,11 +171,11 @@ ArgoCD doesn't use the generic chart (it has bespoke HTTPRoutes). The same opt-o
 7. Filter reads the original URL from `state` and emits a `302` back to it.
 8. Browser → `https://argocd.hess.pm/` again, now with cookies → flow falls through to "authenticated" above.
 
-### User hitting an opt-out route (`https://argocd.hess.pm/api/webhook`)
+### User / external service hitting an opt-out route (`https://argocd.hess.pm/api/webhook`)
 
 1. `HTTPRoute argocd-https-webhook` matches. Per-route SP `argocd-securitypolicy-webhook` is attached.
-2. Per full-replace precedence, the route-level SP replaces `gateway-oidc` for this route — only `authorization` is in effect.
-3. No OIDC check. Source IP must be in `cloudflareCIDRs`; if so, allow.
+2. Per full-replace precedence, the route-level SP replaces `gateway-oidc` for this route — no OIDC check.
+3. The same two `authorization` Allow rules apply (LAN source IP OR shared-secret header). For an external webhook (e.g. GitHub) coming through Cloudflare, the Transform Rule has injected `X-Origin-Auth: <secret>` → allowed.
 4. Forwarded to `argocd-server-tls` Backend, no auth headers added.
 
 ### User signing out
@@ -163,9 +189,9 @@ The only auth-related knob exposed in app values:
 | Value | Effect on the route |
 |---|---|
 | `oauth: true` | (Default for most catch-all routes.) Route inherits Gateway-level SP → OIDC + IP allowlist. **No** per-route SP is generated. |
-| `oauth: false` *or* absent | Route-level SP overrides Gateway-level → IP allowlist only, **no** OIDC. Used for `/api` paths, webhooks, audiobookshelf, etc. |
+| `oauth: false` *or* absent | Route-level SP overrides Gateway-level → LAN-or-shared-secret authorization only, **no** OIDC. Used for `/api` paths, webhooks, audiobookshelf, etc. |
 
-There is no `public` tier — `cloudflareCIDRs` is mandatory at the Gateway level and re-included in every route-level override. If a route truly needs no auth and no IP filter, it would need to be moved to a separate Gateway listener without an attached SP (not currently done anywhere).
+There is no `public` tier — the LAN-or-shared-secret authorization is mandatory at the Gateway level and re-included in every route-level override. If a route truly needs no auth, it would need to be moved to a separate Gateway listener without an attached SP (not currently done anywhere).
 
 ## Per-env config (`homelab-environments/<env>/values.yaml`)
 
@@ -178,8 +204,10 @@ global:
     clientId:  "<Cognito app client id>"
     cookieDomain: "<env-domain>"          # NOTE: no RFC 6265 leading dot — Envoy rejects it
   security:
-    cloudflareCIDRs: [ <CIDRs that are allowed in> ]
-    lanCIDRs: []                          # unused today; reserved for future per-route cloudflare-and-lan
+    lanCIDRs: [ 192.168.1.0/24 ]          # LAN range(s) that reach the gateway directly
+    originAuthHeader:
+      name: X-Origin-Auth                  # don't start with cf- / x-cf-
+      secret: "<random hex, openssl rand -hex 32>"   # must match the Cloudflare Transform Rule
 
 apps:
   envoy-gateway:
@@ -282,9 +310,10 @@ Common failure modes:
 
 ## Caveats / future work
 
-- **Webhooks from external services** (e.g. GitHub → argocd `/api/webhook`): the source IP must be inside `cloudflareCIDRs`. If GitHub's IPs aren't covered (today they're not, since Cloudflare-tunneled traffic from outside isn't part of the LAN allowlist), the webhook will be denied at the authorization step. Either keep webhooks LAN-only or expand `cloudflareCIDRs` per env.
-- **No `public` tier**: every route gets the IP allowlist. To make a route truly public (e.g. for `audiobookshelf` shared with outside listeners), it would need to be moved to a separate Gateway listener with no SP attached. Not done today.
-- **One `cloudflareCIDRs` for the whole Gateway**: `cloudflare-and-lan` and per-route IP-list variation aren't supported. The old `access` enum is gone. Adding it back would require either reintroducing per-route SPs that re-include the OIDC block (cookie-collision risk) or partitioning routes across multiple Gateway listeners.
+- **Webhooks from external services** (e.g. GitHub → argocd `/api/webhook`): the request must traverse our Cloudflare zone (so the Transform Rule injects `X-Origin-Auth`). DNS for the webhook hostname must point at Cloudflare (proxied / orange-cloud), not directly at the origin. If the webhook source bypasses Cloudflare, it's denied.
+- **Origin IP exposure**: the public IP is still reachable from the internet (we're not using Cloudflare Tunnel). Direct attacks on the origin IP that don't carry `X-Origin-Auth` are denied by the Gateway SP, but the attack surface is still TCP-exposed. If you want to remove the attack surface entirely, switching to Cloudflare Tunnel is the bigger move (origin becomes outbound-only).
+- **Shared-secret rotation**: the secret value sits in `homelab-environments/<env>/values.yaml` (private repo) and in cluster etcd (rendered into the `SecurityPolicy` YAML). Rotate at least annually: update both the Cloudflare Transform Rule and the env values, then `git push` + sync. Brief overlap window if you set the SP to accept both values during cutover.
+- **No `public` tier**: every route gets the auth gate. To make a route truly public, it would need to be moved to a separate Gateway listener with no SP attached. Not done today.
 - **Cookie size sensitivity**: we kept `scopes` at `[openid, email]`. Adding `profile` would add ~1–2 KB to the ID-token cookie and could push some Tomcat-based upstreams back over their header limit (currently masked by the cookie-strip filter, but margin for safety).
 
 ## Files
@@ -300,4 +329,4 @@ Common failure modes:
 | `apps/generic/templates/security-policy.yaml` | Per-route SP override (only emitted for `oauth: false`) |
 | `apps/generic/values.schema.json` | Validates the `oauth` field on each `ingress.https[]` |
 | `apps/argocd/templates/argocd-security-policy.yaml` | Per-route SP for `argocd-https-webhook` (opt-out) |
-| `homelab-environments/<env>/values.yaml` | Per-env `global.oidc.*`, `global.security.cloudflareCIDRs`, `apps.envoy-gateway.argocd.helm.values` |
+| `homelab-environments/<env>/values.yaml` | Per-env `global.oidc.*`, `global.security.lanCIDRs`, `global.security.originAuthHeader`, `apps.envoy-gateway.argocd.helm.values` |

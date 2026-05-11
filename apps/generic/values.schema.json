@@ -81,17 +81,16 @@
         },
         "security": {
           "type": "object",
-          "description": "Shared CIDR lists used by SecurityPolicy.authorization for IP allowlisting",
+          "description": "Gateway-level authorization sources. LAN traffic is gated by source IP; Cloudflare-proxied traffic is gated by mTLS at a separate listener using cloudflareOriginCA.",
           "properties": {
-            "cloudflareCIDRs": {
-              "type": "array",
-              "description": "CIDR ranges allowed for routes with access: cloudflare-only (typically Cloudflare published IPs)",
-              "items": { "type": "string" }
-            },
             "lanCIDRs": {
               "type": "array",
-              "description": "Additional CIDR ranges allowed for routes with access: cloudflare-and-lan (typically internal LAN ranges)",
+              "description": "CIDR ranges allowed to reach the gateway's LAN listener (port 443, no mTLS). Typical content: the LAN range.",
               "items": { "type": "string" }
+            },
+            "cloudflareOriginCA": {
+              "type": "string",
+              "description": "PEM-encoded CA certificate used to validate Cloudflare's client cert on the mTLS listener (port 4443). Public information — fine to commit. Generate with openssl, upload the leaf cert + key to Cloudflare's zone-level Authenticated Origin Pulls."
             }
           }
         }
