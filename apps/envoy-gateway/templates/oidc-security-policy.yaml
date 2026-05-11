@@ -1,23 +1,25 @@
 {{- /*
-  Gateway-attached SecurityPolicy:
-   - native OIDC against Cognito (one HMAC, one cookie set scoped to
-     global.oidc.cookieDomain, one Cognito callback URL).
-   - authorization with a single Allow rule for LAN source IPs.
+  Gateway-attached SecurityPolicy. Single concern: enforce OIDC against
+  Cognito for every route that inherits this SP. One HMAC + one cookie set
+  scoped to global.oidc.cookieDomain means a single Cognito callback URL
+  covers every subdomain.
 
-  Cloudflare-proxied traffic does NOT pass this authorization rule — it
-  enters via the dedicated mTLS listener (port 4443 / Authenticated Origin
-  Pulls), where the listener-level cert validation gates the connection
-  before any HTTP filter runs. That's why we don't need a second Allow rule
-  here.
+  No `authorization` block. Access control happens at the listener layer:
+   - The LAN listener (websecure / websecure-apex, port 443) only accepts
+     connections from devices on the LAN VLAN — MetalLB only announces
+     192.168.1.80 there.
+   - The Cloudflare-facing listener (websecure-public[-apex], port 4443)
+     requires mTLS, validated against the cloudflare-origin-ca ConfigMap
+     by the envoy-gateway-mtls ClientTrafficPolicy. Anything not presenting
+     a Cloudflare-signed leaf cert is rejected before any HTTP filter runs.
 
-  Per-route opt-out SPs must re-emit this `authorization` block (Envoy
-  Gateway uses full-replace precedence between Gateway-level and route-level
-  SPs).
+  Per-route opt-out SPs (oauth: false) still emit their own authorization
+  block today; that's an inherited concern from the previous design and
+  effectively keeps those routes LAN-only. Will be revisited if/when
+  external services need to hit them through Cloudflare.
 */ -}}
 {{- $domain := required "global.domain must be set" .Values.global.domain }}
 {{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
-{{- $security := required "global.security must be set" .Values.global.security }}
-{{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -45,13 +47,3 @@ spec:
     {{- if $oidc.cookieDomain }}
     cookieDomain: {{ $oidc.cookieDomain | quote }}
     {{- end }}
-  authorization:
-    defaultAction: Deny
-    rules:
-      - name: lan
-        action: Allow
-        principal:
-          clientCIDRs:
-            {{- range $lanCIDRs }}
-            - {{ . }}
-            {{- end }}
