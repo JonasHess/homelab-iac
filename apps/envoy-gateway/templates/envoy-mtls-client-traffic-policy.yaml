@@ -1,0 +1,49 @@
+{{- /*
+  mTLS enforcement for the Cloudflare-facing listeners (port 4443).
+
+  Gateway API's `tls.frontendValidation` field is in the experimental channel
+  and gets stripped by the API server here, so we use Envoy Gateway's native
+  `ClientTrafficPolicy.tls.clientValidation` instead — same end result, but
+  emitted as a separate CR in the gateway.envoyproxy.io group that's
+  installed regardless of which Gateway-API channel the cluster uses.
+
+  Target: the `websecure-public` and `websecure-public-apex` listeners on the
+  Gateway, scoped via `sectionName`. The other listeners (LAN-direct,
+  non-HTTP) are unaffected and continue to use the Gateway-wide
+  ClientTrafficPolicy in templates/envoy-client-traffic-policy.yaml.
+
+  Both clientIPDetection AND clientValidation are emitted in this CTP because
+  Envoy Gateway uses full-replace precedence between Gateway-level and
+  sectionName-level CTPs — omitting clientIPDetection would lose
+  CF-Connecting-IP-based IP detection for these listeners.
+*/ -}}
+{{- if .Values.global.security.cloudflareOriginCA }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: envoy-gateway-mtls
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-gateway
+      sectionName: websecure-public
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: envoy-gateway
+      sectionName: websecure-public-apex
+  clientIPDetection:
+    customHeader:
+      name: CF-Connecting-IP
+      failClosed: false
+  tls:
+    clientValidation:
+      caCertificateRefs:
+        - group: ""
+          kind: ConfigMap
+          name: cloudflare-origin-ca
+{{- end }}
