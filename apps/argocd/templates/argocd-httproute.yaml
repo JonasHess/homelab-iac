@@ -1,3 +1,5 @@
+{{- $security := $.Values.global.security | default dict }}
+{{- $publicListeners := and (hasKey $security "cloudflareOriginCA") (ne ($security.cloudflareOriginCA | default "") "") }}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -10,6 +12,11 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: websecure
+    {{- if $publicListeners }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: websecure-public
+    {{- end }}
   hostnames:
     - argocd.{{ .Values.global.domain }}
   rules:
@@ -34,6 +41,11 @@ spec:
     - name: {{ .Values.global.gateway.name }}
       namespace: {{ .Values.global.gateway.namespace }}
       sectionName: websecure
+    {{- if $publicListeners }}
+    - name: {{ .Values.global.gateway.name }}
+      namespace: {{ .Values.global.gateway.namespace }}
+      sectionName: websecure-public
+    {{- end }}
   hostnames:
     - argocd.{{ .Values.global.domain }}
   rules:

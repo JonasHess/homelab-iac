@@ -5,7 +5,11 @@
     {{- $domain := required "global.domain must be set in values.yaml" $.Values.global.domain }}
     {{- $gatewayName := required "global.gateway.name must be set" $.Values.global.gateway.name }}
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
+    {{- $security := $.Values.global.security | default dict }}
+    {{- $publicListeners := and (hasKey $security "cloudflareOriginCA") (ne ($security.cloudflareOriginCA | default "") "") }}
     {{- range $index, $ingress := .Values.ingress.https }}
+    {{- $sectionLan := ternary "websecure" "websecure-apex" (hasKey $ingress "subdomain") }}
+    {{- $sectionPublic := ternary "websecure-public" "websecure-public-apex" (hasKey $ingress "subdomain") }}
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -19,7 +23,12 @@ spec:
   parentRefs:
     - name: {{ $gatewayName }}
       namespace: {{ $gatewayNamespace }}
-      sectionName: {{ if $ingress.subdomain }}websecure{{ else }}websecure-apex{{ end }}
+      sectionName: {{ $sectionLan }}
+    {{- if $publicListeners }}
+    - name: {{ $gatewayName }}
+      namespace: {{ $gatewayNamespace }}
+      sectionName: {{ $sectionPublic }}
+    {{- end }}
   hostnames:
     - {{ if $ingress.subdomain }}{{ $ingress.subdomain }}.{{ $domain }}{{ else }}{{ $domain }}{{ end }}
   rules:
