@@ -1,24 +1,22 @@
 {{- /*
   Per-route SecurityPolicy that opts THIS route out of the Gateway-level OIDC.
 
-  Envoy Gateway uses full-replace precedence — a route-level SP completely
-  overrides the Gateway-level SP for that route, including its
-  `authorization` block. So this override has to re-emit the LAN Allow rule.
+  Envoy Gateway uses full-replace precedence: a route-level SP completely
+  overrides the Gateway-level SP for the routes it targets. We want to
+  remove OIDC for these routes while leaving the listener-level gates
+  (LAN-only L2 on port 443, mTLS on port 4443) in charge of access control,
+  so the body is just an "allow all" authorization. No IP allowlist —
+  that's covered at the listener layer.
 
   Trigger: `oauth: false` (or absent) on the route. Routes meant to be
-  auth-protected set `oauth: true` and emit nothing here.
-
-  Cloudflare-proxied traffic for these routes still arrives via the mTLS
-  listener (port 4443); that gate runs before the route's SP, so the
-  authorization block here only needs to cover LAN traffic.
+  auth-protected set `oauth: true` and emit nothing here, inheriting the
+  Gateway-level OIDC.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.ingress }}
   {{- if .Values.ingress.https }}
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
-    {{- $security := required "global.security must be set" $.Values.global.security }}
-    {{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 
     {{- range $index, $ingress := .Values.ingress.https }}
     {{- if not $ingress.oauth }}
@@ -37,15 +35,7 @@ spec:
       kind: HTTPRoute
       name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
   authorization:
-    defaultAction: Deny
-    rules:
-      - name: lan
-        action: Allow
-        principal:
-          clientCIDRs:
-            {{- range $lanCIDRs }}
-            - {{ . }}
-            {{- end }}
+    defaultAction: Allow
     {{- end }}
     {{- end }}
   {{- end }}

@@ -1,15 +1,11 @@
 {{- /*
   Per-route SP only for the webhook route, which must NOT require OIDC
   (external services posting webhooks can't carry an OIDC session cookie).
-  Replicates the Gateway-level SP's authorization block (LAN allowlist)
-  sans OIDC. Cloudflare-proxied webhook traffic enters via the mTLS
-  listener; that gate runs before this route's SP.
+  Body is "allow all" — listener-level gates (LAN topology / Cloudflare
+  mTLS) handle access control.
 
-  The main route inherits the Gateway-level SP from apps/envoy-gateway,
-  so no per-route SP is emitted for it.
+  The main route inherits the Gateway-level SP (OIDC) from apps/envoy-gateway.
 */ -}}
-{{- $security := required "global.security must be set" $.Values.global.security }}
-{{- $lanCIDRs := $security.lanCIDRs | default (list) }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -23,12 +19,4 @@ spec:
       kind: HTTPRoute
       name: argocd-https-webhook
   authorization:
-    defaultAction: Deny
-    rules:
-      - name: lan
-        action: Allow
-        principal:
-          clientCIDRs:
-            {{- range $lanCIDRs }}
-            - {{ . }}
-            {{- end }}
+    defaultAction: Allow
