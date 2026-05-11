@@ -35,6 +35,13 @@ spec:
     - name: envoy-gateway
       namespace: {{ $.Release.Namespace }}
       sectionName: websecure
+    {{- if .Values.global.security.cloudflareOriginCA }}
+    # Also attach to the Cloudflare-facing listener so Cognito's callback
+    # — which comes through Cloudflare → 4443 — actually has a matching route.
+    - name: envoy-gateway
+      namespace: {{ $.Release.Namespace }}
+      sectionName: websecure-public
+    {{- end }}
   hostnames:
     - auth.{{ .Values.global.domain }}
   rules:
