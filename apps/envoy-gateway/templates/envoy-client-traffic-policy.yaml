@@ -4,10 +4,10 @@
   don't carry this header and fall back to the TCP source IP.
 
   `failClosed: false` is deliberate — LAN clients legitimately won't have
-  the header. Spoofing CF-Connecting-IP isn't a concern because any request
-  reaching this listener has already been gated by the Gateway-level SP
-  (LAN source IP OR shared-secret header), and the shared-secret check is
-  what proves the request transited our Cloudflare zone.
+  the header. Spoofing CF-Connecting-IP isn't a concern because the only
+  way to reach a listener that consults this CTP is via the LAN VLAN
+  (websecure / websecure-apex) or through Cloudflare's mTLS handshake on
+  the public listener pair (gated by envoy-mtls-client-traffic-policy.yaml).
 
   This is also Cloudflare's documented recommendation for Envoy Gateway —
   see https://developers.cloudflare.com/support/troubleshooting/restoring-visitor-ips/restoring-original-visitor-ips/
