@@ -1,200 +1,112 @@
 # Radicale
 
-Helm chart for [Radicale](https://radicale.org/) — a lightweight CalDAV (calendar) and CardDAV (contacts) server.
-
-Auth is handled by Radicale itself (htpasswd, bcrypt) — **no oauth2-proxy middleware**, because DAV clients (DAVx⁵, iOS/macOS Contacts, Thunderbird) speak HTTP Basic Auth directly and break behind OAuth redirects.
+CalDAV/CardDAV server. Auth via htpasswd (bcrypt). **No oauth2-proxy middleware** — DAV clients use HTTP Basic Auth and break on OAuth redirects.
 
 ## Prerequisites
 
-### 1. Create Host Directory
+**1. Host directory.** UID 2999 = the `radicale` user in `tomsquest/docker-radicale`:
 
 ```bash
 sudo mkdir -p /mnt/tank1/encrypted/apps/radicale/data
 sudo chown -R 2999:2999 /mnt/tank1/encrypted/apps/radicale/data
 ```
 
-UID `2999` = the `radicale` user inside the `tomsquest/docker-radicale` image.
-
-### 2. Generate htpasswd Entries
-
-Install Apache utils:
+**2. htpasswd in Akeyless.** Generate bcrypt hashes, concatenate, store the blob at `<global.akeyless.path>/radicale/HTPASSWD`:
 
 ```bash
 sudo apt install apache2-utils
-```
-
-Generate a **bcrypt** hash per user (matches `htpasswd_encryption = bcrypt` in the chart's config):
-
-```bash
 htpasswd -nB user1
 htpasswd -nB user2
+# blob:
+# user1:$2y$05$...
+# user2:$2y$05$...
 ```
 
-(`-n` prints to stdout, `-B` uses bcrypt. Omit `-b` so the password isn't echoed in shell history.)
+**3. DNS.** Point `dav.<your-domain>` at your cluster ingress.
 
-Concatenate the two output lines into a single multi-line blob:
+## Where things live
 
-```
-user1:$2y$05$...
-user2:$2y$05$...
-```
-
-### 3. Create Akeyless Secret
-
-Store the concatenated htpasswd blob in Akeyless at:
-
-```
-<global.akeyless.path>/radicale/HTPASSWD
-```
-
-The ExternalSecret in `apps/radicale/values.yaml` pulls this into a Kubernetes Secret mounted at `/etc/radicale-htpasswd/users` inside the pod.
-
-### 4. DNS Record
-
-Point `dav.<your-domain>` at your cluster ingress.
-
-## Architecture
-
-| Concern | Lives in |
+| Concern | File |
 |---|---|
-| Image, ports, service, ingress, mounts | `apps/radicale/values.yaml` (env-agnostic) |
-| Radicale main config file (`config`) | `apps/radicale/values.yaml` (env-agnostic — only paths, no usernames) |
-| Rights file (who can access what) | `homelab_environments/<env>/values.yaml` (env-specific — names real users) |
-| Data PVC `hostPath` | `homelab_environments/<env>/values.yaml` |
+| Chart, image, ingress, mounts, Radicale config file | `apps/radicale/values.yaml` |
+| Rights file, data PVC `hostPath` | `homelab_environments/<env>/values.yaml` |
 | Password hashes | Akeyless `/radicale/HTPASSWD` |
 
-Mounts inside the pod:
+Pod mounts: `/data` (PVC), `/config` (ConfigMap: Radicale config + rights), `/etc/radicale-htpasswd` (Secret: htpasswd file).
 
-| Path | Source | Contents |
-|---|---|---|
-| `/data` | PVC | Collection storage (`/data/collections/<user>/<collection>/`) |
-| `/config` | ConfigMap `radicale-config-files` | `config` and `rights` files |
-| `/etc/radicale-htpasswd` | Secret `radicale-htpasswd-secret` (from ExternalSecret) | `users` file (htpasswd) |
+## Rights file
 
-## Rights File Format
-
-Radicale evaluates rights sections top-to-bottom. **Any matching section grants access.** Each section is INI-style:
+Radicale evaluates sections top-to-bottom; any match grants access.
 
 ```ini
 [section-label]
-user = <regex matching authenticated username>
-collection = <regex matching collection URL path>
+user = <regex>
+collection = <regex>
 permissions = <letters>
 ```
 
-### Permission letters
+Permission letters (`RrWw` = full r/w):
 
 | Letter | Meaning |
 |---|---|
-| `R` | Read the collection itself (metadata, listing) |
+| `R` | Read the collection's metadata |
 | `r` | Read items inside the collection |
-| `W` | Write the collection itself (modify metadata) |
-| `w` | Write items inside the collection (create/update/delete entries) |
+| `W` | Write the collection's metadata |
+| `w` | Write items inside the collection |
 
-`RrWw` = full read/write on the collection and its items.
+`{user}` in the `collection =` regex expands to the authenticated username.
 
-### `{user}` placeholder
-
-`{user}` in the `collection =` line expands to the **currently authenticated** username. This lets one rule cover every user's own private space.
-
-### Example: two users, one shared addressbook + one shared calendar
+**Example — two users, one shared addressbook + one shared calendar:**
 
 ```ini
-# Every user gets full access to their own principal and sub-collections.
+# REQUIRED — without this, clients get 403 on PROPFIND / and discovery fails.
+[root]
+user = .+
+collection =
+permissions = R
+
+# Every user has full access to their own principal.
 [owner-full-access]
 user = .+
 collection = {user}(/.*)?
 permissions = RrWw
 
-# User2 can read and write User1's shared collections.
+# user2 gets full access to user1's shared collections.
 [user2-access-shared]
 user = user2
 collection = user1/shared-(contacts|calendar)
 permissions = RrWw
 ```
 
-Result:
-- User1 → full access to `user1/*` (covered by section 1, including the shared ones)
-- User2 → full access to `user2/*` (section 1) **and** `user1/shared-contacts`, `user1/shared-calendar` (section 2)
+Variations:
+- **More shared collections** → extend the regex: `user1/shared-(contacts|calendar|notes)`
+- **Read-only access** → drop `W` and `w`: `permissions = Rr`
 
-### How to add more shared collections
+## Post-installation
 
-Extend the `collection` regex in the shared section. Example: also share a `notes` addressbook:
-
-```ini
-[user2-access-shared]
-user = user2
-collection = user1/shared-(contacts|calendar|notes)
-permissions = RrWw
-```
-
-### How to add a third user
-
-Add them to the htpasswd file in Akeyless and grant rights:
-
-```ini
-[guest-readonly-shared-calendar]
-user = guest
-collection = user1/shared-calendar
-permissions = Rr
-```
-
-`Rr` (no `W` or `w`) = read-only.
-
-## Post-Installation Steps
-
-### 1. Verify the Pod Started
+**Create the collections** with explicit URL slugs (DAV clients would otherwise pick UUIDs that don't match the rights regex):
 
 ```bash
-kubectl -n services get pods -l app=radicale
-kubectl -n services logs -l app=radicale
+./setup-collections.sh --server https://dav.<your-domain> --user user1 \
+  --collections contacts:addressbook,calendar:calendar,shared-contacts:addressbook,shared-calendar:calendar
+
+./setup-collections.sh --server https://dav.<your-domain> --user user2 \
+  --collections contacts:addressbook,calendar:calendar
 ```
 
-You should see Radicale listening on `0.0.0.0:5232`. If it complains about missing `/config/rights`, your env values are missing the `rights` key — see Architecture above.
+Prompts for the password (or reads `$RADICALE_PASSWORD`). Re-running is safe — existing collections return HTTP 405 and are skipped.
 
-### 2. Create Collections via Radicale's Web UI
+**Add accounts in clients.** URL pattern: `https://dav.<your-domain>/<username>/`. Username/password as set in htpasswd.
 
-Open `https://dav.<your-domain>` in a browser, log in as **user1**.
+- **DAVx⁵ (Android)** — "Login with URL and user name". For user2 to see the shared collections, add a *second* account pointing at `/user1/` with user2's credentials.
+- **iOS / macOS** — Settings → Accounts → Other → CalDAV/CardDAV; server `dav.<your-domain>`.
+- **Thunderbird** — Address Book → New → CardDAV; same pattern for CalDAV.
 
-The web UI lets you create collections with **explicit URL slugs**, which is required so that the rights file regex matches. Create:
+## Operations
 
-- `contacts` (type: address book) — private
-- `calendar` (type: calendar) — private
-- `shared-contacts` (type: address book) — shared with user2
-- `shared-calendar` (type: calendar) — shared with user2
-
-Repeat for **user2**: create `contacts` and `calendar` under their account.
-
-> ⚠️ **Why the web UI and not DAVx⁵ for setup?** DAVx⁵'s "create collection" assigns a random UUID as the URL slug (e.g. `/user1/8f2c1a.../`). That UUID won't match `user1/shared-(contacts|calendar)` in the rights file. The Radicale web UI lets you type the slug explicitly.
-
-After this one-time setup, day-to-day use happens entirely from your clients.
-
-### 3. Add Accounts in Clients
-
-**DAVx⁵ (Android):**
-
-1. Add account → "Login with URL and user name"
-2. URL: `https://dav.<your-domain>/<username>/`
-3. Username/password: as set in htpasswd
-4. DAVx⁵ auto-discovers all collections the user has rights to (private + shared)
-5. For user2 to see the shared collections, add a **second** account pointing at `https://dav.<your-domain>/user1/` with their credentials
-
-**iOS/macOS (built-in Contacts/Calendar):**
-
-1. Settings → Accounts → Add → Other → CalDAV/CardDAV
-2. Server: `dav.<your-domain>`
-3. Username/password: as set in htpasswd
-
-**Thunderbird:**
-
-1. Address Book → New → CardDAV
-2. URL: `https://dav.<your-domain>/<username>/`
-3. Same for calendar (CalDAV).
-
-## Operational Notes
-
-- **Backup**: enabled on the data PVC via the restic integration in the generic chart. Collection storage lives at `/data/collections/`.
-- **Reloading config**: ConfigMap changes auto-roll the pod via the reloader annotation on the deployment.
-- **Adding/removing users**: update the htpasswd blob in Akeyless. The ExternalSecret syncs (refreshInterval `1h` by default), then reloader rolls the pod.
-- **Rotating passwords**: regenerate that user's line with `htpasswd -nB` and update the Akeyless secret.
-- **Removing a user's data**: delete `/data/collections/<username>/` on the host after taking a backup.
+- **Backup**: enabled on `/data` via the generic chart's restic integration.
+- **Add/remove user**: edit the htpasswd blob in Akeyless. ExternalSecret syncs hourly; reloader then rolls the pod.
+- **Change rights**: edit the env values; ConfigMap change auto-rolls the pod.
+- **Inspect rendered config**: `kubectl -n argocd exec deploy/radicale-deployment -- cat /config/rights`
+- **Force reload**: `kubectl -n argocd rollout restart deploy/radicale-deployment`
+- **Wipe a user's data**: `rm -rf /data/collections/<username>/` on the host (back up first).
