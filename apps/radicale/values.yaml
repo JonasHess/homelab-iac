@@ -9,13 +9,44 @@ generic:
         hostPath: ~ # /mnt/storage/radicale/data
         backup:
           enabled: true
+    configMapMounts:
+      config:
+        mountPath: /config
+        configMapName: radicale-config-files
+    secretMounts:
+      htpasswd:
+        mountPath: /etc/radicale-htpasswd
+        secretName: radicale-htpasswd-secret
   service:
     ports:
     - name: http
       port: 5232
   ingress:
     https:
-    - subdomain: radicale
+    - subdomain: dav
       port: 5232
-      middlewares:
-      - oauth2-proxy
+  configMaps:
+    radicale-config-files:
+      config: |
+        [server]
+        hosts = 0.0.0.0:5232
+        max_connections = 20
+        max_content_length = 100000000
+
+        [auth]
+        type = htpasswd
+        htpasswd_filename = /etc/radicale-htpasswd/users
+        htpasswd_encryption = bcrypt
+
+        [rights]
+        type = from_file
+        file = /config/rights
+
+        [storage]
+        filesystem_folder = /data/collections
+
+        [logging]
+        level = info
+  externalSecrets:
+    radicale-htpasswd-secret:
+    - users: "/radicale/HTPASSWD"

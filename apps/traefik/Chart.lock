@@ -1,9 +1,9 @@
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.31
+  version: 0.1.32
 - name: oauth2-proxy
   repository: https://oauth2-proxy.github.io/manifests
   version: 10.4.3
-digest: sha256:d9495d6f8105fceeb09c2e3bdb6ce6efd3d511d9674923b4110a600612531d81
-generated: "2026-04-15T16:56:43.273146381Z"
+digest: sha256:e5211bc70d22d6f4e5c5995ddb863f4c610836223e48e8241146514c53f79708
+generated: "2026-05-15T18:31:21.28241532+02:00"

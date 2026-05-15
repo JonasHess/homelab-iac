@@ -78,6 +78,10 @@ spec:
             - mountPath: "{{ required (printf "mountPath for configMapMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
+            {{- range $mountName, $mount := $deployment.secretMounts }}
+            - mountPath: "{{ required (printf "mountPath for secretMount %s must be specified" $mountName) $mount.mountPath }}"
+              name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
           {{- if $deployment.envFrom }}
           envFrom:
             {{- if $deployment.envFrom.configMapRef }}
@@ -115,6 +119,11 @@ spec:
         - name: {{ $appName }}-{{ $mountName }}-volume
           configMap:
             name: {{ required (printf "configMapName for configMapMount %s must be specified" $mountName) $mount.configMapName }}
+        {{- end }}
+        {{- range $mountName, $mount := $deployment.secretMounts }}
+        - name: {{ $appName }}-{{ $mountName }}-volume
+          secret:
+            secretName: {{ required (printf "secretName for secretMount %s must be specified" $mountName) $mount.secretName }}
         {{- end }}
       {{- if $deployment.imagePullSecrets }}
       imagePullSecrets:

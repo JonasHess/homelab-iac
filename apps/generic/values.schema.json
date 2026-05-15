@@ -214,6 +214,24 @@
             }
           }
         },
+        "secretMounts": {
+          "type": "object",
+          "description": "Secrets to mount in the container as files",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["mountPath", "secretName"],
+            "properties": {
+              "mountPath": {
+                "type": "string",
+                "description": "Path where the Secret should be mounted in the container"
+              },
+              "secretName": {
+                "type": "string",
+                "description": "Name of the Secret to mount"
+              }
+            }
+          }
+        },
         "imagePullSecrets": {
           "type": "array",
           "description": "List of image pull secret names for pulling private container images",
