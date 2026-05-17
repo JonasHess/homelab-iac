@@ -159,3 +159,5 @@ Renovate keeps Helm chart versions, Docker images, and language packages up to d
 - [ ] **AWS Lambda** — provision via Crossplane for specific tasks
 - [ ] **Smart home** — make the smarthome stack Kubernetes-API-native
 - [ ] **Fix namespace issue of Cert-Manager application apps/cert-manager/templates/cert-manager-application.yaml:8**
+- [ ] **radicale only api without oauth2**
+- [ ] **hess.pm cloudlfare WAF, only german IPs**
