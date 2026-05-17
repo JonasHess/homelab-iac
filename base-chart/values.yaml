@@ -674,7 +674,7 @@ apps:
     homer:
       enabled: true
       group: "productivity"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/caldav.svg"
+      logo: "https://raw.githubusercontent.com/lllllllillllllillll/Dashboard-Icons/main/svg/radicale.svg"
       subtitle: "CalDAV Server"
       displayName: "Radicale"
     argocd:
