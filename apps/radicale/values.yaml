@@ -25,7 +25,7 @@ generic:
     https:
     - subdomain: dav
       port: 5232
-      oauth: true
+      oauth: false
   configMaps:
     radicale-config-files:
       config: |

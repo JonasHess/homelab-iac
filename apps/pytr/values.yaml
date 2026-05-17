@@ -3,12 +3,16 @@ appName: pytr
 generic:
   persistentVolumeClaims: {}
   externalSecrets: {}
+  ingress:
+    https:
+    - subdomain: tr
+      port: 8080
+      service: pytr-login-service
+      oauth: true
 
 pytr:
   pytrVersion: "0.4.9"
   image: mcr.microsoft.com/playwright/python:v1.59.0-noble
-
-  subdomain: tr
 
   login:
     schedule: "0 0 1 1 *"
