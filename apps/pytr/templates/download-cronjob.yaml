@@ -25,7 +25,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: download
-            image: python:3.14-slim-bookworm
+            image: {{ .Values.pytr.image }}
             command: ["sh", "-c"]
             envFrom:
             - secretRef:

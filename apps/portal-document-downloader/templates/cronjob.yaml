@@ -7,7 +7,7 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: {{ $appName }}-{{ $portalName }}
+  name: {{ $portalName }}
   namespace: {{ $.Release.Namespace }}
   labels:
     app: {{ $appName }}
@@ -39,6 +39,7 @@ spec:
           containers:
           - name: downloader
             image: {{ required "image must be specified" $.Values.portalDocumentDownloader.image }}:{{ $.Values.portalDocumentDownloader.imageTag | default "latest" }}
+            imagePullPolicy: IfNotPresent
             {{- if $portalConfig.flat }}
             args:
             - "--flat"
@@ -51,7 +52,7 @@ spec:
             {{- if $.Values.portalDocumentDownloader.externalSecret.enabled }}
             envFrom:
             - secretRef:
-                name: {{ $appName }}-{{ $portalName }}-credentials
+                name: {{ $portalName }}-credentials
             {{- end }}
             volumeMounts:
             - name: downloads

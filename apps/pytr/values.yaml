@@ -6,6 +6,7 @@ generic:
 
 pytr:
   pytrVersion: "0.4.9"
+  image: mcr.microsoft.com/playwright/python:v1.59.0-noble
 
   subdomain: tr
 
