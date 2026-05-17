@@ -158,3 +158,4 @@ Renovate keeps Helm chart versions, Docker images, and language packages up to d
 - [ ] **Gateway API** — replace Traefik `IngressRoute` with Gateway API
 - [ ] **AWS Lambda** — provision via Crossplane for specific tasks
 - [ ] **Smart home** — make the smarthome stack Kubernetes-API-native
+- [ ] **Fix namespace issue of Cert-Manager application apps/cert-manager/templates/cert-manager-application.yaml:8**

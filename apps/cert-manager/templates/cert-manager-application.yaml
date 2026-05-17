@@ -2,7 +2,10 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: cert-manager-controller
-  namespace: {{ $.Release.Namespace }}
+  # Child ArgoCD Applications must live in the namespace the application
+  # controller watches (argocd), not the parent's workload namespace —
+  # cert-manager's parent app deploys into the `cert-manager` namespace.
+  namespace: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
