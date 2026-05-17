@@ -20,7 +20,7 @@ generic:
   ingress:
     tcp:
       - port: 445
-        traefikEntryPoint: samba
+        listener: samba
 
 samba:
   workgroup: WORKGROUP
