@@ -96,7 +96,7 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 - **HomeMatic** — automation controller
 - **Zigbee2MQTT** — Zigbee → MQTT gateway
 - **Mosquitto** — MQTT broker
-- **smarthome3** / **smarthome4** — custom smart-home services
+- **smarthome4** — custom smart-home service
 - **smarthome4-ui** — FastAPI + React UI for Zigbee2MQTT scenes
 - **alexa-custom-skill** / **alexa-smarthome-skill** — Alexa integrations
 

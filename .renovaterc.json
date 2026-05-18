@@ -201,9 +201,7 @@
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d{8})$"
     }
   ],
-  "ignoreDeps": [
-    "629099703604.dkr.ecr.eu-central-1.amazonaws.com/nudelkiste"
-  ],
+  "ignoreDeps": [],
   "hostRules": [],
   "customManagers": [
     {

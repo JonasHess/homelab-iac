@@ -170,16 +170,6 @@ apps:
             host: email-smtp.eu-central-1.amazonaws.com
             username: AKIAZE6KDVU2EPZKN2IL
             from: Immich Photo Server <immich@hess.pm>
-  smarthome3:
-    enabled: true
-    argocd:
-      targetRevision: feature/refactor-apps
-      helm:
-        values:
-          hueIp: 192.168.1.194
-          mqttUrl: tcp://mosquitto-service:1883
-          homeAssistantIp: ws://homeassistant-service:8123
-          profilesActive: jonas
   immichold:
     enabled: true
     argocd:

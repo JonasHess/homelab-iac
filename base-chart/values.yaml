@@ -536,13 +536,6 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"
-  smarthome3:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "17"  # Deploy after Home Assistant components
   smarthome4:
     enabled: false
     argocd:
