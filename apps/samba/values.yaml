@@ -60,15 +60,3 @@ samba:
     # hostname: samba             # becomes <hostname>.local in mDNS
     # serviceName: Samba          # display name shown in Finder
     # servicePort: "445"
-
-  # WS-Discovery publisher for Windows File Explorer → Network autodiscovery.
-  # Runs a separate hostNetwork pod that responds to WSD multicast probes,
-  # announcing the SMB server at publishIP. Defaults inherit from samba.avahi
-  # and samba.workgroup so a typical config only needs `enabled: true` and
-  # `publishIP`.
-  wsdd:
-    enabled: false
-    # publishIP: "192.168.1.80"   # REQUIRED: Gateway LB IP, same as avahi.publishIP
-    # hostname: nudelkiste         # NetBIOS-style name; defaults to avahi.hostname / lowercased serverString
-    # workgroup: WORKGROUP         # defaults to samba.workgroup
-    # interface: eth0              # LAN interface on the node; default eth0
