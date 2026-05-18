@@ -1,0 +1,66 @@
+{{- if .Values.samba.wsdd.enabled }}
+{{- /*
+  WS-Discovery responder for Windows auto-discovery in File Explorer →
+  Network. Same pattern as the avahi publisher: separate hostNetwork pod
+  so UDP multicast (WSD uses 239.255.255.250:3702) actually reaches the
+  LAN instead of being trapped in the cluster pod network.
+
+  We use christgau/wsdd (Python, in Alpine's community repo) specifically
+  for its `-A` flag: it lets us advertise a different IP than the host's
+  own — necessary because SMB lives at the Envoy Gateway LB IP, not at
+  this pod's node IP. Without `-A`, Windows would discover the wsdd node
+  and try to connect to TCP/445 on the wrong address.
+
+  wsdd2 (the C rewrite baked into the samba container image) doesn't
+  expose an equivalent advertise-IP flag — that's why we run a separate
+  pod instead of using wsdd2 in the samba container.
+*/ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: samba-wsdd-publisher
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: samba-wsdd-publisher
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: samba-wsdd-publisher
+  template:
+    metadata:
+      labels:
+        app: samba-wsdd-publisher
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: wsdd
+          image: alpine:3.23
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache wsdd
+              exec wsdd \
+                --interface "${WSDD_INTERFACE}" \
+                --address "${PUBLISH_IP}" \
+                --hostname "${WSDD_HOSTNAME}" \
+                --workgroup "${WSDD_WORKGROUP}" \
+                --ipv4only
+          env:
+            - name: PUBLISH_IP
+              value: {{ required "samba.wsdd.publishIP is required when wsdd is enabled" .Values.samba.wsdd.publishIP | quote }}
+            - name: WSDD_HOSTNAME
+              value: {{ .Values.samba.wsdd.hostname | default .Values.samba.avahi.hostname | default (.Values.samba.serverString | lower) | default "samba" | quote }}
+            - name: WSDD_WORKGROUP
+              value: {{ .Values.samba.wsdd.workgroup | default .Values.samba.workgroup | default "WORKGROUP" | quote }}
+            - name: WSDD_INTERFACE
+              value: {{ .Values.samba.wsdd.interface | default "eth0" | quote }}
+          resources:
+            requests:
+              cpu: 5m
+              memory: 32Mi
+            limits:
+              memory: 64Mi
+{{- end }}
