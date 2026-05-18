@@ -22,8 +22,16 @@ generic:
       port: 80
     - name: https
       port: 443
+    # DNS exposes both protocols on port 53. The Gateway's UDPRoute resolves
+    # to the UDP entry (matched by protocol + port). Without an explicit UDP
+    # entry, the Service defaults to TCP-only and the UDPRoute reports
+    # "UDP Port 53 not found on Service".
     - name: dns
       port: 53
+      protocol: UDP
+    - name: dns-tcp
+      port: 53
+      protocol: TCP
     - name: admin
       port: 3000
   ingress:
