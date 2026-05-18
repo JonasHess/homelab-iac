@@ -4,7 +4,7 @@ metadata:
   name: wildcard-tls
   namespace: {{ $.Release.Namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "1"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   secretName: wildcard-tls

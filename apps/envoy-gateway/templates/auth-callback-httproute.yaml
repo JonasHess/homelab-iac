@@ -15,11 +15,10 @@ metadata:
   name: auth-callback-sink
   namespace: {{ $.Release.Namespace }}
   annotations:
-    # Apply after the Gateway (wave 5) and the OIDC SecurityPolicy (wave 6).
-    # Without an explicit wave, ArgoCD defaults to 0 and tries to create the
-    # HTTPRoute before its parent Gateway exists — the route never goes
-    # Healthy and the rest of the sync deadlocks behind wave 0.
-    argocd.argoproj.io/sync-wave: "7"
+    # Routes go last (wave 4): they need the Gateway (wave 2) and the OIDC
+    # SecurityPolicy (wave 3) to already exist, otherwise the route never
+    # goes Healthy and the rest of the sync deadlocks.
+    argocd.argoproj.io/sync-wave: "4"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   directResponse:
@@ -34,7 +33,7 @@ metadata:
   name: auth-callback
   namespace: {{ $.Release.Namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "7"
+    argocd.argoproj.io/sync-wave: "4"
     argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
 spec:
   parentRefs:
