@@ -17,21 +17,16 @@ loadBalancerIP: null
 # secret. Same layout the previous oauth2-proxy deployment used.
 oidcClientSecretAkeylessPath: /oidc/oauth2-proxy/client_secret
 
-# Additional listener ports beyond HTTP/HTTPS, exposed via the Gateway resource.
-# Each entry adds a listener with the given port + protocol.
-additionalExposedPorts:
-  sftpgo:
-    port: 2222
-    protocol: TCP
-  ftp:
-    port: 2121
-    protocol: TCP
-  dns:
-    port: 53
-    protocol: UDP
-  samba:
-    port: 445
-    protocol: TCP
+# Additional listener ports beyond HTTP/HTTPS, exposed via the Gateway
+# resource. Each entry adds a listener with the given port + protocol.
+#
+# No defaults here on purpose: each env explicitly declares only the
+# listeners it actually needs. We tried defaulting to a superset and
+# letting envs disable unwanted listeners with `key: null`, but that
+# silently breaks — ArgoCD persists the Application CR via the K8s API
+# server, which strips nil-valued map keys before storage, so the
+# nulls never reach the chart and the chart defaults always win.
+additionalExposedPorts: {}
 
 envoyGateway:
   # Upstream Envoy Gateway helm chart version (oci://docker.io/envoyproxy/gateway-helm).

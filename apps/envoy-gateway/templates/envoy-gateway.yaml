@@ -75,11 +75,19 @@ spec:
         namespaces:
           from: All
     {{- end }}
+    {{- /*
+      Iterate explicitly so env values can disable a chart-default listener
+      with `key: null`. Helm's deep-merge of valuesObject doesn't actually
+      remove map keys when overridden with null — it keeps the chart default
+      — so we have to filter nil here instead of relying on the merge.
+    */ -}}
     {{- range $key, $value := .Values.additionalExposedPorts }}
+    {{- if $value }}
     - name: {{ $key }}
       port: {{ $value.port }}
       protocol: {{ $value.protocol }}
       allowedRoutes:
         namespaces:
           from: All
+    {{- end }}
     {{- end }}
