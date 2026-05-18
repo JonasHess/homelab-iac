@@ -306,6 +306,9 @@ NAT/port-forward `WAN:443 → <Gateway LB IP>:4443`.
 - Do **not** also map `WAN:443 → :443`. The LAN listener (port 443) must remain unreachable from the WAN — that's the whole point of the split.
 - If your router has multiple WAN interfaces or runs an upstream router (double-NAT), make sure the rule is in place on every hop. Example real-world chain: `WAN:443 → Router1:192.168.0.X:4443 → Router2:192.168.1.80:4443`.
 - The internal LB IP is `apps.envoy-gateway.argocd.helm.values.loadBalancerIP` in your env values.
+- **FRITZ!Box gotcha:** this needs the external port (443) to differ from the internal port (4443). Use a plain **Portfreigabe** (*Andere Anwendung*, TCP, *Port an Gerät* `4443`, *Port extern gewünscht* `443`). Do **not** use a **MyFRITZ!-Freigabe** — it greys out the external-port field and forces external = internal, so it can only open `WAN:4443` (Cloudflare connects on 443 → HTTP 523).
+
+Symptom decoding: Cloudflare **523** = `WAN:443` never reaches Envoy (router/port-forward wrong). **525** = TCP path works but the mTLS handshake failed (AOP cert wrong or not enabled).
 
 Verify from outside the LAN (mobile tether) with `openssl s_client`:
 
