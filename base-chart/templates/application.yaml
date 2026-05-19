@@ -48,11 +48,12 @@ spec:
     repoURL: {{ $appConfig.argocd.repoURL | default "https://github.com/JonasHess/homelab-iac.git" }}
     targetRevision: {{ $appConfig.argocd.targetRevision | default ( required "A global targetRevision is required" $.Values.global.argocd.targetRevision) }}
     path: {{ $appConfig.argocd.path | default (printf "apps/%s" $appName) }}
+    {{- $helm := $appConfig.argocd.helm | default dict }}
     helm:
-      releaseName: {{ $appConfig.argocd.helm.releaseName | default $appName }}
-      {{- if $appConfig.argocd.helm.valueFiles }}
+      releaseName: {{ $helm.releaseName | default $appName }}
+      {{- if $helm.valueFiles }}
       valueFiles:
-        {{- range $appConfig.argocd.helm.valueFiles }}
+        {{- range $helm.valueFiles }}
         - {{ . }}
         {{- end }}
       {{- end }}
@@ -61,15 +62,15 @@ spec:
         global:
           {{- $.Values.global | toYaml | nindent 10 }}
         {{- end }}
-        {{- if $appConfig.argocd.helm.values }}
-        {{- $appConfig.argocd.helm.values | toYaml | nindent 8 }}
+        {{- if $helm.values }}
+        {{- $helm.values | toYaml | nindent 8 }}
         {{- end }}
       parameters:
         - name: appName
           value: {{ $appName }}
         - name: generic.appName
           value: {{ $appName }}
-      {{- with $appConfig.argocd.helm.parameters }}
+      {{- with $helm.parameters }}
       {{- toYaml . | nindent 8 }}
       {{- end }}
   destination:
