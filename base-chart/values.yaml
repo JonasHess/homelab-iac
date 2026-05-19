@@ -27,7 +27,10 @@ global:
 
   gateway:
     name: envoy-gateway
-    namespace: argocd
+    # namespace is NOT set here — it is derived automatically from
+    # apps.envoy-gateway.argocd.namespace by base-chart/templates/application.yaml,
+    # so the gateway's location has a single source of truth. To relocate the
+    # gateway, change apps.envoy-gateway.argocd.namespace only.
 
   # OIDC provider settings consumed by:
   #   - The Gateway-level SecurityPolicy.oidc in apps/envoy-gateway/.
@@ -622,6 +625,9 @@ apps:
       enabled: false
     argocd:
       targetRevision: ~
+      # Single source of truth for the gateway's namespace: the Gateway CR and
+      # all envoy-gateway resources deploy here, and global.gateway.namespace is
+      # derived from this value (see base-chart/templates/application.yaml).
       namespace: "argocd"
       project: "default"
       syncWave: "1"  # Deploy early for ingress management

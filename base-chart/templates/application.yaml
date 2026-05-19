@@ -9,6 +9,24 @@ It includes best practices for Argo CD application management:
 - Support for custom paths, namespaces, and revisions
 */ -}}
 
+{{- /*
+  The Gateway resource always lives in the same namespace as the envoy-gateway
+  app. Derive global.gateway.namespace from apps.envoy-gateway.argocd.namespace
+  (a single source of truth) and inject it into every app's global values, so
+  HTTPRoutes / SecurityPolicies / ReferenceGrants in the generic chart can never
+  point at a stale gateway namespace. Relocating the gateway is then one edit:
+  apps.envoy-gateway.argocd.namespace.
+*/ -}}
+{{- $envoyApp := (index .Values.apps "envoy-gateway") | default dict }}
+{{- $gatewayNamespace := (($envoyApp.argocd | default dict).namespace) | default "argocd" }}
+{{- $globalValues := dict }}
+{{- if .Values.global }}
+{{- $globalValues = deepCopy .Values.global }}
+{{- $gateway := $globalValues.gateway | default dict }}
+{{- $_ := set $gateway "namespace" $gatewayNamespace }}
+{{- $_ := set $globalValues "gateway" $gateway }}
+{{- end }}
+
 {{- range $appName, $appConfig := .Values.apps }}
 {{- if $appConfig.enabled }}
 {{- if not $appName }}
@@ -58,9 +76,9 @@ spec:
         {{- end }}
       {{- end }}
       valuesObject:
-        {{- if $.Values.global }}
+        {{- if $globalValues }}
         global:
-          {{- $.Values.global | toYaml | nindent 10 }}
+          {{- $globalValues | toYaml | nindent 10 }}
         {{- end }}
         {{- if $helm.values }}
         {{- $helm.values | toYaml | nindent 8 }}

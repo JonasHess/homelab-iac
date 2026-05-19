@@ -24,7 +24,7 @@
             },
             "namespace": {
               "type": "string",
-              "description": "Namespace where the Gateway resource is deployed"
+              "description": "Namespace where the Gateway resource is deployed. Derived automatically by base-chart from apps.envoy-gateway.argocd.namespace — do not set it by hand."
             }
           }
         },
