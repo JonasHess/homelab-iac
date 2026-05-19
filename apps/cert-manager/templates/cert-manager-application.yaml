@@ -6,7 +6,7 @@ metadata:
   # app — the namespace the application-controller watches — not the parent's
   # workload namespace (cert-manager's parent app deploys into `cert-manager`).
   # Single source of truth: global.argocd.namespace.
-  namespace: {{ $.Values.global.argocd.namespace | default "argocd" }}
+  namespace: {{ ($.Values.global.argocd | default dict).namespace | default "argocd" }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:

@@ -5,7 +5,7 @@ metadata:
   # Child ArgoCD Applications must live in the same namespace as the parent
   # app — the namespace the application-controller watches — not the parent's
   # workload namespace. Single source of truth: global.argocd.namespace.
-  namespace: {{ $.Values.global.argocd.namespace | default "argocd" }}
+  namespace: {{ ($.Values.global.argocd | default dict).namespace | default "argocd" }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
