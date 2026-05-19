@@ -9,7 +9,7 @@
   omitted. That makes it safe to push the chart change ahead of running the
   openssl + Cloudflare setup steps.
 */ -}}
-{{- if .Values.global.security.cloudflareOriginCA }}
+{{- if (.Values.global.security | default dict).cloudflareOriginCA }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -20,5 +20,5 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 data:
   ca.crt: |
-{{ .Values.global.security.cloudflareOriginCA | indent 4 }}
+{{ (.Values.global.security | default dict).cloudflareOriginCA | indent 4 }}
 {{- end }}

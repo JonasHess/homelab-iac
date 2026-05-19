@@ -17,7 +17,7 @@
   sectionName-level CTPs — omitting clientIPDetection would lose
   CF-Connecting-IP-based IP detection for these listeners.
 */ -}}
-{{- if .Values.global.security.cloudflareOriginCA }}
+{{- if (.Values.global.security | default dict).cloudflareOriginCA }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy
 metadata:

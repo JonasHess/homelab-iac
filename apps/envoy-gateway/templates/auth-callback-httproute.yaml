@@ -40,7 +40,7 @@ spec:
     - name: envoy-gateway
       namespace: {{ $.Release.Namespace }}
       sectionName: websecure
-    {{- if .Values.global.security.cloudflareOriginCA }}
+    {{- if (.Values.global.security | default dict).cloudflareOriginCA }}
     # Also attach to the Cloudflare-facing listener so Cognito's callback
     # — which comes through Cloudflare → 4443 — actually has a matching route.
     - name: envoy-gateway

@@ -42,7 +42,7 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
-    {{- if .Values.global.security.cloudflareOriginCA }}
+    {{- if (.Values.global.security | default dict).cloudflareOriginCA }}
     # Cloudflare-only listeners (port 4443). The router NATs WAN:443 to this
     # port; LAN clients use the regular `websecure` listener on 443 instead.
     #
