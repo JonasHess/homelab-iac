@@ -28,6 +28,16 @@
             }
           }
         },
+        "argocd": {
+          "type": "object",
+          "description": "Global ArgoCD configuration",
+          "properties": {
+            "namespace": {
+              "type": "string",
+              "description": "Namespace the ArgoCD application-controller watches. All Application objects (parent apps and child apps) must live here."
+            }
+          }
+        },
         "externalSecrets": {
           "type": "object",
           "description": "Global configuration for External Secrets",

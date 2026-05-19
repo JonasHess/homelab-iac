@@ -19,7 +19,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: "argocd-app-{{ $appName }}"
-  namespace: argocd
+  namespace: {{ $.Values.global.argocd.namespace | default "argocd" }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   labels:

@@ -2,7 +2,10 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: envoy-gateway-controller
-  namespace: {{ $.Release.Namespace }}
+  # Child ArgoCD Applications must live in the same namespace as the parent
+  # app — the namespace the application-controller watches — not the parent's
+  # workload namespace. Single source of truth: global.argocd.namespace.
+  namespace: {{ $.Values.global.argocd.namespace | default "argocd" }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   annotations:
