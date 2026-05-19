@@ -43,13 +43,12 @@ global:
     cookieDomain: ~
 
   # Gateway-level authorization. Two paths into the gateway:
-  #   - LAN listener (port 443): source IP must be in lanCIDRs.
+  #   - LAN listener (port 443): reached directly by LAN clients (internal DNS).
   #   - Cloudflare listener (port 4443): mTLS, client cert must validate
   #     against cloudflareOriginCA (Cloudflare presents the matching leaf
   #     cert via Authenticated Origin Pulls on the zone).
   # Populated per-environment in homelab-environments/<env>/values.yaml.
   security:
-    lanCIDRs: []
     cloudflareOriginCA: ~
 
   argocd:

@@ -239,7 +239,7 @@ apps:
 ```
 
 Notes:
-- `global.security.lanCIDRs` is still declared in `base-chart/values.yaml` for backward-compat but is **no longer referenced** by any template after the listener-split refactor. Safe to remove from env values; vestigial and can be cleaned out of base-chart + schema in a follow-up.
+- `global.security.lanCIDRs` was removed from `base-chart/values.yaml` and `apps/generic/values.schema.json` — it became unreferenced after the listener-split refactor. Drop it from env values too; it is silently ignored if left behind.
 - If `cloudflareOriginCA` is unset, the public listener pair, the mTLS `ClientTrafficPolicy`, and the public `parentRef` on every HTTPRoute are all skipped — the cluster runs LAN-only. Useful for local Kind clusters.
 
 ## Router / Cloudflare setup
@@ -482,7 +482,7 @@ Common failure modes:
 
 - **Origin IP discoverability**: the WAN IP still answers on TCP/443 (Cloudflare's source), but the mTLS handshake rejects anyone without a Cloudflare-signed cert before any HTTP is exchanged. Port scanners see "TLS bad cert" responses, not application data. If you want zero TCP exposure, Cloudflare Tunnel is the bigger move (origin becomes outbound-only).
 - **CA / leaf rotation**: cert pair is currently 10-year-validity. Rotate before expiry by generating a new pair, uploading the new leaf to Cloudflare alongside the old one, updating `cloudflareOriginCA` in env values to include both PEMs concatenated (Envoy accepts a bundle), waiting for sync, then removing the old leaf from Cloudflare and the old CA from values.
-- **`global.security.lanCIDRs`** is vestigial (declared in base-chart, no longer used by any template). Safe to remove from env values; clean up base-chart and `apps/generic/values.schema.json` in a follow-up commit.
+- **`global.security.lanCIDRs`** has been removed from base-chart and `apps/generic/values.schema.json` (it was unreferenced after the listener-split refactor). Remove it from any env values that still set it.
 - **No `public-no-auth` tier**: every route requires *something* — either OIDC or listener-level gating. To make a route truly anonymous, it would need its own listener with no SP. Not done today.
 - **Cookie size sensitivity**: `scopes` are `[openid, email]`. Adding `profile` would add ~1–2 KB to the ID-token cookie and could push some Tomcat-based upstreams back over their header limit (currently masked by the cookie-strip filter, but margin for safety).
 
