@@ -168,8 +168,8 @@ Findings from reviewing the Traefik → Envoy Gateway migration. Roughly in prio
 
 **Latent bugs (will bite the next environment migration):**
 
-- [ ] **`base-chart/application.yaml` crashes the whole env on a missing `helm` key** — line 52 does `$appConfig.argocd.helm.releaseName` unguarded; one *enabled* app without an `argocd.helm` block fails the entire bootstrap `helm template`, so every app stops syncing. base-chart ships `cert-manager: enabled: true` with **no `helm:` key** (`base-chart/values.yaml:841`), so every new environment crashes on first sync until it redeclares cert-manager. Fix: `{{- $helm := $appConfig.argocd.helm | default dict }}` in `application.yaml`, and/or add `helm: {values: {}}` to the cert-manager default.
-- [ ] **`envoy-gateway-application.yaml:5` child-app namespace** — the `envoy-gateway-controller` child Application uses `namespace: {{ $.Release.Namespace }}`; works only because the parent app runs in `argocd`. Same latent bug as the (now-fixed) cert-manager one. Hardcode `namespace: argocd` — child ArgoCD Applications must live where the application-controller watches.
+- [x] **`base-chart/application.yaml` crashes the whole env on a missing `helm` key** — line 52 does `$appConfig.argocd.helm.releaseName` unguarded; one *enabled* app without an `argocd.helm` block fails the entire bootstrap `helm template`, so every app stops syncing. base-chart ships `cert-manager: enabled: true` with **no `helm:` key** (`base-chart/values.yaml:841`), so every new environment crashes on first sync until it redeclares cert-manager. Fix: `{{- $helm := $appConfig.argocd.helm | default dict }}` in `application.yaml`, and/or add `helm: {values: {}}` to the cert-manager default.
+- [x] **`envoy-gateway-application.yaml:5` child-app namespace** — the `envoy-gateway-controller` child Application uses `namespace: {{ $.Release.Namespace }}`; works only because the parent app runs in `argocd`. Same latent bug as the (now-fixed) cert-manager one. Hardcode `namespace: argocd` — child ArgoCD Applications must live where the application-controller watches.
 
 **Security:**
 
@@ -177,11 +177,11 @@ Findings from reviewing the Traefik → Envoy Gateway migration. Roughly in prio
 
 **Cleanup / drift:**
 
-- [ ] **Remove vestigial `global.security.lanCIDRs`** — unused since the listener-split refactor; still declared in `base-chart/values.yaml:49` and `apps/generic/values.schema.json:84`, and the schema description ("LAN traffic is gated by source IP") is now factually wrong. ⚠️ When doing this, **keep the `global.security` map itself** (e.g. `security: {cloudflareOriginCA: ~}`) — `envoy-mtls-client-traffic-policy.yaml` and `httproute.yaml` do unguarded `.Values.global.security.cloudflareOriginCA`, which nil-pointers if the whole `security` block is gone. LAN-only environments (no `cloudflareOriginCA`, e.g. `raspi.zimmermann.lat`) rely on base-chart providing that map. Safer: guard the templates with `(.Values.global.security | default dict)`.
-- [ ] **Fix `docs/gateway-and-oidc.md` Step 6** — claims `:10443` is the per-pod port for the `:4443` listener; access logs show it's actually the `:443` LAN listener (privileged ports get a +10000 offset; `:4443` binds directly).
-- [ ] **`dns` exposed-port** — the chart default adds a `dns` UDP listener; environments without AdGuard (e.g. zimmermann.lat) leave it with 0 routes. Confirm `additionalExposedPorts: {dns: null}` overrides actually reach the deployed values (currently rendering as `{}`).
+- [x] **Remove vestigial `global.security.lanCIDRs`** — unused since the listener-split refactor; still declared in `base-chart/values.yaml:49` and `apps/generic/values.schema.json:84`, and the schema description ("LAN traffic is gated by source IP") is now factually wrong. ⚠️ When doing this, **keep the `global.security` map itself** (e.g. `security: {cloudflareOriginCA: ~}`) — `envoy-mtls-client-traffic-policy.yaml` and `httproute.yaml` do unguarded `.Values.global.security.cloudflareOriginCA`, which nil-pointers if the whole `security` block is gone. LAN-only environments (no `cloudflareOriginCA`, e.g. `raspi.zimmermann.lat`) rely on base-chart providing that map. Safer: guard the templates with `(.Values.global.security | default dict)`.
+- [x] **Fix `docs/gateway-and-oidc.md` Step 6** — claims `:10443` is the per-pod port for the `:4443` listener; access logs show it's actually the `:443` LAN listener (privileged ports get a +10000 offset; `:4443` binds directly).
+- [x] **`dns` exposed-port** — verified: `additionalExposedPorts: {dns: null}` propagates correctly. base-chart's `application.yaml` serializes it into the child Application's `valuesObject` as `dns: null` (not `{}`), and Helm's coalesce then drops the `dns` listener from the rendered Gateway. No code change needed.
 - [ ] **Rename Akeyless path `/oidc/oauth2-proxy/client_secret`** — name references oauth2-proxy, which no longer exists; rename to `/oidc/client_secret`.
-- [ ] **`whoami` app** — still labelled "Debug Traefik" with a Traefik logo post-migration.
+- [x] **`whoami` app** — relabelled "Debug Envoy Gateway"; Traefik logo swapped for a neutral icon (dashboard-icons has no Envoy icon).
 
 **Architectural notes (not bugs, worth tracking):**
 
