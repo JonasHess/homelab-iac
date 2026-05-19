@@ -371,7 +371,9 @@ Cross-check the access log to confirm the request actually hit the public listen
 kubectl logs -n envoy-gateway-system \
   -l gateway.envoyproxy.io/owning-gateway-name=envoy-gateway \
   --tail=20 | jq -r '"\(.response_code) port=\(.downstream_local_address) \(.\":authority\")"'
-# Expect a line with port=...:10443  (Envoy's per-pod listener port for the :4443 Gateway listener)
+# Expect a line with port=...:4443  (Envoy binds the :4443 Cloudflare listener
+# directly — non-privileged port, no offset. The :443 LAN listener, being
+# privileged, is the one that maps to a per-pod :10443.)
 ```
 
 ### Reusing a cert pair across environments
