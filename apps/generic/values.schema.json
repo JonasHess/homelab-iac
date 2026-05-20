@@ -25,6 +25,10 @@
             "namespace": {
               "type": "string",
               "description": "Namespace where the Gateway resource is deployed. Derived automatically by base-chart from apps.envoy-gateway.argocd.namespace — do not set it by hand."
+            },
+            "loadBalancerIP": {
+              "type": "string",
+              "description": "LoadBalancer IP pinned via the Gateway's spec.addresses (MetalLB assigns this to the Envoy proxy Service). Also used as the expected answer by the optional global.lanDnsCheck probe. Set per-environment."
             }
           }
         },
@@ -98,6 +102,21 @@
               "description": "PEM-encoded CA certificate used to validate Cloudflare's client cert on the mTLS listener (port 4443). Public information — fine to commit. Generate with openssl, upload the leaf cert + key to Cloudflare's zone-level Authenticated Origin Pulls."
             }
           }
+        },
+        "lanDnsCheck": {
+          "type": "object",
+          "description": "Optional: monitor that internal DNS resolves a hostname under global.domain to global.gateway.loadBalancerIP. When set, prometheus-blackbox-exporter gets a dns_lan_gateway module, a Probe queries dnsServer, and a LanInternalDnsBroken alert fires when the answer is not the gateway IP. Leave unset to disable. Catches silent LAN→Cloudflare hairpinning.",
+          "properties": {
+            "dnsServer": {
+              "type": "string",
+              "description": "IP of the internal DNS server to query (e.g. an AdGuard / Pi-hole instance on the LAN)."
+            },
+            "queryName": {
+              "type": "string",
+              "description": "Hostname under global.domain expected to resolve to the gateway LB IP via internal DNS (e.g. argocd.<domain>)."
+            }
+          },
+          "required": ["dnsServer", "queryName"]
         }
       }
     },

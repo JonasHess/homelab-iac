@@ -1,0 +1,22 @@
+{{- with $.Values.global.lanDnsCheck }}
+apiVersion: monitoring.coreos.com/v1
+kind: Probe
+metadata:
+  name: lan-dns-probe
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  interval: 30s
+  module: dns_lan_gateway
+  prober:
+    url: prometheus-blackbox-exporter:9115
+    path: /probe
+  targets:
+    staticConfig:
+      static:
+        - {{ .dnsServer | quote }}
+{{- end }}

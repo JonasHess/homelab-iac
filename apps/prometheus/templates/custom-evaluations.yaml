@@ -81,6 +81,22 @@ spec:
       for: 1m
       labels:
         severity: critical
+    {{- with $.Values.global.lanDnsCheck }}
+    - alert: LanInternalDnsBroken
+      annotations:
+        summary: "Internal DNS not returning the gateway IP for *.{{ $.Values.global.domain }}"
+        description: |
+          Internal DNS server {{ .dnsServer }} did not return {{ $.Values.global.gateway.loadBalancerIP }}
+          for {{ .queryName }} for >5min. LAN clients are silently hairpinning
+          through Cloudflare (slower, and LAN access dies if WAN/Cloudflare is
+          down). Check the DNS server's reachability and the *.{{ $.Values.global.domain }}
+          rewrite rule.
+      expr: |
+        probe_success{job="lan-dns-probe"} == 0
+      for: 5m
+      labels:
+        severity: warning
+    {{- end }}
     - alert: NoZFSMetrics
       annotations:
         summary: "No ZFS metrics found"

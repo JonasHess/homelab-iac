@@ -30,6 +30,21 @@ spec:
                 preferred_ip_protocol: "ip4"
                 follow_redirects: true
                 valid_status_codes: [200, 401, 403]
+            {{- with $.Values.global.lanDnsCheck }}
+            # Activated when the environment sets global.lanDnsCheck. Probes the
+            # internal DNS server for queryName and fails if the answer isn't
+            # global.gateway.loadBalancerIP — catches silent LAN→Cloudflare hairpinning.
+            dns_lan_gateway:
+              prober: dns
+              timeout: 5s
+              dns:
+                query_name: {{ .queryName | quote }}
+                query_type: A
+                valid_rcodes: [NOERROR]
+                validate_answer_rrs:
+                  fail_if_not_matches_regexp:
+                    - {{ printf ".*\\s+IN\\s+A\\s+%s$" ($.Values.global.gateway.loadBalancerIP | replace "." "\\.") | quote }}
+            {{- end }}
 
   destination:
     server: "https://kubernetes.default.svc"

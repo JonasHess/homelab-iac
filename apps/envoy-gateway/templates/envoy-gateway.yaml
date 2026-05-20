@@ -8,10 +8,10 @@ metadata:
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
   gatewayClassName: envoy-gateway
-  {{- if .Values.loadBalancerIP }}
+  {{- if .Values.global.gateway.loadBalancerIP }}
   addresses:
     - type: IPAddress
-      value: {{ .Values.loadBalancerIP | quote }}
+      value: {{ .Values.global.gateway.loadBalancerIP | quote }}
   {{- end }}
   listeners:
     - name: web

@@ -32,6 +32,12 @@ global:
     # so the gateway's location has a single source of truth. To relocate the
     # gateway, change apps.envoy-gateway.argocd.namespace only.
 
+    # LoadBalancer IP pinned via the Gateway's spec.addresses (MetalLB assigns
+    # this IP to the Envoy proxy Service). Single source of truth: also used by
+    # the optional global.lanDnsCheck probe as the expected DNS answer.
+    # Set per-environment.
+    loadBalancerIP: ~
+
   # OIDC provider settings consumed by:
   #   - The Gateway-level SecurityPolicy.oidc in apps/envoy-gateway/.
   #   - App-internal OIDC clients (argocd-cm, immich, sftpgo) for their own
