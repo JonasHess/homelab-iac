@@ -27,24 +27,25 @@ server:
 generic:
   persistentVolumeClaims:
     library:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/library
+      hostPath:   # /mnt/somewhere/encrypted/apps/immich/library
       backup:
         enabled: true
     postgresql:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/postgresql
+      hostPath:   # /mnt/somewhere/encrypted/apps/immich/postgresql
       backup:
         enabled: true
     redis:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/immich/redis
+      hostPath:   # /mnt/somewhere/encrypted/apps/immich/redis
       backup:
         enabled: false
     cli:
-      hostPath: ~ # null
+      hostPath:   # null
   ingress:
     https:
-    - subdomain: immich
-      port: 2283
-      service: immich-app-server
+      - subdomain: immich
+        port: 2283
+        service: immich-app-server
+        oauth: false
   externalSecrets:
     immich-credentials:
       - client_secret: "/immich/oauth/client_secret"

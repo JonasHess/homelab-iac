@@ -4,21 +4,22 @@ generic:
   deployment:
     image: lscr.io/linuxserver/jellyfin:10.11.8
     ports:
-    - containerPort: 8096
+      - containerPort: 8096
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/encrypted/apps/jellyfin/config
+        hostPath:   # /mnt/somewhere/encrypted/apps/jellyfin/config
       media:
         mountPath: /media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
     envFrom:
       configMapRef: jellyfin-config
   service:
     ports:
-    - name: http
-      port: 8096
+      - name: http
+        port: 8096
   ingress:
     https:
-    - subdomain: jellyfin
-      port: 8096
+      - subdomain: jellyfin
+        port: 8096
+        oauth: false

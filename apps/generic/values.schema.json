@@ -360,7 +360,7 @@
           "description": "HTTPS ingress routes via Gateway API HTTPRoute (requires global.domain to be set)",
           "items": {
             "type": "object",
-            "required": ["port"],
+            "required": ["port", "oauth"],
             "properties": {
               "port": {
                 "type": "integer",
@@ -390,8 +390,7 @@
               },
               "oauth": {
                 "type": "boolean",
-                "default": false,
-                "description": "When true: route inherits the Gateway-level SecurityPolicy (OIDC + IP allowlist). When false/absent: a route-level SP overrides the Gateway-level one with IP allowlist only — no OIDC enforced."
+                "description": "REQUIRED. When true: route inherits the Gateway-level SecurityPolicy (OIDC). When false: a route-level SP overrides the Gateway-level one with allow-all authorization — no OIDC. Listener-layer gating (LAN-only :443, Cloudflare-mTLS :4443) still applies either way. There is no implicit default — the choice must be explicit so a forgotten setting never silently leaves a route un-OIDC'd."
               }
             }
           }

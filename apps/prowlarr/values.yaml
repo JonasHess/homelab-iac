@@ -2,26 +2,27 @@ generic:
   deployment:
     image: lscr.io/linuxserver/prowlarr:2.3.5
     ports:
-    - containerPort: 9696
+      - containerPort: 9696
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/prowlarr/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/prowlarr/config
         backup:
           enabled: true
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
   service:
     ports:
-    - name: http
-      port: 9696
+      - name: http
+        port: 9696
   ingress:
     https:
-    - subdomain: prowlarr
-      port: 9696
-      oauth: true
-    - subdomain: prowlarr
-      pathPrefixes:
-        - /api
-      port: 9696
+      - subdomain: prowlarr
+        port: 9696
+        oauth: true
+      - subdomain: prowlarr
+        pathPrefixes:
+          - /api
+        port: 9696
+        oauth: false

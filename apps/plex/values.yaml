@@ -5,17 +5,17 @@ generic:
   deployment:
     image: ghcr.io/linuxserver/plex:1.43.1
     ports:
-    - containerPort: 32400
+      - containerPort: 32400
     resources:
       limits:
         nvidia.com/gpu: "1"
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/encrypted/apps/plex/config
+        hostPath:   # /mnt/somewhere/encrypted/apps/plex/config
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
       transcode:
         mountPath: /transcode
         hostPath: /dev/shm
@@ -24,12 +24,13 @@ generic:
       configMapRef: plex-config
   service:
     ports:
-    - name: http
-      port: 32400
+      - name: http
+        port: 32400
   ingress:
     https:
-    - subdomain: plex
-      port: 32400
+      - subdomain: plex
+        port: 32400
+        oauth: false
     tcp:
-    - port: 32400
-      listener: plex
+      - port: 32400
+        listener: plex

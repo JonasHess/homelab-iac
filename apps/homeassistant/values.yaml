@@ -12,34 +12,35 @@ generic:
   deployment:
     image: ghcr.io/home-assistant/home-assistant:2026.5.3
     ports:
-    - containerPort: 8123
+      - containerPort: 8123
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/homeassistant/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/homeassistant/config
         backup:
           enabled: true
     envFrom:
       configMapRef: homeassistant-config-map
   service:
     ports:
-    - name: http
-      port: 8123
+      - name: http
+        port: 8123
   ingress:
     https:
-    - subdomain: homeassistant
-      port: 8123
-      oauth: true
+      - subdomain: homeassistant
+        port: 8123
+        oauth: true
     # Bypass oauth2-proxy for API, auth endpoints, and Android WebView (companion app)
-    - subdomain: homeassistant
-      port: 8123
-      pathPrefixes:
-        - /api
-        - /auth
-        - /frontend_latest
-        - /static
-      rawMatch:
-        - headers:
-            - name: User-Agent
-              type: RegularExpression
-              value: ".*wv.*"
+      - subdomain: homeassistant
+        port: 8123
+        pathPrefixes:
+          - /api
+          - /auth
+          - /frontend_latest
+          - /static
+        rawMatch:
+          - headers:
+              - name: User-Agent
+                type: RegularExpression
+                value: ".*wv.*"
+        oauth: false

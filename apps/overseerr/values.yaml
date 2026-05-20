@@ -2,31 +2,32 @@ generic:
   deployment:
     image: sctx/overseerr:325eecbad173074ce7c175dedeee12e69fc3c93e
     ports:
-    - containerPort: 5055
+      - containerPort: 5055
     env:
-    - name: TZ
-      value: "UTC"
+      - name: TZ
+        value: "UTC"
     envFrom:
       configMapRef: overseerr-config
     pvcMounts:
       config:
         mountPath: /app/config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/overseerr/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/overseerr/config
         backup:
           enabled: true
   service:
     ports:
-    - name: http
-      port: 5055
+      - name: http
+        port: 5055
   ingress:
     https:
-    - subdomain: overseerr
-      port: 5055
-      oauth: true
-    - subdomain: overseerr
-      pathPrefixes:
-        - /api
-      port: 5055
+      - subdomain: overseerr
+        port: 5055
+        oauth: true
+      - subdomain: overseerr
+        pathPrefixes:
+          - /api
+        port: 5055
+        oauth: false
   externalSecrets:
     overseerr-secret:
       - PLEX_API_KEY: /overseerr/plex_api_key         # API key from plex settings > network

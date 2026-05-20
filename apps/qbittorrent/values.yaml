@@ -2,32 +2,33 @@ generic:
   deployment:
     image: lscr.io/linuxserver/qbittorrent:5.2.0
     ports:
-    - containerPort: 8080
+      - containerPort: 8080
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/qbittorrent/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/qbittorrent/config
         backup:
           enabled: true
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
       downloads:
         mountPath: /mnt/downloads
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/qbittorrent/downloads
+        hostPath:   # /mnt/somewhere/unencrypted/apps/qbittorrent/downloads
       watchdir:
         mountPath: /mnt/watchdir
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/qbittorrent/watchdir
+        hostPath:   # /mnt/somewhere/unencrypted/apps/qbittorrent/watchdir
   service:
     ports:
-    - name: http
-      port: 8080
+      - name: http
+        port: 8080
   ingress:
     https:
-    - subdomain: qbittorrent
-      port: 8080
-      oauth: true
-    - subdomain: qbittorrent
-      pathPrefixes:
-        - /api
-      port: 8080
+      - subdomain: qbittorrent
+        port: 8080
+        oauth: true
+      - subdomain: qbittorrent
+        pathPrefixes:
+          - /api
+        port: 8080
+        oauth: false

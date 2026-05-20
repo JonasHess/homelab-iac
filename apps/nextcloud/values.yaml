@@ -27,6 +27,7 @@ generic:
           - /index.php/login
           - /login/v2
       # Main Nextcloud UI with OAuth protection
+        oauth: false
       - subdomain: nextcloud
         port: 8080
         service: nextcloud
@@ -43,6 +44,7 @@ generic:
           - /lool
           - /loleaflet
       # Collabora fallback with OAuth protection
+        oauth: false
       - subdomain: office
         port: 9980
         service: nextcloud-collabora

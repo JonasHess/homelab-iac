@@ -4,40 +4,41 @@ appName: backrest
 deployment:
   image: garethgeorge/backrest:v1.13.0
   ports:
-  - containerPort: 9898
+    - containerPort: 9898
   env:
-  - name: TZ
-    value: "UTC"
-  - name: BACKREST_DATA
-    value: "/data"
-  - name: BACKREST_CONFIG
-    value: "/config/config.json"
-  - name: XDG_CACHE_HOME
-    value: "/cache"
-  - name: TMPDIR
-    value: "/tmp"
-  - name: AWS_SHARED_CREDENTIALS_FILE
-    value: "/config/credentials"
+    - name: TZ
+      value: "UTC"
+    - name: BACKREST_DATA
+      value: "/data"
+    - name: BACKREST_CONFIG
+      value: "/config/config.json"
+    - name: XDG_CACHE_HOME
+      value: "/cache"
+    - name: TMPDIR
+      value: "/tmp"
+    - name: AWS_SHARED_CREDENTIALS_FILE
+      value: "/config/credentials"
 generic:
   persistentVolumeClaims:
     data:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/data
+      hostPath:   # /mnt/somewhere/unencrypted/apps/backrest/data
     cache:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/cache
+      hostPath:   # /mnt/somewhere/unencrypted/apps/backrest/cache
     tmp:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/tmp
+      hostPath:   # /mnt/somewhere/unencrypted/apps/backrest/tmp
     restore:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/backrest/restore
+      hostPath:   # /mnt/somewhere/unencrypted/apps/backrest/restore
   service:
     ports:
-    - name: http
-      port: 9898
+      - name: http
+        port: 9898
   ingress:
     https:
-    - subdomain: backrest
-      port: 9898
-      oauth: true
-    - subdomain: backrest
-      pathPrefixes:
-        - /api
-      port: 9898
+      - subdomain: backrest
+        port: 9898
+        oauth: true
+      - subdomain: backrest
+        pathPrefixes:
+          - /api
+        port: 9898
+        oauth: false

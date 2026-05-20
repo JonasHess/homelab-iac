@@ -2,31 +2,32 @@ generic:
   deployment:
     image: santiagosayshey/profilarr:v1.1.4
     ports:
-    - containerPort: 6868
+      - containerPort: 6868
     env:
-    - name: TZ
-      value: "UTC"
+      - name: TZ
+        value: "UTC"
     envFrom:
       configMapRef: profilarr-config
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/profilarr/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/profilarr/config
         backup:
           enabled: true
   service:
     ports:
-    - name: http
-      port: 6868
+      - name: http
+        port: 6868
   ingress:
     https:
-    - subdomain: profilarr
-      port: 6868
-      oauth: true
-    - subdomain: profilarr
-      pathPrefixes:
-        - /api
-      port: 6868
+      - subdomain: profilarr
+        port: 6868
+        oauth: true
+      - subdomain: profilarr
+        pathPrefixes:
+          - /api
+        port: 6868
+        oauth: false
   externalSecrets:
     profilarr-secret:
       - RADARR_API_KEY: /profilarr/radarr_api_key   # API key from radarr settings

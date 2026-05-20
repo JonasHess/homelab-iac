@@ -8,9 +8,10 @@
   so the body is just an "allow all" authorization. No IP allowlist —
   that's covered at the listener layer.
 
-  Trigger: `oauth: false` (or absent) on the route. Routes meant to be
-  auth-protected set `oauth: true` and emit nothing here, inheriting the
-  Gateway-level OIDC.
+  Trigger: `oauth: false` on the route. Routes meant to be auth-protected
+  set `oauth: true` and emit nothing here, inheriting the Gateway-level
+  OIDC. The schema makes `oauth` required (apps/generic/values.schema.json),
+  so it can never be absent — the choice is always explicit per route.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 

@@ -5,23 +5,23 @@ generic:
   deployment:
     image: drakkan/sftpgo:v2.7.1
     ports:
-    - containerPort: 8080
-    - containerPort: 2222
-    - containerPort: 2121
+      - containerPort: 8080
+      - containerPort: 2222
+      - containerPort: 2121
     pvcMounts:
       data:
         mountPath: /srv/sftpgo
-        hostPath: ~ # /mnt/somewhere/encrypted/apps/sftpgo/data
+        hostPath:   # /mnt/somewhere/encrypted/apps/sftpgo/data
         backup:
           enabled: true
       config:
         mountPath: /var/lib/sftpgo
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/sftpgo/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/sftpgo/config
         backup:
           enabled: true
       stirlingpdf:
         mountPath: /mnt/stirlingpdf/pipeline/
-        hostPath: ~ # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
+        hostPath:   # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
     envFrom:
       secretRef: sftpgo-secret
     configMapMounts:
@@ -30,29 +30,31 @@ generic:
         configMapName: sftpgo-config
   service:
     ports:
-    - name: http
-      port: 8080
-    - name: webdav
-      port: 8081
-    - name: sftp
-      port: 2222
-      protocol: TCP
-    - name: ftp
-      port: 2121
-      protocol: TCP
+      - name: http
+        port: 8080
+      - name: webdav
+        port: 8081
+      - name: sftp
+        port: 2222
+        protocol: TCP
+      - name: ftp
+        port: 2121
+        protocol: TCP
   ingress:
     https:
-    - subdomain: sftpgo
-      port: 8080
-      oauth: true
-    - subdomain: sftpgo
-      port: 8080
-      pathPrefixes:
-        - /web/client/pubshares/
-    - subdomain: webdav
-      port: 8081
+      - subdomain: sftpgo
+        port: 8080
+        oauth: true
+      - subdomain: sftpgo
+        port: 8080
+        pathPrefixes:
+          - /web/client/pubshares/
+        oauth: false
+      - subdomain: webdav
+        port: 8081
+        oauth: false
     tcp:
-    - port: 2222
-      listener: sftpgo
-    - port: 2121
-      listener: ftp
+      - port: 2222
+        listener: sftpgo
+      - port: 2121
+        listener: ftp

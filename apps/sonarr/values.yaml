@@ -2,26 +2,27 @@ generic:
   deployment:
     image: lscr.io/linuxserver/sonarr:4.0.17
     ports:
-    - containerPort: 8989
+      - containerPort: 8989
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/sonarr/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/sonarr/config
         backup:
           enabled: true
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
   service:
     ports:
-    - name: http
-      port: 8989
+      - name: http
+        port: 8989
   ingress:
     https:
-    - subdomain: sonarr
-      port: 8989
-      oauth: true
-    - subdomain: sonarr
-      pathPrefixes:
-        - /api
-      port: 8989
+      - subdomain: sonarr
+        port: 8989
+        oauth: true
+      - subdomain: sonarr
+        pathPrefixes:
+          - /api
+        port: 8989
+        oauth: false

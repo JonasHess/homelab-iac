@@ -2,30 +2,31 @@ generic:
   deployment:
     image: lscr.io/linuxserver/nzbget:26.1.20260515
     ports:
-    - containerPort: 6789
+      - containerPort: 6789
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/nzbget/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/nzbget/config
         backup:
           enabled: true
       downloads:
         mountPath: /downloads
-        hostPath: ~ # /data/volumes/nzbget-downloads
+        hostPath:   # /data/volumes/nzbget-downloads
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
   service:
     ports:
-    - name: http
-      port: 6789
+      - name: http
+        port: 6789
   ingress:
     https:
-    - subdomain: nzbget
-      port: 6789
-      oauth: true
-    - subdomain: nzbget
-      pathPrefixes:
-        - /jsonrpc
-        - /xmlrpc
-      port: 6789
+      - subdomain: nzbget
+        port: 6789
+        oauth: true
+      - subdomain: nzbget
+        pathPrefixes:
+          - /jsonrpc
+          - /xmlrpc
+        port: 6789
+        oauth: false

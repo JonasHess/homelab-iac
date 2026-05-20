@@ -2,24 +2,25 @@ generic:
   deployment:
     image: lscr.io/linuxserver/readarr:develop
     ports:
-    - containerPort: 8787
+      - containerPort: 8787
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: ~ # /mnt/somewhere/unencrypted/apps/readarr/config
+        hostPath:   # /mnt/somewhere/unencrypted/apps/readarr/config
       media:
         mountPath: /mnt/media
-        hostPath: ~ # /mnt/somewhere/encrypted/media
+        hostPath:   # /mnt/somewhere/encrypted/media
   service:
     ports:
-    - name: http
-      port: 8787
+      - name: http
+        port: 8787
   ingress:
     https:
-    - subdomain: readarr
-      port: 8787
-      oauth: true
-    - subdomain: readarr
-      pathPrefixes:
-        - /api
-      port: 8787
+      - subdomain: readarr
+        port: 8787
+        oauth: true
+      - subdomain: readarr
+        pathPrefixes:
+          - /api
+        port: 8787
+        oauth: false

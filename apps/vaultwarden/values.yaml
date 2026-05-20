@@ -7,14 +7,15 @@ generic:
       - SMTP_PASSWORD: "/vaultwarden/SMTP_PASSWORD"
   persistentVolumeClaims:
     data:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/vaultwarden/data
+      hostPath:   # /mnt/somewhere/encrypted/apps/vaultwarden/data
       backup:
         enabled: true
   ingress:
     https:
-    - subdomain: vaultwarden
-      port: 80
-      service: vaultwarden
+      - subdomain: vaultwarden
+        port: 80
+        service: vaultwarden
+        oauth: false
 smtp:
   host: smtp.example.com
   from: vaultwarden@example.com
