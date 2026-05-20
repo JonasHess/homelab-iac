@@ -56,7 +56,9 @@ samba:
   # pointing at the Envoy Gateway LoadBalancer IP.
   avahi:
     enabled: false
-    # publishIP: "192.168.1.80"  # REQUIRED: Gateway LB IP reachable on LAN
+    # publishIP defaults to global.gateway.loadBalancerIP — set this only to
+    # override (e.g. publish via a different LAN IP than the gateway).
+    # publishIP: "192.168.1.80"
     # hostname: samba             # becomes <hostname>.local in mDNS
     # serviceName: Samba          # display name shown in Finder
     # servicePort: "445"

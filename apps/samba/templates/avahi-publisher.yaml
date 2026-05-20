@@ -38,7 +38,7 @@ spec:
               exec avahi-publish-service --host="${AVAHI_HOSTNAME}.local" "${SERVICE_NAME}" _smb._tcp "${SERVICE_PORT}"
           env:
             - name: PUBLISH_IP
-              value: {{ required "samba.avahi.publishIP is required when avahi is enabled" .Values.samba.avahi.publishIP | quote }}
+              value: {{ required "samba.avahi.publishIP or global.gateway.loadBalancerIP must be set when avahi is enabled" (.Values.samba.avahi.publishIP | default (.Values.global.gateway | default dict).loadBalancerIP) | quote }}
             - name: AVAHI_HOSTNAME
               value: {{ .Values.samba.avahi.hostname | default (.Values.samba.serverString | lower) | default "samba" | quote }}
             - name: SERVICE_NAME
