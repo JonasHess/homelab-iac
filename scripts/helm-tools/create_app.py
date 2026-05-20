@@ -180,9 +180,13 @@ def prompt_for_app_details():
         ports.append({"containerPort": 80})
         port = "80"
 
-    # Always set up ingress with middleware
+    # Always set up ingress with OIDC enabled by default
     subdomain = get_input_with_default(f"Enter subdomain [{app_name}]: ", app_name)
-    middlewares = ["traefik-forward-auth"]  # Always add this middleware
+    oauth_choice = get_input_with_default(
+        "Protect this route with OIDC (Gateway-level Cognito SecurityPolicy)? (y/n) [y]: ",
+        "y",
+    )
+    oauth = oauth_choice.lower() != "n"
 
     # Get additional ports
     while True:
@@ -266,13 +270,13 @@ def prompt_for_app_details():
             'port': port_num
         })
 
-    # Always add ingress with middleware
+    # Always add ingress; oauth is required by the generic chart's schema.
     app_config['generic']['ingress'] = {
         'https': [
             {
                 'subdomain': subdomain,
                 'port': int(port),
-                'middlewares': middlewares
+                'oauth': oauth
             }
         ]
     }
