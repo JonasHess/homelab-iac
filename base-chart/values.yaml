@@ -46,6 +46,11 @@ global:
   oidc:
     issuerUrl: ~
     clientId: ~
+    # Akeyless path (relative to global.akeyless.path) for the Cognito client
+    # secret. Single source of truth — referenced by envoy-gateway,
+    # argocd, and sftpgo ExternalSecrets. To relocate the secret in Akeyless,
+    # change this value in one place.
+    clientSecretAkeylessPath: /oidc/client_secret
     cookieDomain: ~
 
   # Gateway-level authorization. Two paths into the gateway:

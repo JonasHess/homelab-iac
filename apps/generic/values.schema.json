@@ -87,6 +87,10 @@
               "type": "string",
               "description": "OIDC client ID registered with the issuer"
             },
+            "clientSecretAkeylessPath": {
+              "type": "string",
+              "description": "Akeyless path (relative to global.akeyless.path) where the OIDC client secret is stored. Single source of truth — referenced by envoy-gateway, argocd, and sftpgo ExternalSecrets via tpl-rendered remote paths."
+            },
             "cookieDomain": {
               "type": "string",
               "description": "Cookie domain for OIDC session cookies (e.g. .example.com to share across subdomains)"
