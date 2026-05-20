@@ -7,6 +7,11 @@ metadata:
     argocd.argoproj.io/sync-wave: "1"
     argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
 spec:
+  # Expose Prometheus-format proxy metrics on :19001/stats/prometheus.
+  # Scraped by the PodMonitor in envoy-proxy-podmonitor.yaml.
+  telemetry:
+    metrics:
+      prometheus: {}
   provider:
     type: Kubernetes
     kubernetes:

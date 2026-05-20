@@ -1,0 +1,24 @@
+{{- /*
+  Scrapes the Envoy Gateway controller for its own metrics (reconcile
+  counters, xDS push stats, GW-API status). The upstream gateway-helm
+  chart exposes the controller Service with a named port `metrics: 19001`
+  but doesn't ship a ServiceMonitor — wired here instead.
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: envoy-gateway-controller
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  selector:
+    matchLabels:
+      control-plane: envoy-gateway
+  endpoints:
+    - port: metrics
+      interval: 30s
+      scrapeTimeout: 10s

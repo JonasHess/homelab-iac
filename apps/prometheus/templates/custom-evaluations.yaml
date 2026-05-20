@@ -97,6 +97,34 @@ spec:
       labels:
         severity: warning
     {{- end }}
+    - alert: EnvoyHigh5xxRate
+      annotations:
+        summary: "Envoy proxy 5xx rate > 5% over 5min"
+        description: |
+          More than 5% of requests through the Envoy data plane are returning
+          5xx for the last 5 minutes. Common causes: an upstream service is
+          unhealthy, a Gateway/HTTPRoute is misconfigured, or cert-manager
+          hasn't issued a cert that a route depends on.
+      expr: |
+        (sum(rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5"}[5m]))
+         /
+         sum(rate(envoy_http_downstream_rq_xx[5m]))) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+    - alert: EnvoyProxyScrapeDown
+      annotations:
+        summary: "Envoy proxy Prometheus scrape is down"
+        description: |
+          Prometheus is not scraping the Envoy proxy. Either the proxy pod
+          is unreachable, the metrics endpoint isn't exposed (Telemetry
+          config), or the PodMonitor is broken. Without this, ingress
+          observability stops.
+      expr: |
+        absent(up{job=~".*envoy-proxy.*"} == 1)
+      for: 5m
+      labels:
+        severity: warning
     - alert: NoZFSMetrics
       annotations:
         summary: "No ZFS metrics found"

@@ -1,0 +1,30 @@
+{{- /*
+  Scrapes Envoy proxy data-plane pods (the EG-managed Deployment) for
+  Prometheus metrics. Telemetry.metrics.prometheus is enabled on the
+  EnvoyProxy CR in envoy-proxy-config.yaml, so the proxy exposes
+  /stats/prometheus on its `metrics` containerPort (19001).
+
+  PodMonitor (not ServiceMonitor) because the managed LB Service only
+  exposes the data-plane listener ports (80/443/4443/...) — not the
+  internal metrics port. Pod IP + port 19001 is the scrape target.
+*/ -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: envoy-proxy
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/managed-by: envoy-gateway
+      app.kubernetes.io/component: proxy
+  podMetricsEndpoints:
+    - port: metrics
+      path: /stats/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
