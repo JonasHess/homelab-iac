@@ -3,6 +3,6 @@ appVersion: 1.0.0
 description: Helm chart for generic
 name: generic
 type: application
-version: 0.1.53
+version: 0.1.54
 
 schema: file://values.schema.json
