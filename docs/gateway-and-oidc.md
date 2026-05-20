@@ -5,7 +5,7 @@ How HTTPS traffic is terminated, authenticated and authorised in this homelab.
 ## TL;DR
 
 - **Envoy Gateway** (upstream `oci://docker.io/envoyproxy/gateway-helm` v1.7.2) is the Gateway-API controller. Installed by `apps/envoy-gateway/`.
-- One `Gateway` resource, `envoy-gateway` in the `argocd` namespace, with **two HTTPS listener pairs**:
+- One `Gateway` resource, `envoy-gateway` in the `envoy-gateway` namespace, with **two HTTPS listener pairs**:
   - **`websecure` / `websecure-apex` (port 443, LAN-only).** MetalLB announces the LoadBalancer IP only on the LAN VLAN, and the router does **not** NAT `WAN:443` to it. Anything reaching this listener is on the LAN. No further IP filtering needed.
   - **`websecure-public` / `websecure-public-apex` (port 4443, Cloudflare-only).** Router NATs `WAN:443 → :4443`. The listener requires **mTLS**: every request must present a client certificate signed by `global.security.cloudflareOriginCA`. The matching leaf cert is uploaded to Cloudflare as the **Authenticated Origin Pulls (AOP) custom certificate**, so only requests proxied through *our* Cloudflare zone can complete the handshake. The TLS handshake itself is the gate — no shared headers, no IP allowlist.
 - One **Gateway-level `SecurityPolicy`** (`gateway-oidc`) attaches **only** native Envoy OIDC against AWS Cognito. No `authorization` block — access control happens at the listener layer.
@@ -23,7 +23,7 @@ The chart that owns everything gateway-side. Resources it emits:
 
 | File | Resource | Role |
 |---|---|---|
-| `envoy-gateway-application.yaml` | child ArgoCD `Application` | Installs the upstream `gateway-helm` chart into `envoy-gateway-system` (controller + CRDs). |
+| `envoy-gateway-application.yaml` | child ArgoCD `Application` | Installs the upstream `gateway-helm` chart into `envoy-gateway` (controller + CRDs). |
 | `envoy-gatewayclass.yaml` | `GatewayClass envoy-gateway` | Names the controller. |
 | `envoy-proxy-config.yaml` | `EnvoyProxy` | Customises the Envoy data-plane Service (`externalTrafficPolicy: Local`). |
 | `envoy-gateway.yaml` | `Gateway envoy-gateway` | Listeners: `web` (HTTP 80), `websecure` + `websecure-apex` (HTTPS 443, LAN-only), `websecure-public` + `websecure-public-apex` (HTTPS 4443, Cloudflare-only, conditional on `cloudflareOriginCA`), plus per-env extras (sftpgo 2222/TCP, ftp 2121/TCP, dns 53/UDP, samba 445/TCP). `spec.addresses` pins the LoadBalancer IP. |
@@ -140,10 +140,10 @@ Each route emits an HTTPRoute with **dual `parentRefs`** when `global.security.c
 ```yaml
 parentRefs:
   - name: envoy-gateway
-    namespace: argocd
+    namespace: envoy-gateway
     sectionName: websecure          # LAN listener
   - name: envoy-gateway              # only emitted when cloudflareOriginCA is set
-    namespace: argocd
+    namespace: envoy-gateway
     sectionName: websecure-public    # Cloudflare listener
 ```
 
@@ -342,10 +342,10 @@ Commit + push. ArgoCD syncs `apps/envoy-gateway` and emits:
 Verify:
 
 ```bash
-kubectl get configmap -n argocd cloudflare-origin-ca -o jsonpath='{.data}' | head -c 80
-kubectl get clienttrafficpolicy -n argocd envoy-gateway-mtls -o yaml \
+kubectl get configmap -n envoy-gateway cloudflare-origin-ca -o jsonpath='{.data}' | head -c 80
+kubectl get clienttrafficpolicy -n envoy-gateway envoy-gateway-mtls -o yaml \
   | yq '.status.ancestors[].conditions[] | {type, status, message}'
-kubectl get gateway -n argocd envoy-gateway -o yaml \
+kubectl get gateway -n envoy-gateway envoy-gateway -o yaml \
   | yq '.spec.listeners[] | {name, port, protocol, hostname}'
 # Expect: web/80, websecure/443, websecure-apex/443, websecure-public/4443, websecure-public-apex/4443
 ```
@@ -368,7 +368,7 @@ curl -v https://<app>.<env-domain>/
 Cross-check the access log to confirm the request actually hit the public listener:
 
 ```bash
-kubectl logs -n envoy-gateway-system \
+kubectl logs -n envoy-gateway \
   -l gateway.envoyproxy.io/owning-gateway-name=envoy-gateway \
   --tail=20 | jq -r '"\(.response_code) port=\(.downstream_local_address) \(.\":authority\")"'
 # Expect a line with port=...:4443  (Envoy binds the :4443 Cloudflare listener
@@ -436,36 +436,36 @@ Order matters in `ingress.https[]`: Gateway API picks the most-specific path mat
 
 ```bash
 # Is the Gateway-level SP accepted?
-kubectl get securitypolicy -n argocd gateway-oidc -o yaml \
+kubectl get securitypolicy -n envoy-gateway gateway-oidc -o yaml \
   | yq '.status.ancestors[].conditions[]'
 
 # Which routes are overriding it? (Expected: every route with oauth: false.)
-kubectl get securitypolicy -n argocd gateway-oidc -o jsonpath='{.status.ancestors[*].conditions[*].message}'
+kubectl get securitypolicy -n envoy-gateway gateway-oidc -o jsonpath='{.status.ancestors[*].conditions[*].message}'
 
 # Was a per-route SP accepted?
-kubectl get securitypolicy -n argocd <appname>-securitypolicy-<port>-<index> -o yaml \
+kubectl get securitypolicy -n envoy-gateway <appname>-securitypolicy-<port>-<index> -o yaml \
   | yq '.status.ancestors[].conditions[]'
 
 # Is the mTLS ClientTrafficPolicy accepted?
-kubectl get clienttrafficpolicy -n argocd envoy-gateway-mtls -o yaml \
+kubectl get clienttrafficpolicy -n envoy-gateway envoy-gateway-mtls -o yaml \
   | yq '.status.ancestors[].conditions[]'
 
 # Is the CA ConfigMap present?
-kubectl get configmap -n argocd cloudflare-origin-ca -o yaml
+kubectl get configmap -n envoy-gateway cloudflare-origin-ca -o yaml
 
 # Live access log (one line per request) — useful to verify which listener served a request
-kubectl logs -n envoy-gateway-system \
+kubectl logs -n envoy-gateway \
   -l gateway.envoyproxy.io/owning-gateway-name=envoy-gateway \
   --tail=20 -f | jq -r '"\(.response_code) port=\(.downstream_local_address) \(.\":authority\") \(.\"x-envoy-origin-path\")"'
 
 # Envoy controller logs (xDS push, policy translation errors)
-kubectl logs -n envoy-gateway-system deploy/envoy-gateway --tail=200 | grep -iE "oidc|securitypolicy|clienttrafficpolicy|error|warn"
+kubectl logs -n envoy-gateway deploy/envoy-gateway --tail=200 | grep -iE "oidc|securitypolicy|clienttrafficpolicy|error|warn"
 
 # Is the OIDC HMAC secret present?
-kubectl get secret -n envoy-gateway-system envoy-oidc-hmac
+kubectl get secret -n envoy-gateway envoy-oidc-hmac
 
 # Is the Cognito client secret synced from Akeyless?
-kubectl get secret -n argocd oidc-client-secret -o jsonpath='{.data.client-secret}' | base64 -d | wc -c
+kubectl get secret -n envoy-gateway oidc-client-secret -o jsonpath='{.data.client-secret}' | base64 -d | wc -c
 ```
 
 Common failure modes:
@@ -477,7 +477,7 @@ Common failure modes:
 | Public route returns 404 but LAN works | The HTTPRoute isn't attached to `websecure-public`. Verify `parentRefs` has both `sectionName: websecure` and `sectionName: websecure-public`. |
 | Every protected route lets you in with no login | A per-route SP is overriding `gateway-oidc` unintentionally. Check the `gateway-oidc` status message for "being overridden by..." — anything in that list that *shouldn't* be there has a stray `oauth: false`. |
 | Browser is stuck in a redirect loop between app subdomain and Cognito | `cookieDomain` is wrong (e.g. has the leading dot — Envoy's schema rejects `.hess.pm`, only accepts `hess.pm`). |
-| HTTP 431 from a Node/Tomcat upstream | `strip-oauth-cookies` ExtensionPolicy is missing or not Accepted. `kubectl get envoyextensionpolicy -n argocd strip-oauth-cookies`. |
+| HTTP 431 from a Node/Tomcat upstream | `strip-oauth-cookies` ExtensionPolicy is missing or not Accepted. `kubectl get envoyextensionpolicy -n envoy-gateway strip-oauth-cookies`. |
 | `OIDC config not found` in controller logs | `oidc-client-secret` Secret missing or has the wrong key (must be `client-secret`). |
 
 ## Caveats / future work
