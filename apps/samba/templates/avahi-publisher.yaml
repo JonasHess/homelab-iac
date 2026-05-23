@@ -28,6 +28,20 @@ spec:
               apk add --no-cache avahi avahi-tools dbus
               mkdir -p /var/run/dbus
               rm -f /var/run/dbus/pid
+              # Stop avahi-daemon from auto-publishing the node's own hostname and
+              # addresses. This pod runs on hostNetwork, so otherwise the daemon
+              # advertises <node-hostname>.local -> node IP (which serves no SMB)
+              # and collides with the <hostname>.local -> gateway record below,
+              # sending macOS clients to the wrong host.
+              cat > /etc/avahi/avahi-daemon.conf <<'CONF'
+              [server]
+              use-ipv4=yes
+              use-ipv6=no
+              [publish]
+              publish-addresses=no
+              publish-hinfo=no
+              publish-workstation=no
+              CONF
               dbus-daemon --system
               sleep 1
               avahi-daemon --daemonize --no-drop-root --no-chroot
