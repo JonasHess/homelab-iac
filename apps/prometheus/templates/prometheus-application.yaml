@@ -77,7 +77,7 @@ spec:
               group_wait: 30s
               group_interval: 5m
               repeat_interval: 12h
-              receiver: 'pagerduty'
+              receiver: 'all-alerts'
               routes:
                 - matchers:
                     - alertname = "Watchdog"
@@ -86,11 +86,14 @@ spec:
                     - alertname = "InfoInhibitor"
                   receiver: "null"
             receivers:
-              - name: "null"  # Add this to your config as well
-              - name: 'pagerduty'
+              - name: "null"
+              - name: 'all-alerts'
                 pagerduty_configs:
                   - send_resolved: true
                     service_key_file: "/etc/alertmanager/secrets/pagerduty-secret/pagerduty_service_key"
+                webhook_configs:
+                  - url: "https://n8n.hess.pm/webhook/alertmanager/alert"
+                    send_resolved: true
         defaultRules:
           create: true
           rules:
