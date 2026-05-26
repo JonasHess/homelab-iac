@@ -62,6 +62,13 @@ global:
   security:
     cloudflareOriginCA: ~
 
+  # Set to false in environments that do not deploy kube-prometheus-stack.
+  # Guards monitoring.coreos.com resources in non-prometheus app charts
+  # (envoy-gateway, smarthome4, tgtg, duplicatiprometheusexporter) so they
+  # are not rendered at all when the CRD is absent.
+  monitoring:
+    enabled: true
+
   argocd:
     targetRevision: ~ # main
 

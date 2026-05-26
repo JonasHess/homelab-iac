@@ -107,6 +107,16 @@
             }
           }
         },
+        "monitoring": {
+          "type": "object",
+          "description": "Controls whether monitoring.coreos.com resources (ServiceMonitor, PodMonitor, Probe) are rendered. Set enabled: false in environments without kube-prometheus-stack.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "When false, no monitoring.coreos.com resources are emitted by any app chart. Defaults to true."
+            }
+          }
+        },
         "lanDnsCheck": {
           "type": "object",
           "description": "Optional: monitor that internal DNS resolves a hostname under global.domain to global.gateway.loadBalancerIP. When set, prometheus-blackbox-exporter gets a dns_lan_gateway module, a Probe queries dnsServer, and a LanInternalDnsBroken alert fires when the answer is not the gateway IP. Leave unset to disable. Catches silent LAN→Cloudflare hairpinning.",

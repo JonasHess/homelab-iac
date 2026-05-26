@@ -3,7 +3,11 @@
   counters, xDS push stats, GW-API status). The upstream gateway-helm
   chart exposes the controller Service with a named port `metrics: 19001`
   but doesn't ship a ServiceMonitor — wired here instead.
+
+  Gated on global.monitoring.enabled — omitted entirely in environments
+  without kube-prometheus-stack so the CRD absence never causes sync errors.
 */ -}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -22,3 +26,4 @@ spec:
     - port: metrics
       interval: 30s
       scrapeTimeout: 10s
+{{- end }}

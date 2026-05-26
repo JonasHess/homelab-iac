@@ -1,3 +1,4 @@
+{{- if (.Values.global.monitoring | default dict).enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
@@ -14,3 +15,4 @@ spec:
     - port: http
       path: /actuator/prometheus
       interval: 30s
+{{- end }}

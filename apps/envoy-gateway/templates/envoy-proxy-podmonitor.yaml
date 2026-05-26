@@ -7,7 +7,11 @@
   PodMonitor (not ServiceMonitor) because the managed LB Service only
   exposes the data-plane listener ports (80/443/4443/...) — not the
   internal metrics port. Pod IP + port 19001 is the scrape target.
+
+  Gated on global.monitoring.enabled — omitted entirely in environments
+  without kube-prometheus-stack so the CRD absence never causes sync errors.
 */ -}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
@@ -28,3 +32,4 @@ spec:
       path: /stats/prometheus
       interval: 30s
       scrapeTimeout: 10s
+{{- end }}
