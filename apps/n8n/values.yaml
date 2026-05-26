@@ -23,7 +23,10 @@ generic:
         oauth: true
     # Bypass oauth2-proxy for webhooks and API
       - subdomain: n8n
-        priority: 20
-        matchSuffix: '&& (PathPrefix(`/webhook`) || PathPrefix(`/webhook-test`) || PathPrefix(`/api`) || PathPrefix(`/mcp-server/http`))'
+        pathPrefixes:
+          - /webhook
+          - /webhook-test
+          - /api
+          - /mcp-server/http
         port: 5678
         oauth: false
