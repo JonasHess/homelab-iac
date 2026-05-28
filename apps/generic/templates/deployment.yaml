@@ -82,6 +82,10 @@ spec:
             - mountPath: "{{ required (printf "mountPath for secretMount %s must be specified" $mountName) $mount.mountPath }}"
               name: {{ $appName }}-{{ $mountName }}-volume
             {{- end }}
+            {{- range $mountName, $mount := $deployment.emptyDirMounts }}
+            - mountPath: "{{ required (printf "mountPath for emptyDirMount %s must be specified" $mountName) $mount.mountPath }}"
+              name: {{ $appName }}-{{ $mountName }}-volume
+            {{- end }}
           {{- if $deployment.envFrom }}
           envFrom:
             {{- if $deployment.envFrom.configMapRef }}
@@ -124,6 +128,20 @@ spec:
         - name: {{ $appName }}-{{ $mountName }}-volume
           secret:
             secretName: {{ required (printf "secretName for secretMount %s must be specified" $mountName) $mount.secretName }}
+        {{- end }}
+        {{- range $mountName, $mount := $deployment.emptyDirMounts }}
+        - name: {{ $appName }}-{{ $mountName }}-volume
+          {{- if or $mount.sizeLimit $mount.medium }}
+          emptyDir:
+            {{- if $mount.sizeLimit }}
+            sizeLimit: {{ $mount.sizeLimit }}
+            {{- end }}
+            {{- if $mount.medium }}
+            medium: {{ $mount.medium }}
+            {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
         {{- end }}
       {{- if $deployment.imagePullSecrets }}
       imagePullSecrets:

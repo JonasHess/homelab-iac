@@ -308,6 +308,29 @@
             }
           }
         },
+        "emptyDirMounts": {
+          "type": "object",
+          "description": "Ephemeral emptyDir volumes mounted into the main container (and shareable with initContainers by referencing the auto-generated volume name <appName>-<mountName>-volume). Use for scratch space, caches, or init-container-populated assets.",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["mountPath"],
+            "properties": {
+              "mountPath": {
+                "type": "string",
+                "description": "Path where the emptyDir should be mounted in the container"
+              },
+              "sizeLimit": {
+                "type": ["string", "null"],
+                "description": "Optional max size, e.g. '500Mi'. Omit for unlimited."
+              },
+              "medium": {
+                "type": ["string", "null"],
+                "enum": ["", "Memory", null],
+                "description": "Optional storage medium. Set to 'Memory' for tmpfs-backed emptyDir."
+              }
+            }
+          }
+        },
         "imagePullSecrets": {
           "type": "array",
           "description": "List of image pull secret names for pulling private container images",

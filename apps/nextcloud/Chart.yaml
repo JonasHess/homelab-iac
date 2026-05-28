@@ -3,7 +3,7 @@ appVersion: 32.0.5
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.55
+  version: 0.1.56
 - name: nextcloud
   repository: https://nextcloud.github.io/helm/
   version: 9.1.0
