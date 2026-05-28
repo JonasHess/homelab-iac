@@ -56,14 +56,23 @@ generic:
   configMaps:
     # InfCloud runtime config (served by nginx at /config.js — see the
     # `location = /config.js` block in the nginx ConfigMap below).
-    # href is RELATIVE so the browser stays same-origin with InfCloud and
-    # no CORS handling is needed on Radicale. Do not change to an absolute
-    # https://dav.<domain>/ unless you also wire up Envoy-level CORS.
+    #
+    # href MUST be absolute: InfCloud's data_process.js parses the account
+    # URL with a regex anchored on `^https?://`. A relative path like
+    # `/radicale/` makes the regex return null and silently kills the
+    # discovery flow (symptom: blank page after a successful login).
+    #
+    # The host is `contacts.<domain>` — the same origin InfCloud itself
+    # was loaded from — so the browser still treats the XHR as same-origin
+    # and no CORS preflight is involved. nginx in this pod proxies that
+    # path to the in-cluster radicale-service:5232.
+    # global.domain is interpolated via the generic chart's `tpl` call in
+    # templates/configmap.yaml.
     infcloud-config:
       config.js: |
         // Generated for Radicale via homelab-iac. Edit values.yaml to change.
         var globalNetworkCheckSettings = {
-          href: "/radicale/",
+          href: "https://contacts.{{ .Values.global.domain }}/radicale/",
           timeOut: 30000,
           lockTimeOut: 10000,
           checkContentType: true,
@@ -76,7 +85,7 @@ generic:
           backgroundCalendars: []
         };
         var globalAccountSettings = [{
-          href: "/radicale/",
+          href: "https://contacts.{{ .Values.global.domain }}/radicale/",
           hrefLabel: null,
           checkContentType: true,
           timeOut: 30000,

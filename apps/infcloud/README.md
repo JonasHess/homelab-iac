@@ -30,7 +30,7 @@ Pinned InfCloud commit: `Unrud/RadicaleInfCloud@53d3a95af5b58cfa3242cef645f8d40c
 
 ## Same-origin DAV proxy (no CORS)
 
-The browser only talks to `contacts.<domain>`. InfCloud's `config.js` sets `href` to the **relative** path `/radicale/`. The pod's nginx proxies that path to the in-cluster `radicale-service:5232`. Same origin → no preflight, no `Access-Control-Allow-*` needed on Radicale.
+The browser only talks to `contacts.<domain>`. InfCloud's `config.js` sets `href` to `https://contacts.<domain>/radicale/` — same origin as InfCloud itself, so no CORS preflight. The pod's nginx proxies the `/radicale/` path to the in-cluster `radicale-service:5232`.
 
 ```
 browser → https://contacts.<domain>/radicale/...   (nginx in this pod)
@@ -38,7 +38,9 @@ browser → https://contacts.<domain>/radicale/...   (nginx in this pod)
               http://radicale-service:5232/...
 ```
 
-Native DAV clients (DAVx⁵, iOS, Thunderbird) continue to hit `dav.<domain>` directly — this proxy exists **only** for the browser-loaded InfCloud JS. Do not change `href` to an absolute `https://dav.<domain>/` unless you also wire up Envoy-level CORS.
+The URL **must be absolute** even though it points back at the same host. InfCloud's `data_process.js` parses the account URL with `^https?://…` — a relative `/radicale/` makes the regex return null and the JS dies silently after login (symptom: blank page). The `global.domain` value is interpolated by Helm's `tpl` in the generic chart's `configmap.yaml`, so the URL stays env-correct.
+
+Native DAV clients (DAVx⁵, iOS, Thunderbird) continue to hit `dav.<domain>` directly — this proxy exists **only** for the browser-loaded InfCloud JS. Do not change `href` to `https://dav.<domain>/`: that would be cross-origin and require Envoy-level CORS.
 
 ## `config.js` options worth knowing
 
