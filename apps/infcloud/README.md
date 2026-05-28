@@ -11,13 +11,17 @@ pod start
  ├─ init: alpine + busybox
  │    wget tarball from github.com/Unrud/RadicaleInfCloud@<COMMIT>
  │    extract radicale_infcloud/web/ → emptyDir
+ │    sed-inject <script src="config-overrides.js"> into index.html
+ │    (so our overrides load right after upstream config.js)
  └─ main: nginx:1.27-alpine
       serves emptyDir at /usr/share/nginx/html
-      serves /config.js from ConfigMap (overrides the file in the tarball)
+      serves /config-overrides.js from ConfigMap
       proxies /radicale/ → in-cluster radicale-service:5232
 ```
 
-No custom image, no ECR, no Dockerfile. The pinned upstream commit and all server config live in `values.yaml`.
+No custom image, no ECR, no Dockerfile. The pinned upstream commit and the small list of overrides live in `values.yaml`.
+
+We deliberately **do not shadow upstream `config.js`** — it defines ~50 globals (sort alphabets, datepicker formats, search transforms, business hours, etc.) that other InfCloud JS files reference unconditionally. Owning the full file means whack-a-mole every time a global is missed. Instead, our `config-overrides.js` runs after upstream defaults and mutates the handful of values we care about.
 
 ## Where things live
 
