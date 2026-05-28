@@ -1,0 +1,65 @@
+generic:
+  deployment:
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/infcloud:0.13.1-1
+    imagePullSecrets:
+    - regcred-primary
+    ports:
+    - containerPort: 8080
+    configMapMounts:
+      config:
+        mountPath: /etc/infcloud
+        configMapName: infcloud-config
+  service:
+    ports:
+    - name: http
+      port: 8080
+  ingress:
+    https:
+    - subdomain: contacts
+      port: 8080
+      oauth: true
+  configMaps:
+    infcloud-config:
+      # Served by nginx at /config.js (see apps/infcloud/nginx.conf).
+      # InfCloud loads this from the browser at page load.
+      #
+      # Reference: https://www.inf-it.com/open-source/clients/infcloud/
+      #
+      # href is a RELATIVE URL pointing at the in-pod nginx /radicale/ proxy
+      # which forwards to radicale-service:5232. This keeps the browser
+      # same-origin with InfCloud (contacts.<domain>) so no CORS is involved.
+      # Do NOT change to an absolute dav.<domain> URL unless you also wire up
+      # CORS headers on the Radicale route.
+      config.js: |
+        // Generated for Radicale via homelab-iac. Edit values.yaml to change.
+        var globalNetworkCheckSettings = {
+          href: "/radicale/",
+          timeOut: 30000,
+          lockTimeOut: 10000,
+          checkContentType: true,
+          settingsAccount: true,
+          delegation: false,
+          additionalResources: [],
+          hrefLabel: null,
+          forceReadOnly: null,
+          ignoreAlarms: false,
+          backgroundCalendars: []
+        };
+        var globalAccountSettings = [{
+          href: "/radicale/",
+          hrefLabel: null,
+          checkContentType: true,
+          timeOut: 30000,
+          lockTimeOut: 10000,
+          delegation: false,
+          ignoreAlarms: false,
+          backgroundCalendars: []
+        }];
+        var globalInterfaceLanguage = "de_DE";
+        var globalSortAlphabet = " 0123456789AÀÁÂÄÆÃÅĀBCÇĆČDÐEÈÉÊËĒĖĘFGHIÌÍÎİÏĪĮJKLŁĹĻŁĽMNŃÑŇŅŊOÒÓÔÖŒØÕŌPQRŔŘSŚŠŞȘẞTŢȚŤUÙÚÛÜŪŮŲVWXYÝŸZŹŻŽ";
+        var globalDatepickerFirstDayOfWeek = 1;
+        var globalTimeZone = "Europe/Berlin";
+        var globalEnableKbNavigation = true;
+        var globalEnableRefresh = true;
+        var globalEnableJqueryAuthentication = true;
+        var globalRewriteUrl = true;

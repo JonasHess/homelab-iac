@@ -717,6 +717,21 @@ apps:
       project: "default"
       syncWave: "15"  # Deploy after core services
 
+  infcloud:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/radicale.svg"
+      subtitle: "CalDAV/CardDAV Web Client"
+      displayName: "Contacts"
+      subdomain: "contacts"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "16"  # Deploy after Radicale
+
   whoami:
     enabled: false
     homer:
