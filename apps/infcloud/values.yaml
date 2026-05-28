@@ -1,4 +1,10 @@
 generic:
+  # Other Radicale principals InfCloud should also PROPFIND under for the
+  # logged-in user. Used to surface shared collections (Radicale rights file
+  # filters what each user can actually see). Env-specific because the values
+  # are real usernames — set per env in homelab_environments/<env>/values.yaml.
+  additionalResources: []
+
   deployment:
     image: nginx:1.31-alpine
     ports:
@@ -58,6 +64,12 @@ generic:
         globalNetworkCheckSettings.href = "https://contacts.{{ .Values.global.domain }}/radicale/";
         globalInterfaceLanguage = "de_DE";
         globalEnableDevelBuilds = false;
+        {{- with .Values.additionalResources }}
+        // PROPFIND under these principals for every non-matching login,
+        // so users with shared-collection grants see them. InfCloud skips
+        // the entry whose name equals the logged-in user.
+        globalNetworkCheckSettings.additionalResources = {{ . | toJson }};
+        {{- end }}
 
 # nginx server block lives in apps/infcloud/files/nginx.conf and is wrapped
 # into the infcloud-nginx-conf ConfigMap by templates/nginx-configmap.yaml.
