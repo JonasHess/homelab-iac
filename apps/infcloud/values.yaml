@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: nginx:1.27-alpine
+    image: nginx:1.31-alpine
     ports:
     - containerPort: 8080
 
