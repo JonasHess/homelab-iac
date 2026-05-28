@@ -7,7 +7,7 @@ generic:
     # Pinned upstream InfCloud commit. Bump and the init container re-fetches.
     initContainers:
       - name: fetch-infcloud
-        image: alpine:3.20
+        image: alpine:3.23
         env:
           - name: INFCLOUD_COMMIT
             value: "53d3a95af5b58cfa3242cef645f8d40c731a7d95"
