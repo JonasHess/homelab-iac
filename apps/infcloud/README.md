@@ -46,21 +46,21 @@ The URL **must be absolute** even though it points back at the same host. InfClo
 
 Native DAV clients (DAVx⁵, iOS, Thunderbird) continue to hit `dav.<domain>` directly — this proxy exists **only** for the browser-loaded InfCloud JS. Do not change `href` to `https://dav.<domain>/`: that would be cross-origin and require Envoy-level CORS.
 
-## `config.js` options worth knowing
+## Overrides worth knowing
 
-Edit `generic.configMaps.infcloud-config['config.js']` in `values.yaml`:
+Edit `generic.configMaps.infcloud-config['config-overrides.js']` in `values.yaml`. The file is loaded after upstream `config.js`, so use **assignments** (not `var` declarations) to mutate the existing globals:
 
-| Key | What it does |
-|---|---|
-| `globalNetworkCheckSettings.href` | Base DAV URL. Keep relative (`/radicale/`). |
-| `globalAccountSettings[].href` | Same URL; InfCloud allows multiple accounts. |
-| `globalInterfaceLanguage` | `de_DE`, `en_US`, etc. — see `locales/` inside the upstream tarball. |
-| `globalTimeZone` | IANA TZ like `Europe/Berlin`. |
-| `globalDatepickerFirstDayOfWeek` | `0` Sunday, `1` Monday. |
-| `globalEnableRefresh` | Manual refresh button. |
-| `globalEnableJqueryAuthentication` | Keep `true` — XHR Basic Auth, what Radicale expects. |
+```js
+globalNetworkCheckSettings.href = "https://contacts.<domain>/radicale/";  // required, absolute
+globalInterfaceLanguage = "de_DE";                                         // upstream default: en_US
+// Example:
+// globalTimeZone = "America/New_York";          // upstream default: Europe/Berlin
+// globalDatepickerFirstDayOfWeek = 0;           // upstream default: 1 (Monday)
+```
 
-Full reference: visible at `https://contacts.<domain>/config-help.txt` after deploy (the file is part of the upstream tarball).
+**Do not** add `var globalAccountSettings = [...]`. The `globalNetworkCheckSettings` flow already constructs that array dynamically with the right `userAuth`; declaring it statically makes runCardDAV crash on `globalAccountSettings[0].userAuth.userName`.
+
+Full upstream reference: `https://contacts.<domain>/config-help.txt` after deploy.
 
 ## Known InfCloud bugs
 
