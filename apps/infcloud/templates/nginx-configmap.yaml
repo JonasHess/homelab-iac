@@ -1,0 +1,14 @@
+{{- /*
+  nginx server block lives in apps/infcloud/files/nginx.conf so editors
+  syntax-highlight it as nginx instead of a YAML string. Loaded here and
+  emitted as a ConfigMap; the generic chart mounts it at /etc/nginx/conf.d/
+  in the pod (see deployment.configMapMounts.nginxconf in values.yaml).
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: infcloud-nginx-conf
+  namespace: {{ .Release.Namespace }}
+data:
+  default.conf: |-
+{{ .Files.Get "files/nginx.conf" | indent 4 }}
