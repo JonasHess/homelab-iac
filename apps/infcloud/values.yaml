@@ -71,6 +71,11 @@ generic:
     infcloud-config:
       config.js: |
         // Generated for Radicale via homelab-iac. Edit values.yaml to change.
+        // Login-screen setup. Pick ONE of globalAccountSettings (hardcoded
+        // creds) or globalNetworkCheckSettings (login form). Defining both
+        // crashes runCardDAV: the success callback appends a new entry to
+        // globalAccountSettings with userAuth set, but runCardDAV reads
+        // globalAccountSettings[0] which is the static entry without userAuth.
         var globalNetworkCheckSettings = {
           href: "https://contacts.{{ .Values.global.domain }}/radicale/",
           timeOut: 30000,
@@ -84,16 +89,6 @@ generic:
           ignoreAlarms: false,
           backgroundCalendars: []
         };
-        var globalAccountSettings = [{
-          href: "https://contacts.{{ .Values.global.domain }}/radicale/",
-          hrefLabel: null,
-          checkContentType: true,
-          timeOut: 30000,
-          lockTimeOut: 10000,
-          delegation: false,
-          ignoreAlarms: false,
-          backgroundCalendars: []
-        }];
         var globalInterfaceLanguage = "de_DE";
         var globalSortAlphabet = " 0123456789AÀÁÂÄÆÃÅĀBCÇĆČDÐEÈÉÊËĒĖĘFGHIÌÍÎİÏĪĮJKLŁĹĻŁĽMNŃÑŇŅŊOÒÓÔÖŒØÕŌPQRŔŘSŚŠŞȘẞTŢȚŤUÙÚÛÜŪŮŲVWXYÝŸZŹŻŽ";
         var globalDatepickerFirstDayOfWeek = 1;
