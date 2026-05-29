@@ -9,33 +9,6 @@ generic:
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/beszel/data
         backup:
           enabled: true
-    # The hub's SSH private key is pre-provisioned via Akeyless so the
-    # hub->agent handshake is zero-touch on first boot. The init container
-    # below copies it into /beszel_data/id_ed25519 if not already present;
-    # after first run Beszel reuses the file as it would its own.
-    secretMounts:
-      hub-key:
-        mountPath: /tmp/hub-key
-        secretName: beszel-hub-key
-    initContainers:
-      - name: bootstrap-ssh-key
-        image: busybox:1.36
-        command:
-          - sh
-          - -c
-          - |
-            if [ ! -f /beszel_data/id_ed25519 ]; then
-              cp /tmp/hub-key/id_ed25519 /beszel_data/id_ed25519
-              chmod 600 /beszel_data/id_ed25519
-              echo "Bootstrapped /beszel_data/id_ed25519 from Akeyless"
-            else
-              echo "/beszel_data/id_ed25519 already present, skipping"
-            fi
-        volumeMounts:
-          - name: beszel-data-volume
-            mountPath: /beszel_data
-          - name: beszel-hub-key-volume
-            mountPath: /tmp/hub-key
   service:
     ports:
     - name: http
@@ -45,22 +18,27 @@ generic:
     - subdomain: beszel
       port: 8090
       oauth: true
+  # Universal Token used by agents to self-register over WebSocket.
+  # Generated once in the hub UI at /settings/tokens (after first boot),
+  # then mirrored into Akeyless. From then on, every new agent picks it
+  # up automatically — no UI clicks per system.
   externalSecrets:
-    # Hub: private key used to scrape every agent.
-    beszel-hub-key:
-      - id_ed25519: /beszel/HUB_SSH_PRIVATE_KEY
-    # Agent: matching public key, consumed by the agent DaemonSet as env KEY.
-    beszel-agent-key:
-      - KEY: /beszel/HUB_SSH_PUBLIC_KEY
+    beszel-token:
+      - TOKEN: /beszel/UNIVERSAL_TOKEN
 
-# Agent DaemonSet — rendered by apps/beszel/templates/agent-daemonset.yaml,
-# not the generic chart. Off by default; opt in per-environment.
+# Agent DaemonSet — rendered by apps/beszel/templates/agent-daemonset.yaml.
+# Off by default; opt in per-environment.
 agent:
   enabled: false
   image: henrygd/beszel-agent:0.18.7
   listen: "45876"
+  # Where the agent connects to the hub. Cluster-internal Service URL by
+  # default — agents reach it via cluster DNS (the DaemonSet uses
+  # dnsPolicy: ClusterFirstWithHostNet so cluster DNS works alongside
+  # hostNetwork). Override if the hub lives in a different cluster.
+  hubUrl: http://beszel-service.argocd.svc.cluster.local:8090
+  tokenSecret: beszel-token
   # Path on the host to the container runtime socket. Defaults to standard
   # Docker; microk8s/containerd environments can override or set to null
   # (host CPU/RAM/disk metrics work regardless).
   containerSocket: ~
-  keySecret: beszel-agent-key

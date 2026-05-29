@@ -22,6 +22,9 @@ spec:
     spec:
       hostNetwork: true
       hostPID: true
+      # ClusterFirstWithHostNet lets the pod use cluster DNS even though
+      # it shares the host's network namespace — needed so HUB_URL can
+      # resolve via the in-cluster Service name.
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: agent
@@ -30,11 +33,13 @@ spec:
           env:
             - name: LISTEN
               value: {{ $agent.listen | default "45876" | quote }}
-            - name: KEY
+            - name: HUB_URL
+              value: {{ required "agent.hubUrl must be set" $agent.hubUrl | quote }}
+            - name: TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ $agent.keySecret | default "beszel-agent-key" }}
-                  key: KEY
+                  name: {{ $agent.tokenSecret | default "beszel-token" }}
+                  key: TOKEN
           {{- if $agent.containerSocket }}
           volumeMounts:
             - name: container-socket
