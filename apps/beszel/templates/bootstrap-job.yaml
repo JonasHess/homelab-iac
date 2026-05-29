@@ -40,10 +40,14 @@ metadata:
   name: {{ $appName }}-bootstrap
   namespace: {{ $.Release.Namespace }}
   annotations:
-    # PostSync runs after the hub Deployment is reconciled; HookSucceeded
-    # removes the Job object on success so the next sync re-creates it
-    # cleanly (idempotent inside the script handles the no-op case).
-    argocd.argoproj.io/hook: PostSync
+    # Sync (not PostSync) — PostSync only fires once *every* resource is
+    # healthy, but the agent DaemonSet can't be healthy until this Job
+    # writes its Secret. So we run during the sync itself: ArgoCD blocks
+    # the wave on this hook's success before continuing. The container's
+    # own loop waits for the hub Service to be reachable.
+    # HookSucceeded clears the Job after success so the next sync recreates
+    # it cleanly (idempotent inside the script handles the no-op case).
+    argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
 spec:
   backoffLimit: 6
