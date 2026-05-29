@@ -896,3 +896,17 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"
+
+  beszel:
+    enabled: false
+    homer:
+      enabled: true
+      group: "monitoring"
+      logo: "https://raw.githubusercontent.com/homarr-labs/dashboard-icons/main/svg/beszel.svg"
+      subtitle: "Lightweight Server Monitoring"
+      displayName: "Beszel"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"

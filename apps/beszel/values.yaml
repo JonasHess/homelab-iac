@@ -1,0 +1,66 @@
+generic:
+  deployment:
+    image: henrygd/beszel:0.18.7
+    ports:
+    - containerPort: 8090
+    pvcMounts:
+      data:
+        mountPath: /beszel_data
+        hostPath: ~ # /mnt/somewhere/unencrypted/apps/beszel/data
+        backup:
+          enabled: true
+    # The hub's SSH private key is pre-provisioned via Akeyless so the
+    # hub->agent handshake is zero-touch on first boot. The init container
+    # below copies it into /beszel_data/id_ed25519 if not already present;
+    # after first run Beszel reuses the file as it would its own.
+    secretMounts:
+      hub-key:
+        mountPath: /tmp/hub-key
+        secretName: beszel-hub-key
+    initContainers:
+      - name: bootstrap-ssh-key
+        image: busybox:1.36
+        command:
+          - sh
+          - -c
+          - |
+            if [ ! -f /beszel_data/id_ed25519 ]; then
+              cp /tmp/hub-key/id_ed25519 /beszel_data/id_ed25519
+              chmod 600 /beszel_data/id_ed25519
+              echo "Bootstrapped /beszel_data/id_ed25519 from Akeyless"
+            else
+              echo "/beszel_data/id_ed25519 already present, skipping"
+            fi
+        volumeMounts:
+          - name: beszel-data-volume
+            mountPath: /beszel_data
+          - name: beszel-hub-key-volume
+            mountPath: /tmp/hub-key
+  service:
+    ports:
+    - name: http
+      port: 8090
+  ingress:
+    https:
+    - subdomain: beszel
+      port: 8090
+      oauth: true
+  externalSecrets:
+    # Hub: private key used to scrape every agent.
+    beszel-hub-key:
+      - id_ed25519: /beszel/HUB_SSH_PRIVATE_KEY
+    # Agent: matching public key, consumed by the agent DaemonSet as env KEY.
+    beszel-agent-key:
+      - KEY: /beszel/HUB_SSH_PUBLIC_KEY
+
+# Agent DaemonSet — rendered by apps/beszel/templates/agent-daemonset.yaml,
+# not the generic chart. Off by default; opt in per-environment.
+agent:
+  enabled: false
+  image: henrygd/beszel-agent:0.18.7
+  listen: "45876"
+  # Path on the host to the container runtime socket. Defaults to standard
+  # Docker; microk8s/containerd environments can override or set to null
+  # (host CPU/RAM/disk metrics work regardless).
+  containerSocket: ~
+  keySecret: beszel-agent-key

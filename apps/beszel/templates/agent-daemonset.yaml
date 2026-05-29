@@ -1,0 +1,51 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- $agent := .Values.agent | default dict }}
+{{- if $agent.enabled }}
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ $appName }}-agent
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}-agent
+spec:
+  selector:
+    matchLabels:
+      app: {{ $appName }}-agent
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}-agent
+      annotations:
+        reloader.stakater.com/auto: "true"
+    spec:
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: agent
+          image: {{ $agent.image | default "henrygd/beszel-agent:0.18.7" }}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LISTEN
+              value: {{ $agent.listen | default "45876" | quote }}
+            - name: KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $agent.keySecret | default "beszel-agent-key" }}
+                  key: KEY
+          {{- if $agent.containerSocket }}
+          volumeMounts:
+            - name: container-socket
+              mountPath: /var/run/docker.sock
+              readOnly: true
+          {{- end }}
+      {{- if $agent.containerSocket }}
+      volumes:
+        - name: container-socket
+          hostPath:
+            path: {{ $agent.containerSocket | quote }}
+            type: Socket
+      {{- end }}
+{{- end }}
