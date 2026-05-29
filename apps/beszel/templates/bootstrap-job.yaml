@@ -118,12 +118,26 @@ spec:
               JWT=$(echo "$AUTH" | jq -r '.token')
               [ -n "$JWT" ] && [ "$JWT" != "null" ] || { echo "[bootstrap] no JWT in auth response"; exit 1; }
 
-              echo "[bootstrap] enabling Universal Token ..."
-              TR=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token?enable=1" \
+              # Beszel quirk: enable=1 always rotates the token, even if it's
+              # already active. So check current state first, only call
+              # enable=1 if it's not already active. permanent=1 stops the
+              # hub from auto-rotating it over time (Beszel issue #1479).
+              echo "[bootstrap] checking Universal Token state ..."
+              STATE=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token" \
                 -H "Authorization: $JWT") \
-                || { echo "[bootstrap] enable failed"; exit 1; }
-              TOKEN=$(echo "$TR" | jq -r '.token // empty')
-              [ -n "$TOKEN" ] || { echo "[bootstrap] no token in response: $TR"; exit 1; }
+                || { echo "[bootstrap] state check failed"; exit 1; }
+              ACTIVE=$(echo "$STATE" | jq -r '.active // false')
+              if [ "$ACTIVE" = "true" ]; then
+                echo "[bootstrap] token already active, reusing"
+                TOKEN=$(echo "$STATE" | jq -r '.token // empty')
+              else
+                echo "[bootstrap] enabling Universal Token (permanent) ..."
+                TR=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token?enable=1&permanent=1" \
+                  -H "Authorization: $JWT") \
+                  || { echo "[bootstrap] enable failed"; exit 1; }
+                TOKEN=$(echo "$TR" | jq -r '.token // empty')
+              fi
+              [ -n "$TOKEN" ] || { echo "[bootstrap] no token in response: $STATE"; exit 1; }
 
               echo "[bootstrap] deriving hub pubkey ..."
               if [ ! -f /beszel_data/id_ed25519 ]; then

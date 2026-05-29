@@ -1,21 +1,56 @@
 # Beszel
 
-Lightweight server monitoring. Hub (web UI + PocketBase) + per-node agent. Agents self-register over WebSocket using a Universal Token — no per-host UI clicks ever — and use a pre-provisioned SSH keypair for message signing.
+Lightweight server monitoring. Hub (web UI + PocketBase) + per-node agent. **Fully self-bootstrapping** — no Akeyless paths to populate, no UI clicks per system. Push the chart, sync ArgoCD, done.
 
 ## Architecture
 
 | Component | Resource | Image | Notes |
 |---|---|---|---|
-| Hub | Deployment | `henrygd/beszel` | PocketBase + SQLite at `/beszel_data`. Exposed via Envoy Gateway at `beszel.<domain>`, gated by Cognito OIDC. Init container restores the SSH private key from Akeyless on first boot. |
-| Agent | DaemonSet | `henrygd/beszel-agent` | One pod per node. `hostNetwork: true`, `hostPID: true`. Listens on `:45876`, dials hub on cluster DNS via `dnsPolicy: ClusterFirstWithHostNet`. `envFrom` pulls `KEY` + `TOKEN` from the same Secret. |
+| Hub | Deployment | `henrygd/beszel` | PocketBase + SQLite at `/beszel_data`. Exposed via Envoy Gateway at `beszel.<domain>`, gated by Cognito OIDC. Auto-creates its admin user from env vars on first start. |
+| Bootstrap | Sync-hook Job | `alpine:3.20` | Runs during sync. Auths against the hub, enables a permanent Universal Token, derives the hub's SSH pubkey from the shared PV, and writes both into a K8s Secret. Idempotent. |
+| Agent | DaemonSet | `henrygd/beszel-agent` | One pod per node. `hostNetwork: true`, `hostPID: true`. Listens on `:45876`, dials hub on cluster DNS via `dnsPolicy: ClusterFirstWithHostNet`. `envFrom` pulls `KEY` + `TOKEN` from the bootstrap-written Secret. |
 
-## Why both SSH key *and* Universal Token
+## How the bootstrap works
 
-Beszel uses the SSH keypair for **message signing** in both transports — even when the agent connects via WebSocket, every message from the hub is signed with the hub's SSH private key, and the agent verifies it with `KEY`. So the agent always needs the hub's *public* key, and any placeholder will fail with `invalid signature - check KEY value`.
+```
+            ┌──────────────────────────────────────────────┐
+            │  hub Deployment                              │
+            │  env: USER_EMAIL, USER_PASSWORD, AUTO_LOGIN  │
+            │  → first boot: creates admin user            │
+            │  → generates its own SSH keypair             │
+            └─────────────────┬────────────────────────────┘
+                              │ mounts /beszel_data
+                              ▼
+            ┌──────────────────────────────────────────────┐
+            │  beszel-bootstrap Job (Sync hook)            │
+            │                                              │
+            │  1. wait for hub /api/health                 │
+            │  2. POST users/auth-with-password            │
+            │  3. GET universal-token → read state         │
+            │     • if active: reuse                       │
+            │     • else: enable=1&permanent=1             │
+            │  4. ssh-keygen -y -f /beszel_data/id_ed25519 │
+            │  5. kubectl apply Secret beszel-agent-env    │
+            │     keys: KEY (pubkey), TOKEN                │
+            │  6. exit 0  (deleted by HookSucceeded)       │
+            └─────────────────┬────────────────────────────┘
+                              │ Secret beszel-agent-env
+                              ▼
+            ┌──────────────────────────────────────────────┐
+            │  agent DaemonSet                             │
+            │  envFrom: beszel-agent-env                   │
+            │  → KEY validates hub signatures              │
+            │  → TOKEN registers the system on first dial  │
+            └──────────────────────────────────────────────┘
+```
 
-The Universal Token is purely about **registration**: it lets the agent register a new System entry in the hub's PocketBase without anyone clicking "+ Add System" in the UI.
+**Why the hub admin password is fine to ship in the chart**
 
-Together: pre-provisioned keypair = signed comms work, Universal Token = registration is automatic.
+The PocketBase admin user is only used internally by the bootstrap Job. External access to the hub is gated by Cognito OIDC at the Envoy Gateway, so the password value never matters for end-user auth. `AUTO_LOGIN` ensures any OIDC-authenticated visitor lands directly in the UI without seeing Beszel's own login form.
+
+**Why we can't seed the Universal Token from outside**
+
+Beszel generates the token in PocketBase server-side and exposes a REST endpoint to enable/read it. There's no env var to seed it. The bootstrap Job calls that endpoint after the hub is up. The `permanent=1` flag prevents the hub from auto-rotating it ([Beszel #1479](https://github.com/henrygd/beszel/issues/1479)).
 
 ## Per-environment configuration
 
@@ -46,77 +81,25 @@ apps:
 Defaults that you usually don't override:
 
 - `agent.hubUrl: http://beszel-service.argocd.svc.cluster.local:8090` — in-cluster Service URL.
-- `agent.envSecret: beszel-agent-env` — name of the K8s Secret produced by ESO (carries both `KEY` and `TOKEN`).
+- `agent.envSecret: beszel-agent-env` — name of the Secret the bootstrap Job writes.
 - `agent.listen: "45876"` — agent listen port.
-
-## Akeyless paths
-
-Three values per env, under `<global.akeyless.path>/beszel/`:
-
-| Path | Used by | How it's produced |
-|---|---|---|
-| `HUB_SSH_PRIVATE_KEY` | Hub init container → `/beszel_data/id_ed25519` | `ssh-keygen -t ed25519 -N "" -f beszel_hub` (local), upload the private side |
-| `HUB_SSH_PUBLIC_KEY` | Agent (`KEY` env) | Public side of the same keypair, single line `ssh-ed25519 AAAA…` |
-| `UNIVERSAL_TOKEN` | Agent (`TOKEN` env) | Generated server-side by the hub UI at `/settings/tokens` after first boot |
+- `bootstrap.enabled: true` — turn off only if you're managing the Secret out of band.
 
 ## First-time setup
 
-Per cluster. ~5 minutes once, then GitOps forever.
+1. Set `apps.beszel.enabled: true` in the env values (see above).
+2. Create the host directory matching `pvcMounts.data.hostPath`:
+   ```bash
+   ssh <user>@<node> 'sudo mkdir -p /mnt/<storage>/apps/beszel/data \
+     && sudo chown 1000:1000 /mnt/<storage>/apps/beszel/data'
+   ```
+3. Commit + push. ArgoCD syncs.
 
-### 1. Generate the SSH keypair locally
-
-```bash
-ssh-keygen -t ed25519 -N "" -C "beszel-hub-<env>" -f /tmp/beszel_hub
-cat /tmp/beszel_hub      # private — copy into Akeyless HUB_SSH_PRIVATE_KEY
-cat /tmp/beszel_hub.pub  # public — copy into Akeyless HUB_SSH_PUBLIC_KEY
-rm -P /tmp/beszel_hub /tmp/beszel_hub.pub
-```
-
-### 2. Put them in Akeyless
-
-- `<global.akeyless.path>/beszel/HUB_SSH_PRIVATE_KEY`
-- `<global.akeyless.path>/beszel/HUB_SSH_PUBLIC_KEY`
-
-### 3. Create the host directory
-
-```bash
-ssh <user>@<node> 'sudo mkdir -p /mnt/<storage>/apps/beszel/data \
-  && sudo chown 1000:1000 /mnt/<storage>/apps/beszel/data'
-```
-
-Path must match `pvcMounts.data.hostPath`.
-
-### 4. Let ArgoCD sync
-
-- Hub init container copies the private key into `/beszel_data/id_ed25519`.
-- Hub starts and uses *that* key (no auto-generation).
-- Agent DaemonSet starts but will be in `CrashLoopBackoff` because `UNIVERSAL_TOKEN` isn't set yet — expected.
-
-### 5. Generate the Universal Token
-
-1. Open `https://beszel.<domain>`.
-2. Create the admin account on first visit.
-3. **Settings → Tokens → Enable Universal Token** → copy the value.
-
-### 6. Put the token in Akeyless
-
-`<global.akeyless.path>/beszel/UNIVERSAL_TOKEN`
-
-Force ESO refresh:
-
-```bash
-kubectl -n argocd annotate externalsecret beszel-agent-env-external-secret \
-  force-sync=$(date +%s) --overwrite
-```
-
-Reloader restarts the agent pods. Agent dials the hub via cluster DNS with `TOKEN` + `KEY`, registers a System entry, and starts reporting metrics.
+No Akeyless paths to populate, no UI to visit, no clicks. Within ~30 s the agent registers itself.
 
 ## Adding another cluster
 
-1. Repeat steps 1–6 for the new env (each hub has its own PocketBase → its own Universal Token, so you can't share that one across clusters).
-2. The SSH keypair *can* be shared across clusters if you want, or you can generate a fresh one per hub — it's a per-env decision.
-
-Per-agent setup within a cluster: zero. Just `agent.enabled: true` for any new node (or change the DaemonSet's node selector) — Universal Token handles registration.
+Same three steps. Each hub has its own PocketBase → its own admin user (auto-created), its own Universal Token (auto-enabled), its own agent Secret (auto-written). No values are shared across clusters.
 
 ## Operational notes
 
@@ -124,7 +107,7 @@ Per-agent setup within a cluster: zero. Just `agent.enabled: true` for any new n
 
 `/beszel_data/`:
 
-- `id_ed25519` — hub's SSH private key (bootstrapped from Akeyless by the init container, never regenerated).
+- `id_ed25519` — hub's SSH private key (auto-generated on first boot).
 - `data.db`, `data.db-shm`, `data.db-wal` — PocketBase SQLite (users, system entries, tokens, fingerprints, ~30 days of telemetry).
 - `auxiliary.db` — secondary state.
 
@@ -132,44 +115,39 @@ Restic backs up the whole directory (`pvcMounts.data.backup.enabled: true`).
 
 ### Rotating the Universal Token
 
-1. Hub UI → **Settings → Tokens → Regenerate**.
-2. Overwrite Akeyless `/beszel/UNIVERSAL_TOKEN` with the new value.
-3. Force ExternalSecret refresh; reloader restarts agents.
+```bash
+# Force the bootstrap Job to regenerate by deleting the Secret and re-syncing.
+kubectl -n argocd delete secret beszel-agent-env
+kubectl -n argocd patch application argocd-app-beszel \
+  --type merge -p '{"operation":{"sync":{}}}'
+```
 
-Already-registered systems keep working — their per-system fingerprints in PocketBase don't depend on the universal token after first registration.
-
-### Rotating the SSH keypair
-
-1. Generate a new keypair locally.
-2. Overwrite both `HUB_SSH_PRIVATE_KEY` and `HUB_SSH_PUBLIC_KEY` in Akeyless.
-3. SSH into the node and `sudo rm /mnt/<storage>/apps/beszel/data/id_ed25519` so the init container will write the new one on next pod start.
-4. `kubectl -n argocd rollout restart deploy/beszel-deployment ds/beszel-agent`.
+The Job's idempotency check (Secret exists?) trips, it skips. Deleting the Secret forces it to re-enable + regenerate. Already-registered systems keep working — they switched to per-system fingerprints at registration time.
 
 ### Resetting everything
 
 ```bash
 kubectl -n argocd scale deploy beszel-deployment --replicas=0
-
-ssh <user>@<node> 'sudo rm -rf /mnt/<storage>/apps/beszel/data \
-  && sudo mkdir -p /mnt/<storage>/apps/beszel/data \
-  && sudo chown 1000:1000 /mnt/<storage>/apps/beszel/data'
-
+ssh <user>@<node> 'sudo find /mnt/<storage>/apps/beszel/data -mindepth 1 -delete'
+kubectl -n argocd delete secret beszel-agent-env
 kubectl -n argocd scale deploy beszel-deployment --replicas=1
+kubectl -n argocd patch application argocd-app-beszel \
+  --type merge -p '{"operation":{"sync":{}}}'
 ```
 
-Then redo "First-time setup" from step 5 (steps 1–4 are persistent in Akeyless).
+Hub regenerates keypair, recreates admin from env vars, Job re-enables Universal Token, Secret repopulated, agent re-registers as a fresh system. ~30 s end-to-end.
 
 ### Troubleshooting
 
-| Symptom | Likely cause |
-|---|---|
-| Agent in `CrashLoopBackoff`, "must set KEY env var" | `beszel-agent-env` Secret missing — check ESO status and Akeyless paths. |
-| Agent logs `invalid signature - check KEY value` | Akeyless `HUB_SSH_PUBLIC_KEY` doesn't match what's actually at `/beszel_data/id_ed25519`. Re-derive: `ssh-keygen -y -f /mnt/<storage>/apps/beszel/data/id_ed25519`. |
-| Agent logs `unexpected status code: 401` | `TOKEN` doesn't match the hub's Universal Token. Verify, force-sync ESO, restart agent pods. |
-| Hub shows "Keine Systeme gefunden" with agent connected | Token mismatch (same as above) — agent connects but hub refuses to register the system. |
-| Hub init container loops | PV not writable (check `chown 1000:1000`) or Akeyless secret missing. |
-| Agent can't resolve `HUB_URL` | `dnsPolicy: ClusterFirstWithHostNet` missing on the DaemonSet, or in-cluster DNS broken. |
-| No container stats on microk8s | Expected — Beszel reads Docker's API; containerd socket only provides host-level metrics. Host CPU/RAM/disk still work. |
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Agent in `CreateContainerConfigError` with `secret "beszel-agent-env" not found` | Bootstrap Job hasn't completed yet, or failed | `kubectl -n argocd get pods` for `beszel-bootstrap-*`; check its logs |
+| Agent `invalid signature - check KEY value` | Hub keypair was regenerated but Secret has stale KEY (e.g. PV was wiped without deleting the Secret) | `kubectl -n argocd delete secret beszel-agent-env` + re-sync |
+| Agent `unexpected status code: 401` | Universal Token in Secret doesn't match hub's current token | Same as above — delete Secret, re-sync |
+| Bootstrap Job logs `auth failed` | Hub `USER_EMAIL/USER_PASSWORD` env vars don't match data.db state (e.g. an old admin user pre-exists) | Reset everything (above) |
+| Bootstrap Job never runs | ArgoCD's previous sync is still "Running" waiting for healthy state | Terminate the stuck operation, re-sync |
+| No container stats on microk8s | Expected — Beszel reads Docker's API; containerd socket only provides host-level metrics | Host CPU/RAM/disk still work |
+| Agent can't resolve `HUB_URL` | `dnsPolicy: ClusterFirstWithHostNet` missing on the DaemonSet, or in-cluster DNS broken | Inspect DS spec |
 
 ## Versions
 
