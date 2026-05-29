@@ -35,11 +35,12 @@ spec:
               value: {{ $agent.listen | default "45876" | quote }}
             - name: HUB_URL
               value: {{ required "agent.hubUrl must be set" $agent.hubUrl | quote }}
-            - name: TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ $agent.tokenSecret | default "beszel-token" }}
-                  key: TOKEN
+          # KEY (hub's pubkey, for verifying hub signatures) and TOKEN
+          # (Universal Token, for self-registration) both come from the
+          # same ExternalSecret — keeps the per-env Akeyless paths tidy.
+          envFrom:
+            - secretRef:
+                name: {{ $agent.envSecret | default "beszel-agent-env" }}
           {{- if $agent.containerSocket }}
           volumeMounts:
             - name: container-socket

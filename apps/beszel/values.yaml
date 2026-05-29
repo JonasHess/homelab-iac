@@ -9,6 +9,18 @@ generic:
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/beszel/data
         backup:
           enabled: true
+    # USER_EMAIL + USER_PASSWORD auto-create the PocketBase admin user on
+    # first boot (no UI step). AUTO_LOGIN bypasses Beszel's password auth
+    # for any request — safe here because external access is gated by
+    # Cognito OIDC at the Envoy Gateway; the password is only used
+    # internally by the bootstrap Job and never exposed.
+    envFrom:
+      configMapRef: beszel-hub-config
+  configMaps:
+    beszel-hub-config:
+      USER_EMAIL: "bootstrap@beszel.local"
+      USER_PASSWORD: "beszel-internal-bootstrap-password-not-used-externally"
+      AUTO_LOGIN: "bootstrap@beszel.local"
   service:
     ports:
     - name: http
@@ -18,13 +30,15 @@ generic:
     - subdomain: beszel
       port: 8090
       oauth: true
-  # Universal Token used by agents to self-register over WebSocket.
-  # Generated once in the hub UI at /settings/tokens (after first boot),
-  # then mirrored into Akeyless. From then on, every new agent picks it
-  # up automatically — no UI clicks per system.
-  externalSecrets:
-    beszel-token:
-      - TOKEN: /beszel/UNIVERSAL_TOKEN
+
+# Bootstrap Job — runs once after hub is ready. Auths via Beszel API,
+# enables the Universal Token, derives the hub's pubkey, writes both as
+# a K8s Secret consumed by the agent. Idempotent: if the Secret already
+# carries TOKEN, the Job exits 0 without touching anything.
+bootstrap:
+  enabled: true
+  image: alpine:3.20
+  agentSecretName: beszel-agent-env
 
 # Agent DaemonSet — rendered by apps/beszel/templates/agent-daemonset.yaml.
 # Off by default; opt in per-environment.
@@ -37,7 +51,7 @@ agent:
   # dnsPolicy: ClusterFirstWithHostNet so cluster DNS works alongside
   # hostNetwork). Override if the hub lives in a different cluster.
   hubUrl: http://beszel-service.argocd.svc.cluster.local:8090
-  tokenSecret: beszel-token
+  envSecret: beszel-agent-env
   # Path on the host to the container runtime socket. Defaults to standard
   # Docker; microk8s/containerd environments can override or set to null
   # (host CPU/RAM/disk metrics work regardless).
