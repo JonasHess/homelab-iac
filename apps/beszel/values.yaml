@@ -19,7 +19,7 @@ generic:
         secretName: beszel-hub-key
     initContainers:
       - name: bootstrap-ssh-key
-        image: busybox:1.36
+        image: busybox:1.38
         command:
           - sh
           - -c
