@@ -1,8 +1,8 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 {{- $bootstrap := .Values.bootstrap | default dict }}
-{{- $generic := .Values.generic | default dict }}
-{{- $cfg := (index ($generic.configMaps | default dict) "beszel-hub-config") | default dict }}
 {{- if $bootstrap.enabled }}
+{{- $agentSecret := printf "%s-agent-env" $appName }}
+{{- $hubSecret := printf "%s-hub-config" $appName }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -40,13 +40,10 @@ metadata:
   name: {{ $appName }}-bootstrap
   namespace: {{ $.Release.Namespace }}
   annotations:
-    # Sync (not PostSync) — PostSync only fires once *every* resource is
-    # healthy, but the agent DaemonSet can't be healthy until this Job
-    # writes its Secret. So we run during the sync itself: ArgoCD blocks
-    # the wave on this hook's success before continuing. The container's
-    # own loop waits for the hub Service to be reachable.
-    # HookSucceeded clears the Job after success so the next sync recreates
-    # it cleanly (idempotent inside the script handles the no-op case).
+    # Sync hook runs during the sync itself — PostSync deadlocks because
+    # the agent DaemonSet can't be healthy until this Job writes the
+    # Secret. HookSucceeded clears the Job after success so the next
+    # sync recreates it; the script's idempotency check makes that safe.
     argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
 spec:
@@ -63,96 +60,28 @@ spec:
         - name: hub-data
           persistentVolumeClaim:
             claimName: {{ $appName }}-data-pvc
+        - name: script
+          configMap:
+            name: {{ $appName }}-bootstrap-script
       containers:
         - name: bootstrap
           image: {{ $bootstrap.image | default "alpine:3.20" }}
+          command: ["sh", "/script/bootstrap.sh"]
           volumeMounts:
             - name: hub-data
               mountPath: /beszel_data
-              readOnly: true
+            - name: script
+              mountPath: /script
           env:
             - name: HUB_URL
               value: "http://{{ $appName }}-service.{{ $.Release.Namespace }}.svc.cluster.local:8090"
             - name: NAMESPACE
               value: {{ $.Release.Namespace | quote }}
-            - name: SECRET_NAME
-              value: {{ $bootstrap.agentSecretName | default "beszel-agent-env" | quote }}
-            - name: APP_NAME
-              value: {{ $appName | quote }}
-            - name: BESZEL_USER_EMAIL
-              value: {{ $cfg.USER_EMAIL | default "bootstrap@beszel.local" | quote }}
-            - name: BESZEL_USER_PASSWORD
-              value: {{ $cfg.USER_PASSWORD | default "beszel-internal-bootstrap" | quote }}
-          command: ["sh", "-c"]
-          args:
-            - |
-              set -eu
-
-              echo "[bootstrap] installing tools..."
-              apk add --no-cache curl jq openssh-keygen kubectl >/dev/null
-
-              echo "[bootstrap] waiting for hub at $HUB_URL ..."
-              for i in $(seq 1 60); do
-                if curl -sf -o /dev/null "$HUB_URL/api/health"; then
-                  echo "[bootstrap] hub is healthy"
-                  break
-                fi
-                sleep 3
-              done
-
-              # Idempotency: if the Secret already carries a non-empty TOKEN,
-              # we're done. Re-runs after the Job is recreated by ArgoCD
-              # short-circuit here so we don't churn the agent.
-              EXISTING=$(kubectl -n "$NAMESPACE" get secret "$SECRET_NAME" \
-                -o jsonpath='{.data.TOKEN}' 2>/dev/null || true)
-              if [ -n "$EXISTING" ]; then
-                echo "[bootstrap] secret $SECRET_NAME already populated, nothing to do"
-                exit 0
-              fi
-
-              echo "[bootstrap] authenticating as $BESZEL_USER_EMAIL ..."
-              AUTH=$(curl -sf -X POST "$HUB_URL/api/collections/users/auth-with-password" \
-                -H "Content-Type: application/json" \
-                -d "{\"identity\":\"$BESZEL_USER_EMAIL\",\"password\":\"$BESZEL_USER_PASSWORD\"}") \
-                || { echo "[bootstrap] auth failed"; exit 1; }
-              JWT=$(echo "$AUTH" | jq -r '.token')
-              [ -n "$JWT" ] && [ "$JWT" != "null" ] || { echo "[bootstrap] no JWT in auth response"; exit 1; }
-
-              # Beszel quirk: enable=1 always rotates the token, even if it's
-              # already active. So check current state first, only call
-              # enable=1 if it's not already active. permanent=1 stops the
-              # hub from auto-rotating it over time (Beszel issue #1479).
-              echo "[bootstrap] checking Universal Token state ..."
-              STATE=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token" \
-                -H "Authorization: $JWT") \
-                || { echo "[bootstrap] state check failed"; exit 1; }
-              ACTIVE=$(echo "$STATE" | jq -r '.active // false')
-              if [ "$ACTIVE" = "true" ]; then
-                echo "[bootstrap] token already active, reusing"
-                TOKEN=$(echo "$STATE" | jq -r '.token // empty')
-              else
-                echo "[bootstrap] enabling Universal Token (permanent) ..."
-                TR=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token?enable=1&permanent=1" \
-                  -H "Authorization: $JWT") \
-                  || { echo "[bootstrap] enable failed"; exit 1; }
-                TOKEN=$(echo "$TR" | jq -r '.token // empty')
-              fi
-              [ -n "$TOKEN" ] || { echo "[bootstrap] no token in response: $STATE"; exit 1; }
-
-              echo "[bootstrap] deriving hub pubkey ..."
-              if [ ! -f /beszel_data/id_ed25519 ]; then
-                echo "[bootstrap] hub keypair not present at /beszel_data/id_ed25519"
-                exit 1
-              fi
-              KEY=$(ssh-keygen -y -f /beszel_data/id_ed25519)
-              [ -n "$KEY" ] || { echo "[bootstrap] empty pubkey"; exit 1; }
-
-              echo "[bootstrap] writing Secret $SECRET_NAME ..."
-              kubectl -n "$NAMESPACE" create secret generic "$SECRET_NAME" \
-                --from-literal=KEY="$KEY" \
-                --from-literal=TOKEN="$TOKEN" \
-                --dry-run=client -o yaml \
-                | kubectl apply -f -
-
-              echo "[bootstrap] done."
+            - name: AGENT_SECRET_NAME
+              value: {{ $agentSecret | quote }}
+          envFrom:
+            # USER_EMAIL + USER_PASSWORD — same Secret the hub Deployment
+            # uses to auto-create the admin. Single source of truth.
+            - secretRef:
+                name: {{ $hubSecret }}
 {{- end }}

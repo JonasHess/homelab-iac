@@ -1,0 +1,82 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if (.Values.bootstrap | default dict).enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $appName }}-bootstrap-script
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}-bootstrap
+data:
+  bootstrap.sh: |
+    #!/bin/sh
+    # Bootstrap script for the Beszel hub — auth as the chart-provided
+    # admin user, ensure the Universal Token is enabled (and permanent),
+    # derive the hub's SSH pubkey, write both into the agent's Secret.
+    #
+    # Env vars expected (set by the Job spec):
+    #   HUB_URL              — internal hub URL
+    #   NAMESPACE            — namespace to write the Secret into
+    #   AGENT_SECRET_NAME    — name of the Secret the agent reads via envFrom
+    #   USER_EMAIL           — hub admin email (from beszel-hub-config Secret)
+    #   USER_PASSWORD        — hub admin password
+    set -eu
+
+    apk add --no-cache curl jq openssh-keygen kubectl >/dev/null
+
+    echo "[bootstrap] waiting for hub at $HUB_URL ..."
+    for _ in $(seq 1 60); do
+      curl -sf -o /dev/null "$HUB_URL/api/health" && break
+      sleep 3
+    done
+
+    # Idempotency: if the agent Secret already has TOKEN, we're done.
+    EXISTING=$(kubectl -n "$NAMESPACE" get secret "$AGENT_SECRET_NAME" \
+      -o jsonpath='{.data.TOKEN}' 2>/dev/null || true)
+    if [ -n "$EXISTING" ]; then
+      echo "[bootstrap] $AGENT_SECRET_NAME already populated, nothing to do"
+      exit 0
+    fi
+
+    echo "[bootstrap] authenticating as $USER_EMAIL ..."
+    AUTH=$(curl -sf -X POST "$HUB_URL/api/collections/users/auth-with-password" \
+      -H 'Content-Type: application/json' \
+      -d "{\"identity\":\"$USER_EMAIL\",\"password\":\"$USER_PASSWORD\"}") \
+      || { echo "[bootstrap] auth failed"; exit 1; }
+    JWT=$(echo "$AUTH" | jq -r '.token')
+    [ -n "$JWT" ] && [ "$JWT" != "null" ] || { echo "[bootstrap] no JWT in auth response"; exit 1; }
+
+    # enable=1 always rotates the token (even when already active), so:
+    #   - plain GET first to read current state
+    #   - only call enable=1&permanent=1 when token isn't active yet
+    # permanent=1 prevents the hub from auto-rotating it (Beszel #1479).
+    echo "[bootstrap] checking Universal Token state ..."
+    STATE=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token" \
+      -H "Authorization: $JWT") \
+      || { echo "[bootstrap] state check failed"; exit 1; }
+    if [ "$(echo "$STATE" | jq -r '.active // false')" = "true" ]; then
+      echo "[bootstrap] token already active, reusing"
+      TOKEN=$(echo "$STATE" | jq -r '.token // empty')
+    else
+      echo "[bootstrap] enabling Universal Token (permanent) ..."
+      TR=$(curl -sf -X GET "$HUB_URL/api/beszel/universal-token?enable=1&permanent=1" \
+        -H "Authorization: $JWT") \
+        || { echo "[bootstrap] enable failed"; exit 1; }
+      TOKEN=$(echo "$TR" | jq -r '.token // empty')
+    fi
+    [ -n "$TOKEN" ] || { echo "[bootstrap] empty token from hub"; exit 1; }
+
+    echo "[bootstrap] deriving hub pubkey ..."
+    [ -f /beszel_data/id_ed25519 ] || { echo "[bootstrap] hub keypair missing at /beszel_data/id_ed25519"; exit 1; }
+    KEY=$(ssh-keygen -y -f /beszel_data/id_ed25519)
+    [ -n "$KEY" ] || { echo "[bootstrap] empty pubkey"; exit 1; }
+
+    echo "[bootstrap] writing $AGENT_SECRET_NAME ..."
+    kubectl -n "$NAMESPACE" create secret generic "$AGENT_SECRET_NAME" \
+      --from-literal=KEY="$KEY" \
+      --from-literal=TOKEN="$TOKEN" \
+      --dry-run=client -o yaml | kubectl apply -f -
+
+    echo "[bootstrap] done."
+{{- end }}

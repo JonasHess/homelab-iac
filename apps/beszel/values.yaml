@@ -9,18 +9,11 @@ generic:
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/beszel/data
         backup:
           enabled: true
-    # USER_EMAIL + USER_PASSWORD auto-create the PocketBase admin user on
-    # first boot (no UI step). AUTO_LOGIN bypasses Beszel's password auth
-    # for any request — safe here because external access is gated by
-    # Cognito OIDC at the Envoy Gateway; the password is only used
-    # internally by the bootstrap Job and never exposed.
+    # Hub admin user is auto-created from this Secret on first boot;
+    # AUTO_LOGIN lets any OIDC-authenticated visitor enter without
+    # seeing Beszel's password form. Rendered by hub-config-secret.yaml.
     envFrom:
-      configMapRef: beszel-hub-config
-  configMaps:
-    beszel-hub-config:
-      USER_EMAIL: "bootstrap@beszel.local"
-      USER_PASSWORD: "beszel-internal-bootstrap-password-not-used-externally"
-      AUTO_LOGIN: "bootstrap@beszel.local"
+      secretRef: beszel-hub-config
   service:
     ports:
     - name: http
@@ -31,28 +24,29 @@ generic:
       port: 8090
       oauth: true
 
-# Bootstrap Job — runs once after hub is ready. Auths via Beszel API,
-# enables the Universal Token, derives the hub's pubkey, writes both as
-# a K8s Secret consumed by the agent. Idempotent: if the Secret already
-# carries TOKEN, the Job exits 0 without touching anything.
+# Hub admin credentials. The hub creates the user from these on first
+# boot and the bootstrap Job authenticates as the same user. External
+# access is OIDC-gated at the Envoy Gateway and AUTO_LOGIN bypasses
+# Beszel's own form, so the password is never used outside the cluster.
+auth:
+  email: bootstrap@beszel.local
+  password: beszel-internal-bootstrap-password-not-used-externally
+
+# Bootstrap Job — runs once per sync. Auths via Beszel API, enables a
+# permanent Universal Token, reads the hub's pubkey from the shared PV,
+# and writes both into the agent's envFrom Secret. Idempotent.
 bootstrap:
   enabled: true
   image: alpine:3.20
-  agentSecretName: beszel-agent-env
 
-# Agent DaemonSet — rendered by apps/beszel/templates/agent-daemonset.yaml.
-# Off by default; opt in per-environment.
+# Agent DaemonSet — off by default; opt in per environment.
 agent:
   enabled: false
   image: henrygd/beszel-agent:0.18.7
   listen: "45876"
-  # Where the agent connects to the hub. Cluster-internal Service URL by
-  # default — agents reach it via cluster DNS (the DaemonSet uses
-  # dnsPolicy: ClusterFirstWithHostNet so cluster DNS works alongside
-  # hostNetwork). Override if the hub lives in a different cluster.
+  # Cluster-internal Service URL. Agents reach it via cluster DNS
+  # (the DaemonSet sets dnsPolicy: ClusterFirstWithHostNet so cluster
+  # DNS resolves alongside hostNetwork).
   hubUrl: http://beszel-service.argocd.svc.cluster.local:8090
-  envSecret: beszel-agent-env
-  # Path on the host to the container runtime socket. Defaults to standard
-  # Docker; microk8s/containerd environments can override or set to null
-  # (host CPU/RAM/disk metrics work regardless).
+  # Host runtime socket — optional. Host CPU/RAM/disk work without it.
   containerSocket: ~

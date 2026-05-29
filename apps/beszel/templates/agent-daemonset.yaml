@@ -1,6 +1,7 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 {{- $agent := .Values.agent | default dict }}
 {{- if $agent.enabled }}
+{{- $agentSecret := printf "%s-agent-env" $appName }}
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -35,12 +36,12 @@ spec:
               value: {{ $agent.listen | default "45876" | quote }}
             - name: HUB_URL
               value: {{ required "agent.hubUrl must be set" $agent.hubUrl | quote }}
-          # KEY (hub's pubkey, for verifying hub signatures) and TOKEN
-          # (Universal Token, for self-registration) both come from the
-          # same ExternalSecret — keeps the per-env Akeyless paths tidy.
+          # KEY (hub pubkey, for verifying hub signatures) and TOKEN
+          # (Universal Token, for self-registration) are populated by the
+          # bootstrap Job — see templates/bootstrap-script.yaml.
           envFrom:
             - secretRef:
-                name: {{ $agent.envSecret | default "beszel-agent-env" }}
+                name: {{ $agentSecret }}
           {{- if $agent.containerSocket }}
           volumeMounts:
             - name: container-socket
