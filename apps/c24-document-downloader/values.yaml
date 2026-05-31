@@ -2,7 +2,7 @@ appName: c24-document-downloader
 
 generic:
   deployment:
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/c24-document-downloader:v0.1.0
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/c24-document-downloader:v0.2.0
     imagePullSecrets:
     - regcred-secondary
     ports:
