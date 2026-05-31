@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.56
+description: Helm chart for c24-document-downloader — Flask UI that bridges C24 Bank's interactive QR-code login to an automated mailbox download.
+name: c24-document-downloader
+type: application
+version: 0.1.0

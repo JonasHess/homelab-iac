@@ -1,0 +1,22 @@
+appName: c24-document-downloader
+
+generic:
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/c24-document-downloader:v0.1.0
+    imagePullSecrets:
+    - regcred-secondary
+    ports:
+    - containerPort: 5000
+    pvcMounts:
+      downloads:
+        mountPath: /data/downloads
+        hostPath: ~  # /mnt/somewhere/encrypted/apps/paperlessngx/consume/.../C24Bank
+  service:
+    ports:
+    - name: http
+      port: 5000
+  ingress:
+    https:
+    - subdomain: c24
+      port: 5000
+      oauth: true
