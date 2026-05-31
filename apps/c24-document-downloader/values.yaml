@@ -1,12 +1,20 @@
 appName: c24-document-downloader
 
 generic:
+  configMaps:
+    c24-document-downloader-config:
+      # When "true", PDFs land directly in the mounted output directory
+      # instead of in <account>/ subfolders. The per-environment values
+      # file in homelab_environments overrides this when desired.
+      C24_FLAT_STRUCTURE: "false"
   deployment:
     image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/c24-document-downloader:v0.2.0
     imagePullSecrets:
     - regcred-secondary
     ports:
     - containerPort: 5000
+    envFrom:
+      configMapRef: c24-document-downloader-config
     pvcMounts:
       downloads:
         mountPath: /data/downloads
