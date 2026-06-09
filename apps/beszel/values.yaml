@@ -37,7 +37,7 @@ auth:
 # and writes both into the agent's envFrom Secret. Idempotent.
 bootstrap:
   enabled: true
-  image: alpine:3.20
+  image: alpine:3.23
 
 # Agent DaemonSet — off by default; opt in per environment.
 agent:
