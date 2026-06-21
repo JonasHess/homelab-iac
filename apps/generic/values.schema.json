@@ -157,6 +157,11 @@
           "enum": ["Always", "IfNotPresent", "Never"],
           "description": "Image pull policy"
         },
+        "revisionHistoryLimit": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of old ReplicaSets to retain for rollback. Defaults to 3."
+        },
         "securityContext": {
           "type": ["object", "null"],
           "description": "Security context for the container"
