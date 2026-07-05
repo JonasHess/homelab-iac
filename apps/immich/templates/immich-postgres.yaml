@@ -24,7 +24,7 @@ spec:
           # Official Immich VectorChord Postgres image. The vector preload and
           # search_path config is baked into the image and must NOT be overridden
           # via args, or VectorChord fails to load.
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3
+          image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
