@@ -711,6 +711,7 @@ apps:
       logo: "https://raw.githubusercontent.com/lllllllillllllillll/Dashboard-Icons/main/svg/radicale.svg"
       subtitle: "CalDAV Server"
       displayName: "Radicale"
+      subdomain: "dav"
     argocd:
       targetRevision: ~
       namespace: "argocd"
