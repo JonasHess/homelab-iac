@@ -246,15 +246,6 @@ apps:
     enabled: true
     argocd:
       targetRevision: feature/refactor-apps
-      helm:
-        values:
-          generic:
-            deployment:
-              pvcMounts:
-                scanner:
-                  hostPath: /mnt/tank1/encrypted/apps/stirlingpdf/pipeline/watchedFolders/scanner
-                paperlessconsume:
-                  hostPath: /mnt/tank1/encrypted/apps/paperlessngx/consume
   radarr:
     enabled: true
     argocd:
@@ -385,9 +376,6 @@ apps:
                 tank1:
                   mountPath: /mnt/tank1
                   hostPath: /mnt/tank1
-                stirlingpdf:
-                  mountPath: /mnt/stirlingpdf/pipeline/
-                  hostPath: /mnt/tank1/encrypted/apps/stirlingpdf/pipeline/
   sonarr:
     enabled: true
     argocd:

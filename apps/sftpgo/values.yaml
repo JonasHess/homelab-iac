@@ -19,9 +19,6 @@ generic:
         hostPath:   # /mnt/somewhere/unencrypted/apps/sftpgo/config
         backup:
           enabled: true
-      stirlingpdf:
-        mountPath: /mnt/stirlingpdf/pipeline/
-        hostPath:   # /mnt/somewehere/encrypted/apps/stirlingpdf/pipeline/
     envFrom:
       secretRef: sftpgo-secret
     configMapMounts:
