@@ -113,6 +113,16 @@ spec:
               value: "Europe/Berlin"
             - name: IMMICH_CONFIG_FILE
               value: "/config/immich-config.json"
+          # Gates liveness/readiness until first startup finishes. Immich v3 runs
+          # the pgvecto.rs -> VectorChord DB migration before opening the HTTP port,
+          # which on large libraries exceeds the liveness window and gets the pod
+          # killed mid-migration. Allows up to ~15 min for that first-start migration.
+          startupProbe:
+            httpGet:
+              path: /server-info/ping
+              port: 2283
+            periodSeconds: 10
+            failureThreshold: 90
           livenessProbe:
             httpGet:
               path: /server-info/ping
