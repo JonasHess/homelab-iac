@@ -21,11 +21,10 @@ spec:
     spec:
       containers:
         - name: postgres
-          # VectorChord image, bundling pgvecto.rs 0.2.0 for the in-place
-          # vectors -> vchord migration Immich v3 performs on first startup.
-          # The vector preload/search_path config is baked into this image and
-          # must NOT be overridden via args, or VectorChord fails to load.
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          # Official Immich VectorChord Postgres image. The vector preload and
+          # search_path config is baked into the image and must NOT be overridden
+          # via args, or VectorChord fails to load.
+          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3
           env:
             - name: POSTGRES_PASSWORD
               valueFrom:
