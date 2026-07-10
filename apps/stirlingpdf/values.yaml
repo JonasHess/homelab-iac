@@ -3,6 +3,12 @@ generic:
     image: frooodle/s-pdf:2.14.2
     ports:
     - containerPort: 8080
+    pvcMounts:
+      config:
+        mountPath: /configs
+        hostPath:   # set per-environment, e.g. /mnt/tank1/encrypted/apps/stirlingpdf/config
+        backup:
+          enabled: true
   service:
     ports:
     - name: http
