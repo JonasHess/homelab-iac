@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: firefly-db-init
+  namespace: {{ $.Release.Namespace }}
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-firefly-db
+          image: "postgres:16"
+          envFrom:
+            - secretRef:
+                name: postgres-secret
+            - secretRef:
+                name: firefly-secret
+            - configMapRef:
+                name: postgres-config
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              echo "Starting Firefly III database initialization..."
+              echo "POSTGRES_USER: $POSTGRES_USER"
+              echo "POSTGRES_DB: $POSTGRES_DB"
+
+              echo "Checking if user 'firefly' exists..."
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='firefly'" | grep -q 1; then
+                echo "User 'firefly' already exists."
+              else
+                echo "Creating user 'firefly'..."
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER firefly WITH PASSWORD '$DB_PASSWORD';"
+              fi
+
+              echo "Keeping the 'firefly' password in sync..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "ALTER USER firefly WITH PASSWORD '$DB_PASSWORD';"
+
+              echo "Checking if database 'firefly' exists..."
+              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_database WHERE datname='firefly'" | grep -q 1; then
+                echo "Database 'firefly' already exists."
+              else
+                echo "Creating database 'firefly'..."
+                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE firefly;"
+              fi
+
+              echo "Granting ownership of database 'firefly' to user 'firefly'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "ALTER DATABASE firefly OWNER TO firefly;"
+
+              echo "Granting ownership and full privileges on schema 'public' to user 'firefly'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d firefly -c "GRANT ALL PRIVILEGES ON SCHEMA public TO firefly;"
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d firefly -c "ALTER SCHEMA public OWNER TO firefly;"
+
+              echo "Firefly III database initialization completed."
+      restartPolicy: OnFailure

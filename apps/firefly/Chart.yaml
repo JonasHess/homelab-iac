@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.57
+description: Helm chart for Firefly III (personal finance manager)
+name: firefly
+type: application
+version: 0.1.0

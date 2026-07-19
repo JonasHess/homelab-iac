@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  # In-cluster URL of the Firefly III core service; the importer talks to it directly.
+  FIREFLY_III_URL: "http://firefly-service:8080"
+  # Public URL of core, so links the importer generates point at the real host.
+  VANITY_URL: "https://firefly.{{ .Values.global.domain }}"
+  APP_URL: "https://firefly-importer.{{ .Values.global.domain }}"
+  TRUSTED_PROXIES: "**"
+  TZ: "Europe/Berlin"
+  LOG_CHANNEL: "stdout"
+  # Enable Banking reads the client IP from the forwarded header set by Envoy.
+  ENABLE_BANKING_IMPORT_IP_HEADER: "X-Forwarded-For"

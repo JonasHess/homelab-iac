@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-config
+  namespace: {{ $.Release.Namespace }}
+data:
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  LOG_CHANNEL: "stdout"
+  SITE_OWNER: "michael@{{ .Values.global.domain }}"
+  APP_URL: "https://firefly.{{ .Values.global.domain }}"
+  TRUSTED_PROXIES: "**"
+  TZ: "Europe/Berlin"
+  DEFAULT_LANGUAGE: "de_DE"
+  DEFAULT_LOCALE: "de_DE"
+  DB_CONNECTION: "pgsql"
+  DB_HOST: "postgres-service"
+  DB_PORT: "5432"
+  DB_DATABASE: "firefly"
+  DB_USERNAME: "firefly"

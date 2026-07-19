@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-cron
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: firefly
+    component: cron
+spec:
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: firefly
+            component: cron
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: cron
+              image: curlimages/curl:8.11.1
+              envFrom:
+                - secretRef:
+                    name: firefly-secret
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  echo "Triggering Firefly III cron endpoint..."
+                  curl -sSf "http://firefly-service:8080/api/v1/cron/${STATIC_CRON_TOKEN}"
+                  echo "Firefly III cron run finished."

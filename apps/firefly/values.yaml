@@ -1,0 +1,28 @@
+generic:
+  externalSecrets:
+    firefly-secret:
+      - APP_KEY: "/firefly/APP_KEY"
+      - DB_PASSWORD: "/firefly/DB_PASSWORD"
+      - STATIC_CRON_TOKEN: "/firefly/STATIC_CRON_TOKEN"
+  deployment:
+    image: fireflyiii/core:version-6.6.6
+    ports:
+      - containerPort: 8080
+    pvcMounts:
+      upload:
+        mountPath: /var/www/html/storage/upload
+        hostPath:   # set in the environment overlay, e.g. /mnt/tank1/encrypted/apps/firefly/upload
+        backup:
+          enabled: true
+    envFrom:
+      configMapRef: firefly-config
+      secretRef: firefly-secret
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: firefly
+        port: 8080
+        oauth: true

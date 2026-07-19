@@ -1,0 +1,22 @@
+generic:
+  externalSecrets:
+    firefly-importer-secret:
+      - FIREFLY_III_ACCESS_TOKEN: "/firefly/IMPORTER_ACCESS_TOKEN"
+      - ENABLE_BANKING_APP_ID: "/firefly/ENABLE_BANKING_APP_ID"
+      - ENABLE_BANKING_PRIVATE_KEY: "/firefly/ENABLE_BANKING_PRIVATE_KEY"
+  deployment:
+    image: fireflyiii/data-importer:version-2.3.4
+    ports:
+      - containerPort: 8080
+    envFrom:
+      configMapRef: firefly-importer-config
+      secretRef: firefly-importer-secret
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: firefly-importer
+        port: 8080
+        oauth: true
