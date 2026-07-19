@@ -9,7 +9,7 @@
 #                      revert to false to fall back to Firefly's own login.
 sso:
   enabled: false
-  enforceRemoteUser: false
+  enforceRemoteUser: true
 
 generic:
   externalSecrets:
