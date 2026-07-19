@@ -31,14 +31,20 @@ spec:
     clientID: {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
     clientSecret:
       name: oidc-client-secret
-    redirectURL: "https://auth.{{ .Values.global.domain }}/oauth2/callback"
+    # Firefly's OWN callback on its OWN host, so the filter that starts the flow
+    # also handles the callback (shared auth.<domain> callback is owned by a
+    # different filter and fails CSRF validation). Must be whitelisted in Cognito.
+    redirectURL: "https://firefly.{{ .Values.global.domain }}/oauth2/callback"
     logoutPath: /oauth2/logout
     scopes:
       - openid
       - email
-    {{- if $oidc.cookieDomain }}
-    cookieDomain: {{ $oidc.cookieDomain | quote }}
-    {{- end }}
+    # No cookieDomain -> session cookies are host-only to firefly.<domain>, and
+    # unique names, so they can't collide with the gateway-oidc *.<domain> cookies
+    # and break other apps' sessions.
+    cookieNames:
+      idToken: "FireflyIdToken"
+      accessToken: "FireflyAccessToken"
     forwardIDToken:
       header: Authorization
   jwt:
