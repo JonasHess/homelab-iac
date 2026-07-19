@@ -8,7 +8,7 @@
 #                      after confirming the header arrives and cannot be spoofed;
 #                      revert to false to fall back to Firefly's own login.
 sso:
-  enabled: false
+  enabled: true
   enforceRemoteUser: true
 
 generic:

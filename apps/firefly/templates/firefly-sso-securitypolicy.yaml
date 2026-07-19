@@ -1,14 +1,24 @@
 {{- /*
   Firefly-scoped SSO. A route-level SecurityPolicy fully REPLACES the
-  Gateway-level `gateway-oidc` SP for Firefly's HTTPRoute only — every other
-  app is untouched. It re-declares the same Cognito OIDC (so the shared
-  session cookie still works, no re-login when hopping between apps), then:
-   - forwardIDToken: pushes the Cognito ID token upstream as `Authorization: Bearer`
-   - jwt: validates that ID token and copies the `email` claim into the
-     `X-Auth-Email` request header, which Firefly's remote_user_guard reads.
+  Gateway-level `gateway-oidc` SP for Firefly's HTTPRoute only — every other app
+  is untouched (no changes to the shared gateway, its cookies, or its encryption).
 
-  The JWT provider also OVERWRITES any client-supplied X-Auth-Email with the
-  value from the validated token, so the header cannot be spoofed.
+  Envoy runs the jwt_authn filter BEFORE the oauth2/oidc filter, so jwt cannot see
+  a token the oidc filter forwards later in the chain. Instead jwt reads the ID
+  token straight from the session COOKIE, which the browser sends on every request
+  — order-independent. That needs, all scoped to Firefly:
+    - disableTokenEncryption: store the raw JWT in the cookie so jwt can parse it
+    - refreshToken:           keep the ID token fresh so the cookie never holds an
+                              expired token (which jwt would reject with 401)
+    - cookieNames.idToken:    a fixed, Firefly-only cookie name for jwt to target
+  jwt then validates the token and copies its `email` claim into X-Auth-Email for
+  Firefly's remote_user_guard. claimToHeaders OVERWRITES any client-supplied
+  X-Auth-Email, and the value comes only from a signature-validated token, so the
+  header cannot be spoofed.
+
+  Own callback on Firefly's own host: the shared auth.<domain> callback is owned by
+  the gateway-oidc filter and fails CSRF for this separate filter. Firefly's
+  callback URL must be whitelisted in Cognito.
 */ -}}
 {{- if .Values.sso.enabled }}
 {{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
@@ -31,23 +41,20 @@ spec:
     clientID: {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
     clientSecret:
       name: oidc-client-secret
-    # Firefly's OWN callback on its OWN host, so the filter that starts the flow
-    # also handles the callback (shared auth.<domain> callback is owned by a
-    # different filter and fails CSRF validation). Must be whitelisted in Cognito.
     redirectURL: "https://firefly.{{ .Values.global.domain }}/oauth2/callback"
     logoutPath: /oauth2/logout
     scopes:
       - openid
       - email
-    # No cookieDomain -> session cookies are host-only to firefly.<domain>, and
-    # unique names, so they can't collide with the gateway-oidc *.<domain> cookies
-    # and break other apps' sessions.
+    # Host-only, uniquely-named cookies -> isolated from the gateway-oidc
+    # *.<domain> cookies, so other apps' sessions are never touched.
     cookieNames:
       idToken: "FireflyIdToken"
       accessToken: "FireflyAccessToken"
-    forwardIDToken:
-      header: Authorization
+    disableTokenEncryption: true
+    refreshToken: true
   jwt:
+    optional: true
     providers:
       - name: cognito
         issuer: {{ $issuer | quote }}
@@ -55,6 +62,9 @@ spec:
           - {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
         remoteJWKS:
           uri: "{{ $issuer }}/.well-known/jwks.json"
+        extractFrom:
+          cookies:
+            - FireflyIdToken
         claimToHeaders:
           - claim: email
             header: X-Auth-Email
