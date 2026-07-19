@@ -47,3 +47,33 @@ spec:
     {{- if $oidc.cookieDomain }}
     cookieDomain: {{ $oidc.cookieDomain | quote }}
     {{- end }}
+    {{- if $oidc.emailClaimHeader }}
+    # Forward the validated Cognito ID token to upstreams in a custom header
+    # (NOT Authorization, so app API auth is untouched). The jwt provider below
+    # then extracts the email claim from it into $oidc.emailClaimHeader.
+    forwardIDToken:
+      header: X-Id-Token
+    {{- end }}
+  {{- if $oidc.emailClaimHeader }}
+  # Extract the signed-in user's email into a request header so backends that do
+  # header-based auth (e.g. Firefly III remote_user_guard) get single sign-on.
+  # optional:true -> a MISSING token is allowed (unauthenticated redirects, the
+  # callback route and probes still pass); only a present-but-invalid token fails.
+  # Reads solely from X-Id-Token (set by forwardIDToken), so client Authorization
+  # headers are never interpreted as identity.
+  jwt:
+    optional: true
+    providers:
+      - name: cognito
+        issuer: {{ required "global.oidc.issuerUrl must be set" $oidc.issuerUrl | quote }}
+        audiences:
+          - {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+        remoteJWKS:
+          uri: "{{ $oidc.issuerUrl }}/.well-known/jwks.json"
+        extractFrom:
+          headers:
+            - name: X-Id-Token
+        claimToHeaders:
+          - claim: email
+            header: {{ $oidc.emailClaimHeader | quote }}
+  {{- end }}
