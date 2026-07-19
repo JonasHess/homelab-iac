@@ -1,0 +1,55 @@
+{{- /*
+  Firefly-scoped SSO. A route-level SecurityPolicy fully REPLACES the
+  Gateway-level `gateway-oidc` SP for Firefly's HTTPRoute only — every other
+  app is untouched. It re-declares the same Cognito OIDC (so the shared
+  session cookie still works, no re-login when hopping between apps), then:
+   - forwardIDToken: pushes the Cognito ID token upstream as `Authorization: Bearer`
+   - jwt: validates that ID token and copies the `email` claim into the
+     `X-Auth-Email` request header, which Firefly's remote_user_guard reads.
+
+  The JWT provider also OVERWRITES any client-supplied X-Auth-Email with the
+  value from the validated token, so the header cannot be spoofed.
+*/ -}}
+{{- if .Values.sso.enabled }}
+{{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
+{{- $issuer := required "global.oidc.issuerUrl must be set" $oidc.issuerUrl }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: firefly-sso
+  namespace: {{ required "global.gateway.namespace must be set" .Values.global.gateway.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: firefly-https-8080-0
+  oidc:
+    provider:
+      issuer: {{ $issuer | quote }}
+    clientID: {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+    clientSecret:
+      name: oidc-client-secret
+    redirectURL: "https://auth.{{ .Values.global.domain }}/oauth2/callback"
+    logoutPath: /oauth2/logout
+    scopes:
+      - openid
+      - email
+    {{- if $oidc.cookieDomain }}
+    cookieDomain: {{ $oidc.cookieDomain | quote }}
+    {{- end }}
+    forwardIDToken:
+      header: Authorization
+  jwt:
+    providers:
+      - name: cognito
+        issuer: {{ $issuer | quote }}
+        audiences:
+          - {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+        remoteJWKS:
+          uri: "{{ $issuer }}/.well-known/jwks.json"
+        claimToHeaders:
+          - claim: email
+            header: X-Auth-Email
+{{- end }}

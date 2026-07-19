@@ -18,3 +18,8 @@ data:
   DB_PORT: "5432"
   DB_DATABASE: "firefly"
   DB_USERNAME: "firefly"
+  {{- if .Values.sso.enforceRemoteUser }}
+  AUTHENTICATION_GUARD: "remote_user_guard"
+  AUTHENTICATION_GUARD_HEADER: "X-Auth-Email"
+  AUTHENTICATION_GUARD_EMAIL: "X-Auth-Email"
+  {{- end }}
