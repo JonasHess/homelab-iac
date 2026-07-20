@@ -1,0 +1,22 @@
+{{- /*
+  The Data Importer converts each CSV line and submits each transaction with
+  per-line Firefly API calls (IBAN account matching), so a few hundred rows runs
+  well past Envoy's default 15s route timeout -> the browser gets a 504 while the
+  importer is still working. Raise the request timeout for the importer's route
+  only. Scoped to Firefly-importer; no other app is affected.
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: firefly-importer-timeout
+  namespace: {{ required "global.gateway.namespace must be set" .Values.global.gateway.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: firefly-importer-https-8080-0
+  timeout:
+    http:
+      requestTimeout: 600s
