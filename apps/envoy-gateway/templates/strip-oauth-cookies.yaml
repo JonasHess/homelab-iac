@@ -28,13 +28,18 @@ spec:
         -- Cookie names set by Envoy's OAuth2 filter. Listed explicitly so we
         -- don't drop app-defined cookies that happen to share a prefix.
         local STRIP = {
-          IdToken      = true,
-          AccessToken  = true,
-          RefreshToken = true,
-          BearerToken  = true,
-          OauthHMAC    = true,
-          OauthExpires = true,
-          OauthNonce   = true,
+          IdToken            = true,
+          AccessToken        = true,
+          RefreshToken       = true,
+          BearerToken        = true,
+          OauthHMAC          = true,
+          OauthExpires       = true,
+          OauthNonce         = true,
+          -- Firefly-scoped SSO (firefly-sso SP) uses custom cookie names; the
+          -- ID token is a large raw JWT (disableTokenEncryption). Backends never
+          -- need them — Envoy's JWT filter reads them and sets X-Auth-Email.
+          FireflyIdToken     = true,
+          FireflyAccessToken = true,
         }
 
         local function trim(s)
