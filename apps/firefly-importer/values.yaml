@@ -4,10 +4,17 @@ generic:
       - FIREFLY_III_ACCESS_TOKEN: "/firefly/IMPORTER_ACCESS_TOKEN"
       - ENABLE_BANKING_APP_ID: "/firefly/ENABLE_BANKING_APP_ID"
       - ENABLE_BANKING_PRIVATE_KEY: "/firefly/ENABLE_BANKING_PRIVATE_KEY"
+      - AUTO_IMPORT_SECRET: "/firefly/AUTO_IMPORT_SECRET"
   deployment:
     image: fireflyiii/data-importer:version-2.3.4
     ports:
       - containerPort: 8080
+    # Persistent folder holding the downloaded import configuration JSON(s) that
+    # the daily auto-import CronJob runs. hostPath is set in the environment overlay.
+    pvcMounts:
+      import:
+        mountPath: /import
+        hostPath:
     envFrom:
       configMapRef: firefly-importer-config
       secretRef: firefly-importer-secret

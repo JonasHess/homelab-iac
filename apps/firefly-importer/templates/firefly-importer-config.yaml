@@ -14,3 +14,8 @@ data:
   LOG_CHANNEL: "stdout"
   # Enable Banking reads the client IP from the forwarded header set by Envoy.
   ENABLE_BANKING_IMPORT_IP_HEADER: "X-Forwarded-For"
+  # Headless auto-import: the /autoimport endpoint runs every config JSON found in
+  # IMPORT_DIR_ALLOWLIST, gated by AUTO_IMPORT_SECRET (>=16 chars). The daily
+  # firefly-importer-autoimport CronJob calls it.
+  CAN_POST_AUTOIMPORT: "true"
+  IMPORT_DIR_ALLOWLIST: "/import"

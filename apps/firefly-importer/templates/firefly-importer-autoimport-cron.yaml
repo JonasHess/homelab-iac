@@ -1,0 +1,52 @@
+{{- /*
+  Daily headless bank import. The Data Importer has the auto-import mechanism
+  (POST /autoimport) but no scheduler, so this CronJob supplies the schedule —
+  the pattern Firefly's docs recommend. It calls the importer's in-cluster
+  Service directly (bypassing the gateway/OIDC), authenticated by AUTO_IMPORT_SECRET,
+  and runs every config JSON placed in /import.
+
+  Works only while the Enable Banking PSD2 consent is valid (~90 days); after that
+  a one-time browser SCA re-auth is required (regulatory, cannot be automated).
+  With no config file present, /autoimport simply reports "No files found".
+*/ -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-autoimport
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: autoimport
+spec:
+  schedule: "0 4 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: autoimport
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: autoimport
+              image: curlimages/curl:8.11.1
+              envFrom:
+                - secretRef:
+                    name: firefly-importer-secret
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -e
+                  echo "Triggering Firefly III Data Importer auto-import..."
+                  curl -sSf --max-time 890 -X POST \
+                    "http://firefly-importer-service:8080/autoimport" \
+                    --data-urlencode "secret=${AUTO_IMPORT_SECRET}" \
+                    --data-urlencode "directory=/import"
+                  echo
+                  echo "Auto-import request completed."
