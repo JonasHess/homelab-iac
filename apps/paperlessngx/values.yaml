@@ -7,6 +7,7 @@ generic:
       - PAPERLESS_DBPASS: "/paperlessngx/POSTGRES_PASSWORD"
       - PAPERLESS_ADMIN_PASSWORD: "/paperlessngx/PAPERLESS_ADMIN_PASSWORD"
       - PAPERLESS_SOCIALACCOUNT_PROVIDERS: "/paperlessngx/PAPERLESS_SOCIALACCOUNT_PROVIDERS"
+      - PAPERLESS_SECRET_KEY: "/paperlessngx/PAPERLESS_SECRET_KEY"
   deployment:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.0.2
     ports:
