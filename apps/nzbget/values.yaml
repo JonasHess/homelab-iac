@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: lscr.io/linuxserver/nzbget:26.2.20260710
+    image: lscr.io/linuxserver/nzbget:26.2.20260724
     ports:
       - containerPort: 6789
     pvcMounts:
