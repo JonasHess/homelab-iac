@@ -9,7 +9,7 @@ generic:
       - PAPERLESS_SOCIALACCOUNT_PROVIDERS: "/paperlessngx/PAPERLESS_SOCIALACCOUNT_PROVIDERS"
       - PAPERLESS_SECRET_KEY: "/paperlessngx/PAPERLESS_SECRET_KEY"
   deployment:
-    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.3
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.0.4
     ports:
       - containerPort: 8000
     pvcMounts:
