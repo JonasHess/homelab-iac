@@ -7,7 +7,7 @@ cd "$(dirname "$0")" # Change to the script directory
 # Summary: This script creates a directory structure for media storage with specific permissions.
 
 
-BASE_DIR="/mnt/tank0/encrypted/media"
+BASE_DIR="/mnt/hdd-z1/encrypted/media"
 
 declare -A DIRS_SUBDIRS
 DIRS_SUBDIRS=(

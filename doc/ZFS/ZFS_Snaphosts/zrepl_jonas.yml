@@ -17,9 +17,9 @@ jobs:
   type: snap
   filesystems: {
     "tank1<": true,
-    "tank0<": true,
-    # Exclude the media directory from backups
-    "tank0/encrypted/media<": false
+    # Immich lives on the RAIDZ2 pool; snapshot it. Media on hdd-z1 (RAIDZ1)
+    # is intentionally not snapshotted, so hdd-z1 is left out of the filter.
+    "hdd-z2<": true
   }
   # create snapshots with prefix `zrepl_` every 15 minutes
   snapshotting:
