@@ -5,9 +5,13 @@ set -u  # Treat unset variables as an error
 cd "$(dirname "$0")" # Change to the script directory
 
 # Summary: This script creates a directory structure for media storage with specific permissions.
-
-
 BASE_DIR="/mnt/hdd-z1/encrypted/media"
+# LinuxServer containers (SABnzbd, Radarr, Sonarr, and others) run as abc
+# with UID/GID 911 by default. Keep the media tree writable by that shared
+# service identity. Override these values explicitly if the containers change.
+MEDIA_SERVICE_UID="${MEDIA_SERVICE_UID:-911}"
+MEDIA_SERVICE_GID="${MEDIA_SERVICE_GID:-911}"
+MEDIA_SERVICE_OWNER="${MEDIA_SERVICE_UID}:${MEDIA_SERVICE_GID}"
 
 declare -A DIRS_SUBDIRS
 DIRS_SUBDIRS=(
@@ -24,17 +28,17 @@ DIRS_SUBDIRS=(
   ["tutorials"]=""
 )
 
-# Ensure the base directory is owned by root and has strict permissions
-echo "Setting up base directory with root ownership and permissions..."
+# Ensure the base directory is owned by the shared media-service identity.
+echo "Setting up base directory with media-service ownership and permissions..."
 sudo mkdir -p "$BASE_DIR"
-sudo chown root:root "$BASE_DIR"
+sudo chown "$MEDIA_SERVICE_OWNER" "$BASE_DIR"
 sudo chmod 755 "$BASE_DIR"
-echo "Base directory '$BASE_DIR' created with root ownership and permissions set to 755."
+echo "Base directory '$BASE_DIR' created with owner '$MEDIA_SERVICE_OWNER' and permissions set to 755."
 
 # Loop through the associative array to create directories and subdirectories
 for DIR in "${!DIRS_SUBDIRS[@]}"; do
   sudo mkdir -p "$BASE_DIR/$DIR"
-  sudo chown root:root "$BASE_DIR/$DIR"
+  sudo chown "$MEDIA_SERVICE_OWNER" "$BASE_DIR/$DIR"
 
   if [ -n "${DIRS_SUBDIRS[$DIR]}" ]; then
     # Set permissions for the main directory (protected)
@@ -45,7 +49,7 @@ for DIR in "${!DIRS_SUBDIRS[@]}"; do
     echo "Creating subdirectories in '$DIR' with open read/write permissions..."
     for SUBDIR in ${DIRS_SUBDIRS[$DIR]}; do
       sudo mkdir -p "$BASE_DIR/$DIR/$SUBDIR"
-      sudo chown root:root "$BASE_DIR/$DIR/$SUBDIR"
+      sudo chown "$MEDIA_SERVICE_OWNER" "$BASE_DIR/$DIR/$SUBDIR"
       sudo chmod 777 "$BASE_DIR/$DIR/$SUBDIR"
       echo "Subdirectory '$BASE_DIR/$DIR/$SUBDIR' created with permissions set to 777."
     done
