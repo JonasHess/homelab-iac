@@ -34,6 +34,7 @@ def api_json(
     query: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
     body: Any | None = None,
+    method: str | None = None,
 ) -> Any:
     if query:
         url = f"{url}?{urllib.parse.urlencode(query)}"
@@ -42,9 +43,10 @@ def api_json(
     if body is not None:
         data = json.dumps(body).encode()
         request_headers["Content-Type"] = "application/json"
-    request = urllib.request.Request(url, data=data, headers=request_headers)
+    request = urllib.request.Request(url, data=data, headers=request_headers, method=method)
     with urllib.request.urlopen(request, timeout=20) as response:
-        return json.load(response)
+        content = response.read()
+        return json.loads(content) if content else {}
 
 
 def sabnzbd_api(base_url: str, api_key: str, mode: str, **query: str) -> dict[str, Any]:
@@ -186,6 +188,65 @@ def import_blocked_download(
     return len(files)
 
 
+def remove_paused_encrypted(
+    *,
+    candidate: dict[str, Any],
+    download_root: pathlib.Path,
+    sabnzbd_url: str,
+    sabnzbd_key: str,
+    radarr_url: str,
+    radarr_key: str,
+    minimum_age: int,
+) -> tuple[bool, int]:
+    download_id = candidate["download_id"]
+    current_queue = sabnzbd_api(sabnzbd_url, sabnzbd_key, "queue").get("queue", {})
+    slot = next(
+        (
+            item
+            for item in current_queue.get("slots", [])
+            if str(item.get("nzo_id", "")).lower() == download_id
+        ),
+        None,
+    )
+    if (
+        slot is None
+        or str(slot.get("status", "")).lower() != "paused"
+        or "ENCRYPTED" not in {str(label).upper() for label in slot.get("labels", [])}
+    ):
+        return False, 0
+
+    path = safe_orphan_path(download_root, str(slot.get("filename", "")))
+    if path is None:
+        return False, 0
+    age_hours, total_bytes = directory_stats(path, time.time())
+    if age_hours < minimum_age:
+        return False, 0
+
+    radarr_queue = api_json(
+        f"{radarr_url.rstrip('/')}/api/v3/queue",
+        query={"page": "1", "pageSize": "1000", "includeUnknownMovieItems": "true"},
+        headers={"X-Api-Key": radarr_key},
+    )
+    record = next(
+        (
+            item
+            for item in radarr_queue.get("records", [])
+            if str(item.get("downloadId", "")).lower() == download_id
+        ),
+        None,
+    )
+    if record is None or not record.get("id"):
+        return False, 0
+
+    api_json(
+        f"{radarr_url.rstrip('/')}/api/v3/queue/{record['id']}",
+        query={"removeFromClient": "true", "blocklist": "true"},
+        headers={"X-Api-Key": radarr_key},
+        method="DELETE",
+    )
+    return True, total_bytes
+
+
 def main() -> int:
     started = time.time()
     sabnzbd_url = required_env("SABNZBD_URL")
@@ -221,6 +282,7 @@ def main() -> int:
     manual_import_jobs = 0
     manual_import_files = 0
     manual_import_failures = 0
+    encrypted_paused_seen = 0
 
     for record in radarr_queue.get("records", []):
         if (
@@ -239,6 +301,30 @@ def main() -> int:
         if imported_files:
             manual_import_jobs += 1
             manual_import_files += imported_files
+
+    for slot in queue.get("slots", []):
+        if (
+            str(slot.get("status", "")).lower() != "paused"
+            or "ENCRYPTED" not in {str(label).upper() for label in slot.get("labels", [])}
+        ):
+            continue
+        encrypted_paused_seen += 1
+        path = safe_orphan_path(download_root, str(slot.get("filename", "")))
+        if path is None:
+            invalid_orphans += 1
+            continue
+        age_hours, total_bytes = directory_stats(path, now)
+        if age_hours >= minimum_age:
+            download_id = str(slot.get("nzo_id", "")).lower()
+            candidates.append(
+                {
+                    "kind": "paused_encrypted",
+                    "download_id": download_id,
+                    "age_hours": age_hours,
+                    "bytes": total_bytes,
+                    "tracked_by_radarr": download_id in radarr_ids,
+                }
+            )
 
     for folder in status.get("folders", []):
         path = safe_orphan_path(download_root, str(folder))
@@ -289,23 +375,37 @@ def main() -> int:
     candidates = candidates[:maximum_candidates]
     deleted_count = 0
     deleted_bytes = 0
+    encrypted_removed_count = 0
     skipped_after_recheck = 0
     if not report_only:
         for candidate in candidates:
-            if candidate["kind"] != "sabnzbd_orphan":
-                continue
             if deleted_count >= maximum_deletions:
                 break
-            deleted, reclaimed = delete_orphan(
-                candidate=candidate,
-                download_root=download_root,
-                sabnzbd_url=sabnzbd_url,
-                sabnzbd_key=sabnzbd_key,
-                minimum_age=minimum_age,
-            )
+            if candidate["kind"] == "sabnzbd_orphan":
+                deleted, reclaimed = delete_orphan(
+                    candidate=candidate,
+                    download_root=download_root,
+                    sabnzbd_url=sabnzbd_url,
+                    sabnzbd_key=sabnzbd_key,
+                    minimum_age=minimum_age,
+                )
+            elif candidate["kind"] == "paused_encrypted":
+                deleted, reclaimed = remove_paused_encrypted(
+                    candidate=candidate,
+                    download_root=download_root,
+                    sabnzbd_url=sabnzbd_url,
+                    sabnzbd_key=sabnzbd_key,
+                    radarr_url=radarr_url,
+                    radarr_key=radarr_key,
+                    minimum_age=minimum_age,
+                )
+            else:
+                continue
             if deleted:
                 deleted_count += 1
                 deleted_bytes += reclaimed
+                if candidate["kind"] == "paused_encrypted":
+                    encrypted_removed_count += 1
             else:
                 skipped_after_recheck += 1
 
@@ -325,6 +425,8 @@ def main() -> int:
         "manual_import_jobs": manual_import_jobs,
         "manual_import_files": manual_import_files,
         "manual_import_failures": manual_import_failures,
+        "encrypted_paused_seen": encrypted_paused_seen,
+        "encrypted_removed_count": encrypted_removed_count,
         "minimum_age_hours": minimum_age,
         "candidate_count": len(candidates),
         "candidate_bytes": sum(candidate["bytes"] for candidate in candidates),
