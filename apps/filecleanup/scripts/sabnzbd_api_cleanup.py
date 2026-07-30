@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clean stale SABnzbd orphan folders without exposing release names."""
+"""Recover blocked Radarr imports and clean stale SABnzbd orphan folders."""
 
 from __future__ import annotations
 
@@ -33,10 +33,16 @@ def api_json(
     *,
     query: dict[str, str] | None = None,
     headers: dict[str, str] | None = None,
-) -> dict[str, Any]:
+    body: Any | None = None,
+) -> Any:
     if query:
         url = f"{url}?{urllib.parse.urlencode(query)}"
-    request = urllib.request.Request(url, headers=headers or {})
+    request_headers = dict(headers or {})
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode()
+        request_headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=data, headers=request_headers)
     with urllib.request.urlopen(request, timeout=20) as response:
         return json.load(response)
 
@@ -131,6 +137,54 @@ def active_download_ids(records: Iterable[dict[str, Any]]) -> set[str]:
     }
 
 
+def import_blocked_download(
+    radarr_url: str,
+    radarr_key: str,
+    record: dict[str, Any],
+) -> int:
+    movie_id = record.get("movieId")
+    download_id = record.get("downloadId")
+    output_path = record.get("outputPath")
+    if not movie_id or not download_id or not output_path:
+        return 0
+
+    headers = {"X-Api-Key": radarr_key}
+    candidates = api_json(
+        f"{radarr_url.rstrip('/')}/api/v3/manualimport",
+        query={
+            "folder": str(output_path),
+            "downloadId": str(download_id),
+            "filterExistingFiles": "true",
+        },
+        headers=headers,
+    )
+    files = [
+        {
+            "id": candidate["id"],
+            "path": candidate["path"],
+            "movieId": movie_id,
+            "quality": candidate.get("quality"),
+            "languages": candidate.get("languages", []),
+            "releaseGroup": candidate.get("releaseGroup"),
+            "indexerFlags": candidate.get("indexerFlags", 0),
+            "downloadId": download_id,
+        }
+        for candidate in candidates
+        if candidate.get("id")
+        and candidate.get("path")
+        and not candidate.get("rejections")
+    ]
+    if not files:
+        return 0
+
+    api_json(
+        f"{radarr_url.rstrip('/')}/api/v3/manualimport",
+        headers=headers,
+        body=files,
+    )
+    return len(files)
+
+
 def main() -> int:
     started = time.time()
     sabnzbd_url = required_env("SABNZBD_URL")
@@ -162,6 +216,28 @@ def main() -> int:
     now = time.time()
     candidates: list[dict[str, Any]] = []
     invalid_orphans = 0
+    import_blocked_seen = 0
+    manual_import_jobs = 0
+    manual_import_files = 0
+    manual_import_failures = 0
+
+    for record in radarr_queue.get("records", []):
+        if (
+            str(record.get("status", "")).lower() != "completed"
+            or record.get("trackedDownloadState") != "importBlocked"
+        ):
+            continue
+        import_blocked_seen += 1
+        if report_only:
+            continue
+        try:
+            imported_files = import_blocked_download(radarr_url, radarr_key, record)
+        except Exception:
+            manual_import_failures += 1
+            continue
+        if imported_files:
+            manual_import_jobs += 1
+            manual_import_files += imported_files
 
     for folder in status.get("folders", []):
         path = safe_orphan_path(download_root, str(folder))
@@ -233,13 +309,21 @@ def main() -> int:
                 skipped_after_recheck += 1
 
     summary = {
-        "mode": "report-only" if report_only else "delete-confirmed-orphans",
+        "mode": (
+            "report-only"
+            if report_only
+            else "recover-blocked-imports-and-delete-confirmed-orphans"
+        ),
         "sabnzbd_queue_status": queue.get("status"),
         "sabnzbd_queue_jobs": len(queue.get("slots", [])),
         "sabnzbd_orphans_reported": len(status.get("folders", [])),
         "invalid_orphan_paths": invalid_orphans,
         "failed_history_seen": failed_history_seen,
         "radarr_queue_jobs": int(radarr_queue.get("totalRecords", len(radarr_queue.get("records", [])))),
+        "radarr_import_blocked_seen": import_blocked_seen,
+        "manual_import_jobs": manual_import_jobs,
+        "manual_import_files": manual_import_files,
+        "manual_import_failures": manual_import_failures,
         "minimum_age_hours": minimum_age,
         "candidate_count": len(candidates),
         "candidate_bytes": sum(candidate["bytes"] for candidate in candidates),
