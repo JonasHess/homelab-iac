@@ -20,10 +20,11 @@ filecleanup:
 
   sabnzbdApiCleanup:
     enabled: true
-    reportOnly: true
+    reportOnly: false
     schedule: "*/30 * * * *"
-    minimumAgeHours: 48
+    minimumAgeHours: 1
     maximumCandidatesPerRun: 100
+    maximumDeletionsPerRun: 10
     sabnzbdUrl: http://sabnzbd-service.argocd.svc.cluster.local:8080
     radarrUrl: http://radarr-service.argocd.svc.cluster.local:7878
     downloadsPvc: filecleanup-sabnzbd-download-pvc

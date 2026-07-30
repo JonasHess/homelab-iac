@@ -64,6 +64,8 @@ spec:
                   value: {{ $config.minimumAgeHours | quote }}
                 - name: MAXIMUM_CANDIDATES_PER_RUN
                   value: {{ $config.maximumCandidatesPerRun | quote }}
+                - name: MAXIMUM_DELETIONS_PER_RUN
+                  value: {{ $config.maximumDeletionsPerRun | quote }}
                 - name: REPORT_ONLY
                   value: {{ $config.reportOnly | quote }}
                 - name: SABNZBD_API_KEY

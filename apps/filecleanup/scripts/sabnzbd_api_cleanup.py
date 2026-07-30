@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Report stale SABnzbd jobs and orphan folders without exposing release names."""
+"""Clean stale SABnzbd orphan folders without exposing release names."""
 
 from __future__ import annotations
 
@@ -91,6 +91,38 @@ def redact_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def delete_orphan(
+    *,
+    candidate: dict[str, Any],
+    download_root: pathlib.Path,
+    sabnzbd_url: str,
+    sabnzbd_key: str,
+    minimum_age: int,
+) -> tuple[bool, int]:
+    folder = candidate["folder"]
+    current_status = sabnzbd_api(sabnzbd_url, sabnzbd_key, "status").get("status", {})
+    if folder not in {str(item) for item in current_status.get("folders", [])}:
+        return False, 0
+
+    path = safe_orphan_path(download_root, folder)
+    if path is None:
+        return False, 0
+    age_hours, total_bytes = directory_stats(path, time.time())
+    if age_hours < minimum_age:
+        return False, 0
+
+    response = sabnzbd_api(
+        sabnzbd_url,
+        sabnzbd_key,
+        "status",
+        name="delete_orphan",
+        value=folder,
+    )
+    if response.get("status") is not True:
+        return False, 0
+    return True, total_bytes
+
+
 def active_download_ids(records: Iterable[dict[str, Any]]) -> set[str]:
     return {
         str(record.get("downloadId", "")).lower()
@@ -108,10 +140,10 @@ def main() -> int:
     download_root = pathlib.Path(required_env("DOWNLOAD_ROOT")).resolve(strict=True)
     minimum_age = integer_env("MINIMUM_AGE_HOURS", 48)
     maximum_candidates = integer_env("MAXIMUM_CANDIDATES_PER_RUN", 100)
+    maximum_deletions = integer_env("MAXIMUM_DELETIONS_PER_RUN", 10)
     report_only = os.environ.get("REPORT_ONLY", "true").lower() == "true"
-    if not report_only:
-        raise RuntimeError("Deletion mode is not implemented; REPORT_ONLY must remain true")
 
+    # Complete every dependency check before considering any deletion.
     status = sabnzbd_api(sabnzbd_url, sabnzbd_key, "status").get("status", {})
     queue = sabnzbd_api(sabnzbd_url, sabnzbd_key, "queue").get("queue", {})
     history = sabnzbd_api(sabnzbd_url, sabnzbd_key, "history", limit="500").get("history", {})
@@ -141,6 +173,7 @@ def main() -> int:
             candidates.append(
                 {
                     "kind": "sabnzbd_orphan",
+                    "folder": str(folder),
                     "age_hours": age_hours,
                     "bytes": total_bytes,
                     "tracked_by_radarr": False,
@@ -168,11 +201,39 @@ def main() -> int:
             }
         )
 
-    candidates.sort(key=lambda item: (item["tracked_by_radarr"], -item["age_hours"]))
+    candidates.sort(
+        key=lambda item: (
+            item["kind"] != "sabnzbd_orphan",
+            item["tracked_by_radarr"],
+            -item["age_hours"],
+        )
+    )
     truncated = len(candidates) > maximum_candidates
     candidates = candidates[:maximum_candidates]
+    deleted_count = 0
+    deleted_bytes = 0
+    skipped_after_recheck = 0
+    if not report_only:
+        for candidate in candidates:
+            if candidate["kind"] != "sabnzbd_orphan":
+                continue
+            if deleted_count >= maximum_deletions:
+                break
+            deleted, reclaimed = delete_orphan(
+                candidate=candidate,
+                download_root=download_root,
+                sabnzbd_url=sabnzbd_url,
+                sabnzbd_key=sabnzbd_key,
+                minimum_age=minimum_age,
+            )
+            if deleted:
+                deleted_count += 1
+                deleted_bytes += reclaimed
+            else:
+                skipped_after_recheck += 1
+
     summary = {
-        "mode": "report-only",
+        "mode": "report-only" if report_only else "delete-confirmed-orphans",
         "sabnzbd_queue_status": queue.get("status"),
         "sabnzbd_queue_jobs": len(queue.get("slots", [])),
         "sabnzbd_orphans_reported": len(status.get("folders", [])),
@@ -183,6 +244,10 @@ def main() -> int:
         "candidate_count": len(candidates),
         "candidate_bytes": sum(candidate["bytes"] for candidate in candidates),
         "candidate_list_truncated": truncated,
+        "maximum_deletions_per_run": maximum_deletions,
+        "deleted_count": deleted_count,
+        "deleted_bytes": deleted_bytes,
+        "skipped_after_recheck": skipped_after_recheck,
         "duration_seconds": round(time.time() - started, 3),
         "candidates": [redact_candidate(candidate) for candidate in candidates],
     }
@@ -196,7 +261,7 @@ if __name__ == "__main__":
     except Exception as error:
         print(
             json.dumps(
-                {"mode": "report-only", "status": "error", "error_type": type(error).__name__},
+                {"mode": "sabnzbd-orphan-cleanup", "status": "error", "error_type": type(error).__name__},
                 separators=(",", ":"),
                 sort_keys=True,
             ),
