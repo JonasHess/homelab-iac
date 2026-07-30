@@ -160,14 +160,15 @@ def import_blocked_download(
     )
     files = [
         {
-            "id": candidate["id"],
             "path": candidate["path"],
+            "folderName": candidate.get("folderName"),
             "movieId": movie_id,
             "quality": candidate.get("quality"),
             "languages": candidate.get("languages", []),
             "releaseGroup": candidate.get("releaseGroup"),
             "indexerFlags": candidate.get("indexerFlags", 0),
             "downloadId": download_id,
+            "movieFileId": candidate.get("movieFileId", 0),
         }
         for candidate in candidates
         if candidate.get("id")
@@ -178,9 +179,9 @@ def import_blocked_download(
         return 0
 
     api_json(
-        f"{radarr_url.rstrip('/')}/api/v3/manualimport",
+        f"{radarr_url.rstrip('/')}/api/v3/command",
         headers=headers,
-        body=files,
+        body={"name": "ManualImport", "files": files, "importMode": "move"},
     )
     return len(files)
 
