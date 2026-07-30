@@ -27,4 +27,4 @@ filecleanup:
     sabnzbdUrl: http://sabnzbd-service.argocd.svc.cluster.local:8080
     radarrUrl: http://radarr-service.argocd.svc.cluster.local:7878
     downloadsPvc: filecleanup-sabnzbd-download-pvc
-    image: python:3.12.11-alpine3.22
+    image: python:3.14.5-alpine3.22
