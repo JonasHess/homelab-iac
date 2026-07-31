@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-login-script
+  namespace: {{ .Release.Namespace }}
+data:
+  login.py: |
+    #!/usr/bin/env python3
+    """justTRADE login wrapper with an HTTP OTP-code endpoint.
+
+    A CronJob Pod has no stdin, so the interactive 2FA code cannot be typed.
+    This wrapper starts the justTRADE login (which sends a one-time code by
+    e-mail, or by SMS when JUSTTRADE_2FA_METHOD=sms), then serves an HTTP
+    endpoint so the code can be submitted from a browser. On success it writes
+    the refresh token to JUSTTRADE_SESSION_FILE (a shared PVC) so the scheduled
+    download Job can resume without 2FA.
+
+    Trigger the Job manually (ArgoCD), then open
+    ``https://jt.<domain>/code/<code>``.
+
+    Endpoints:  GET /code/<digits>   submit the code
+                GET /health          liveness while waiting
+    """
+    import logging
+    import sys
+    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    from document_downloader.portals.justtrade import JustTradeDownloader
+
+    _STATE = {"result": None, "dl": None, "session": None, "mfa_type": "CUSTOM"}
+
+
+    class CodeHandler(BaseHTTPRequestHandler):
+        def _reply(self, status, text):
+            self.send_response(status)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(text.encode())
+
+        def do_GET(self):
+            if self.path == "/health":
+                self._reply(200, "Waiting for the justTRADE code.\n")
+                return
+            parts = self.path.strip("/").split("/")
+            if len(parts) == 2 and parts[0] == "code" and parts[1].isdigit():
+                code = parts[1]
+                dl = _STATE["dl"]
+                if dl._confirm_mfa(_STATE["session"], _STATE["mfa_type"], code):
+                    dl._save_session()
+                    _STATE["result"] = "success"
+                    self._reply(200, "Login successful — session saved.\n")
+                else:
+                    _STATE["result"] = "failure"
+                    self._reply(400, "Login failed (wrong or expired code?). Re-run the Job.\n")
+                return
+            self._reply(404, "Submit your code at /code/<digits>\n")
+
+        def log_message(self, fmt, *args):
+            print(f"[http] {fmt % args}", flush=True)
+
+
+    def main():
+        dl = JustTradeDownloader.from_env()
+        _STATE["dl"] = dl
+
+        challenge = dl._init_auth()
+        if not challenge:
+            print("ERROR: /login failed — check credentials.", flush=True)
+            sys.exit(1)
+        session = dl._dig(challenge, "session")
+        if not session:
+            print("ERROR: no session handle in /login response.", flush=True)
+            sys.exit(1)
+        challenge_type = dl._dig(challenge, "challenge")
+        _STATE["mfa_type"] = "SMS" if challenge_type == "SMS_MFA" else "CUSTOM"
+
+        if dl.mfa_channel == "sms":
+            session = dl._send_sms_code(session)
+            if not session:
+                print("ERROR: SMS request failed.", flush=True)
+                sys.exit(1)
+        _STATE["session"] = session
+
+        print("Code sent. Submit it at /code/<digits> "
+              "(e.g. https://jt.<domain>/code/123456)", flush=True)
+        server = HTTPServer(("0.0.0.0", 8080), CodeHandler)
+        print("HTTP server listening on :8080", flush=True)
+        while _STATE["result"] is None:
+            server.handle_request()
+        server.server_close()
+
+        print(f"Login {_STATE['result']}.", flush=True)
+        sys.exit(0 if _STATE["result"] == "success" else 1)
+
+
+    if __name__ == "__main__":
+        main()

@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-download
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: download
+spec:
+  schedule: {{ .Values.justtrade.download.schedule | quote }}
+  suspend: {{ .Values.justtrade.download.suspend }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.appName }}
+            component: download
+        spec:
+          restartPolicy: OnFailure
+          securityContext:
+            fsGroup: 1000
+          {{- with .Values.justtrade.imagePullSecrets }}
+          imagePullSecrets:
+          {{- range . }}
+          - name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          containers:
+          - name: download
+            image: {{ required "image must be specified" .Values.justtrade.image }}:{{ .Values.justtrade.imageTag | default "latest" }}
+            imagePullPolicy: IfNotPresent
+            # Default entrypoint is `python3 download.py`; resumes via the stored
+            # refresh token (JUSTTRADE_SESSION_FILE) so no 2FA is needed. If the
+            # token has expired the run fails — re-trigger the login Job.
+            args:
+            - "--output"
+            - "/app/downloads"
+            {{- if .Values.justtrade.download.flat }}
+            - "--flat"
+            {{- end }}
+            env:
+            - name: PORTAL
+              value: justtrade
+            - name: JUSTTRADE_SESSION_FILE
+              value: {{ .Values.justtrade.sessionFile | quote }}
+            # JUSTTRADE_2FA_METHOD is intentionally NOT set here: the download
+            # Job must never trigger an SMS. On an expired session it falls back
+            # to the (email) interactive path and fails at the missing stdin,
+            # which is the intended "re-login needed" signal.
+            envFrom:
+            - secretRef:
+                name: {{ .Values.appName }}-credentials
+            volumeMounts:
+            - name: session
+              mountPath: /session
+            - name: downloads
+              mountPath: /app/downloads
+          volumes:
+          - name: session
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-credentials-pvc
+          - name: downloads
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-downloads-pvc

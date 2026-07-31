@@ -1,0 +1,39 @@
+appName: justtrade
+
+# PVCs (justtrade-credentials-pvc, justtrade-downloads-pvc), the ExternalSecret
+# (justtrade-credentials) and any hostPaths are supplied by the environment repo
+# via the generic sub-chart — see README.md.
+generic:
+  persistentVolumeClaims: {}
+  externalSecrets: {}
+  ingress:
+    https:
+    - subdomain: jt          # https://jt.<domain>/code/<code> for OTP submission
+      port: 8080
+      service: justtrade-login-service
+      oauth: true            # behind oauth2-proxy (Cognito)
+
+justtrade:
+  # Reuses the portal-document-downloader image. NOTE: the tag must be a build
+  # that includes the justTRADE portal (added after v11.2.0).
+  image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
+  imageTag: "v11.3.0"
+  imagePullSecrets:
+    - name: regcred-secondary
+
+  # Where the refresh token is persisted (on the shared credentials PVC), so the
+  # download Job resumes without 2FA. Matches JUSTTRADE_SESSION_FILE in the pods.
+  sessionFile: /session/justtrade.json
+
+  # Code delivery for the login Job: "email" (auto-sent on /login) or "sms".
+  mfaMethod: sms
+
+  login:
+    # Dummy schedule; always suspended and triggered manually via ArgoCD.
+    schedule: "0 0 1 1 *"
+    suspend: true
+
+  download:
+    schedule: "0 2 1 * *"    # 1st of month, 02:00
+    suspend: false
+    flat: false

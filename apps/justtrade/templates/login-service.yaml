@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.appName }}-login-service
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: login
+spec:
+  selector:
+    app: {{ .Values.appName }}
+    component: login
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

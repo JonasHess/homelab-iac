@@ -793,6 +793,15 @@ apps:
       namespace: argocd
       project: default
       syncWave: '20'
+  justtrade:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'
   backrest:
     enabled: false
     homer:

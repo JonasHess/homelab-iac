@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-login
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: login
+spec:
+  schedule: {{ .Values.justtrade.login.schedule | quote }}
+  suspend: {{ .Values.justtrade.login.suspend }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.appName }}
+            component: login
+        spec:
+          restartPolicy: Never
+          securityContext:
+            # The credentials PVC must be writable by the image's uid 1000
+            # (appuser) so the refresh token can be persisted.
+            fsGroup: 1000
+          {{- with .Values.justtrade.imagePullSecrets }}
+          imagePullSecrets:
+          {{- range . }}
+          - name: {{ .name }}
+          {{- end }}
+          {{- end }}
+          containers:
+          - name: login
+            image: {{ required "image must be specified" .Values.justtrade.image }}:{{ .Values.justtrade.imageTag | default "latest" }}
+            imagePullPolicy: IfNotPresent
+            command: ["python3", "/scripts/login.py"]
+            ports:
+            - containerPort: 8080
+              name: http
+            env:
+            # The login script lives in /scripts; put the app package on the path.
+            - name: PYTHONPATH
+              value: /app
+            - name: PORTAL
+              value: justtrade
+            - name: JUSTTRADE_SESSION_FILE
+              value: {{ .Values.justtrade.sessionFile | quote }}
+            - name: JUSTTRADE_2FA_METHOD
+              value: {{ .Values.justtrade.mfaMethod | quote }}
+            envFrom:
+            - secretRef:
+                name: {{ .Values.appName }}-credentials
+            volumeMounts:
+            - name: login-script
+              mountPath: /scripts
+              readOnly: true
+            - name: session
+              mountPath: /session
+          volumes:
+          - name: login-script
+            configMap:
+              name: {{ .Values.appName }}-login-script
+          - name: session
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-credentials-pvc
