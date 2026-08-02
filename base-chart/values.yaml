@@ -209,6 +209,43 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"  # Deploy after core services
+  # Firefly III finance stack. Definition (Homer tile + ArgoCD) lives here; the
+  # environment overlay only flips `enabled` and supplies cluster-specific hostPaths.
+  firefly:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/firefly-iii.svg"
+      subtitle: "Personal Finance Manager"
+      displayName: "Firefly III"
+      subdomain: "firefly"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
+  firefly-importer:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
+  firefly-sankey:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/firefly-iii.svg"
+      subtitle: "Sankey money-flow diagrams"
+      displayName: "Firefly Sankey"
+      subdomain: "sankey"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
   adguard:
     enabled: false
     homer:
