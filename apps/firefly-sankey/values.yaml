@@ -6,6 +6,7 @@ generic:
   configMaps:
     firefly-sankey-config:
       FIREFLY_URL: "http://firefly-service:8080"
+      FIREFLY_PUBLIC_URL: "https://firefly.zimmermann.lat"
   # Firefly Personal Access Token → env FIREFLY_TOKEN (reuses the importer's PAT).
   externalSecrets:
     firefly-sankey-secret:
