@@ -9,6 +9,8 @@ generic:
       - SABNZBD_API_KEY: /apps/filecleanup/sabnzbd/api-key
     filecleanup-radarr-api:
       - RADARR_API_KEY: /apps/filecleanup/radarr/api-key
+    filecleanup-sonarr-api:
+      - SONARR_API_KEY: /apps/filecleanup/sonarr/api-key
 
 filecleanup:
   dryRun: true  # Global dry-run toggle for testing
@@ -27,5 +29,6 @@ filecleanup:
     maximumDeletionsPerRun: 10
     sabnzbdUrl: http://sabnzbd-service.argocd.svc.cluster.local:8080
     radarrUrl: http://radarr-service.argocd.svc.cluster.local:7878
+    sonarrUrl: http://sonarr-service.argocd.svc.cluster.local:8989
     downloadsPvc: filecleanup-sabnzbd-download-pvc
     image: python:3.12.11-alpine3.22

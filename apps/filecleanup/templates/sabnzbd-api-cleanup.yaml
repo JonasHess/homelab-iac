@@ -58,6 +58,8 @@ spec:
                   value: {{ $config.sabnzbdUrl | quote }}
                 - name: RADARR_URL
                   value: {{ $config.radarrUrl | quote }}
+                - name: SONARR_URL
+                  value: {{ $config.sonarrUrl | quote }}
                 - name: DOWNLOAD_ROOT
                   value: /mnt/downloads
                 - name: MINIMUM_AGE_HOURS
@@ -78,6 +80,11 @@ spec:
                     secretKeyRef:
                       name: filecleanup-radarr-api
                       key: RADARR_API_KEY
+                - name: SONARR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: filecleanup-sonarr-api
+                      key: SONARR_API_KEY
               resources:
                 requests:
                   cpu: 10m

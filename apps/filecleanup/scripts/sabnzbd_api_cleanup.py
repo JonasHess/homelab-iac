@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Recover blocked Radarr imports and clean stale SABnzbd orphan folders."""
+"""Recover blocked Starr imports and clean stale SABnzbd orphan folders."""
 
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ def redact_candidate(candidate: dict[str, Any]) -> dict[str, Any]:
         "kind": candidate["kind"],
         "age_hours": candidate["age_hours"],
         "bytes": candidate["bytes"],
-        "tracked_by_radarr": candidate.get("tracked_by_radarr", False),
+        "tracked_by_starr": candidate.get("tracked_by_starr", False),
     }
 
 
@@ -140,19 +140,19 @@ def active_download_ids(records: Iterable[dict[str, Any]]) -> set[str]:
 
 
 def import_blocked_download(
-    radarr_url: str,
-    radarr_key: str,
+    app: str,
+    app_url: str,
+    app_key: str,
     record: dict[str, Any],
 ) -> int:
-    movie_id = record.get("movieId")
     download_id = record.get("downloadId")
     output_path = record.get("outputPath")
-    if not movie_id or not download_id or not output_path:
+    if not download_id or not output_path:
         return 0
 
-    headers = {"X-Api-Key": radarr_key}
+    headers = {"X-Api-Key": app_key}
     candidates = api_json(
-        f"{radarr_url.rstrip('/')}/api/v3/manualimport",
+        f"{app_url.rstrip('/')}/api/v3/manualimport",
         query={
             "folder": str(output_path),
             "downloadId": str(download_id),
@@ -160,28 +160,37 @@ def import_blocked_download(
         },
         headers=headers,
     )
-    files = [
-        {
+    files = []
+    for candidate in candidates:
+        if not candidate.get("id") or not candidate.get("path") or candidate.get("rejections"):
+            continue
+        common = {
             "path": candidate["path"],
             "folderName": candidate.get("folderName"),
-            "movieId": movie_id,
             "quality": candidate.get("quality"),
             "languages": candidate.get("languages", []),
             "releaseGroup": candidate.get("releaseGroup"),
             "indexerFlags": candidate.get("indexerFlags", 0),
             "downloadId": download_id,
-            "movieFileId": candidate.get("movieFileId", 0),
         }
-        for candidate in candidates
-        if candidate.get("id")
-        and candidate.get("path")
-        and not candidate.get("rejections")
-    ]
+        if app == "radarr" and record.get("movieId"):
+            files.append({**common, "movieId": record["movieId"], "movieFileId": 0})
+        elif app == "sonarr" and candidate.get("series", {}).get("id"):
+            episode_ids = [episode["id"] for episode in candidate.get("episodes", []) if episode.get("id")]
+            if episode_ids:
+                files.append(
+                    {
+                        **common,
+                        "seriesId": candidate["series"]["id"],
+                        "episodeIds": episode_ids,
+                        "episodeFileId": 0,
+                    }
+                )
     if not files:
         return 0
 
     api_json(
-        f"{radarr_url.rstrip('/')}/api/v3/command",
+        f"{app_url.rstrip('/')}/api/v3/command",
         headers=headers,
         body={"name": "ManualImport", "files": files, "importMode": "move"},
     )
@@ -194,8 +203,7 @@ def remove_paused_encrypted(
     download_root: pathlib.Path,
     sabnzbd_url: str,
     sabnzbd_key: str,
-    radarr_url: str,
-    radarr_key: str,
+    starr_apps: list[tuple[str, str, list[dict[str, Any]]]],
     minimum_age: int,
 ) -> tuple[bool, int]:
     download_id = candidate["download_id"]
@@ -222,29 +230,24 @@ def remove_paused_encrypted(
     if age_hours < minimum_age:
         return False, 0
 
-    radarr_queue = api_json(
-        f"{radarr_url.rstrip('/')}/api/v3/queue",
-        query={"page": "1", "pageSize": "1000", "includeUnknownMovieItems": "true"},
-        headers={"X-Api-Key": radarr_key},
-    )
-    record = next(
-        (
-            item
-            for item in radarr_queue.get("records", [])
-            if str(item.get("downloadId", "")).lower() == download_id
-        ),
-        None,
-    )
-    if record is None or not record.get("id"):
-        return False, 0
-
-    api_json(
-        f"{radarr_url.rstrip('/')}/api/v3/queue/{record['id']}",
-        query={"removeFromClient": "true", "blocklist": "true"},
-        headers={"X-Api-Key": radarr_key},
-        method="DELETE",
-    )
-    return True, total_bytes
+    for app_url, app_key, records in starr_apps:
+        record = next(
+            (
+                item
+                for item in records
+                if str(item.get("downloadId", "")).lower() == download_id
+            ),
+            None,
+        )
+        if record and record.get("id"):
+            api_json(
+                f"{app_url.rstrip('/')}/api/v3/queue/{record['id']}",
+                query={"removeFromClient": "true", "blocklist": "true"},
+                headers={"X-Api-Key": app_key},
+                method="DELETE",
+            )
+            return True, total_bytes
+    return False, 0
 
 
 def main() -> int:
@@ -253,6 +256,8 @@ def main() -> int:
     sabnzbd_key = required_env("SABNZBD_API_KEY")
     radarr_url = required_env("RADARR_URL")
     radarr_key = required_env("RADARR_API_KEY")
+    sonarr_url = required_env("SONARR_URL")
+    sonarr_key = required_env("SONARR_API_KEY")
     download_root = pathlib.Path(required_env("DOWNLOAD_ROOT")).resolve(strict=True)
     minimum_age = integer_env("MINIMUM_AGE_HOURS", 48)
     maximum_candidates = integer_env("MAXIMUM_CANDIDATES_PER_RUN", 100)
@@ -268,8 +273,19 @@ def main() -> int:
         query={"page": "1", "pageSize": "1000", "includeUnknownMovieItems": "true"},
         headers={"X-Api-Key": radarr_key},
     )
+    sonarr_queue = api_json(
+        f"{sonarr_url.rstrip('/')}/api/v3/queue",
+        query={"page": "1", "pageSize": "1000", "includeUnknownSeriesItems": "true"},
+        headers={"X-Api-Key": sonarr_key},
+    )
 
     radarr_ids = active_download_ids(radarr_queue.get("records", []))
+    sonarr_ids = active_download_ids(sonarr_queue.get("records", []))
+    starr_ids = radarr_ids | sonarr_ids
+    starr_apps = [
+        (radarr_url, radarr_key, radarr_queue.get("records", [])),
+        (sonarr_url, sonarr_key, sonarr_queue.get("records", [])),
+    ]
     sab_queue_ids = {
         str(slot.get("nzo_id", "")).lower()
         for slot in queue.get("slots", [])
@@ -278,29 +294,33 @@ def main() -> int:
     now = time.time()
     candidates: list[dict[str, Any]] = []
     invalid_orphans = 0
-    import_blocked_seen = 0
-    manual_import_jobs = 0
-    manual_import_files = 0
-    manual_import_failures = 0
+    import_stats = {
+        "radarr": {"blocked": 0, "jobs": 0, "files": 0, "failures": 0},
+        "sonarr": {"blocked": 0, "jobs": 0, "files": 0, "failures": 0},
+    }
     encrypted_paused_seen = 0
 
-    for record in radarr_queue.get("records", []):
-        if (
-            str(record.get("status", "")).lower() != "completed"
-            or record.get("trackedDownloadState") != "importBlocked"
-        ):
-            continue
-        import_blocked_seen += 1
-        if report_only:
-            continue
-        try:
-            imported_files = import_blocked_download(radarr_url, radarr_key, record)
-        except Exception:
-            manual_import_failures += 1
-            continue
-        if imported_files:
-            manual_import_jobs += 1
-            manual_import_files += imported_files
+    for app, app_url, app_key, records in (
+        ("radarr", radarr_url, radarr_key, radarr_queue.get("records", [])),
+        ("sonarr", sonarr_url, sonarr_key, sonarr_queue.get("records", [])),
+    ):
+        for record in records:
+            if (
+                str(record.get("status", "")).lower() != "completed"
+                or record.get("trackedDownloadState") != "importBlocked"
+            ):
+                continue
+            import_stats[app]["blocked"] += 1
+            if report_only:
+                continue
+            try:
+                imported_files = import_blocked_download(app, app_url, app_key, record)
+            except Exception:
+                import_stats[app]["failures"] += 1
+                continue
+            if imported_files:
+                import_stats[app]["jobs"] += 1
+                import_stats[app]["files"] += imported_files
 
     for slot in queue.get("slots", []):
         if (
@@ -322,7 +342,7 @@ def main() -> int:
                     "download_id": download_id,
                     "age_hours": age_hours,
                     "bytes": total_bytes,
-                    "tracked_by_radarr": download_id in radarr_ids,
+                    "tracked_by_starr": download_id in starr_ids,
                 }
             )
 
@@ -339,7 +359,7 @@ def main() -> int:
                     "folder": str(folder),
                     "age_hours": age_hours,
                     "bytes": total_bytes,
-                    "tracked_by_radarr": False,
+                    "tracked_by_starr": False,
                 }
             )
 
@@ -360,14 +380,14 @@ def main() -> int:
                 "kind": "failed_history",
                 "age_hours": age_hours,
                 "bytes": int(slot.get("bytes") or 0),
-                "tracked_by_radarr": download_id in radarr_ids,
+                "tracked_by_starr": download_id in starr_ids,
             }
         )
 
     candidates.sort(
         key=lambda item: (
             item["kind"] != "sabnzbd_orphan",
-            item["tracked_by_radarr"],
+            item["tracked_by_starr"],
             -item["age_hours"],
         )
     )
@@ -395,8 +415,7 @@ def main() -> int:
                     download_root=download_root,
                     sabnzbd_url=sabnzbd_url,
                     sabnzbd_key=sabnzbd_key,
-                    radarr_url=radarr_url,
-                    radarr_key=radarr_key,
+                    starr_apps=starr_apps,
                     minimum_age=minimum_age,
                 )
             else:
@@ -421,10 +440,15 @@ def main() -> int:
         "invalid_orphan_paths": invalid_orphans,
         "failed_history_seen": failed_history_seen,
         "radarr_queue_jobs": int(radarr_queue.get("totalRecords", len(radarr_queue.get("records", [])))),
-        "radarr_import_blocked_seen": import_blocked_seen,
-        "manual_import_jobs": manual_import_jobs,
-        "manual_import_files": manual_import_files,
-        "manual_import_failures": manual_import_failures,
+        "sonarr_queue_jobs": int(sonarr_queue.get("totalRecords", len(sonarr_queue.get("records", [])))),
+        "radarr_import_blocked_seen": import_stats["radarr"]["blocked"],
+        "radarr_manual_import_jobs": import_stats["radarr"]["jobs"],
+        "radarr_manual_import_files": import_stats["radarr"]["files"],
+        "radarr_manual_import_failures": import_stats["radarr"]["failures"],
+        "sonarr_import_blocked_seen": import_stats["sonarr"]["blocked"],
+        "sonarr_manual_import_jobs": import_stats["sonarr"]["jobs"],
+        "sonarr_manual_import_files": import_stats["sonarr"]["files"],
+        "sonarr_manual_import_failures": import_stats["sonarr"]["failures"],
         "encrypted_paused_seen": encrypted_paused_seen,
         "encrypted_removed_count": encrypted_removed_count,
         "minimum_age_hours": minimum_age,
