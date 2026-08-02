@@ -1,0 +1,42 @@
+appName: firefly-sankey
+
+generic:
+  # Non-secret runtime config → env vars. FIREFLY_URL points at Firefly core in the
+  # same (argocd) namespace; the app reaches it by the short service name.
+  configMaps:
+    firefly-sankey-config:
+      FIREFLY_URL: "http://firefly-service:8080"
+  # Firefly Personal Access Token → env FIREFLY_TOKEN (reuses the importer's PAT).
+  externalSecrets:
+    firefly-sankey-secret:
+      - FIREFLY_TOKEN: "/firefly/IMPORTER_ACCESS_TOKEN"
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/firefly-sankey:v0.1.0
+    imagePullSecrets:
+    - regcred-secondary
+    ports:
+    - containerPort: 8080
+    readinessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 20
+    envFrom:
+      configMapRef: firefly-sankey-config
+      secretRef: firefly-sankey-secret
+  service:
+    ports:
+    - name: http
+      port: 8080
+  ingress:
+    https:
+    - subdomain: sankey
+      port: 8080
+      oauth: true
