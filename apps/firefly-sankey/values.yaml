@@ -12,7 +12,7 @@ generic:
     firefly-sankey-secret:
       - FIREFLY_TOKEN: "/firefly/IMPORTER_ACCESS_TOKEN"
   deployment:
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/firefly-sankey:v0.1.0
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/firefly-sankey:v0.2.0
     imagePullSecrets:
     - regcred-secondary
     ports:
