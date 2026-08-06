@@ -246,6 +246,21 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"
+  kalibra:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      # The tile logo is the app's own PWA icon, so it is set per environment where the
+      # domain is known.
+      subtitle: "Scale and weight calibration records"
+      displayName: "Kalibra"
+      subdomain: "kalibra"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "15"
   adguard:
     enabled: false
     homer:

@@ -1,0 +1,60 @@
+appName: kalibra
+
+generic:
+  # One image serves both the sync API and the installable PWA, so the browser talks to its own
+  # origin — no separate frontend deployment and no CORS.
+  configMaps:
+    kalibra-config:
+      # H2 in a file on the mounted volume, prefilled with the demo data (see application-h2.yml).
+      # Switching to PostgreSQL later is this one value plus the KALIBRA_DB_* env vars.
+      SPRING_PROFILES_ACTIVE: "h2"
+      KALIBRA_DATA_DIR: "/data"
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/kalibra:v0.1.0
+    imagePullSecrets:
+    - regcred-secondary
+    ports:
+    - containerPort: 8080
+    # The whole database is a single H2 file, so it must outlive the pod. The hostPath is
+    # supplied by the environment repo.
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~ # /mnt/somewhere/encrypted/apps/kalibra/data
+        # This volume is the only copy of the calibration records the Prüfer signs off.
+        backup:
+          enabled: true
+    # The app runs as uid 1000 and H2 must create its database file, but the hostPath arrives
+    # owned by whoever made it on the host. This hands the directory over before the app starts.
+    initContainers:
+      - name: fix-data-permissions
+        image: busybox:1.37
+        command: ["sh", "-c", "chown 1000:1000 /data"]
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+          - name: kalibra-data-volume
+            mountPath: /data
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 20
+    envFrom:
+      configMapRef: kalibra-config
+  service:
+    ports:
+    - name: http
+      port: 8080
+  ingress:
+    https:
+    - subdomain: kalibra
+      port: 8080
+      oauth: true
