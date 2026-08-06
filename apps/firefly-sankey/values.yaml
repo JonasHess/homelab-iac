@@ -1,5 +1,18 @@
 appName: firefly-sankey
 
+# Sankey-scoped SSO + group gate (see templates/sankey-sso-securitypolicy.yaml).
+#   enabled       - install the Sankey-scoped OIDC + JWT SecurityPolicy. Requires
+#                   https://sankey.<domain>/oauth2/callback in the Cognito client.
+#   allowedGroups - Cognito groups permitted to reach Sankey, matched against the
+#                   `cognito:groups` claim; a user needs ANY one of them. Empty
+#                   list = every authenticated Cognito user, i.e. no gate at all.
+#                   Sankey reads Firefly through one shared Personal Access Token,
+#                   so anyone who gets in sees the whole ledger. Set this per
+#                   environment, to the same groups as the firefly chart.
+sso:
+  enabled: true
+  allowedGroups: []
+
 generic:
   # Non-secret runtime config → env vars. FIREFLY_URL points at Firefly core in the
   # same (argocd) namespace; the app reaches it by the short service name.
