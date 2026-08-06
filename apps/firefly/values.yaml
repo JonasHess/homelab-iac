@@ -1,15 +1,22 @@
-# Single sign-on via the shared Cognito gateway.
-# The X-Auth-Email header is injected centrally by the gateway-oidc
-# SecurityPolicy (global.oidc.emailClaimHeader), so Firefly needs no policy of
-# its own — `enabled` stays false.
-#   enabled          - (unused) would install a Firefly-scoped OIDC+JWT policy.
-#   enforceRemoteUser- switch Firefly to remote_user_guard so it trusts the
-#                      X-Auth-Email header (password-less login). Flip on only
-#                      after confirming the header arrives and cannot be spoofed;
-#                      revert to false to fall back to Firefly's own login.
+# Single sign-on via a Firefly-scoped SecurityPolicy (see
+# templates/firefly-sso-securitypolicy.yaml). It validates the Cognito ID token
+# out of the session cookie and copies the `email` claim into X-Auth-Email.
+#   enabled           - install the Firefly-scoped OIDC + JWT SecurityPolicy.
+#   enforceRemoteUser - switch Firefly to remote_user_guard so it trusts the
+#                       X-Auth-Email header (password-less login). Set to false
+#                       to fall back to Firefly's own login form.
+#   allowedGroups     - Cognito groups permitted to reach Firefly, matched
+#                       against the `cognito:groups` claim; a user needs ANY one
+#                       of them. Empty list = every authenticated Cognito user,
+#                       i.e. no authorization at all.
+#                       This is the only access gate Firefly has: under
+#                       remote_user_guard it auto-creates an account for any
+#                       email it is handed (no way to disable that) and ignores
+#                       its own `blocked` flag. Set this per environment.
 sso:
   enabled: true
   enforceRemoteUser: true
+  allowedGroups: []
 
 generic:
   externalSecrets:
