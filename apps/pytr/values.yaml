@@ -11,7 +11,7 @@ generic:
       oauth: true
 
 pytr:
-  pytrVersion: "0.4.9"
+  pytrVersion: "0.4.10"
   image: mcr.microsoft.com/playwright/python:v1.61.0-noble
 
   login:
