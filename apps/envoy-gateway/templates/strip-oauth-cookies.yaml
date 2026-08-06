@@ -9,6 +9,7 @@
   touches the request path and doesn't depend on filter ordering or any
   inter-phase state, so it's robust to Envoy Gateway upgrades.
 */ -}}
+{{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyExtensionPolicy
 metadata:
@@ -25,22 +26,33 @@ spec:
   lua:
     - type: Inline
       inline: |
-        -- Cookie names set by Envoy's OAuth2 filter. Listed explicitly so we
-        -- don't drop app-defined cookies that happen to share a prefix.
+        -- Cookie names set by Envoy's OAuth2 filter, in two flavours.
+        -- Exact names: the ones a SecurityPolicy pins itself — the Gateway's
+        -- ID/access token cookies and the Firefly-scoped policy's.
         local STRIP = {
-          IdToken            = true,
-          AccessToken        = true,
-          RefreshToken       = true,
-          BearerToken        = true,
-          OauthHMAC          = true,
-          OauthExpires       = true,
-          OauthNonce         = true,
-          -- Firefly-scoped SSO (firefly-sso SP) uses custom cookie names; the
-          -- ID token is a large raw JWT (disableTokenEncryption). Backends never
-          -- need them — Envoy's JWT filter reads them and sets X-Auth-Email.
+          {{ required "global.oidc.idTokenCookieName must be set" $oidc.idTokenCookieName }}     = true,
+          {{ required "global.oidc.accessTokenCookieName must be set" $oidc.accessTokenCookieName }} = true,
           FireflyIdToken     = true,
           FireflyAccessToken = true,
         }
+        -- Prefixed names: everything a policy cannot rename. Envoy Gateway
+        -- appends a digest of the policy UID, e.g. "RefreshToken-a1b2c3".
+        -- Matching on "<base>-" keeps app cookies that merely start with the
+        -- same word.
+        local STRIP_PREFIXES = {
+          "IdToken", "AccessToken", "BearerToken", "RefreshToken",
+          "OauthHMAC", "OauthExpires", "OauthNonce", "CodeVerifier",
+        }
+
+        local function is_oauth_cookie(name)
+          if STRIP[name] then return true end
+          for _, base in ipairs(STRIP_PREFIXES) do
+            if name == base or name:sub(1, #base + 1) == base .. "-" then
+              return true
+            end
+          end
+          return false
+        end
 
         local function trim(s)
           return (s:gsub("^%s*(.-)%s*$", "%1"))
@@ -53,7 +65,7 @@ spec:
           for piece in string.gmatch(cookie, "([^;]+)") do
             local p = trim(piece)
             local name = p:match("^([^=]+)")
-            if name and not STRIP[trim(name)] then
+            if name and not is_oauth_cookie(trim(name)) then
               kept[#kept + 1] = p
             end
           end

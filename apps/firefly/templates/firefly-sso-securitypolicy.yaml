@@ -19,6 +19,14 @@
   Own callback on Firefly's own host: the shared auth.<domain> callback is owned by
   the gateway-oidc filter and fails CSRF for this separate filter. Firefly's
   callback URL must be whitelisted in Cognito.
+
+  With sso.allowedGroups set, the same validated token also drives authorization:
+  only members of those Cognito groups reach Firefly, everyone else gets a 403
+  ("RBAC: access denied") from Envoy. This is Firefly's only access gate —
+  remote_user_guard creates an account for every email it is handed and does not
+  honour Firefly's `blocked` flag. Envoy orders the filters oauth2 (8) -> jwt (9)
+  -> rbac (301), so a request without a session is redirected to Cognito long
+  before the deny rule is evaluated; the deny only ever hits signed-in users.
 */ -}}
 {{- if .Values.sso.enabled }}
 {{- $oidc := required "global.oidc must be set" .Values.global.oidc }}
@@ -68,4 +76,19 @@ spec:
         claimToHeaders:
           - claim: email
             header: X-Auth-Email
+  {{- with .Values.sso.allowedGroups }}
+  authorization:
+    defaultAction: Deny
+    rules:
+      - name: allow-groups
+        action: Allow
+        principal:
+          jwt:
+            provider: cognito
+            claims:
+              - name: "cognito:groups"
+                valueType: StringArray
+                values:
+{{- toYaml . | nindent 18 }}
+  {{- end }}
 {{- end }}

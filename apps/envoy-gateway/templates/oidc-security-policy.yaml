@@ -4,7 +4,13 @@
   scoped to global.oidc.cookieDomain means a single Cognito callback URL
   covers every subdomain.
 
-  No `authorization` block. Access control happens at the listener layer:
+  No `authorization` block here — this policy authenticates only. Per-route
+  group checks (`groups:` on an ingress in the generic chart) merge into this
+  one and add the authorization. They read the ID token back out of the session
+  cookie, which is why the cookie names are pinned and token encryption is off:
+  Envoy's jwt filter can only parse a raw JWT, and only from a name it knows.
+
+  Beyond that, access control happens at the listener layer:
    - The LAN listener (websecure / websecure-apex, port 443) only accepts
      connections from devices on the LAN VLAN — MetalLB only announces
      192.168.1.80 there.
@@ -47,3 +53,14 @@ spec:
     {{- if $oidc.cookieDomain }}
     cookieDomain: {{ $oidc.cookieDomain | quote }}
     {{- end }}
+    cookieNames:
+      idToken: {{ required "global.oidc.idTokenCookieName must be set" $oidc.idTokenCookieName | quote }}
+      accessToken: {{ required "global.oidc.accessTokenCookieName must be set" $oidc.accessTokenCookieName | quote }}
+    # Store the tokens unencrypted so the per-route jwt filter can parse the ID
+    # token. This does not widen the attack surface: an encrypted cookie is just
+    # as replayable by whoever can read it, and the strip-oauth-cookies policy
+    # keeps both cookies out of upstream requests.
+    disableTokenEncryption: true
+    # Keep the ID token fresh, so the cookie never carries an expired token for
+    # the jwt filter to reject with a 401.
+    refreshToken: true

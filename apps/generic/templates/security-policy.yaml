@@ -1,17 +1,23 @@
 {{- /*
-  Per-route SecurityPolicy that opts THIS route out of the Gateway-level OIDC.
+  Per-route SecurityPolicy. A route lands in one of three cases:
 
-  Envoy Gateway uses full-replace precedence: a route-level SP completely
-  overrides the Gateway-level SP for the routes it targets. We want to
-  remove OIDC for these routes while leaving the listener-level gates
-  (LAN-only L2 on port 443, mTLS on port 4443) in charge of access control,
-  so the body is just an "allow all" authorization. No IP allowlist —
-  that's covered at the listener layer.
+  1. `oauth: false` — opt THIS route out of the Gateway-level OIDC. Envoy
+     Gateway uses full-replace precedence, so a route-level SP completely
+     overrides the Gateway-level one; the body is just an "allow all"
+     authorization, leaving the listener-level gates (LAN-only L2 on port 443,
+     mTLS on port 4443) in charge. No IP allowlist — that's the listener layer.
 
-  Trigger: `oauth: false` on the route. Routes meant to be auth-protected
-  set `oauth: true` and emit nothing here, inheriting the Gateway-level
-  OIDC. The schema makes `oauth` required (apps/generic/values.schema.json),
-  so it can never be absent — the choice is always explicit per route.
+  2. `oauth: true` with `groups` — keep the shared OIDC session and add a group
+     check on top. `mergeType` merges this policy INTO the Gateway-level one
+     instead of replacing it, so nothing about the session changes: same
+     cookies, same single Cognito callback URL. Only members of the listed
+     Cognito groups get through; everyone else gets 403 "RBAC: access denied".
+
+  3. `oauth: true` without `groups` — nothing is emitted; the route inherits the
+     Gateway-level OIDC and every authenticated user may reach it.
+
+  The schema makes `oauth` required (apps/generic/values.schema.json), so it can
+  never be absent — the choice is always explicit per route.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
@@ -37,6 +43,58 @@ spec:
       name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
   authorization:
     defaultAction: Allow
+    {{- else if $ingress.groups }}
+    {{- $oidc := required "global.oidc must be set" $.Values.global.oidc }}
+    {{- $issuer := required "global.oidc.issuerUrl must be set" $oidc.issuerUrl }}
+
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $appName }}-securitypolicy-{{ $ingress.port }}-{{ $index }}
+  namespace: {{ $gatewayNamespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  # Merged into the Gateway-level gateway-oidc policy rather than replacing it,
+  # so this route keeps the shared Cognito session — same cookies, same single
+  # callback URL — and only gains the group check.
+  mergeType: StrategicMerge
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
+  # `optional` keeps a request without a session flowing to the OAuth2 filter,
+  # which redirects it to Cognito. Envoy orders the filters oauth2 (8) -> jwt (9)
+  # -> rbac (301), so the deny below only ever reaches a signed-in user.
+  jwt:
+    optional: true
+    providers:
+      - name: cognito
+        issuer: {{ $issuer | quote }}
+        audiences:
+          - {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+        remoteJWKS:
+          uri: "{{ $issuer }}/.well-known/jwks.json"
+        # The OAuth2 filter never hands its token to the jwt filter, so the ID
+        # token is read straight from the session cookie the browser sends on
+        # every request — which makes this independent of filter ordering.
+        extractFrom:
+          cookies:
+            - {{ required "global.oidc.idTokenCookieName must be set" $oidc.idTokenCookieName }}
+  authorization:
+    defaultAction: Deny
+    rules:
+      - name: allow-groups
+        action: Allow
+        principal:
+          jwt:
+            provider: cognito
+            claims:
+              - name: "cognito:groups"
+                valueType: StringArray
+                values:
+{{- toYaml $ingress.groups | nindent 18 }}
     {{- end }}
     {{- end }}
   {{- end }}

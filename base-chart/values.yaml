@@ -53,6 +53,15 @@ global:
     clientSecretAkeylessPath: /oidc/client_secret
     cookieDomain: ~
 
+    # Fixed names for the session cookies the Gateway's OAuth2 filter sets.
+    # Without an override Envoy Gateway appends a digest of the policy UID
+    # (IdToken-<digest>), which nothing else can reference. Pinning the names
+    # lets the per-route group check read the ID token back out of the cookie,
+    # and lets the cookie stripper drop them before they reach a backend.
+    # Changing either name invalidates every existing session once.
+    idTokenCookieName: HomelabIdToken
+    accessTokenCookieName: HomelabAccessToken
+
   # Gateway-level authorization. Two paths into the gateway:
   #   - LAN listener (port 443): reached directly by LAN clients (internal DNS).
   #   - Cloudflare listener (port 4443): mTLS, client cert must validate

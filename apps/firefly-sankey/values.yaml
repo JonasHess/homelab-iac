@@ -42,3 +42,8 @@ generic:
     - subdomain: sankey
       port: 8080
       oauth: true
+      # Sankey reads Firefly through one shared Personal Access Token, so anyone
+      # who gets in sees the whole ledger — keep this no wider than firefly's own
+      # sso.allowedGroups.
+      groups:
+        - finance
