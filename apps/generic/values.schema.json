@@ -433,6 +433,14 @@
               "oauth": {
                 "type": "boolean",
                 "description": "REQUIRED. When true: route inherits the Gateway-level SecurityPolicy (OIDC). When false: a route-level SP overrides the Gateway-level one with allow-all authorization — no OIDC. Listener-layer gating (LAN-only :443, Cloudflare-mTLS :4443) still applies either way. There is no implicit default — the choice must be explicit so a forgotten setting never silently leaves a route un-OIDC'd."
+              },
+              "groups": {
+                "type": "array",
+                "description": "Cognito groups allowed to reach this route, matched against the `cognito:groups` claim of the shared session's ID token; a user needs ANY one of them. Everyone else gets 403. Requires oauth: true, and the groups must exist in the pool with members before this is deployed — an empty or misspelled group locks everyone out. Omit to let every authenticated user in. Not for routes whose app ships its own SecurityPolicy (e.g. firefly): two policies targeting one HTTPRoute conflict.",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
               }
             }
           }
