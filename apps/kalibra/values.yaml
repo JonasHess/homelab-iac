@@ -16,7 +16,9 @@ generic:
     ports:
     - containerPort: 8080
     # The whole database is a single H2 file, so it must outlive the pod. The hostPath is
-    # supplied by the environment repo.
+    # supplied by the environment repo, and must be owned by uid 1000 on the host — the app
+    # runs as that user and H2 creates its file there:
+    #   mkdir -p <hostPath> && chown 1000:1000 <hostPath>
     pvcMounts:
       data:
         mountPath: /data
@@ -24,17 +26,6 @@ generic:
         # This volume is the only copy of the calibration records the Prüfer signs off.
         backup:
           enabled: true
-    # The app runs as uid 1000 and H2 must create its database file, but the hostPath arrives
-    # owned by whoever made it on the host. This hands the directory over before the app starts.
-    initContainers:
-      - name: fix-data-permissions
-        image: busybox:1.37
-        command: ["sh", "-c", "chown 1000:1000 /data"]
-        securityContext:
-          runAsUser: 0
-        volumeMounts:
-          - name: kalibra-data-volume
-            mountPath: /data
     readinessProbe:
       httpGet:
         path: /actuator/health/readiness
