@@ -37,23 +37,29 @@ the env repo via the `generic` sub-chart:
 apps:
   justtrade:
     enabled: true
-
-# passed through to apps/justtrade -> generic
-justtrade:
-  generic:
-    externalSecrets:
-      justtrade-credentials:
-        - JUSTTRADE_USERNAME: /justtrade/JUSTTRADE_USERNAME
-        - JUSTTRADE_PASSWORD: /justtrade/JUSTTRADE_PASSWORD
-    persistentVolumeClaims:
-      justtrade-credentials-pvc:                 # small; holds the refresh token
-        hostPath: /mnt/tank1/encrypted/apps/justtrade/session
-      justtrade-downloads-pvc:                   # paperless consume folder
-        hostPath: /mnt/tank1/encrypted/apps/paperlessngx/consume/paperless-gpt-auto/Michael/justTRADE
+    argocd:
+      helm:
+        values:
+          generic:
+            persistentVolumeClaims:
+              credentials:        # -> justtrade-credentials-pvc (holds the refresh token)
+                hostPath: /mnt/tank1/encrypted/apps/justtrade/credentials
+              downloads:          # -> justtrade-downloads-pvc (paperless consume folder)
+                hostPath: /mnt/tank1/encrypted/apps/paperlessngx/consume/paperless-gpt-auto/Michael/justTRADE
+            externalSecrets:
+              justtrade-credentials:
+                # Reuses the shared portal-document-downloader Akeyless namespace.
+                - JUSTTRADE_USERNAME: /portal-document-downloader/JUSTTRADE_USERNAME
+                - JUSTTRADE_PASSWORD: /portal-document-downloader/JUSTTRADE_PASSWORD
+          justtrade:
+            download:
+              suspend: true       # un-suspend after the first login seeds the session
 ```
 
-Akeyless paths (`global.akeyless.path` is prefixed automatically):
-`/justtrade/JUSTTRADE_USERNAME` (Kundennummer) and `/justtrade/JUSTTRADE_PASSWORD`.
+The credentials live in the same Akeyless namespace as the other portals:
+add `/portal-document-downloader/JUSTTRADE_USERNAME` (Kundennummer) and
+`/portal-document-downloader/JUSTTRADE_PASSWORD` (`global.akeyless.path` is
+prefixed automatically).
 
 The ingress (`jt` subdomain, behind oauth2-proxy) is already declared in this
 chart's `values.yaml`.
