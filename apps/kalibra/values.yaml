@@ -10,7 +10,7 @@ generic:
       SPRING_PROFILES_ACTIVE: "h2"
       KALIBRA_DATA_DIR: "/data"
   deployment:
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/kalibra:v0.1.0
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/kalibra:v0.2.0
     imagePullSecrets:
     - regcred-secondary
     ports:
