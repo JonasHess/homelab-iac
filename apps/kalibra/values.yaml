@@ -48,4 +48,8 @@ generic:
     https:
     - subdomain: kalibra
       port: 8080
-      oauth: true
+      # Reachable without a Cognito account, so the gateway does not challenge
+      # for one. What is left in front of the app is the listener layer: the LAN
+      # listener on :443, and the Cloudflare listener on :4443 which only accepts
+      # a Cloudflare-signed client certificate.
+      oauth: false
