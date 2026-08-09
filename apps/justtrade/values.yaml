@@ -17,7 +17,7 @@ justtrade:
   # Reuses the portal-document-downloader image. NOTE: the tag must be a build
   # that includes the justTRADE portal (added after v11.2.0).
   image: "339712710461.dkr.ecr.eu-central-1.amazonaws.com/portal-document-downloader"
-  imageTag: "v12.0.0"
+  imageTag: "v13.0.0"
   imagePullSecrets:
     - name: regcred-secondary
 
