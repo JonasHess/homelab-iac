@@ -24,7 +24,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: cron
-              image: curlimages/curl:8.11.1
+              image: curlimages/curl:8.21.0
               envFrom:
                 - secretRef:
                     name: firefly-secret
