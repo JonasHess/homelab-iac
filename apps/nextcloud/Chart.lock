@@ -4,6 +4,6 @@ dependencies:
   version: 0.1.58
 - name: nextcloud
   repository: https://nextcloud.github.io/helm/
-  version: 9.2.5
-digest: sha256:7ccbcaf2d11b6a499e48a29c5200223abb19c755a4222d9b84c8dffeda41f0c6
-generated: "2026-08-06T22:25:16.461787+02:00"
+  version: 9.2.6
+digest: sha256:9a9c9a77a6160f46547eeb335c70eb44052f88ca53aaf8b09f138f28a45d693c
+generated: "2026-08-18T10:56:32.50365481Z"
