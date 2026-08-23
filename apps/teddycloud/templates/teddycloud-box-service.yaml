@@ -1,0 +1,31 @@
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- $box := (.Values.teddycloud | default dict).box | default dict }}
+# Dedicated LoadBalancer for the Toniebox connection.
+#
+# The box always dials :443 and authenticates with a client certificate, so
+# teddyCloud has to terminate that TLS itself. The Envoy Gateway already owns
+# :443 on its own address with the wildcard certificate in Terminate mode, and
+# Gateway API cannot mix Terminate and Passthrough on one port — hence a second
+# MetalLB address instead of a route through the Gateway.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}-box-service
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+  {{- if $box.loadBalancerIP }}
+  annotations:
+    # MetalLB's way of pinning an address since 0.13. Kubernetes'
+    # spec.loadBalancerIP is deprecated and deliberately not used.
+    metallb.universe.tf/loadBalancerIPs: {{ $box.loadBalancerIP | quote }}
+  {{- end }}
+spec:
+  type: LoadBalancer
+  ports:
+    - name: box
+      port: 443
+      targetPort: 443
+      protocol: TCP
+  selector:
+    app: {{ $appName }}

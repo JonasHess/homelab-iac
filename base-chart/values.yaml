@@ -981,3 +981,18 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "15"
+
+  teddycloud:
+    enabled: false
+    homer:
+      enabled: true
+      group: "media"
+      # dashboard-icons has no teddyCloud entry — use the project's own favicon.
+      logo: "https://raw.githubusercontent.com/toniebox-reverse-engineering/teddycloud/master/contrib/data/www/web/favicon.svg"
+      subtitle: "Toniebox Cloud Replacement"
+      displayName: "teddyCloud"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "20"

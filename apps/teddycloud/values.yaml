@@ -1,0 +1,97 @@
+# teddyCloud — self-hosted replacement for the Tonies cloud.
+#
+# Two independent network paths:
+#   - Web UI: port 80, routed through the Envoy Gateway as a normal HTTPRoute
+#     (OIDC protected like every other app).
+#   - Toniebox: port 443, and the box hard-codes that port. It speaks TLS with
+#     a client certificate dumped from the box, so teddyCloud must terminate
+#     the TLS itself — the Gateway's :443 listeners already terminate the
+#     wildcard cert for *.<domain> and cannot pass this through. The box
+#     therefore gets its own MetalLB LoadBalancer address, see
+#     templates/teddycloud-box-service.yaml.
+generic:
+  deployment:
+    # The image ships no USER, and teddyCloud writes to paths outside the
+    # mounted volumes (/teddycloud/data/www, /tmp), so it stays uid 0. Strip the
+    # capabilities root does not need instead — NET_BIND_SERVICE is kept because
+    # the container binds 80 and 443 directly.
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+        add:
+          - NET_BIND_SERVICE
+    image: ghcr.io/toniebox-reverse-engineering/teddycloud:0.6.8
+    ports:
+      - containerPort: 80    # web UI (http)
+      - containerPort: 443   # Toniebox connection — port is fixed by the box firmware
+      - containerPort: 8443  # web UI (https, self-signed)
+    pvcMounts:
+      # Server CA/cert plus the certs dumped from each box. Losing these means
+      # re-dumping the box certificates, so they are backed up.
+      certs:
+        mountPath: /teddycloud/certs
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/certs
+        backup:
+          enabled: true
+      config:
+        mountPath: /teddycloud/config
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/config
+        backup:
+          enabled: true
+      # Representation of the box' microSD card — the tonie files it plays.
+      content:
+        mountPath: /teddycloud/data/content
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/content
+        backup:
+          enabled: true
+      # Managed audio library the content entries are linked against.
+      library:
+        mountPath: /teddycloud/data/library
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/library
+        backup:
+          enabled: true
+      firmware:
+        mountPath: /teddycloud/data/firmware
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/firmware
+        backup:
+          enabled: true
+      # Cover images uploaded for custom tonies.
+      custom-img:
+        mountPath: /teddycloud/data/www/custom_img
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/custom_img
+        backup:
+          enabled: true
+      plugins:
+        mountPath: /teddycloud/data/www/plugins
+        hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/plugins
+      # Re-downloadable image cache — not worth backing up.
+      cache:
+        mountPath: /teddycloud/data/cache
+        hostPath:   # /mnt/somewhere/unencrypted/apps/teddycloud/cache
+  service:
+    ports:
+      - name: http
+        port: 80
+      - name: box
+        port: 443
+        protocol: TCP
+      - name: https
+        port: 8443
+  ingress:
+    https:
+      - subdomain: teddycloud
+        port: 80
+        oauth: true
+
+# LoadBalancer service carrying the box connection on :443.
+teddycloud:
+  box:
+    # Set per-environment to a free address from the MetalLB pool. The box
+    # reaches teddyCloud at this address, so it must also be what internal DNS
+    # answers for the box' cloud hostnames (prod.revvox / rtnl.revvox after the
+    # altUrl patch, or the original prod.de.tbs.toys / rtnl.bosch-ba.de).
+    # Leave empty to let MetalLB pick — only useful for a throwaway cluster,
+    # since the DNS override needs a stable address.
+    loadBalancerIP: ~
