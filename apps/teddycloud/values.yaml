@@ -27,6 +27,17 @@ generic:
       - containerPort: 80    # web UI (http)
       - containerPort: 443   # Toniebox connection — port is fixed by the box firmware
       - containerPort: 8443  # web UI (https, self-signed)
+    # teddyCloud generates its CA and server certificate before it binds any
+    # listener, which takes minutes on first start (RSA keygen, slowed further
+    # by the sanitizers in the release build). Without this the Gateway routes
+    # to the pod while nothing is listening and clients get a 502. A TCP probe
+    # matches the condition exactly: not-yet-bound means not ready.
+    readinessProbe:
+      tcpSocket:
+        port: 80
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 60
     pvcMounts:
       # Server CA/cert plus the certs dumped from each box. Losing these means
       # re-dumping the box certificates, so they are backed up.
