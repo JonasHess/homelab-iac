@@ -22,7 +22,7 @@ generic:
           - ALL
         add:
           - NET_BIND_SERVICE
-    image: ghcr.io/toniebox-reverse-engineering/teddycloud:0.6.8
+    image: ghcr.io/toniebox-reverse-engineering/teddycloud:0.7.0
     ports:
       - containerPort: 80    # web UI (http)
       - containerPort: 443   # Toniebox connection — port is fixed by the box firmware
