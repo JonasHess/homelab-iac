@@ -35,47 +35,71 @@ spec:
         severity: warning
     {{- end }}
     {{- if .Values.alerts.probes.enabled }}
+    {{- /* The Prometheus Operator names a Probe's scrape job
+           "probe/<namespace>/<probe-name>", not the bare probe name, so these
+           matchers must be regexes. Matching the bare name selects no series at
+           all, which makes the rule silently unfireable rather than noisy. */}}
     - alert: DomainProbeDown
       annotations:
-        summary: "Domain probe is failing"
-        description: "The blackbox probe for {{ .Values.global.domain }} is failing. The domain may be unreachable."
+        summary: "Blackbox probe for {{ `{{ $labels.instance }}` }} is failing"
+        description: |
+          {{ `{{ $labels.instance }}` }} has not answered the blackbox probe for
+          over 2 minutes, so the site is unreachable from inside the cluster.
+          Check, in this order: the Envoy Gateway pod and its listeners, the
+          public DNS record for {{ .Values.global.domain }}, and whether the
+          certificate that host serves is still valid.
       expr: |
-        probe_success{job="domain-status-probe"} == 0
+        probe_success{job=~"probe/.*/domain-status-probe"} == 0
       for: 2m
       labels:
         severity: critical
     - alert: DomainProbeHighLatency
       annotations:
-        summary: "Domain probe has high latency"
-        description: "The blackbox probe for {{ .Values.global.domain }} is responding slowly (>5s)."
+        summary: "Blackbox probe for {{ `{{ $labels.instance }}` }} took {{ `{{ $value | humanizeDuration }}` }}"
+        description: |
+          {{ `{{ $labels.instance }}` }} answered the blackbox probe, but took
+          {{ `{{ $value | humanizeDuration }}` }} to do so (threshold 5s), sustained
+          over 5 minutes. The site is up but slow for every user behind it.
       expr: |
-        probe_duration_seconds{job="domain-status-probe"} > 5
+        probe_duration_seconds{job=~"probe/.*/domain-status-probe"} > 5
       for: 5m
       labels:
         severity: warning
     - alert: GoogleProbeDown
       annotations:
-        summary: "Internet connectivity probe is failing"  
-        description: "The blackbox probe for google.de is failing. This may indicate internet connectivity issues."
+        summary: "Internet connectivity probe to {{ `{{ $labels.instance }}` }} is failing"
+        description: |
+          The cluster could not reach {{ `{{ $labels.instance }}` }} for over
+          2 minutes. This probes a third-party site precisely because it is not
+          ours: failure points at the WAN link, the router, or upstream DNS
+          rather than at anything running in the homelab.
       expr: |
-        probe_success{job="google-status-probe"} == 0
+        probe_success{job=~"probe/.*/google-status-probe"} == 0
       for: 2m
       labels:
         severity: warning
     - alert: GoogleProbeHighLatency
       annotations:
-        summary: "Internet connectivity probe has high latency"
-        description: "The blackbox probe for google.de is responding slowly (>10s). Internet connectivity may be degraded."
+        summary: "Internet connectivity probe to {{ `{{ $labels.instance }}` }} took {{ `{{ $value | humanizeDuration }}` }}"
+        description: |
+          Reaching {{ `{{ $labels.instance }}` }} took
+          {{ `{{ $value | humanizeDuration }}` }} (threshold 10s) for over 5 minutes.
+          The WAN link is up but degraded.
       expr: |
-        probe_duration_seconds{job="google-status-probe"} > 10
+        probe_duration_seconds{job=~"probe/.*/google-status-probe"} > 10
       for: 5m
       labels:
         severity: info
     {{- end }}
     - alert: ZFSPoolUnhealthy
       annotations:
-        summary: "ZFS pool is unhealthy"
-        description: "A ZFS pool is reporting unhealthy status."
+        summary: "ZFS pool {{ `{{ $labels.pool }}` }} on {{ `{{ $labels.instance }}` }} is not ONLINE"
+        description: |
+          The exporter reports pool {{ `{{ $labels.pool }}` }} on
+          {{ `{{ $labels.instance }}` }} in a non-ONLINE state (it reports 0 for
+          ONLINE, non-zero for anything worse) averaged over 10 minutes, so this
+          is a persistent state and not a scrape blip. Run "zpool status
+          {{ `{{ $labels.pool }}` }}" on the host to see which device degraded.
       expr: |
         avg_over_time(zfs_pool_health[10m]) > 0
       for: 1m
@@ -92,23 +116,56 @@ spec:
           down). Check the DNS server's reachability and the *.{{ $.Values.global.domain }}
           rewrite rule.
       expr: |
-        probe_success{job="lan-dns-probe"} == 0
+        probe_success{job=~"probe/.*/lan-dns-probe"} == 0
       for: 5m
       labels:
         severity: warning
     {{- end }}
+    - alert: EnvoyRouteHigh5xxRate
+      annotations:
+        summary: "{{ `{{ $labels.envoy_cluster_name }}` }} is answering {{ `{{ $value | humanizePercentage }}` }} 5xx"
+        description: |
+          The backend behind {{ `{{ $labels.envoy_cluster_name }}` }} answered 5xx
+          for {{ `{{ $value | humanizePercentage }}` }} of its requests over the last
+          5 minutes. Envoy names the backend after the Gateway API object that
+          routed the traffic, as httproute/<namespace>/<route-name>/rule/<index>,
+          so that string identifies the HTTPRoute to inspect and the namespace
+          its backing Service lives in.
+          Likely causes: the backing Service has no ready endpoints, the route
+          targets the wrong port, or the application itself is erroring.
+      expr: |
+        (
+          sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{envoy_response_code_class="5"}[5m]))
+          /
+          sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx[5m]))
+        ) > 0.05
+        and
+        sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: warning
     - alert: EnvoyHigh5xxRate
       annotations:
-        summary: "Envoy proxy 5xx rate > 5% over 5min"
+        summary: "Envoy listener {{ `{{ $labels.envoy_http_conn_manager_prefix }}` }} is serving {{ `{{ $value | humanizePercentage }}` }} 5xx"
         description: |
-          More than 5% of requests through the Envoy data plane are returning
-          5xx for the last 5 minutes. Common causes: an upstream service is
-          unhealthy, a Gateway/HTTPRoute is misconfigured, or cert-manager
-          hasn't issued a cert that a route depends on.
+          Listener {{ `{{ $labels.envoy_http_conn_manager_prefix }}` }} returned 5xx
+          for {{ `{{ $value | humanizePercentage }}` }} of the responses it sent to
+          clients over the last 5 minutes.
+          This counts what clients received, so unlike EnvoyRouteHigh5xxRate it
+          also catches the 5xx Envoy generates without ever reaching a backend:
+          no healthy upstream, no matching route, or a failing OIDC filter. If
+          EnvoyRouteHigh5xxRate is silent while this fires, the fault is in the
+          gateway or its configuration rather than in an application.
+          The listener name encodes the entry point: https-10443 is the LAN
+          listener, https-4443 the Cloudflare mTLS one, http-10080 the redirect.
       expr: |
-        (sum(rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5"}[5m]))
-         /
-         sum(rate(envoy_http_downstream_rq_xx[5m]))) > 0.05
+        (
+          sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5", envoy_http_conn_manager_prefix=~"https?-.*"}[5m]))
+          /
+          sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_http_conn_manager_prefix=~"https?-.*"}[5m]))
+        ) > 0.05
+        and
+        sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_http_conn_manager_prefix=~"https?-.*"}[5m])) > 0.05
       for: 5m
       labels:
         severity: warning
@@ -116,10 +173,11 @@ spec:
       annotations:
         summary: "Envoy proxy Prometheus scrape is down"
         description: |
-          Prometheus is not scraping the Envoy proxy. Either the proxy pod
-          is unreachable, the metrics endpoint isn't exposed (Telemetry
-          config), or the PodMonitor is broken. Without this, ingress
-          observability stops.
+          No Envoy proxy target is being scraped successfully (job matching
+          .*envoy-proxy.*). Either the proxy pod is unreachable, the metrics
+          endpoint is not exposed (Telemetry config), or the PodMonitor is
+          broken. While this fires, every other Envoy alert here is blind and
+          will stay silent no matter how badly ingress is failing.
       expr: |
         absent(up{job=~".*envoy-proxy.*"} == 1)
       for: 5m
@@ -128,7 +186,12 @@ spec:
     - alert: NoZFSMetrics
       annotations:
         summary: "No ZFS metrics found"
-        description: "No ZFS metrics have been found in the last 10 minutes."
+        description: |
+          The zfs_pool_health metric has been absent for 10 minutes. It is
+          scraped from the zfs_exporter on {{ .Values.global.cluster.serverip }}:9134
+          (scrape job zfs_status), so check that the exporter is running on the
+          host and reachable from the cluster. While this fires, ZFSPoolUnhealthy
+          cannot fire: pool degradation would go unnoticed.
       expr: |
         absent(zfs_pool_health)
       for: 10m
