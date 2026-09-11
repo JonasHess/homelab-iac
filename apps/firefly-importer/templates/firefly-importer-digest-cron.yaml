@@ -1,0 +1,157 @@
+{{- if .Values.digest.enabled }}
+{{- /*
+  Post-import digest. The Data Importer's own report lists every rejected line,
+  and because the bank re-offers a rolling window every night, that is ~100
+  "already exists" entries daily - a genuine failure is invisible in it. Worse,
+  a run that aborts early (expired bank consent) sends no report at all, so the
+  failure mode that matters produces silence.
+
+  This job asks the opposite question: did each account actually receive data?
+  An account whose newest transaction is older than staleDays is reported,
+  which catches a broken connection regardless of why it broke.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-digest-script
+  namespace: {{ .Release.Namespace }}
+data:
+  digest.py: |
+    import json, os, smtplib, urllib.request, datetime
+    from email.message import EmailMessage
+
+    BASE  = os.environ["FIREFLY_III_URL"].rstrip("/")
+    TOKEN = os.environ["FIREFLY_III_ACCESS_TOKEN"]
+    STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
+    MULT  = int(os.environ.get("DIGEST_STALE_MULTIPLIER", "4")) # x the account's median gap
+    WINDOW= int(os.environ.get("DIGEST_WINDOW_HOURS", "24"))
+
+    def api(path):
+        req = urllib.request.Request(
+            BASE + path,
+            headers={"Authorization": "Bearer " + TOKEN, "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.load(r)
+
+    today = datetime.date.today()
+    since = today - datetime.timedelta(days=max(1, WINDOW // 24))
+
+    # New transactions in the window, counted per asset account.
+    fresh = {}
+    page = 1
+    while True:
+        d = api(f"/api/v1/transactions?start={since}&end={today}&limit=500&page={page}")
+        for t in d["data"]:
+            for s in t["attributes"]["transactions"]:
+                for side in ("source", "destination"):
+                    if s.get(f"{side}_type") == "Asset account":
+                        fresh[s[f"{side}_name"]] = fresh.get(s[f"{side}_name"], 0) + 1
+        if page >= max(1, d["meta"]["pagination"]["total_pages"]):
+            break
+        page += 1
+
+    # A fixed "silent for N days" rule is useless here: PSD sees traffic daily,
+    # the rental accounts a few times a month, SpaceX never. So each account is
+    # judged against its OWN rhythm - the median gap between its transactions -
+    # and only flagged when the current silence is several times that.
+    def rhythm(aid):
+        d = api(f"/api/v1/accounts/{aid}/transactions?limit=60")
+        ds = sorted({s["date"][:10] for t in d["data"] for s in t["attributes"]["transactions"]})
+        if len(ds) < 6:
+            return None                       # too little history to judge
+        dts  = [datetime.date.fromisoformat(x) for x in ds]
+        gaps = sorted((dts[i+1] - dts[i]).days for i in range(len(dts)-1))
+        return max(1, gaps[len(gaps)//2])     # median gap in days
+
+    rows, stale = [], []
+    for a in api("/api/v1/accounts?type=asset&limit=200")["data"]:
+        at = a["attributes"]
+        if not at.get("active"):
+            continue
+        last = (at.get("last_activity") or "")[:10]
+        age  = (today - datetime.date.fromisoformat(last)).days if last else None
+        n    = fresh.get(at["name"], 0)
+        rows.append((at["name"], n, last or "-", at.get("current_balance") or "0", age))
+        if age is None:
+            continue
+        med = rhythm(a["id"])
+        if med is None:
+            continue
+        limit = max(STALE, MULT * med)
+        if age > limit:
+            stale.append((at["name"], last, age, med, limit))
+
+    rows.sort(key=lambda r: (-r[1], r[0]))
+    w = max([len(r[0]) for r in rows] + [7])
+    lines = [f"{'Account'.ljust(w)}  {'new':>4}  {'last activity':>13}  {'balance':>12}",
+             "-" * (w + 36)]
+    lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}  {float(r[3]):>12,.2f}" for r in rows]
+
+    subject = f"Firefly import digest {today} - {sum(r[1] for r in rows)} new"
+    if stale:
+        subject = f"[!] {subject}, {len(stale)} account(s) stale"
+        lines += ["", "Silent far longer than usual - check the bank connection:"]
+        lines += [f"  - {n}: last {d}, {a} days ago (usually every {m}d, flags above {l}d)"
+                  for n, d, a, m, l in stale]
+    else:
+        lines += ["", "All active accounts have recent data."]
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"]    = f"{os.environ.get('MAIL_FROM_NAME','Firefly')} <{os.environ['MAIL_FROM_ADDRESS']}>"
+    msg["To"]      = os.environ["MAIL_DESTINATION"]
+    msg.set_content("\n".join(lines))
+
+    with smtplib.SMTP(os.environ["MAIL_HOST"], int(os.environ.get("MAIL_PORT", "587")), timeout=30) as s:
+        if os.environ.get("MAIL_ENCRYPTION", "tls") == "tls":
+            s.starttls()
+        s.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
+        s.send_message(msg)
+    print(subject)
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-digest
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: digest
+spec:
+  schedule: {{ .Values.digest.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: digest
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: digest
+              image: {{ .Values.digest.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: DIGEST_STALE_DAYS
+                  value: {{ .Values.digest.staleDays | quote }}
+                - name: DIGEST_STALE_MULTIPLIER
+                  value: {{ .Values.digest.staleMultiplier | quote }}
+              command: ["python3", "/script/digest.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-digest-script
+{{- end }}

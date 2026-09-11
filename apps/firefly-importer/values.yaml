@@ -45,3 +45,16 @@ smtp:
   from: firefly@example.com
   fromName: Firefly III Data Importer
   destination: admin@example.com
+# Post-import summary mail. Answers "did every account receive data?" rather than
+# listing rejected lines, so a dead bank connection is visible even when the
+# importer aborts before writing a report of its own. Reuses the smtp block above.
+digest:
+  enabled: false
+  # 30 minutes after the auto-import, so it reports on that run.
+  schedule: "30 4 * * *"
+  image: python:3.13-slim
+  # An account is flagged only when its silence exceeds BOTH this absolute floor
+  # and staleMultiplier x its own median gap between transactions. A fixed day
+  # count cannot work: some accounts move daily, others a few times a year.
+  staleDays: 3
+  staleMultiplier: 4
