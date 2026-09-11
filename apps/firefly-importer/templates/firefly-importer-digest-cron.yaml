@@ -71,7 +71,7 @@ data:
         last = (at.get("last_activity") or "")[:10]
         age  = (today - datetime.date.fromisoformat(last)).days if last else None
         n    = fresh.get(at["name"], 0)
-        rows.append((at["name"], n, last or "-", at.get("current_balance") or "0", age))
+        rows.append((at["name"], n, last or "-", age))
         if age is None:
             continue
         med = rhythm(a["id"])
@@ -82,10 +82,12 @@ data:
             stale.append((at["name"], last, age, med, limit))
 
     rows.sort(key=lambda r: (-r[1], r[0]))
+    # Deliberately no balances: this mail answers "did the import run?", and
+    # account balances do not belong in a daily plaintext notification.
     w = max([len(r[0]) for r in rows] + [7])
-    lines = [f"{'Account'.ljust(w)}  {'new':>4}  {'last activity':>13}  {'balance':>12}",
-             "-" * (w + 36)]
-    lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}  {float(r[3]):>12,.2f}" for r in rows]
+    lines = [f"{'Account'.ljust(w)}  {'new':>4}  {'last activity':>13}",
+             "-" * (w + 22)]
+    lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}" for r in rows]
 
     subject = f"Firefly import digest {today} - {sum(r[1] for r in rows)} new"
     if stale:
