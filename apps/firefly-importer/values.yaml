@@ -5,6 +5,11 @@ generic:
       - ENABLE_BANKING_APP_ID: "/firefly/ENABLE_BANKING_APP_ID"
       - ENABLE_BANKING_PRIVATE_KEY: "/firefly/ENABLE_BANKING_PRIVATE_KEY"
       - AUTO_IMPORT_SECRET: "/firefly/AUTO_IMPORT_SECRET"
+      # Own copy of the mailbox password rather than borrowing another app's:
+      # a shared path would make this importer break when that app rotates it.
+      # Only consumed when smtp.enabled is true; the Akeyless entry must exist
+      # before rollout, otherwise the whole firefly-importer-secret fails to sync.
+      - MAIL_PASSWORD: "/firefly/MAIL_PASSWORD"
   deployment:
     image: fireflyiii/data-importer:version-2.3.4
     ports:
@@ -27,3 +32,16 @@ generic:
       - subdomain: firefly-importer
         port: 8080
         oauth: true
+# Nightly import report. The importer builds a report after every /autoimport run
+# but drops it unless a mailer is configured, so rejected transactions are visible
+# only in the pod log - which is how duplicate imports went unnoticed for weeks.
+# Setting destination is what actually delivers it.
+smtp:
+  enabled: false
+  host: smtp.example.com
+  port: 587
+  encryption: tls
+  username: firefly@example.com
+  from: firefly@example.com
+  fromName: Firefly III Data Importer
+  destination: admin@example.com

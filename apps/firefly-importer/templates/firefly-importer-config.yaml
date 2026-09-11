@@ -19,3 +19,16 @@ data:
   # firefly-importer-autoimport CronJob calls it.
   CAN_POST_AUTOIMPORT: "true"
   IMPORT_DIR_ALLOWLIST: "/import"
+{{- if .Values.smtp.enabled }}
+  # MAIL_MAILER is empty by default, which disables Laravel's mailer entirely and
+  # makes the importer skip its report silently. MAIL_DESTINATION is the address
+  # the report (including per-transaction import errors) is sent to.
+  MAIL_MAILER: "smtp"
+  MAIL_HOST: {{ .Values.smtp.host | quote }}
+  MAIL_PORT: {{ .Values.smtp.port | quote }}
+  MAIL_ENCRYPTION: {{ .Values.smtp.encryption | quote }}
+  MAIL_USERNAME: {{ .Values.smtp.username | quote }}
+  MAIL_FROM_ADDRESS: {{ .Values.smtp.from | quote }}
+  MAIL_FROM_NAME: {{ .Values.smtp.fromName | quote }}
+  MAIL_DESTINATION: {{ .Values.smtp.destination | quote }}
+{{- end }}
