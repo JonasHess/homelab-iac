@@ -23,6 +23,9 @@ data:
   # MAIL_MAILER is empty by default, which disables Laravel's mailer entirely and
   # makes the importer skip its report silently. MAIL_DESTINATION is the address
   # the report (including per-transaction import errors) is sent to.
+  # Separate from MAIL_MAILER: the importer checks this flag before sending and
+  # defaults it to false, so a fully configured mailer still stays silent without it.
+  ENABLE_MAIL_REPORT: "true"
   MAIL_MAILER: "smtp"
   MAIL_HOST: {{ .Values.smtp.host | quote }}
   MAIL_PORT: {{ .Values.smtp.port | quote }}
