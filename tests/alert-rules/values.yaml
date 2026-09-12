@@ -1,0 +1,25 @@
+# Values used only to render charts for rule testing. They stand in for a real
+# environment's globals; nothing here reaches a cluster. Keep them close enough to a
+# real environment that the rendered rules are representative - the probe job names in
+# particular depend on Release.Namespace.
+global:
+  domain: test.example
+  akeyless:
+    path: /test
+  externalSecrets:
+    clusterSecretStoreRef:
+      name: akeyless-secret-store
+  gateway:
+    name: envoy-gateway
+    namespace: envoy-gateway
+    loadBalancerIP: 192.168.0.80
+  letsencrypt:
+    email: test@test.example
+  monitoring:
+    enabled: true
+  cluster:
+    serverip: 192.168.0.20
+    cluster-name: test.example
+  lanDnsCheck:
+    dnsServer: 192.168.0.91
+    queryName: argocd.test.example

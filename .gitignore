@@ -10,3 +10,6 @@ node_modules/
 /base-chart/values/custom-values.yaml
 settings.local.json
 /.claude/
+
+# Rendered by tests/alert-rules/render-rules.sh; regenerated on every run.
+tests/alert-rules/.rendered/

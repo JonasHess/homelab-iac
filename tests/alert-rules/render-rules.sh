@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#
+# Renders every chart that ships a PrometheusRule and writes each rule group set to
+# .rendered/<chart>.yaml in Prometheus' own rule-file format, which is exactly the
+# PrometheusRule's .spec. promtool consumes those; the .test.yaml files next to this
+# script reference them.
+#
+# Rendering rather than testing the YAML directly is the point: the rules are Helm
+# templates, so the thing worth testing is what Helm actually produces.
+set -euo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo="$(cd "$here/../.." && pwd)"
+out="$here/.rendered"
+rm -rf "$out"; mkdir -p "$out"
+
+# Charts that ship alert rules. Add to this list when a new chart gets a PrometheusRule.
+charts=(prometheus)
+
+for chart in "${charts[@]}"; do
+  helm template "$chart" "$repo/apps/$chart" \
+    --namespace argocd \
+    --values "$here/values.yaml" \
+    --set generic.appName="$chart" \
+    --set generic.persistentVolume.prometheus=/tmp/p \
+    --set generic.persistentVolume.alertmanager=/tmp/a \
+    --set generic.persistentVolumeClaims.grafana.hostPath=/tmp/g \
+  | python3 "$here/extract-rules.py" "$out/$chart.yaml" "$chart"
+done

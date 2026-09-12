@@ -1,0 +1,49 @@
+name: Alert Rules
+
+# The alert rules are Helm templates, so the only meaningful thing to check is what
+# Helm renders. This job renders them and runs promtool's unit tests against the result,
+# which catches the class of bug where a selector matches no series: such a rule never
+# fires and never errors, so nothing else notices until the alert is needed.
+
+on:
+  pull_request:
+    paths:
+      - 'apps/**/templates/**.yaml'
+      - 'apps/**/values.yaml'
+      - 'apps/generic/**'
+      - 'tests/alert-rules/**'
+      - '.github/workflows/alert-rules.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**/templates/**.yaml'
+      - 'apps/**/values.yaml'
+      - 'apps/generic/**'
+      - 'tests/alert-rules/**'
+
+jobs:
+  promtool:
+    name: Render and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install promtool
+        run: |
+          version=3.6.0
+          curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz" \
+            | tar -xz --strip-components=1 -C /usr/local/bin "prometheus-${version}.linux-amd64/promtool"
+          promtool --version
+
+      - name: Render the rules
+        run: ./tests/alert-rules/render-rules.sh
+
+      - name: Check rule syntax
+        run: promtool check rules tests/alert-rules/.rendered/*.yaml
+
+      - name: Run rule unit tests
+        working-directory: tests/alert-rules
+        run: promtool test rules *.test.yaml

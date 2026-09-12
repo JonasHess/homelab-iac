@@ -1,0 +1,86 @@
+# Unit tests for the hand-written alert rules, run by promtool against the rules as
+# Helm actually renders them (see render-rules.sh).
+#
+# What these are for: five of these rules once matched `job="<probe-name>"` while the
+# Prometheus Operator names the job `probe/<namespace>/<probe-name>`. They selected zero
+# series, so they could never fire - and nothing failed, because a rule that matches
+# nothing looks exactly like a rule with nothing wrong. Only a test that feeds in a
+# failing series and demands the alert catches that.
+#
+# Positive cases assert the full annotation text as well, which pins the Prometheus
+# templating ({{ $labels.x }}) that otherwise only fails at evaluation time.
+rule_files:
+  - .rendered/prometheus.yaml
+
+evaluation_interval: 1m
+
+tests:
+  # --- the regression test for the dead-selector bug -------------------------------
+  - interval: 1m
+    name: DomainProbeDown fires for an operator-named probe job
+    input_series:
+      - series: 'probe_success{job="probe/argocd/domain-status-probe", instance="https://test.example:443"}'
+        values: '0x10'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: DomainProbeDown
+        exp_alerts: []          # "for: 2m" has not elapsed yet
+      - eval_time: 3m
+        alertname: DomainProbeDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              job: probe/argocd/domain-status-probe
+              instance: https://test.example:443
+            exp_annotations:
+              summary: "Blackbox probe for https://test.example:443 is failing"
+              description: |
+                https://test.example:443 has not answered the blackbox probe for
+                over 2 minutes, so the site is unreachable from inside the cluster.
+                Check, in this order: the Envoy Gateway pod and its listeners, the
+                public DNS record for test.example, and whether the
+                certificate that host serves is still valid.
+
+  - interval: 1m
+    name: DomainProbeDown stays silent while the probe succeeds
+    input_series:
+      - series: 'probe_success{job="probe/argocd/domain-status-probe", instance="https://test.example:443"}'
+        values: '1x10'
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DomainProbeDown
+        exp_alerts: []
+
+  # --- the traffic floor, which exists so one bad request is not a 100% error rate --
+  - interval: 1m
+    name: EnvoyRouteHigh5xxRate ignores a route below the traffic floor
+    input_series:
+      # every request 5xx, but only ~0.008 req/s - far under the 0.05 floor
+      - series: 'envoy_cluster_upstream_rq_xx{envoy_cluster_name="httproute/argocd/x/rule/0", envoy_response_code_class="5"}'
+        values: '0+0.5x15'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: EnvoyRouteHigh5xxRate
+        exp_alerts: []
+
+  # --- thresholds ------------------------------------------------------------------
+  - interval: 1m
+    name: BackupTooOld tolerates a backup inside the window
+    input_series:
+      # last success 20h before the evaluation time, well under the 36h threshold
+      - series: 'kube_cronjob_status_last_successful_time{cronjob="restic-backup", namespace="argocd"}'
+        values: '-72000x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BackupTooOld
+        exp_alerts: []
+
+  - interval: 1m
+    name: CertificateExpiringSoon tolerates a certificate with a month left
+    input_series:
+      - series: 'certmanager_certificate_expiration_timestamp_seconds{name="wildcard-tls", namespace="cert-manager"}'
+        values: '2592000x70'
+    alert_rule_test:
+      - eval_time: 65m
+        alertname: CertificateExpiringSoon
+        exp_alerts: []
