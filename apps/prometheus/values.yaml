@@ -1,3 +1,11 @@
+# Dead man's switch. Off by default because it needs a per-cluster ping URL at
+# <global.akeyless.path>/o11y/alertmanager/watchdog_heartbeat_url; without that
+# secret the ExternalSecret never syncs and Alertmanager cannot mount it, so the
+# whole pod fails. Two clusters must never share one URL - either one alone would
+# keep the check green. See doc/Alerting/watchdog-heartbeat.md.
+watchdogHeartbeat:
+  enabled: false
+
 # Feature flags for optional alerts
 alerts:
   duplicati:

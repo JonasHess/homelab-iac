@@ -67,6 +67,9 @@ spec:
             logLevel: info
             secrets:
               - pagerduty-secret
+              {{- if $.Values.watchdogHeartbeat.enabled }}
+              - watchdog-heartbeat
+              {{- end }}
             # Without this Alertmanager runs on an emptyDir: silences vanish on
             # restart, and so does the notification log, so every still-firing
             # alert is paged again after a restart. The selector binds to the
@@ -94,12 +97,34 @@ spec:
               routes:
                 - matchers:
                     - alertname = "Watchdog"
+                  {{- if $.Values.watchdogHeartbeat.enabled }}
+                  # Watchdog fires permanently by design, so forwarding it turns its
+                  # ABSENCE into the signal: when Prometheus, Alertmanager or the node
+                  # dies the pings stop and the external check notices. repeat_interval
+                  # is what sets the ping rate - the rule's evaluation interval does not
+                  # re-notify - so it has to stay well under the far end's grace period.
+                  receiver: 'watchdog-heartbeat'
+                  group_wait: 0s
+                  group_interval: 5m
+                  repeat_interval: 5m
+                  {{- else }}
                   receiver: "null"
+                  {{- end }}
                 - matchers:
                     - alertname = "InfoInhibitor"
                   receiver: "null"
             receivers:
               - name: "null"
+              {{- if $.Values.watchdogHeartbeat.enabled }}
+              - name: 'watchdog-heartbeat'
+                webhook_configs:
+                  # send_resolved stays off: a resolved Watchdog is precisely the
+                  # silence the far end is watching for. url_file keeps the ping URL
+                  # out of Git - it is a capability URL, anyone holding it can keep
+                  # the check green and mask a real outage.
+                  - url_file: "/etc/alertmanager/secrets/watchdog-heartbeat/watchdog_heartbeat_url"
+                    send_resolved: false
+              {{- end }}
               - name: 'all-alerts'
                 pagerduty_configs:
                   - send_resolved: true
