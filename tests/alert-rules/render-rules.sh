@@ -15,15 +15,27 @@ out="$here/.rendered"
 rm -rf "$out"; mkdir -p "$out"
 
 # Charts that ship alert rules. Add to this list when a new chart gets a PrometheusRule.
-charts=(prometheus)
-
-for chart in "${charts[@]}"; do
+# Extra args are the values each chart needs to render at all - unrelated to alerting,
+# but a chart that will not render cannot be tested.
+render() {
+  local chart="$1"; shift
   helm template "$chart" "$repo/apps/$chart" \
     --namespace argocd \
     --values "$here/values.yaml" \
-    --set generic.appName="$chart" \
-    --set generic.persistentVolume.prometheus=/tmp/p \
-    --set generic.persistentVolume.alertmanager=/tmp/a \
-    --set generic.persistentVolumeClaims.grafana.hostPath=/tmp/g \
+    "$@" \
   | python3 "$here/extract-rules.py" "$out/$chart.yaml" "$chart"
-done
+}
+
+render prometheus \
+  --set generic.appName=prometheus \
+  --set generic.persistentVolume.prometheus=/tmp/p \
+  --set generic.persistentVolume.alertmanager=/tmp/a \
+  --set generic.persistentVolumeClaims.grafana.hostPath=/tmp/g
+
+render envoy-gateway --set generic.appName=envoy-gateway
+
+render cert-manager --set generic.appName=cert-manager --set certManager.version=v1.17.2
+
+render restic --set appName=restic --set generic.appName=restic \
+  --set generic.persistentVolumeClaims.tank1.hostPath=/tmp/tank1 \
+  --set generic.persistentVolumeClaims.restoreddata.hostPath=/tmp/restored

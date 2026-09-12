@@ -1,0 +1,41 @@
+{{- /*
+  The backup freshness rule lives with the CronJob it watches: the alert names
+  restic-backup explicitly, so it would be stale the moment this chart stopped
+  creating that CronJob.
+*/}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: restic-alerts
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on. Without it the rules are created
+    # and silently never loaded.
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  groups:
+  - name: restic-alerts
+    interval: 1m
+    rules:
+    - alert: BackupTooOld
+      annotations:
+        summary: "{{ `{{ $labels.cronjob }}` }} last succeeded {{ `{{ $value | humanizeDuration }}` }} ago"
+        description: |
+          The CronJob {{ `{{ $labels.cronjob }}` }} in namespace
+          {{ `{{ $labels.namespace }}` }} has not completed successfully for over 36
+          hours, against a daily schedule.
+          A CronJob that stops being scheduled produces no failing Job at all, so
+          KubeJobFailed stays silent: this is the only signal that backups have stopped.
+          Scoped to restic-backup by name rather than a prefix, because restic-restore
+          runs yearly and would breach any freshness threshold permanently.
+      expr: |
+        time() - max by (namespace, cronjob) (kube_cronjob_status_last_successful_time{cronjob="restic-backup"}) > 36 * 3600
+      for: 10m
+      labels:
+        severity: critical
+{{- end }}

@@ -1,0 +1,53 @@
+{{- /*
+  Certificate rules live with cert-manager, alongside the chart values that enable the
+  ServiceMonitor these expressions depend on - so the metric and the alert that reads
+  it cannot be enabled separately.
+*/}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cert-manager-alerts
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on. Without it the rules are created
+    # and silently never loaded.
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  groups:
+  - name: cert-manager-alerts
+    interval: 1m
+    rules:
+    - alert: CertificateExpiringSoon
+      annotations:
+        summary: "{{ `{{ $labels.name }}` }} expires in {{ `{{ $value | humanizeDuration }}` }}"
+        description: |
+          The certificate {{ `{{ $labels.name }}` }} in namespace
+          {{ `{{ $labels.namespace }}` }} expires in
+          {{ `{{ $value | humanizeDuration }}` }}. cert-manager renews at two thirds of a
+          certificate's lifetime, so reaching 14 days means renewal has already failed at
+          least once - check the Certificate's status conditions and the DNS-01 solver.
+          Without this the first symptom is DomainProbeDown, which only fires once the
+          certificate has expired and visitors are already being turned away.
+      expr: |
+        certmanager_certificate_expiration_timestamp_seconds - time() < 14 * 24 * 3600
+      for: 1h
+      labels:
+        severity: warning
+    - alert: CertificateNotReady
+      annotations:
+        summary: "Certificate {{ `{{ $labels.name }}` }} is not ready"
+        description: |
+          cert-manager has reported {{ `{{ $labels.name }}` }} in namespace
+          {{ `{{ $labels.namespace }}` }} as not ready for over an hour. Every route that
+          serves this certificate will fail TLS once the current one expires.
+      expr: |
+        certmanager_certificate_ready_status{condition="False"} == 1
+      for: 1h
+      labels:
+        severity: warning
+{{- end }}

@@ -1,0 +1,87 @@
+{{- /*
+  Rules about the gateway live with the gateway, matching how its ServiceMonitor and
+  PodMonitor already do. They then appear and disappear with the app rather than
+  outliving it in the prometheus chart.
+*/}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: envoy-gateway-alerts
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on. Without it the rules are created
+    # and silently never loaded.
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  groups:
+  - name: envoy-gateway-alerts
+    interval: 1m
+    rules:
+    - alert: EnvoyRouteHigh5xxRate
+      annotations:
+        summary: "{{ `{{ $labels.envoy_cluster_name }}` }} is answering {{ `{{ $value | humanizePercentage }}` }} 5xx"
+        description: |
+          The backend behind {{ `{{ $labels.envoy_cluster_name }}` }} answered 5xx
+          for {{ `{{ $value | humanizePercentage }}` }} of its requests over the last
+          5 minutes. Envoy names the backend after the Gateway API object that
+          routed the traffic, as httproute/<namespace>/<route-name>/rule/<index>,
+          so that string identifies the HTTPRoute to inspect and the namespace
+          its backing Service lives in.
+          Likely causes: the backing Service has no ready endpoints, the route
+          targets the wrong port, or the application itself is erroring.
+      expr: |
+        (
+          sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx{envoy_response_code_class="5"}[5m]))
+          /
+          sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx[5m]))
+        ) > 0.05
+        and
+        sum by (envoy_cluster_name) (rate(envoy_cluster_upstream_rq_xx[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+    - alert: EnvoyHigh5xxRate
+      annotations:
+        summary: "Envoy listener {{ `{{ $labels.envoy_http_conn_manager_prefix }}` }} is serving {{ `{{ $value | humanizePercentage }}` }} 5xx"
+        description: |
+          Listener {{ `{{ $labels.envoy_http_conn_manager_prefix }}` }} returned 5xx
+          for {{ `{{ $value | humanizePercentage }}` }} of the responses it sent to
+          clients over the last 5 minutes.
+          This counts what clients received, so unlike EnvoyRouteHigh5xxRate it
+          also catches the 5xx Envoy generates without ever reaching a backend:
+          no healthy upstream, no matching route, or a failing OIDC filter. If
+          EnvoyRouteHigh5xxRate is silent while this fires, the fault is in the
+          gateway or its configuration rather than in an application.
+          The listener name encodes the entry point: https-10443 is the LAN
+          listener, https-4443 the Cloudflare mTLS one, http-10080 the redirect.
+      expr: |
+        (
+          sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_response_code_class="5", envoy_http_conn_manager_prefix=~"https?-.*"}[5m]))
+          /
+          sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_http_conn_manager_prefix=~"https?-.*"}[5m]))
+        ) > 0.05
+        and
+        sum by (envoy_http_conn_manager_prefix) (rate(envoy_http_downstream_rq_xx{envoy_http_conn_manager_prefix=~"https?-.*"}[5m])) > 0.05
+      for: 5m
+      labels:
+        severity: warning
+    - alert: EnvoyProxyScrapeDown
+      annotations:
+        summary: "Envoy proxy Prometheus scrape is down"
+        description: |
+          No Envoy proxy target is being scraped successfully (job matching
+          .*envoy-proxy.*). Either the proxy pod is unreachable, the metrics
+          endpoint is not exposed (Telemetry config), or the PodMonitor is
+          broken. While this fires, every other Envoy alert here is blind and
+          will stay silent no matter how badly ingress is failing.
+      expr: |
+        absent(up{job=~".*envoy-proxy.*"} == 1)
+      for: 5m
+      labels:
+        severity: warning
+{{- end }}

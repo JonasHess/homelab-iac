@@ -23,3 +23,14 @@ global:
   lanDnsCheck:
     dnsServer: 192.168.0.91
     queryName: argocd.test.example
+  oidc:
+    issuerUrl: https://issuer.test.example
+    clientId: testclient
+    clientSecretAkeylessPath: /oidc/client_secret
+    cookieDomain: test.example
+    idTokenCookieName: HomelabIdToken
+    accessTokenCookieName: HomelabAccessToken
+  security:
+    cloudflareOriginCA: ""
+  argocd:
+    namespace: argocd

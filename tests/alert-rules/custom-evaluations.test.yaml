@@ -11,6 +11,9 @@
 # templating ({{ $labels.x }}) that otherwise only fails at evaluation time.
 rule_files:
   - .rendered/prometheus.yaml
+  - .rendered/envoy-gateway.yaml
+  - .rendered/cert-manager.yaml
+  - .rendered/restic.yaml
 
 evaluation_interval: 1m
 
