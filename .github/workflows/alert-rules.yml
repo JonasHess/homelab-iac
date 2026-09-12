@@ -6,6 +6,9 @@ name: Alert Rules
 # fires and never errors, so nothing else notices until the alert is needed.
 
 on:
+  # Runnable on demand, so verifying a change to this workflow does not need a dummy
+  # commit to some unrelated chart.
+  workflow_dispatch:
   pull_request:
     paths:
       - 'apps/**/templates/**.yaml'
@@ -20,6 +23,9 @@ on:
       - 'apps/**/values.yaml'
       - 'apps/generic/**'
       - 'tests/alert-rules/**'
+      # Included so a change to how the tests run is itself tested on main; without it
+      # this workflow is the one thing it cannot validate.
+      - '.github/workflows/alert-rules.yml'
 
 jobs:
   promtool:
