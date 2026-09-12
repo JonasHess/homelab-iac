@@ -117,16 +117,20 @@ And point the existing `Watchdog` route at it instead of `"null"`:
                     - alertname = "Watchdog"
                   receiver: 'watchdog-heartbeat'
                   group_wait: 0s
-                  group_interval: 5m
-                  repeat_interval: 5m
+                  group_interval: 1m
+                  repeat_interval: 1m
 ```
 
 Three details that are not obvious:
 
-- **`repeat_interval` is what sets the ping frequency.** Alertmanager only re-sends a firing
-  alert when this elapses, so this value, not the alert's evaluation interval, decides how
-  often the check is pinged. It must stay comfortably below the grace time configured at the
-  other end.
+- **The two intervals set the ping frequency, and you get about half the rate you ask for.**
+  Alertmanager re-notifies only on a group flush tick (`group_interval`), and only once
+  `repeat_interval` has fully elapsed since the last notification. With both set to the same
+  value, the first tick falls a hair short and it waits for the next one, so `5m`/`5m` pings
+  every 10 minutes, not 5. Measured on this cluster before the values were lowered.
+  Pick a rate far below the far end's alert threshold (period + grace), so that a single
+  dropped ping cannot raise a false alarm. A dead man's switch that cries wolf is worse than
+  none, because it trains you to ignore it.
 - **`send_resolved: false`** because a resolved Watchdog is precisely the silence the far end
   is watching for. Sending it would be pointless, and on some receivers actively confusing.
 - **`url_file` rather than `url`** keeps the capability URL out of Git. It needs Alertmanager

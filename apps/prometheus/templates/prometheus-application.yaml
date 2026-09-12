@@ -100,13 +100,20 @@ spec:
                   {{- if $.Values.watchdogHeartbeat.enabled }}
                   # Watchdog fires permanently by design, so forwarding it turns its
                   # ABSENCE into the signal: when Prometheus, Alertmanager or the node
-                  # dies the pings stop and the external check notices. repeat_interval
-                  # is what sets the ping rate - the rule's evaluation interval does not
-                  # re-notify - so it has to stay well under the far end's grace period.
+                  # dies the pings stop and the external check notices.
+                  # These two intervals set the ping rate; the rule's evaluation
+                  # interval does not re-notify. Expect roughly DOUBLE this value in
+                  # practice: Alertmanager only re-notifies on a group flush tick
+                  # (group_interval) and only once repeat_interval has fully elapsed,
+                  # so at the first tick it is a hair short and waits for the next one.
+                  # Keep the resulting rate far below the far end's alert threshold, so
+                  # that one dropped ping cannot raise a false alarm - a dead man's
+                  # switch that cries wolf is worse than none, because it trains you to
+                  # ignore it.
                   receiver: 'watchdog-heartbeat'
                   group_wait: 0s
-                  group_interval: 5m
-                  repeat_interval: 5m
+                  group_interval: 1m
+                  repeat_interval: 1m
                   {{- else }}
                   receiver: "null"
                   {{- end }}
