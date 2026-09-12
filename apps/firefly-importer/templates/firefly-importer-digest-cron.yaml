@@ -56,6 +56,7 @@ data:
     TOKEN = os.environ["FIREFLY_III_ACCESS_TOKEN"]
     STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
     MULT  = int(os.environ.get("DIGEST_STALE_MULTIPLIER", "4")) # x the account's median gap
+    LOG_SECONDS = int(os.environ.get("DIGEST_LOG_SECONDS", "43200"))  # log window to scan (12h)
     WINDOW= int(os.environ.get("DIGEST_WINDOW_HOURS", "24"))
 
     def api(path):
@@ -138,10 +139,15 @@ data:
                                        headers={"Authorization": "Bearer " + ktok})
             with urllib.request.urlopen(r, context=ctx, timeout=30) as resp:
                 return resp.read().decode("utf-8", "replace")
+        # NB the digest's own pod carries app=firefly-importer too, so filter on the
+        # deployment's name; picking by label alone reads this job's own (empty) log.
         pods = json.loads(k8s(f"/api/v1/namespaces/{ns}/pods?labelSelector=app%3Dfirefly-importer"))
         name = next(p["metadata"]["name"] for p in pods["items"]
-                    if p["status"]["phase"] == "Running" and "autoimport" not in p["metadata"]["name"])
-        log  = k8s(f"/api/v1/namespaces/{ns}/pods/{name}/log?tailLines=4000")
+                    if p["status"]["phase"] == "Running"
+                    and p["metadata"]["name"].startswith("firefly-importer-deployment"))
+        # The Enable Banking debug dumps are enormous, so a line cap can miss the run
+        # entirely; take everything since shortly before the import instead.
+        log  = k8s(f"/api/v1/namespaces/{ns}/pods/{name}/log?sinceSeconds={LOG_SECONDS}")
         for ln in log.splitlines():
             m = re.search(r'importable "/import/([^"]+)"', ln)
             if m: attempted.append(m.group(1))
@@ -192,6 +198,8 @@ data:
         s.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
         s.send_message(msg)
     print(subject)
+    print()
+    print("\n".join(lines))
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -231,6 +239,8 @@ spec:
                   value: {{ .Values.digest.staleDays | quote }}
                 - name: DIGEST_STALE_MULTIPLIER
                   value: {{ .Values.digest.staleMultiplier | quote }}
+                - name: DIGEST_LOG_SECONDS
+                  value: {{ .Values.digest.logSeconds | quote }}
               command: ["python3", "/script/digest.py"]
               volumeMounts:
                 - name: script

@@ -62,3 +62,6 @@ digest:
   # count cannot work: some accounts move daily, others a few times a year.
   staleDays: 3
   staleMultiplier: 4
+  # How far back to scan the importer log. Must comfortably cover the nightly run;
+  # a line-count cap does not, because the Enable Banking debug output is huge.
+  logSeconds: 43200
