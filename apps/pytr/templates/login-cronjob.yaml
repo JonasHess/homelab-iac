@@ -29,7 +29,11 @@ spec:
             command: ["sh", "-c"]
             args:
               - |
-                pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
+                # The [playwright] extra is required: pytr fetches the AWS WAF token that
+                # app.traderepublic.com demands by driving a headless Chromium, and the
+                # playwright Python package ships only in that extra. The base image
+                # provides the browser binaries and system libraries, not the package.
+                pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
                 python3 /scripts/login.py
             ports:
             - containerPort: 8080

@@ -36,7 +36,11 @@ spec:
                 mkdir -p /home/pytr/.pytr && \
                 printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /tmp/credentials && \
                 ln -sf /tmp/credentials /home/pytr/.pytr/credentials && \
-                pip install --quiet pytr=={{ .Values.pytr.pytrVersion }} && \
+                # The [playwright] extra is required: pytr fetches the AWS WAF token that
+                # app.traderepublic.com demands by driving a headless Chromium, and the
+                # playwright Python package ships only in that extra. The base image
+                # provides the browser binaries and system libraries, not the package.
+                pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
                 pytr dl_docs -path /downloads ; \
                 rc=$? && \
                 rm -f /home/pytr/.pytr/credentials && \
