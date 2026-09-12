@@ -131,6 +131,39 @@ spec:
                 - matchers:
                     - alertname = "InfoInhibitor"
                   receiver: "null"
+            # Copied verbatim from the kube-prometheus-stack defaults. They survived
+            # until now only because this key was never specified: Helm replaces lists
+            # rather than merging them, so declaring inhibit_rules at all takes ownership
+            # of the whole set. Re-check them against the chart on upgrade.
+            inhibit_rules:
+              - source_matchers:
+                  - severity = "critical"
+                target_matchers:
+                  - severity =~ "warning|info"
+                equal: ['namespace', 'alertname']
+              - source_matchers:
+                  - severity = "warning"
+                target_matchers:
+                  - severity = "info"
+                equal: ['namespace', 'alertname']
+              - source_matchers:
+                  - alertname = "InfoInhibitor"
+                target_matchers:
+                  - severity = "info"
+                equal: ['namespace']
+              - target_matchers:
+                  - alertname = "InfoInhibitor"
+              # One Envoy fault trips both rules, because a 5xx from an upstream is also
+              # a 5xx delivered downstream - two incidents for one problem. The
+              # listener-wide rule only adds information when the per-route rule stays
+              # silent, which is the case where Envoy generated the 5xx itself without
+              # ever reaching a backend. Equal on cluster so one homelab cannot mute
+              # another's alert.
+              - source_matchers:
+                  - alertname = "EnvoyRouteHigh5xxRate"
+                target_matchers:
+                  - alertname = "EnvoyHigh5xxRate"
+                equal: ['cluster']
             receivers:
               - name: "null"
               {{- if $.Values.watchdogHeartbeat.enabled }}
