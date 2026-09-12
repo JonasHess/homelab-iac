@@ -56,7 +56,7 @@ digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.
   schedule: "30 4 * * *"
-  image: python:3.13-slim
+  image: python:3.14-slim
   # An account is flagged only when its silence exceeds BOTH this absolute floor
   # and staleMultiplier x its own median gap between transactions. A fixed day
   # count cannot work: some accounts move daily, others a few times a year.
