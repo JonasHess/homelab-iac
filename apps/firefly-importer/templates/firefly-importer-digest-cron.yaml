@@ -164,6 +164,11 @@ data:
         real_errors.append(f"(could not read importer log: {e})")
 
     aborted = [c for c in dict.fromkeys(attempted) if c not in finished]
+    # A pod restart between the import and this job wipes the log, and "no errors
+    # found" would then be a lie. Say so instead of implying everything is fine.
+    if not attempted and not real_errors:
+        real_errors.append("no import run found in the importer log "
+                           "(pod restarted since the import?) - could not verify the run")
     # collapse repeats, keep order
     real_errors = list(dict.fromkeys(real_errors))[:12]
 
