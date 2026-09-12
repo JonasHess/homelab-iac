@@ -33,7 +33,10 @@ jobs:
 
       - name: Install promtool
         run: |
-          version=3.6.0
+          # Keep this in step with the Prometheus that actually evaluates these rules;
+          # testing against an older evaluator than production defeats the point.
+          # renovate: datasource=github-releases depName=prometheus/prometheus
+          version=3.14.0
           curl -sSL "https://github.com/prometheus/prometheus/releases/download/v${version}/prometheus-${version}.linux-amd64.tar.gz" \
             | tar -xz --strip-components=1 -C /usr/local/bin "prometheus-${version}.linux-amd64/promtool"
           promtool --version

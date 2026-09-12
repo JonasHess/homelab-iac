@@ -254,6 +254,18 @@
         "repository:\\s*['\"]?(?<depName>[^'\"\\s]+)['\"]?\\s*\\n\\s*tag:\\s*['\"]?(?<currentValue>[^'\"\\s]+)['\"]?"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Update the promtool version pinned by the alert-rules workflow",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/alert-rules\\.yml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=github-releases\\s+depName=(?<depName>[^\\s]+)\\s*\\n\\s*version=(?<currentValue>[^\\s]+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
     }
   ],
   "ignorePaths": [
