@@ -45,8 +45,6 @@ spec:
               enabled: true
               name: prometheus-scrape-secret
               key: scrape-config.yaml
-          persistentVolumeClaim:
-            existingClaim: prometheus-prometheus-pvc
 
         grafana:
           defaultDashboardsTimezone: Europe/Berlin
@@ -69,6 +67,21 @@ spec:
             logLevel: info
             secrets:
               - pagerduty-secret
+            # Without this Alertmanager runs on an emptyDir: silences vanish on
+            # restart, and so does the notification log, so every still-firing
+            # alert is paged again after a restart. The selector binds to the
+            # labelled PV that generic's persistentVolume.alertmanager creates.
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: ""
+                  accessModes: [ "ReadWriteOnce" ]
+                  resources:
+                    requests:
+                      storage: 10Gi
+                  selector:
+                    matchLabels:
+                      app: prometheus-alertmanager
           config:
             global:
               resolve_timeout: 5m

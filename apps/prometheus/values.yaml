@@ -28,8 +28,10 @@ generic:
       oauth: true
   persistentVolume:
     prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
+    # Alertmanager's StatefulSet creates its own claim, which can only bind to a
+    # PV that is labelled and unclaimed. persistentVolumeClaims would instead pin
+    # the PV with a claimRef to a fixed claim name the StatefulSet never uses.
+    alertmanager: /mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data
   persistentVolumeClaims:
     grafana:
       hostPath: ~ # /mnt/somewhere/unencrypted/apps/prometheus/grafana/data
-    alertmanager:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/prometheus/alertmanager/data
