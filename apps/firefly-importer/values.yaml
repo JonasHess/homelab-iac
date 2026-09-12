@@ -65,3 +65,9 @@ digest:
   # How far back to scan the importer log. Must comfortably cover the nightly run;
   # a line-count cap does not, because the Enable Banking debug output is huge.
   logSeconds: 43200
+  # Mail only when something needs attention. A daily "all fine" message is the
+  # fastest way to train yourself to ignore the one that matters.
+  alwaysSend: false
+  # Accounts that are not nightly-imported and would otherwise be flagged forever
+  # (manually refreshed depots, closed cards). Exact account names.
+  ignoreStale: []
