@@ -25,6 +25,18 @@ spec:
         featureGates: "ExperimentalGatewayAPISupport=true"
         dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
         dns01RecursiveNameserversOnly: true
+        {{- if (.Values.global.monitoring | default dict).enabled }}
+        # Exposes certificate expiry and readiness so a renewal that quietly fails is
+        # caught before the certificate dies, rather than after, when the blackbox probe
+        # starts failing and users already see a broken site. The release label is what
+        # this Prometheus selects ServiceMonitors on.
+        prometheus:
+          enabled: true
+          servicemonitor:
+            enabled: true
+            labels:
+              release: kube-prometheus-stack
+        {{- end }}
   destination:
     server: "https://kubernetes.default.svc"
     namespace: cert-manager
