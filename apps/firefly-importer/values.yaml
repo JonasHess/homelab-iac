@@ -45,6 +45,10 @@ smtp:
   from: firefly@example.com
   fromName: Firefly III Data Importer
   destination: admin@example.com
+  # The importer's own per-config report lists every rejected line (~100+/night, all
+  # "already exists") and sends nothing at all when a run aborts. The digest below
+  # covers both cases readably, so this stays off unless you want the raw detail.
+  reportMail: false
 # Post-import summary mail. Answers "did every account receive data?" rather than
 # listing rejected lines, so a dead bank connection is visible even when the
 # importer aborts before writing a report of its own. Reuses the smtp block above.

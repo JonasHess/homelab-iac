@@ -11,13 +11,45 @@
   which catches a broken connection regardless of why it broke.
 */ -}}
 apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: firefly-importer-digest
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: firefly-importer-digest
+  namespace: {{ .Release.Namespace }}
+rules:
+  # Read-only, namespace-scoped: find the importer pod and read its log, so the
+  # digest can report runs that never produced a report of their own.
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: firefly-importer-digest
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: firefly-importer-digest
+subjects:
+  - kind: ServiceAccount
+    name: firefly-importer-digest
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: firefly-importer-digest-script
   namespace: {{ .Release.Namespace }}
 data:
   digest.py: |
-    import json, os, smtplib, urllib.request, datetime
+    import json, os, re, ssl, smtplib, urllib.request, datetime
     from email.message import EmailMessage
 
     BASE  = os.environ["FIREFLY_III_URL"].rstrip("/")
@@ -89,9 +121,59 @@ data:
              "-" * (w + 22)]
     lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}" for r in rows]
 
+    # --- what the importer itself did last run -------------------------------
+    # The digest can only see what arrived. A run that aborts (expired consent) or
+    # a line rejected for a real reason leaves no trace in the data, so read the
+    # importer's log too and keep only what is NOT routine duplicate noise:
+    # a115 = "already exists" (external_id), a117 = same by content. Both expected
+    # every night because the bank re-offers a rolling window.
+    attempted, finished, real_errors = [], [], []
+    try:
+        sa   = "/var/run/secrets/kubernetes.io/serviceaccount"
+        ns   = open(f"{sa}/namespace").read().strip()
+        ktok = open(f"{sa}/token").read().strip()
+        ctx  = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+        def k8s(path):
+            r = urllib.request.Request("https://kubernetes.default.svc" + path,
+                                       headers={"Authorization": "Bearer " + ktok})
+            with urllib.request.urlopen(r, context=ctx, timeout=30) as resp:
+                return resp.read().decode("utf-8", "replace")
+        pods = json.loads(k8s(f"/api/v1/namespaces/{ns}/pods?labelSelector=app%3Dfirefly-importer"))
+        name = next(p["metadata"]["name"] for p in pods["items"]
+                    if p["status"]["phase"] == "Running" and "autoimport" not in p["metadata"]["name"])
+        log  = k8s(f"/api/v1/namespaces/{ns}/pods/{name}/log?tailLines=4000")
+        for ln in log.splitlines():
+            m = re.search(r'importable "/import/([^"]+)"', ln)
+            if m: attempted.append(m.group(1))
+            m = re.search(r'Created event ImportedTransactions\("([^"]+)"\)', ln)
+            if m: finished.append(m.group(1))
+            if "production.ERROR" in ln and "[a115]" not in ln and "[a117]" not in ln \
+               and "Exit code is GENERAL_ERROR" not in ln:
+                real_errors.append(re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180])
+    except Exception as e:                       # never let monitoring break the digest
+        real_errors.append(f"(could not read importer log: {e})")
+
+    aborted = [c for c in dict.fromkeys(attempted) if c not in finished]
+    # collapse repeats, keep order
+    real_errors = list(dict.fromkeys(real_errors))[:12]
+
     subject = f"Firefly import digest {today} - {sum(r[1] for r in rows)} new"
+    if aborted or real_errors or sum(r[1] for r in rows) == 0:
+        bits = []
+        if aborted:     bits.append(f"{len(aborted)} import(s) failed")
+        if real_errors: bits.append(f"{len(real_errors)} error(s)")
+        if sum(r[1] for r in rows) == 0: bits.append("no new data at all")
+        subject = "[!] " + subject + " - " + ", ".join(bits)
+        lines += [""]
+        if aborted:
+            lines += ["Import did NOT complete for:"] + [f"  - {c}" for c in aborted]
+        if real_errors:
+            lines += ["", "Errors (duplicate rejections excluded):"] + [f"  - {e}" for e in real_errors]
+        if sum(r[1] for r in rows) == 0:
+            lines += ["", "No account received a single new transaction - check the connections."]
     if stale:
-        subject = f"[!] {subject}, {len(stale)} account(s) stale"
+        if not subject.startswith("[!]"): subject = "[!] " + subject
+        subject += f", {len(stale)} stale"
         lines += ["", "Silent far longer than usual - check the bank connection:"]
         lines += [f"  - {n}: last {d}, {a} days ago (usually every {m}d, flags above {l}d)"
                   for n, d, a, m, l in stale]
@@ -135,6 +217,7 @@ spec:
             component: digest
         spec:
           restartPolicy: OnFailure
+          serviceAccountName: firefly-importer-digest
           containers:
             - name: digest
               image: {{ .Values.digest.image | quote }}
