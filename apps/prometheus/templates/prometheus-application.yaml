@@ -27,6 +27,17 @@ spec:
 
         prometheus:
           prometheusSpec:
+            # Stamped onto every alert sent to Alertmanager (and onto federation and
+            # remote-write), but NOT onto locally stored series, so dashboards and
+            # recording rules are unaffected. Without it the route's group_by on
+            # 'cluster' groups on a label that is always empty, a PagerDuty incident
+            # cannot say which homelab it came from, and two clusters sharing one
+            # PagerDuty service produce identical dedup keys - so one cluster's resolve
+            # closes the other's incident.
+            # dig, not dot notation: the key contains a hyphen, and global.cluster is
+            # set per environment and absent from base-chart's defaults.
+            externalLabels:
+              cluster: {{ dig "cluster" "cluster-name" $.Values.global.domain $.Values.global | quote }}
             replicas: 1
             retention: 90d
             retentionSize: 50GB
