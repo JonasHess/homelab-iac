@@ -2,6 +2,13 @@
 
 {{- if .Values.persistentVolume }}
   {{- range $pvName, $pvPath := .Values.persistentVolume }}
+  {{- /* Capacity is a separate map rather than a field beside the path, because
+         environments override persistentVolume with a bare path string; a map here
+         would be replaced wholesale and the capacity would silently fall back to the
+         default. For hostPath volumes capacity is nominal - nothing enforces it - but
+         it must not understate reality, or a later move to an enforcing storage class
+         provisions a volume far too small for the data already on disk. */}}
+  {{- $capacity := dig $pvName "10Gi" ($.Values.persistentVolumeCapacity | default dict) }}
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -14,7 +21,7 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=true
 spec:
   capacity:
-    storage: 10Gi
+    storage: {{ $capacity }}
   volumeMode: Filesystem
   accessModes:
     - ReadWriteOnce

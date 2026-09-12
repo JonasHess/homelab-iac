@@ -34,6 +34,12 @@ generic:
       port: 9093
       service: kube-prometheus-stack-alertmanager
       oauth: true
+  # Declared capacity, not a limit: the TSDB held 40.8 GiB at 90d retention when this
+  # was set, against a retentionSize cap of 50GB. 60Gi leaves the declaration above
+  # both. Kept out of persistentVolume so an environment overriding the path does not
+  # drop it.
+  persistentVolumeCapacity:
+    prometheus: 60Gi
   persistentVolume:
     prometheus: /mnt/somewhere/unencrypted/apps/prometheus/data
     # Alertmanager's StatefulSet creates its own claim, which can only bind to a
