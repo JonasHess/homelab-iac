@@ -1,0 +1,24 @@
+{{- /*
+  The ArgoCD UI holds long-lived streaming requests open (application watches), which
+  Envoy's default 15s route timeout cuts off as 504. The UI reconnects immediately, so
+  an open tab produces a 504 roughly every 53 seconds for as long as it stays open -
+  enough to trip EnvoyRouteHigh5xxRate even though nothing is actually broken.
+  An hour bounds a wedged request while letting a watch survive a normal session.
+  Scoped to the main route; the webhook route keeps the default, because webhook calls
+  are short and a stuck one should time out.
+*/ -}}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: argocd-timeout
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-https-main
+  timeout:
+    http:
+      requestTimeout: 3600s
