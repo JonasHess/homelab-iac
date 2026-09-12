@@ -134,6 +134,10 @@ data:
         ns   = open(f"{sa}/namespace").read().strip()
         ktok = open(f"{sa}/token").read().strip()
         ctx  = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+        # Python 3.13 enables VERIFY_X509_STRICT, which rejects the cluster CA because
+        # it carries no keyUsage extension. Drop just that check - the certificate is
+        # still verified against the cluster CA, we are not disabling verification.
+        ctx.verify_flags &= ~ssl.VERIFY_X509_STRICT
         def k8s(path):
             r = urllib.request.Request("https://kubernetes.default.svc" + path,
                                        headers={"Authorization": "Bearer " + ktok})
