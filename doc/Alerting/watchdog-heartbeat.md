@@ -155,15 +155,35 @@ elsewhere for optional globals, rather than making every consumer create a check
 
    It should stay at 0. A climbing `serverError` here means the URL is wrong.
 
-3. **Prove the switch actually works.** A heartbeat nobody has tested is not a safety net:
+3. **Prove the switch actually works.** A heartbeat nobody has tested is not a safety net.
+
+   Note what does NOT work, both measured on 2026-09-12: scaling the StatefulSet is undone
+   by the prometheus-operator, which rebuilt the pod within 22 seconds, and patching the
+   Alertmanager CR is undone by ArgoCD's `selfHeal` within about a second. Two layers
+   defend the desired state, so an imperative scale cannot hold Alertmanager down.
+
+   Shorten the feedback loop first: set the check's grace time to 1 minute in the
+   healthchecks.io UI, so a few minutes of silence is enough and alerting is blind for
+   minutes rather than the full period plus grace.
+
+   Then remove the desired state that keeps restoring it:
 
    ```bash
-   kubectl --context <ctx> -n argocd scale statefulset \
-     alertmanager-kube-prometheus-stack-alertmanager --replicas=0
+   CTX=<ctx>
+   # 1. stop ArgoCD healing the change back
+   kubectl --context $CTX -n argocd patch application kube-prometheus-stack --type merge \
+     -p '{"spec":{"syncPolicy":{"automated":{"selfHeal":false}}}}'
+   # 2. now the operator obeys the CR
+   kubectl --context $CTX -n argocd patch alertmanager kube-prometheus-stack-alertmanager \
+     --type merge -p '{"spec":{"replicas":0}}'
    ```
 
-   Within the grace time the check goes red and notifies you. Scale back to 1 afterwards.
-   Do this deliberately, while watching, because alerting is down for the duration.
+   Wait for the check to go red **and for the notification to arrive** - the notification
+   is the thing under test, not the red dot. Then reverse both patches (`replicas: 1`,
+   `selfHeal: true`) and restore the grace time.
+
+   Do this while watching. Alerting is down throughout, and the cluster is left without
+   self-healing until step 1 is reversed.
 
 ## Alternative destination
 
