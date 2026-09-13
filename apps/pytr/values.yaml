@@ -1,6 +1,10 @@
 appName: pytr
 
 generic:
+  # The per-instance values supply the entries: the secret names carry appName, so
+  # declaring them here would make both chart instances claim the same Secret.
+  #   <appName>-credentials  -> PHONE_NUMBER, PIN   from /pytr/{PHONE_NUMBER,PIN}
+  #   <appName>-paperless    -> PAPERLESS_API_TOKEN from /pytr/PAPERLESS_API_TOKEN
   persistentVolumeClaims: {}
   externalSecrets: {}
   ingress:
@@ -21,3 +25,19 @@ pytr:
   download:
     schedule: "0 2 1 * *"
     suspend: false
+
+  # Folds each new account_transactions.csv into one versioned Paperless document.
+  csvVersions:
+    enabled: true
+    # Daily rather than tied to the download schedule: downloads are triggered by hand
+    # (the login they depend on needs an SMS code), so there is no run time to align to.
+    # A run with nothing to merge is a single API call.
+    schedule: "0 4 * * *"
+    suspend: false
+    image: python:3.14.5-alpine3.22
+    paperlessUrl: "http://paperlessngx-service:8000"
+    csvFilename: "account_transactions.csv"
+    # Which document the exports are merged into. Every chart instance has its own, so
+    # the instance values must set it; rendering fails rather than defaulting, because a
+    # wrong id would merge one account's exports into another account's history.
+    rootDocumentId: ~

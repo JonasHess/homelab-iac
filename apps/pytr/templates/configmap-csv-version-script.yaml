@@ -1,0 +1,129 @@
+{{- if .Values.pytr.csvVersions.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.appName }}-csv-version-script
+  namespace: {{ .Release.Namespace }}
+data:
+  merge_csv_versions.py: |
+    #!/usr/bin/env python3
+    """
+    Folds a freshly imported account_transactions.csv into the existing versioned
+    document in Paperless instead of leaving a second top-level entry behind.
+
+    pytr writes a cumulative export on every run: same filename, different bytes.
+    Paperless deduplicates on checksum, so each run adds another document that fully
+    contains the previous one. Merging them as versions keeps one list entry whose
+    current version is the newest export, with the older ones still reachable.
+
+    Exit codes: 0 on success and when there is nothing to merge, 1 on any API error.
+
+    Env: PAPERLESS_URL, PAPERLESS_API_TOKEN, ROOT_DOCUMENT_ID, CSV_FILENAME
+    """
+    import json
+    import os
+    import sys
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    BASE = os.environ["PAPERLESS_URL"].rstrip("/")
+    TOKEN = os.environ["PAPERLESS_API_TOKEN"]
+    ROOT_ID = int(os.environ["ROOT_DOCUMENT_ID"])
+    FILENAME = os.environ.get("CSV_FILENAME", "account_transactions.csv")
+
+
+    def api(path, payload=None):
+        url = f"{BASE}{path}"
+        data = json.dumps(payload).encode() if payload is not None else None
+        req = urllib.request.Request(url, data=data, method="POST" if data else "GET")
+        req.add_header("Authorization", f"Token {TOKEN}")
+        req.add_header("Accept", "application/json")
+        if data:
+            req.add_header("Content-Type", "application/json")
+        try:
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                return json.loads(resp.read() or b"{}")
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode(errors="replace")[:500]
+            print(f"ERROR {exc.code} on {path}: {body}", flush=True)
+            raise
+
+
+    def first_transaction(content):
+        """The first data row, i.e. the oldest booking, or None if there is none.
+
+        Every export starts at the account's first booking, so this row is identical
+        across all exports of one account and differs between accounts. That makes it
+        the fingerprint that says whether a new export continues this chain, without
+        the job having to be told anything about the account or its holder.
+        """
+        rows = [line.strip() for line in (content or "").splitlines() if line.strip()]
+        return rows[1] if len(rows) > 1 else None
+
+
+    def main():
+        # The document list endpoint only ever returns top-level documents, so versions
+        # that were merged in on an earlier run cannot show up here again.
+        query = urllib.parse.urlencode(
+            {"original_filename__iexact": FILENAME, "page_size": 100},
+        )
+        candidates = api(f"/api/documents/?{query}").get("results", [])
+
+        if not any(doc["id"] == ROOT_ID for doc in candidates):
+            print(
+                f"Document {ROOT_ID} is not a top-level document named {FILENAME}. "
+                f"Refusing to merge into it.",
+                flush=True,
+            )
+            return 1
+
+        fingerprint = first_transaction(api(f"/api/documents/{ROOT_ID}/").get("content"))
+        if fingerprint is None:
+            print(f"Document {ROOT_ID} has no transaction rows to compare against.")
+            return 1
+
+        # Several accounts export under this one filename, so a candidate is only ours
+        # when it starts at the same booking. Skipping on anything else is the safe
+        # direction: a skipped export can be merged by hand, a wrongly merged one mixes
+        # two accounts into one history.
+        to_merge = []
+        for doc in candidates:
+            if doc["id"] == ROOT_ID:
+                continue
+            detail = api(f"/api/documents/{doc['id']}/")
+            if first_transaction(detail.get("content")) != fingerprint:
+                print(
+                    f"Skipping document {doc['id']}: it starts at a different booking, "
+                    f"so it belongs to another account.",
+                    flush=True,
+                )
+                continue
+            to_merge.append((detail.get("added") or "", doc["id"]))
+
+        if not to_merge:
+            print(f"Nothing to merge into document {ROOT_ID}.", flush=True)
+            return 0
+
+        # Oldest first: every merged document gets the next version_index, and the highest
+        # index counts as the current version. Feeding them in reverse would make an
+        # outdated export the one that Paperless shows and indexes.
+        to_merge.sort()
+        ids = [doc_id for _, doc_id in to_merge]
+
+        print(f"Merging {ids} as versions of document {ROOT_ID}.", flush=True)
+        api(
+            "/api/documents/merge_as_versions/",
+            {"documents": [ROOT_ID, *ids], "root_document_id": ROOT_ID},
+        )
+        print("Merge accepted.", flush=True)
+        return 0
+
+
+    if __name__ == "__main__":
+        try:
+            sys.exit(main())
+        except urllib.error.URLError as exc:
+            print(f"ERROR talking to {BASE}: {exc}", flush=True)
+            sys.exit(1)
+{{- end }}

@@ -1,0 +1,60 @@
+{{- if .Values.pytr.csvVersions.enabled }}
+{{- /*
+  Keeps Paperless from accumulating one top-level account_transactions.csv per pytr run.
+  The export is cumulative and its bytes change every time, so checksum deduplication
+  never rejects it; each run would otherwise leave another document that fully contains
+  the previous one. This job folds the new ones into the configured root document as
+  versions, which Paperless supports for documents that already exist.
+
+  Scheduled after the download job rather than triggered by it: Paperless consumes the
+  files asynchronously at roughly one document every five seconds, so the CSV is not in
+  the archive when pytr exits.
+*/ -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.appName }}-csv-versions
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+    component: csv-versions
+spec:
+  schedule: {{ .Values.pytr.csvVersions.schedule | quote }}
+  suspend: {{ .Values.pytr.csvVersions.suspend }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: {{ .Values.appName }}
+            component: csv-versions
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: csv-versions
+            image: {{ .Values.pytr.csvVersions.image }}
+            command: ["python3", "/scripts/merge_csv_versions.py"]
+            env:
+            - name: PAPERLESS_URL
+              value: {{ .Values.pytr.csvVersions.paperlessUrl | quote }}
+            - name: ROOT_DOCUMENT_ID
+              value: {{ required "pytr.csvVersions.rootDocumentId must be set per instance" .Values.pytr.csvVersions.rootDocumentId | quote }}
+            - name: CSV_FILENAME
+              value: {{ .Values.pytr.csvVersions.csvFilename | quote }}
+            envFrom:
+            - secretRef:
+                name: {{ .Values.appName }}-paperless
+            volumeMounts:
+            - name: csv-version-script
+              mountPath: /scripts
+              readOnly: true
+          volumes:
+          - name: csv-version-script
+            configMap:
+              name: {{ .Values.appName }}-csv-version-script
+{{- end }}
