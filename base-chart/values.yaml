@@ -644,6 +644,20 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "17"  # Deploy after Home Assistant components
+  venice-autobook:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/calendar.svg"
+      subtitle: "Auto-book gym classes"
+      displayName: "Venice Autobook"
+      subdomain: "venice-autobook"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "18"
   sonarr:
     enabled: false
     homer:

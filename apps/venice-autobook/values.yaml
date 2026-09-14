@@ -1,0 +1,35 @@
+generic:
+  configMaps:
+    venice-autobook-config:
+      # rules.yaml, tokens.json and autobook.db all live on the mounted PVC.
+      VB_CONFIG_DIR: "/data"
+      VB_DATA_DIR: "/data"
+  externalSecrets:
+    venice-autobook-secret:
+      - VB_USERNAME: "/venice-autobook/VB_USERNAME"
+      - VB_PASSWORD: "/venice-autobook/VB_PASSWORD"
+      - NTFY_URL: "/venice-autobook/NTFY_URL"
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.1.0
+    imagePullSecrets:
+      - regcred-secondary
+    ports:
+      - containerPort: 8080
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~
+        backup:
+          enabled: true
+    envFrom:
+      configMapRef: venice-autobook-config
+      secretRef: venice-autobook-secret
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: venice-autobook
+        port: 8080
+        oauth: true
