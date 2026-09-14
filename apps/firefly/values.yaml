@@ -46,3 +46,6 @@ generic:
       - subdomain: firefly
         port: 8080
         oauth: true
+        # Firefly ships its own SecurityPolicy (firefly-sso), so opt this route out
+        # of global.oidc.defaultGroups to avoid two policies on one HTTPRoute.
+        noDefaultGroups: true

@@ -26,6 +26,13 @@
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
 
     {{- range $index, $ingress := .Values.ingress.https }}
+    {{- /* Route groups; falls back to global.oidc.defaultGroups unless the route
+           opts out via noDefaultGroups (used by apps that ship their own
+           SecurityPolicy, e.g. firefly). */ -}}
+    {{- $groups := $ingress.groups }}
+    {{- if not $ingress.noDefaultGroups }}
+      {{- $groups = $ingress.groups | default (($.Values.global.oidc | default dict).defaultGroups) }}
+    {{- end }}
     {{- if not $ingress.oauth }}
 
 ---
@@ -43,7 +50,7 @@ spec:
       name: {{ $appName }}-https-{{ $ingress.port }}-{{ $index }}
   authorization:
     defaultAction: Allow
-    {{- else if $ingress.groups }}
+    {{- else if $groups }}
     {{- $oidc := required "global.oidc must be set" $.Values.global.oidc }}
     {{- $issuer := required "global.oidc.issuerUrl must be set" $oidc.issuerUrl }}
 
@@ -94,7 +101,7 @@ spec:
               - name: "cognito:groups"
                 valueType: StringArray
                 values:
-{{- toYaml $ingress.groups | nindent 18 }}
+{{- toYaml $groups | nindent 18 }}
     {{- end }}
     {{- end }}
   {{- end }}
