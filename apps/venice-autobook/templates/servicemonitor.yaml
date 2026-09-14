@@ -1,0 +1,20 @@
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: venice-autobook-monitor
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: venice-autobook
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+  namespaceSelector:
+    matchNames:
+      - argocd
+{{- end }}
