@@ -10,7 +10,7 @@ generic:
       - VB_PASSWORD: "/venice-autobook/VB_PASSWORD"
       - NTFY_URL: "/venice-autobook/NTFY_URL"
   deployment:
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.1.0
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.2.0
     imagePullSecrets:
       - regcred-secondary
     ports:
