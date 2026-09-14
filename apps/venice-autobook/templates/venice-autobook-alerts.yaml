@@ -1,0 +1,76 @@
+{{- /*
+  Alert rules live with the app, alongside the ServiceMonitor whose metrics they
+  read - the metric and the alert cannot be enabled separately. These back up the
+  app's own ntfy/email alerts: if the app is down or cannot notify, Prometheus
+  still catches the failure.
+*/}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: venice-autobook-alerts
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on; without it the rules never load.
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  groups:
+  - name: venice-autobook-alerts
+    interval: 1m
+    rules:
+    - alert: VeniceAutobookLoginBroken
+      annotations:
+        summary: "venice-autobook cannot log in to the studio"
+        description: |
+          venice_autobook_auth_ok has been 0 for 15m: authentication to the studio
+          is failing, so no class will be booked until the credentials are fixed
+          (check /zimmermann.lat/venice-autobook/VB_PASSWORD, or a changed password
+          / new 2FA).
+      expr: venice_autobook_auth_ok == 0
+      for: 15m
+      labels:
+        severity: critical
+    - alert: VeniceAutobookSyncStale
+      annotations:
+        summary: "venice-autobook has not synced the class plan recently"
+        description: |
+          No successful schedule sync in over an hour. Upcoming classes may not be
+          armed - check the pod and the studio API.
+      expr: venice_autobook_last_sync_timestamp_seconds > 0
+        and (time() - venice_autobook_last_sync_timestamp_seconds) > 3600
+      for: 15m
+      labels:
+        severity: warning
+    - alert: VeniceAutobookMissedBooking
+      annotations:
+        summary: "venice-autobook missed a booking window"
+        description: |
+          A class booking window passed without a booking (the service was likely
+          down at the fire moment). The seat was not taken.
+      expr: increase(venice_autobook_outcomes_total{result="missed"}[1h]) > 0
+      labels:
+        severity: critical
+    - alert: VeniceAutobookBookingFailed
+      annotations:
+        summary: "venice-autobook failed to book a class"
+        description: |
+          A booking attempt failed (full without a waitlist, or an API error).
+          Check the app's activity log.
+      expr: increase(venice_autobook_outcomes_total{result="failed"}[1h]) > 0
+      labels:
+        severity: warning
+    - alert: VeniceAutobookTargetDown
+      annotations:
+        summary: "venice-autobook is not being scraped"
+        description: |
+          Prometheus has not been able to scrape venice-autobook /metrics for 15m -
+          the pod may be down, which means bookings will be missed.
+      expr: absent(venice_autobook_auth_ok)
+      for: 15m
+      labels:
+        severity: critical
+{{- end }}
