@@ -649,7 +649,7 @@ apps:
     homer:
       enabled: true
       group: "productivity"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/calendar.svg"
+      logo: "https://www.venicebeach-fitness.de/assets/tpl/favicon/vaficon_180x180_light_blue.png"
       subtitle: "Auto-book gym classes"
       displayName: "Venice Autobook"
       subdomain: "venice-autobook"
