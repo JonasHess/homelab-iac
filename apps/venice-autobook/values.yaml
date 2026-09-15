@@ -11,7 +11,7 @@ generic:
       - NTFY_URL: "/venice-autobook/NTFY_URL"
       - SMTP_PASSWORD: "/venice-autobook/SMTP_PASSWORD"
   deployment:
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.3.2
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.3.3
     imagePullSecrets:
       - regcred-secondary
     ports:
