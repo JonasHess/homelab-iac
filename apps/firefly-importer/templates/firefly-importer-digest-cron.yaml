@@ -133,7 +133,21 @@ data:
     # importer's log too and keep only what is NOT routine duplicate noise:
     # a115 = "already exists" (external_id), a117 = same by content. Both expected
     # every night because the bank re-offers a rolling window.
-    attempted, finished, real_errors = [], [], []
+    #
+    # An empty download is the other routine non-event. A bank that simply had no
+    # new booking makes the importer log "Zero transactions!" AND abort the config
+    # with "Too many errors in the data conversion (1)", so one quiet account
+    # produces two alarming lines every night. Both are dropped, but only for the
+    # config that was empty: a second config failing for a real reason still shows.
+    ZERO_DOWNLOAD = re.compile(r"Zero transactions!|\[eb003\]|\[a111\]")
+    # The importer aborts a config as soon as ONE conversion error exists (the
+    # "too many" wording is misleading), and the number in the message is that
+    # error count. "(1)" next to an empty download therefore means the empty
+    # download was the only thing wrong; a higher count means something else
+    # failed as well, so the message is kept.
+    TOO_MANY      = re.compile(r"Too many errors in the data conversion \((\d+)\)")
+    attempted, finished = [], []
+    per_config = {}   # config file -> error lines logged while that config ran
     try:
         sa   = "/var/run/secrets/kubernetes.io/serviceaccount"
         ns   = open(f"{sa}/namespace").read().strip()
@@ -157,16 +171,36 @@ data:
         # The Enable Banking debug dumps are enormous, so a line cap can miss the run
         # entirely; take everything since shortly before the import instead.
         log  = k8s(f"/api/v1/namespaces/{ns}/pods/{name}/log?sinceSeconds={LOG_SECONDS}")
+        # The importer processes one config at a time and every line between two
+        # "importable" markers belongs to that config, which is what allows the
+        # empty-download noise to be judged and suppressed per account below.
+        current = "(before the first import)"
         for ln in log.splitlines():
             m = re.search(r'importable "/import/([^"]+)"', ln)
-            if m: attempted.append(m.group(1))
+            if m:
+                current = m.group(1)
+                attempted.append(current)
             m = re.search(r'Created event ImportedTransactions\("([^"]+)"\)', ln)
             if m: finished.append(m.group(1))
             if "production.ERROR" in ln and "[a115]" not in ln and "[a117]" not in ln \
                and "Exit code is GENERAL_ERROR" not in ln:
-                real_errors.append(re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180])
+                msg = re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180]
+                per_config.setdefault(current, []).append(msg)
     except Exception as e:                       # never let monitoring break the digest
-        real_errors.append(f"(could not read importer log: {e})")
+        per_config.setdefault("(digest)", []).append(f"(could not read importer log: {e})")
+
+    real_errors = []
+    for cfg, msgs in per_config.items():
+        empty = any(ZERO_DOWNLOAD.search(m) for m in msgs)
+        for m in msgs:
+            if empty and ZERO_DOWNLOAD.search(m):
+                continue
+            hit = TOO_MANY.search(m)
+            if empty and hit and hit.group(1) == "1":
+                continue
+            # Name the config. Several banks are imported in one run, and an error
+            # on its own does not say which connection needs attention.
+            real_errors.append(m if cfg.startswith("(") else f"{cfg}: {m}")
 
     aborted = [c for c in dict.fromkeys(attempted) if c not in finished]
     # A pod restart between the import and this job wipes the log, and "no errors
