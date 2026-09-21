@@ -2,6 +2,7 @@
 {{- $agent := .Values.agent | default dict }}
 {{- if $agent.enabled }}
 {{- $agentSecret := printf "%s-agent-env" $appName }}
+{{- $smartDevices := (($agent.smart | default dict).devices | default list) }}
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -24,13 +25,24 @@ spec:
       hostNetwork: true
       hostPID: true
       # ClusterFirstWithHostNet lets the pod use cluster DNS even though
-      # it shares the host's network namespace — needed so HUB_URL can
+      # it shares the host's network namespace, needed so HUB_URL can
       # resolve via the in-cluster Service name.
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: agent
-          image: {{ $agent.image | default "henrygd/beszel-agent:0.18.7" }}
+          image: {{ $agent.image | default "henrygd/beszel-agent:0.20.0-alpine" }}
           imagePullPolicy: IfNotPresent
+          {{- if $smartDevices }}
+          securityContext:
+            capabilities:
+              add:
+                # smartctl issues raw pass-through commands to the drive.
+                # SYS_RAWIO covers SATA/ATA, NVMe additionally needs
+                # SYS_ADMIN; without them every device reads back as
+                # "Permission denied" and the hub shows no disk health.
+                - SYS_RAWIO
+                - SYS_ADMIN
+          {{- end }}
           env:
             - name: LISTEN
               value: {{ $agent.listen | default "45876" | quote }}
@@ -38,21 +50,44 @@ spec:
               value: {{ required "agent.hubUrl must be set" $agent.hubUrl | quote }}
           # KEY (hub pubkey, for verifying hub signatures) and TOKEN
           # (Universal Token, for self-registration) are populated by the
-          # bootstrap Job — see templates/bootstrap-script.yaml.
+          # bootstrap Job, see templates/bootstrap-script.yaml.
           envFrom:
             - secretRef:
                 name: {{ $agentSecret }}
-          {{- if $agent.containerSocket }}
           volumeMounts:
+            # The agent generates the fingerprint it registers with once and
+            # keeps it here. On ephemeral storage it would present a new one
+            # after every pod replacement and the hub would refuse the
+            # reconnect with "fingerprint mismatch", so this must outlive
+            # the pod.
+            - name: data
+              mountPath: /var/lib/beszel-agent
+            {{- if $agent.containerSocket }}
             - name: container-socket
               mountPath: /var/run/docker.sock
               readOnly: true
-          {{- end }}
-      {{- if $agent.containerSocket }}
+            {{- end }}
+            {{- range $smartDevices }}
+            - name: {{ printf "smart-%s" (base .) }}
+              mountPath: {{ . | quote }}
+            {{- end }}
       volumes:
+        - name: data
+          hostPath:
+            path: {{ required "agent.dataHostPath must be set" $agent.dataHostPath | quote }}
+            type: DirectoryOrCreate
+        {{- if $agent.containerSocket }}
         - name: container-socket
           hostPath:
             path: {{ $agent.containerSocket | quote }}
             type: Socket
-      {{- end }}
+        {{- end }}
+        {{- range $smartDevices }}
+        - name: {{ printf "smart-%s" (base .) }}
+          hostPath:
+            # Deliberately untyped: an NVMe controller (/dev/nvme0) is a
+            # character device while a SATA disk (/dev/sda) is a block
+            # device, so no single hostPath type validates both.
+            path: {{ . | quote }}
+        {{- end }}
 {{- end }}

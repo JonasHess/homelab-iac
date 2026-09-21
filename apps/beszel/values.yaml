@@ -42,11 +42,28 @@ bootstrap:
 # Agent DaemonSet — off by default; opt in per environment.
 agent:
   enabled: false
-  image: henrygd/beszel-agent:0.20.0
+  # The -alpine variant is the only agent image carrying smartctl, which
+  # is what produces the disk-health panel. The plain image is distroless
+  # and silently reports no drives. Keep the version in sync with the hub.
+  image: henrygd/beszel-agent:0.20.0-alpine
   listen: "45876"
   # Cluster-internal Service URL. Agents reach it via cluster DNS
   # (the DaemonSet sets dnsPolicy: ClusterFirstWithHostNet so cluster
   # DNS resolves alongside hostNetwork).
   hubUrl: http://beszel-service.argocd.svc.cluster.local:8090
-  # Host runtime socket — optional. Host CPU/RAM/disk work without it.
+  # Node-local directory holding the agent's fingerprint. It identifies the
+  # agent to the hub for the lifetime of the registration, so it has to
+  # survive pod replacement; a fresh one is rejected as a mismatch until
+  # the stale fingerprint is dropped on the hub.
+  dataHostPath: /var/lib/beszel-agent
+  # Docker or Podman socket, optional. Host CPU/RAM/disk work without it.
+  # A containerd socket does not work here: container metrics are read over
+  # the Docker HTTP API and containerd only serves CRI over gRPC, so on a
+  # containerd-only node (k3s, microk8s) there is nothing to point this at.
   containerSocket: ~
+  smart:
+    # Drives to expose for S.M.A.R.T., as base controllers (/dev/nvme0,
+    # /dev/sda). A namespace or partition (/dev/nvme0n1, /dev/sda1) carries
+    # no health data and yields an empty panel. Each entry is passed through
+    # to the container and enables the raw-IO capabilities it needs.
+    devices: []

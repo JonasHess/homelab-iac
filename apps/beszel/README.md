@@ -23,9 +23,14 @@ apps:
                   hostPath: /mnt/<storage>/apps/beszel/data
           agent:
             enabled: true
-            containerSocket: /var/snap/microk8s/common/run/containerd.sock  # microk8s
-            # containerSocket: /var/run/docker.sock                          # Docker
-            # containerSocket: ~                                             # host metrics only
+            # Docker or Podman only. A containerd node (k3s, microk8s) has
+            # no socket that works here, so leave it unset there.
+            containerSocket: ~
+            # containerSocket: /var/run/docker.sock
+            smart:
+              # Base controllers, never namespaces or partitions.
+              devices:
+              - /dev/nvme0
 ```
 
 Then on the node:
@@ -43,7 +48,11 @@ Push, ArgoCD syncs, agent self-registers within ~30 s. Reachable at `https://bes
 |---|---|---|---|
 | Hub | Deployment | `henrygd/beszel` | Web UI + PocketBase at `/beszel_data`. Auto-creates admin from `USER_EMAIL`/`USER_PASSWORD`/`AUTO_LOGIN` env. |
 | Bootstrap | Job (`hook: Sync`) | `alpine:3.20` | Reads/enables Universal Token + writes Secret `beszel-agent-env`. Idempotent. |
-| Agent | DaemonSet | `henrygd/beszel-agent` | `hostNetwork`+`hostPID`. `envFrom` Secret. Connects via `dnsPolicy: ClusterFirstWithHostNet` to `http://beszel-service.argocd.svc.cluster.local:8090`. |
+| Agent | DaemonSet | `henrygd/beszel-agent:*-alpine` | `hostNetwork`+`hostPID`. `envFrom` Secret. Connects via `dnsPolicy: ClusterFirstWithHostNet` to `http://beszel-service.argocd.svc.cluster.local:8090`. Keeps its fingerprint on a node-local `hostPath` (`agent.dataHostPath`). |
+
+The agent runs the `-alpine` image rather than the default one because that is the only variant shipping `smartctl`. Listing a drive under `agent.smart.devices` passes it into the container and grants `SYS_RAWIO`/`SYS_ADMIN`, which raw pass-through commands to the drive require.
+
+Container metrics work only against a Docker or Podman socket. A node whose only runtime is containerd (k3s, microk8s) cannot supply them at all, since containerd speaks CRI over gRPC and the agent speaks the Docker HTTP API.
 
 The hub's admin password is hardcoded in the chart because external access is OIDC-gated and `AUTO_LOGIN` skips Beszel's login screen — the password is only ever used by the bootstrap Job inside the cluster.
 
@@ -68,7 +77,9 @@ Fresh PocketBase, fresh keypair, Job repopulates the Secret, agent re-registers.
 | Agent `invalid signature - check KEY value` | Hub keypair was regenerated but Secret has the old pubkey — `kubectl -n argocd delete secret beszel-agent-env`, then re-sync |
 | Agent `unexpected status code: 401` | Universal Token in Secret no longer matches the hub's — same fix as above |
 | Bootstrap Job `auth failed` | data.db has a pre-existing admin that doesn't match the chart's `USER_EMAIL`/`USER_PASSWORD` — wipe per the Reset section |
-| No container stats on microk8s | Expected — Beszel reads Docker's API. Host CPU/RAM/disk still work. |
+| Agent `connection closed, code=1000, reason=fingerprint mismatch` | The agent presents a fingerprint the hub has on file for a different one. Delete the system's fingerprint under Settings > Tokens & Fingerprints in the hub, and make sure `agent.dataHostPath` is set so the next one sticks. |
+| No container stats on microk8s | Expected, containerd cannot serve them. Host CPU/RAM/disk/SMART still work. |
+| SMART panel empty | Agent image is not an `-alpine` variant (no `smartctl`), or the drive is missing from `agent.smart.devices`, or a namespace/partition was listed instead of the controller. |
 
 ## Versions
 
