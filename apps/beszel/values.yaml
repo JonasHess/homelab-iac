@@ -62,8 +62,11 @@ agent:
   # containerd-only node (k3s, microk8s) there is nothing to point this at.
   containerSocket: ~
   smart:
-    # Drives to expose for S.M.A.R.T., as base controllers (/dev/nvme0,
-    # /dev/sda). A namespace or partition (/dev/nvme0n1, /dev/sda1) carries
-    # no health data and yields an empty panel. Each entry is passed through
-    # to the container and enables the raw-IO capabilities it needs.
+    # Drives to expose for S.M.A.R.T. The controller (/dev/nvme0, /dev/sda)
+    # is what answers the queries, but the agent probes whichever node it
+    # derived the mounted filesystem from, so an NVMe usually needs its
+    # namespace (/dev/nvme0n1) listed as well. A partition (/dev/sda1,
+    # /dev/nvme0n1p2) never carries health data. Listing anything here also
+    # puts the agent in privileged mode, which is the only way a container
+    # is allowed to open a disk at all.
     devices: []

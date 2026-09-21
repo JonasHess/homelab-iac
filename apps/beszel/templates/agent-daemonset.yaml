@@ -34,12 +34,17 @@ spec:
           imagePullPolicy: IfNotPresent
           {{- if $smartDevices }}
           securityContext:
+            # Mounting a device node grants no right to open it: the device
+            # cgroup still refuses everything outside its default set, so
+            # smartctl gets EPERM as root holding SYS_RAWIO and SYS_ADMIN.
+            # Only privileged mode opens the cgroup up, and outside of a
+            # device plugin there is no narrower way to hand a disk to a
+            # container. The capabilities are what smartctl then needs to
+            # issue raw pass-through commands: SYS_RAWIO for SATA/ATA,
+            # SYS_ADMIN additionally for NVMe.
+            privileged: true
             capabilities:
               add:
-                # smartctl issues raw pass-through commands to the drive.
-                # SYS_RAWIO covers SATA/ATA, NVMe additionally needs
-                # SYS_ADMIN; without them every device reads back as
-                # "Permission denied" and the hub shows no disk health.
                 - SYS_RAWIO
                 - SYS_ADMIN
           {{- end }}
