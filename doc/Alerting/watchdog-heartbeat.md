@@ -185,6 +185,37 @@ elsewhere for optional globals, rather than making every consumer create a check
    Do this while watching. Alerting is down throughout, and the cluster is left without
    self-healing until step 1 is reversed.
 
+## A second switch: the nightly import digest
+
+The Firefly III import digest (`apps/firefly-importer`, CronJob `firefly-importer-digest`)
+needs the same treatment, for the same reason in a different shape. It mails only when
+something needs attention, so a healthy night is silent - and so is a suspended CronJob, a
+job that crashes before the mail, and a mailbox that stopped accepting logins. Without a
+heartbeat those four states are indistinguishable, and the failure is the quiet kind: the
+import could be dead for weeks while the inbox looks reassuringly normal.
+
+The setup is the one described above, with three differences:
+
+1. **Period and grace.** The job runs once a day, so the check needs a period of 1 day and a
+   grace time of a few hours. A period shorter than the schedule turns the check red every
+   day by definition.
+2. **Akeyless path.** `/<global.akeyless.path>/firefly/DIGEST_HEARTBEAT_URL`, kept separate
+   from `firefly-importer-secret` on purpose: a key missing from that shared ExternalSecret
+   fails the sync of every other importer credential along with it.
+3. **The repository change is one flag.** Once the secret exists, set
+
+   ```yaml
+   digest:
+     heartbeat:
+       enabled: true
+   ```
+
+   in the environment's values. That renders the ExternalSecret and hands the URL to the job.
+   Enabling it before the secret exists leaves the job unable to start.
+
+The script pings only after the mail is out, or after it decides no mail is needed. A run
+that fails earlier deliberately leaves the check to go red.
+
 ## Alternative destination
 
 A second PagerDuty service with a heartbeat-style integration also works and keeps everything

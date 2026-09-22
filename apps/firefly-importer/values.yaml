@@ -58,10 +58,13 @@ digest:
   schedule: "30 4 * * *"
   image: python:3.14-slim
   # An account is flagged only when its silence exceeds BOTH this absolute floor
-  # and staleMultiplier x its own median gap between transactions. A fixed day
-  # count cannot work: some accounts move daily, others a few times a year.
+  # and the longest stretch that account has already been quiet in its own
+  # history. A fixed day count cannot work: some accounts move daily, others a
+  # few times a year.
   staleDays: 3
-  staleMultiplier: 4
+  # Ceiling for that per-account limit, so one long dormant stretch in an
+  # account's past cannot excuse an unlimited silence in its present.
+  staleMaxDays: 60
   # How far back to scan the importer log. Must comfortably cover the nightly run;
   # a line-count cap does not, because the Enable Banking debug output is huge.
   logSeconds: 43200
@@ -71,3 +74,13 @@ digest:
   # Accounts that are not nightly-imported and would otherwise be flagged forever
   # (manually refreshed depots, closed cards). Exact account names.
   ignoreStale: []
+  # Dead man's switch for this job. Because a healthy night sends no mail at all,
+  # a suspended CronJob, a crashed run and a dead mailbox are indistinguishable
+  # from "nothing to report"; only a ping that stops arriving tells them apart.
+  # A successful run pings the URL from /<akeyless path>/firefly/DIGEST_HEARTBEAT_URL.
+  # Create that entry and the check itself BEFORE enabling this, otherwise the
+  # ExternalSecret never syncs and the job cannot start. The check's period must
+  # exceed the schedule above (daily), so period 1 day with a grace of a few hours.
+  # doc/Alerting/watchdog-heartbeat.md walks through setting one up.
+  heartbeat:
+    enabled: false

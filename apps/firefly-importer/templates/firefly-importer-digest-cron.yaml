@@ -55,7 +55,7 @@ data:
     BASE  = os.environ["FIREFLY_III_URL"].rstrip("/")
     TOKEN = os.environ["FIREFLY_III_ACCESS_TOKEN"]
     STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
-    MULT  = int(os.environ.get("DIGEST_STALE_MULTIPLIER", "4")) # x the account's median gap
+    CAP   = int(os.environ.get("DIGEST_STALE_MAX_DAYS", "60"))  # absolute ceiling
     LOG_SECONDS = int(os.environ.get("DIGEST_LOG_SECONDS", "43200"))  # log window to scan (12h)
     # Accounts that legitimately go quiet (manually maintained, dormant). Without
     # this they would trip the staleness check every single night, and a warning
@@ -70,6 +70,24 @@ data:
             headers={"Authorization": "Bearer " + TOKEN, "Accept": "application/json"})
         with urllib.request.urlopen(req, timeout=60) as r:
             return json.load(r)
+
+    def heartbeat():
+        """Tell the dead man's switch this run finished.
+
+        A healthy night sends no mail, so an absent mail is not evidence of
+        anything: a suspended CronJob, a crashed job and an unreachable mailbox
+        all look exactly like "nothing to report". The far end alerts when this
+        ping stops arriving, which is the only way that difference becomes
+        visible. Called on the paths that got all the way through and nowhere
+        else - a run that dies before the mail is out must NOT keep it green.
+        """
+        url = os.environ.get("DIGEST_HEARTBEAT_URL", "")
+        if not url:
+            return
+        try:
+            urllib.request.urlopen(url, timeout=10).read()
+        except Exception as e:   # a missed ping is not worth failing the job over
+            print(f"heartbeat ping failed: {e}")
 
     today = datetime.date.today()
     since = today - datetime.timedelta(days=max(1, WINDOW // 24))
@@ -88,18 +106,23 @@ data:
             break
         page += 1
 
-    # A fixed "silent for N days" rule is useless here: PSD sees traffic daily,
-    # the rental accounts a few times a month, SpaceX never. So each account is
-    # judged against its OWN rhythm - the median gap between its transactions -
-    # and only flagged when the current silence is several times that.
-    def rhythm(aid):
+    # A fixed "silent for N days" rule is useless here: the giro accounts see
+    # traffic daily, the rental accounts once a month, SpaceX never. So each
+    # account is judged against its OWN history: the longest stretch it has
+    # already been quiet without anything being wrong. Only a silence longer
+    # than that is evidence of a problem.
+    #
+    # The average gap is the wrong statistic for this. Rent accounts book several
+    # times on one day and then nothing for a month, so their median gap is a few
+    # days while a perfectly healthy quiet stretch is four weeks - a multiple of
+    # the median flags them every month for being normal.
+    def quiet_record(aid):
         d = api(f"/api/v1/accounts/{aid}/transactions?limit=60")
         ds = sorted({s["date"][:10] for t in d["data"] for s in t["attributes"]["transactions"]})
         if len(ds) < 6:
             return None                       # too little history to judge
         dts  = [datetime.date.fromisoformat(x) for x in ds]
-        gaps = sorted((dts[i+1] - dts[i]).days for i in range(len(dts)-1))
-        return max(1, gaps[len(gaps)//2])     # median gap in days
+        return max((dts[i+1] - dts[i]).days for i in range(len(dts)-1))
 
     rows, stale = [], []
     for a in api("/api/v1/accounts?type=asset&limit=200")["data"]:
@@ -112,12 +135,14 @@ data:
         rows.append((at["name"], n, last or "-", age))
         if age is None or at["name"] in IGNORE:
             continue
-        med = rhythm(a["id"])
-        if med is None:
+        rec = quiet_record(a["id"])
+        if rec is None:
             continue
-        limit = max(STALE, MULT * med)
+        # The cap matters for an account that was dormant once: without it, a
+        # single six-month gap in its history would excuse any future silence.
+        limit = max(STALE, min(rec, CAP))
         if age > limit:
-            stale.append((at["name"], last, age, med, limit))
+            stale.append((at["name"], last, age, rec, limit))
 
     rows.sort(key=lambda r: (-r[1], r[0]))
     # Deliberately no balances: this mail answers "did the import run?", and
@@ -130,15 +155,27 @@ data:
     # --- what the importer itself did last run -------------------------------
     # The digest can only see what arrived. A run that aborts (expired consent) or
     # a line rejected for a real reason leaves no trace in the data, so read the
-    # importer's log too and keep only what is NOT routine duplicate noise:
-    # a115 = "already exists" (external_id), a117 = same by content. Both expected
-    # every night because the bank re-offers a rolling window.
+    # importer's log too and keep only what is NOT routine noise (see below).
     #
-    # An empty download is the other routine non-event. A bank that simply had no
-    # new booking makes the importer log "Zero transactions!" AND abort the config
-    # with "Too many errors in the data conversion (1)", so one quiet account
-    # produces two alarming lines every night. Both are dropped, but only for the
-    # config that was empty: a second config failing for a real reason still shows.
+    # Lines the importer logs at ERROR level that do not mean anything failed:
+    #   a115/a117 - transaction already exists, by external_id and by content. Every
+    #               night, because the bank re-offers a rolling window.
+    #   "Exit code" - logged through the error channel for EVERY outcome, SUCCESS
+    #               included. A genuinely fatal exit always writes a readable error
+    #               line of its own right before it, so nothing is lost by dropping
+    #               these; the one exception, an empty /import directory, is caught
+    #               by the "no import run found" check further down.
+    #   "tag"     - the import tag is created per run and reused for every following
+    #               transaction, so Firefly III rejects the create as a duplicate
+    #               name. The tag is attached to the transaction regardless.
+    NOT_A_FAILURE = ("[a115]", "[a117]", "Exit code is ", '{"tag":[')
+    #
+    # An empty download is the other routine non-event, and needs more than a
+    # text match. A bank that simply had no new booking makes the importer log
+    # "Zero transactions!" AND abort the config with "Too many errors in the data
+    # conversion (1)", so one quiet account produces two alarming lines every
+    # night. Both are dropped, but only for the config that was empty: a second
+    # config failing for a real reason still shows.
     ZERO_DOWNLOAD = re.compile(r"Zero transactions!|\[eb003\]|\[a111\]")
     # The importer aborts a config as soon as ONE conversion error exists (the
     # "too many" wording is misleading), and the number in the message is that
@@ -182,8 +219,7 @@ data:
                 attempted.append(current)
             m = re.search(r'Created event ImportedTransactions\("([^"]+)"\)', ln)
             if m: finished.append(m.group(1))
-            if "production.ERROR" in ln and "[a115]" not in ln and "[a117]" not in ln \
-               and "Exit code is GENERAL_ERROR" not in ln:
+            if "production.ERROR" in ln and not any(x in ln for x in NOT_A_FAILURE):
                 msg = re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180]
                 per_config.setdefault(current, []).append(msg)
     except Exception as e:                       # never let monitoring break the digest
@@ -225,15 +261,17 @@ data:
         if aborted:
             lines += ["Import did NOT complete for:"] + [f"  - {c}" for c in aborted]
         if real_errors:
-            lines += ["", "Errors (duplicate rejections excluded):"] + [f"  - {e}" for e in real_errors]
+            lines += ["", "Errors (routine noise excluded):"] + [f"  - {e}" for e in real_errors]
         if stale:
-            lines += ["", "Silent far longer than usual - check the bank connection:"]
-            lines += [f"  - {n}: last {d}, {a} days ago (usually every {m}d, flags above {l}d)"
+            lines += ["", "Silent longer than ever before - check the bank connection:"]
+            lines += [f"  - {n}: last {d}, {a} days ago "
+                      f"(longest quiet stretch so far {m}d, flags above {l}d)"
                       for n, d, a, m, l in stale]
 
     if not bits and not ALWAYS:
         print("nothing to report - no mail sent")
         print("\n".join(lines))
+        heartbeat()
         raise SystemExit(0)
 
     msg = EmailMessage()
@@ -250,6 +288,7 @@ data:
     print(subject)
     print()
     print("\n".join(lines))
+    heartbeat()
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -284,11 +323,15 @@ spec:
                     name: firefly-importer-config
                 - secretRef:
                     name: firefly-importer-secret
+                {{- if .Values.digest.heartbeat.enabled }}
+                - secretRef:
+                    name: firefly-importer-digest-heartbeat
+                {{- end }}
               env:
                 - name: DIGEST_STALE_DAYS
                   value: {{ .Values.digest.staleDays | quote }}
-                - name: DIGEST_STALE_MULTIPLIER
-                  value: {{ .Values.digest.staleMultiplier | quote }}
+                - name: DIGEST_STALE_MAX_DAYS
+                  value: {{ .Values.digest.staleMaxDays | quote }}
                 - name: DIGEST_LOG_SECONDS
                   value: {{ .Values.digest.logSeconds | quote }}
                 - name: DIGEST_IGNORE_STALE
