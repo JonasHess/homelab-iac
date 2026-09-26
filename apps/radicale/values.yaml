@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: tomsquest/docker-radicale:3.8.0.0
+    image: tomsquest/docker-radicale:3.8.1.1
     ports:
     - containerPort: 5232
     pvcMounts:
