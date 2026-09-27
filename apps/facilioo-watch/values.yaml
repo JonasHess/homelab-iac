@@ -1,0 +1,37 @@
+generic:
+  configMaps:
+    facilioo-watch-config:
+      # settings.yaml, template.yaml and watch.db all live on the mounted PVC.
+      FW_CONFIG_DIR: "/data"
+      FW_DATA_DIR: "/data"
+  externalSecrets:
+    facilioo-watch-secret:
+      - FW_FACILIOO_EMAIL: "/facilioo-watch/FW_FACILIOO_EMAIL"
+      - FW_FACILIOO_PASSWORD: "/facilioo-watch/FW_FACILIOO_PASSWORD"
+      - SMTP_PASSWORD: "/facilioo-watch/SMTP_PASSWORD"
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/facilioo-watch:v0.1.0
+    imagePullSecrets:
+      - regcred-secondary
+    ports:
+      - containerPort: 8080
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~
+        backup:
+          # The run history is the record of what was reported to whom; the
+          # rest is reconstructible from the portal.
+          enabled: true
+    envFrom:
+      configMapRef: facilioo-watch-config
+      secretRef: facilioo-watch-secret
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: facilioo-watch
+        port: 8080
+        oauth: true

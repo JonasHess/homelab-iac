@@ -658,6 +658,20 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "18"
+  facilioo-watch:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/homebox.svg"
+      subtitle: "Stalled property management processes"
+      displayName: "Facilioo Watch"
+      subdomain: "facilioo-watch"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "18"
   sonarr:
     enabled: false
     homer:
