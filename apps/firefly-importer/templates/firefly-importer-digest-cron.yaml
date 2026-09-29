@@ -56,6 +56,7 @@ data:
     TOKEN = os.environ["FIREFLY_III_ACCESS_TOKEN"]
     STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
     CAP   = int(os.environ.get("DIGEST_STALE_MAX_DAYS", "60"))  # absolute ceiling
+    MARGIN= float(os.environ.get("DIGEST_STALE_MARGIN", "1.25")) # slack on the record
     LOG_SECONDS = int(os.environ.get("DIGEST_LOG_SECONDS", "43200"))  # log window to scan (12h)
     # Accounts that legitimately go quiet (manually maintained, dormant). Without
     # this they would trip the staleness check every single night, and a warning
@@ -138,9 +139,12 @@ data:
         rec = quiet_record(a["id"])
         if rec is None:
             continue
-        # The cap matters for an account that was dormant once: without it, a
-        # single six-month gap in its history would excuse any future silence.
-        limit = max(STALE, min(rec, CAP))
+        # The margin matters for anything on a monthly cycle: its record gap IS
+        # one cycle, so a rent payment landing two days late would trip the alarm
+        # every time it happens. The cap matters in the other direction - for an
+        # account that was dormant once, a single six-month gap in its history
+        # would otherwise excuse any future silence.
+        limit = max(STALE, min(int(rec * MARGIN) + 1, CAP))
         if age > limit:
             stale.append((at["name"], last, age, rec, limit))
 
@@ -301,7 +305,9 @@ metadata:
 spec:
   schedule: {{ .Values.digest.schedule | quote }}
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 3
+  # A week of runs, because this job's pod log IS the mail it sent: with three,
+  # a Monday question about Thursday's digest has nothing left to read.
+  successfulJobsHistoryLimit: 7
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
@@ -332,6 +338,8 @@ spec:
                   value: {{ .Values.digest.staleDays | quote }}
                 - name: DIGEST_STALE_MAX_DAYS
                   value: {{ .Values.digest.staleMaxDays | quote }}
+                - name: DIGEST_STALE_MARGIN
+                  value: {{ .Values.digest.staleMargin | quote }}
                 - name: DIGEST_LOG_SECONDS
                   value: {{ .Values.digest.logSeconds | quote }}
                 - name: DIGEST_IGNORE_STALE

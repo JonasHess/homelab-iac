@@ -65,6 +65,10 @@ digest:
   # Ceiling for that per-account limit, so one long dormant stretch in an
   # account's past cannot excuse an unlimited silence in its present.
   staleMaxDays: 60
+  # Slack on top of the record, because for a monthly account the record gap is
+  # exactly one cycle: without it, rent arriving a couple of days late is enough
+  # to raise an alarm that the next day's import answers by itself.
+  staleMargin: 1.25
   # How far back to scan the importer log. Must comfortably cover the nightly run;
   # a line-count cap does not, because the Enable Banking debug output is huge.
   logSeconds: 43200
