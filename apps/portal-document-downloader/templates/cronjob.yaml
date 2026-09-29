@@ -58,13 +58,33 @@ spec:
             - secretRef:
                 name: {{ $portalName }}-credentials
             {{- end }}
+            {{- if $portalConfig.bluetooth }}
+            # Bluetooth is how a phone proves it is next to the machine showing
+            # a passkey QR code. The browser reaches the host's adapter through
+            # BlueZ on the host's system D-Bus, and the bus refuses messages
+            # from a container under the runtime's default AppArmor profile -
+            # the browser then sees no adapter and offers no QR code at all.
+            securityContext:
+              appArmorProfile:
+                type: Unconfined
+            {{- end }}
             volumeMounts:
             - name: downloads
               mountPath: /app/downloads
+            {{- if $portalConfig.bluetooth }}
+            - name: host-dbus
+              mountPath: /run/dbus/system_bus_socket
+            {{- end }}
           volumes:
           - name: downloads
             persistentVolumeClaim:
               claimName: {{ $appName }}-downloads-{{ $portalName }}-pvc
+          {{- if $portalConfig.bluetooth }}
+          - name: host-dbus
+            hostPath:
+              path: /run/dbus/system_bus_socket
+              type: Socket
+          {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

@@ -24,4 +24,10 @@ portalDocumentDownloader:
   #     secrets:
   #       TREUBAU_KURZNAME: /portal-document-downloader/TREUBAU_KURZNAME
   #       TREUBAU_PASSWORT: /portal-document-downloader/TREUBAU_PASSWORT
+  #
+  # A portal whose login needs a passkey from a phone can set
+  #   bluetooth: true
+  # to give it the host's Bluetooth: the host's D-Bus socket is mounted and the
+  # container runs without an AppArmor profile, which loosens its isolation -
+  # so only portals that need it should set it.
   portals: {}
