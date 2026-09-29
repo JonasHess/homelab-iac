@@ -1024,3 +1024,20 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "20"
+  tonie-studio:
+    enabled: false
+    homer:
+      enabled: true
+      group: "media"
+      # Same favicon as teddyCloud on purpose: the two belong together and sit
+      # side by side, and dashboard-icons has no entry for either.
+      logo: "https://raw.githubusercontent.com/toniebox-reverse-engineering/teddycloud/master/contrib/data/www/web/favicon.svg"
+      subtitle: "Build traveltonies"
+      displayName: "Tonie Studio"
+      subdomain: "tonie-studio"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      # After teddyCloud, which this app uploads to and encodes through.
+      syncWave: "21"
