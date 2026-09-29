@@ -1,0 +1,53 @@
+# tonie-studio - turns an album folder into a playable traveltonie.
+#
+# Companion to teddyCloud rather than a replacement: it uploads audio into
+# teddyCloud's library, has it encoded to a taf, points an NFC tag at the
+# result, writes a custom model with the cover, and prints the round 46 mm
+# stickers that go on the tags.
+generic:
+  configMaps:
+    tonie-studio-config:
+      # teddyCloud's management API is unauthenticated, so this only works
+      # because both sit inside the cluster. Never route this through an
+      # address reachable from outside.
+      TS_TEDDYCLOUD_URL: "http://teddycloud-service:80"
+      TS_ARCHIVE_DIR: "/archive"
+      TS_DATA_DIR: "/data"
+  deployment:
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/tonie-studio:v0.1.0
+    imagePullSecrets:
+      - regcred-secondary
+    ports:
+      - containerPort: 8080
+    # /health answers without touching teddyCloud or the archive on purpose: a
+    # restart of teddyCloud must not roll this pod as well.
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10
+    pvcMounts:
+      # The audio archive. The app only ever reads from here; nothing in it
+      # opens a file for writing. Kubernetes does not enforce that, so treat a
+      # change that writes into this path as a bug, not a feature.
+      archive:
+        mountPath: /archive
+        hostPath: ~
+      # Browser uploads are spooled here until they have been encoded, and the
+      # generated sheet PDF passes through on its way to the download. Both are
+      # reconstructible, so this is not backed up.
+      data:
+        mountPath: /data
+        hostPath: ~
+    envFrom:
+      configMapRef: tonie-studio-config
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: tonie-studio
+        port: 8080
+        oauth: true
