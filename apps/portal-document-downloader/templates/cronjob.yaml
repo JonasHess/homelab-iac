@@ -29,7 +29,11 @@ spec:
             component: document-downloader
             portal: {{ $portalName }}
         spec:
-          restartPolicy: OnFailure
+          # Never, not OnFailure: on OnFailure the job controller deletes the
+          # pod once the backoff limit is hit, taking the only record of why a
+          # portal login failed with it. With Never each attempt gets its own
+          # pod and those pods are kept, so the logs outlive the failure.
+          restartPolicy: Never
           {{- if $.Values.portalDocumentDownloader.imagePullSecrets }}
           imagePullSecrets:
           {{- range $.Values.portalDocumentDownloader.imagePullSecrets }}
