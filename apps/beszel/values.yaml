@@ -45,7 +45,7 @@ agent:
   # The -alpine variant is the only agent image carrying smartctl, which
   # is what produces the disk-health panel. The plain image is distroless
   # and silently reports no drives. Keep the version in sync with the hub.
-  image: henrygd/beszel-agent:0.20.0-alpine
+  image: henrygd/beszel-agent:0.21.0-alpine
   listen: "45876"
   # Cluster-internal Service URL. Agents reach it via cluster DNS
   # (the DaemonSet sets dnsPolicy: ClusterFirstWithHostNet so cluster
