@@ -10,7 +10,7 @@ generic:
     prompt-util-secret:
       - LLM_API_KEY: "/prompt-util/LLM_API_KEY"
   deployment:
-    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/prompt-util:v0.0.1
+    image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/prompt-util:v0.0.2
     imagePullSecrets:
     - regcred-primary
     ports:
