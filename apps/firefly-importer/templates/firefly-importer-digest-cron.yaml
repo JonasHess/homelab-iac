@@ -22,8 +22,8 @@ metadata:
   name: firefly-importer-digest
   namespace: {{ .Release.Namespace }}
 rules:
-  # Read-only, namespace-scoped: find the importer pod and read its log, so the
-  # digest can report runs that never produced a report of their own.
+  # Read-only, namespace-scoped: find tonight's auto-import pod and read its log,
+  # so the digest can report runs that never produced a report of their own.
   - apiGroups: [""]
     resources: ["pods", "pods/log"]
     verbs: ["get", "list"]
@@ -57,7 +57,7 @@ data:
     STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
     CAP   = int(os.environ.get("DIGEST_STALE_MAX_DAYS", "60"))  # absolute ceiling
     MARGIN= float(os.environ.get("DIGEST_STALE_MARGIN", "1.25")) # slack on the record
-    LOG_SECONDS = int(os.environ.get("DIGEST_LOG_SECONDS", "43200"))  # log window to scan (12h)
+    RUN_MAX_AGE = int(os.environ.get("DIGEST_RUN_MAX_AGE_HOURS", "12"))  # newest import pod must be younger
     # Accounts that legitimately go quiet (manually maintained, dormant). Without
     # this they would trip the staleness check every single night, and a warning
     # that fires every night is one nobody reads.
@@ -159,7 +159,10 @@ data:
     # --- what the importer itself did last run -------------------------------
     # The digest can only see what arrived. A run that aborts (expired consent) or
     # a line rejected for a real reason leaves no trace in the data, so read the
-    # importer's log too and keep only what is NOT routine noise (see below).
+    # log of tonight's auto-import pod too and keep only what is NOT routine noise
+    # (see below). That pod runs the importer CLI, so its log holds exactly one
+    # run: the CLI's console progress lines plus the importer's own log lines at
+    # LOG_LEVEL (info), which still include every ERROR.
     #
     # Lines the importer logs at ERROR level that do not mean anything failed:
     #   a115/a117 - transaction already exists, by external_id and by content. Every
@@ -167,8 +170,8 @@ data:
     #   "Exit code" - logged through the error channel for EVERY outcome, SUCCESS
     #               included. A genuinely fatal exit always writes a readable error
     #               line of its own right before it, so nothing is lost by dropping
-    #               these; the one exception, an empty /import directory, is caught
-    #               by the "no import run found" check further down.
+    #               these; the one exception, an empty /import directory, prints
+    #               a console line that CONSOLE_ERROR below picks up.
     #   "tag"     - the import tag is created per run and reused for every following
     #               transaction, so Firefly III rejects the create as a duplicate
     #               name. The tag is attached to the transaction regardless.
@@ -187,8 +190,15 @@ data:
     # download was the only thing wrong; a higher count means something else
     # failed as well, so the message is kept.
     TOO_MANY      = re.compile(r"Too many errors in the data conversion \((\d+)\)")
+    # Failures the CLI prints to the console only, without a matching ERROR log line.
+    CONSOLE_ERROR = re.compile(r"Too many errors in the data conversion|^Error message: "
+                               r"|requisition|No access, or no connection"
+                               r"|is not a valid location|not in the list of allowed paths"
+                               r"|There are no files in directory")
     attempted, finished = [], []
     per_config = {}   # config file -> error lines logged while that config ran
+    exit_code = None  # printed by the job's wrapper after the CLI returns
+    run_seen = False
     try:
         sa   = "/var/run/secrets/kubernetes.io/serviceaccount"
         ns   = open(f"{sa}/namespace").read().strip()
@@ -203,33 +213,46 @@ data:
                                        headers={"Authorization": "Bearer " + ktok})
             with urllib.request.urlopen(r, context=ctx, timeout=30) as resp:
                 return resp.read().decode("utf-8", "replace")
-        # NB the digest's own pod carries app=firefly-importer too, so filter on the
-        # deployment's name; picking by label alone reads this job's own (empty) log.
-        pods = json.loads(k8s(f"/api/v1/namespaces/{ns}/pods?labelSelector=app%3Dfirefly-importer"))
-        name = next(p["metadata"]["name"] for p in pods["items"]
-                    if p["status"]["phase"] == "Running"
-                    and p["metadata"]["name"].startswith("firefly-importer-deployment"))
-        # The Enable Banking debug dumps are enormous, so a line cap can miss the run
-        # entirely; take everything since shortly before the import instead.
-        log  = k8s(f"/api/v1/namespaces/{ns}/pods/{name}/log?sinceSeconds={LOG_SECONDS}")
-        # The importer processes one config at a time and every line between two
-        # "importable" markers belongs to that config, which is what allows the
-        # empty-download noise to be judged and suppressed per account below.
-        current = "(before the first import)"
-        for ln in log.splitlines():
-            m = re.search(r'importable "/import/([^"]+)"', ln)
-            if m:
-                current = m.group(1)
-                attempted.append(current)
-            m = re.search(r'Created event ImportedTransactions\("([^"]+)"\)', ln)
-            if m: finished.append(m.group(1))
-            if "production.ERROR" in ln and not any(x in ln for x in NOT_A_FAILURE):
-                msg = re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180]
-                per_config.setdefault(current, []).append(msg)
+        pods = json.loads(k8s(f"/api/v1/namespaces/{ns}/pods?labelSelector=component%3Dautoimport"))
+        cutoff = (datetime.datetime.now(datetime.timezone.utc)
+                  - datetime.timedelta(hours=RUN_MAX_AGE)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        # RFC 3339 UTC timestamps in a fixed format compare correctly as strings.
+        recent = sorted((p for p in pods["items"]
+                         if p["metadata"]["creationTimestamp"] >= cutoff),
+                        key=lambda p: p["metadata"]["creationTimestamp"])
+        if recent:
+            run_seen = True
+            pod  = recent[-1]
+            log  = k8s(f"/api/v1/namespaces/{ns}/pods/{pod['metadata']['name']}/log")
+            # The importer processes one config at a time, and every line between two
+            # "Going to convert" markers belongs to that config, which is what allows
+            # the empty-download noise to be judged and suppressed per account below.
+            current = "(before the first import)"
+            for ln in log.splitlines():
+                m = re.search(r"Going to convert from file .* using configuration (\S+) and flow", ln)
+                if m:
+                    current = os.path.basename(m.group(1))
+                    attempted.append(current)
+                if ln.strip() == "Done!":
+                    finished.append(current)
+                m = re.match(r"importer exit code: (\d+)", ln)
+                if m: exit_code = int(m.group(1))
+                if "production.ERROR" in ln and not any(x in ln for x in NOT_A_FAILURE):
+                    msg = re.sub(r"^\[[^\]]+\] production.ERROR: ", "", ln).strip()[:180]
+                    per_config.setdefault(current, []).append(msg)
+                elif CONSOLE_ERROR.search(ln):
+                    per_config.setdefault(current, []).append(ln.strip()[:180])
+            if exit_code is None:
+                per_config.setdefault("(run)", []).append(
+                    f"import run did not finish (pod {pod['metadata']['name']} is "
+                    f"{pod['status'].get('phase')}) - killed by the deadline or OOM?")
     except Exception as e:                       # never let monitoring break the digest
         per_config.setdefault("(digest)", []).append(f"(could not read importer log: {e})")
 
     real_errors = []
+    # Configs that ended early only because their bank had nothing new. The CLI
+    # prints no "Done!" for them, yet nothing failed.
+    quiet = set()
     for cfg, msgs in per_config.items():
         empty = any(ZERO_DOWNLOAD.search(m) for m in msgs)
         for m in msgs:
@@ -237,17 +260,20 @@ data:
                 continue
             hit = TOO_MANY.search(m)
             if empty and hit and hit.group(1) == "1":
+                quiet.add(cfg)
                 continue
             # Name the config. Several banks are imported in one run, and an error
             # on its own does not say which connection needs attention.
             real_errors.append(m if cfg.startswith("(") else f"{cfg}: {m}")
 
-    aborted = [c for c in dict.fromkeys(attempted) if c not in finished]
-    # A pod restart between the import and this job wipes the log, and "no errors
-    # found" would then be a lie. Say so instead of implying everything is fine.
-    if not attempted and not real_errors:
-        real_errors.append("no import run found in the importer log "
-                           "(pod restarted since the import?) - could not verify the run")
+    aborted = [c for c in dict.fromkeys(attempted) if c not in finished and c not in quiet]
+    # Without a run to read, "no errors found" would be a lie. Say so instead of
+    # implying everything is fine.
+    if not run_seen and "(digest)" not in per_config:
+        real_errors.append(f"no auto-import run in the last {RUN_MAX_AGE}h "
+                           "(CronJob suspended, or its pod never started?)")
+    elif run_seen and not attempted and not real_errors:
+        real_errors.append("the auto-import ran but processed no config")
     # collapse repeats, keep order
     real_errors = list(dict.fromkeys(real_errors))[:12]
 
@@ -340,8 +366,8 @@ spec:
                   value: {{ .Values.digest.staleMaxDays | quote }}
                 - name: DIGEST_STALE_MARGIN
                   value: {{ .Values.digest.staleMargin | quote }}
-                - name: DIGEST_LOG_SECONDS
-                  value: {{ .Values.digest.logSeconds | quote }}
+                - name: DIGEST_RUN_MAX_AGE_HOURS
+                  value: {{ .Values.digest.runMaxAgeHours | quote }}
                 - name: DIGEST_IGNORE_STALE
                   value: {{ .Values.digest.ignoreStale | toJson | quote }}
                 - name: DIGEST_ALWAYS_SEND

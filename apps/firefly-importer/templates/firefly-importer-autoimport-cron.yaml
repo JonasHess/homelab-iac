@@ -1,13 +1,16 @@
 {{- /*
-  Daily headless bank import. The Data Importer has the auto-import mechanism
-  (POST /autoimport) but no scheduler, so this CronJob supplies the schedule —
-  the pattern Firefly's docs recommend. It calls the importer's in-cluster
-  Service directly (bypassing the gateway/OIDC), authenticated by AUTO_IMPORT_SECRET,
-  and runs every config JSON placed in /import.
+  Daily headless bank import. The Data Importer has an auto-import mechanism but
+  no scheduler, so this CronJob supplies the schedule.
+
+  It runs the importer's CLI (importer:auto-import) in a pod of its own instead of
+  POSTing /autoimport to the web pod. The HTTP endpoint answers only "Seems to
+  have worked!" and leaves every detail in the web pod's shared, rotating log; the
+  CLI prints per-config progress ("Going to convert ...", "Done!") and errors to
+  this job's own log regardless of LOG_LEVEL. The digest CronJob reads exactly
+  that log, one run per pod.
 
   Works only while the Enable Banking PSD2 consent is valid (~90 days); after that
   a one-time browser SCA re-auth is required (regulatory, cannot be automated).
-  With no config file present, /autoimport simply reports "No files found".
 */ -}}
 apiVersion: batch/v1
 kind: CronJob
@@ -20,11 +23,15 @@ metadata:
 spec:
   schedule: "0 4 * * *"
   concurrencyPolicy: Forbid
-  successfulJobsHistoryLimit: 3
+  # A week of runs: the digest reads the newest, the rest answer "what did the
+  # import print on Thursday?".
+  successfulJobsHistoryLimit: 7
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      backoffLimit: 1
+      # No retries. A re-run imports nothing new (duplicates are rejected), but its
+      # pod would become the newest and hide the log of the run that failed.
+      backoffLimit: 0
       activeDeadlineSeconds: 900
       template:
         metadata:
@@ -32,21 +39,33 @@ spec:
             app: firefly-importer
             component: autoimport
         spec:
-          restartPolicy: OnFailure
+          restartPolicy: Never
           containers:
             - name: autoimport
-              image: curlimages/curl:8.22.0
+              # Same image as the web pod, so a version bump moves both together.
+              image: {{ .Values.generic.deployment.image | quote }}
+              workingDir: /var/www/html
               envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
                 - secretRef:
                     name: firefly-importer-secret
               command: ["sh", "-c"]
+              # The importer exits non-zero on most healthy nights: transactions the
+              # bank re-offers are rejected as duplicates, and those count as errors.
+              # So the job always succeeds and prints the code for the digest. A
+              # missing "importer exit code" line means the run was killed (deadline,
+              # OOM) before it finished.
               args:
                 - |
-                  set -e
-                  echo "Triggering Firefly III Data Importer auto-import..."
-                  curl -sSf --max-time 890 -X POST \
-                    "http://firefly-importer-service:8080/autoimport" \
-                    --data-urlencode "secret=${AUTO_IMPORT_SECRET}" \
-                    --data-urlencode "directory=/import"
-                  echo
-                  echo "Auto-import request completed."
+                  php artisan importer:auto-import /import
+                  echo "importer exit code: $?"
+              volumeMounts:
+                - name: import
+                  mountPath: /import
+          volumes:
+            - name: import
+              persistentVolumeClaim:
+                # Created by the generic chart for the web pod's pvcMounts.import. It is
+                # ReadWriteMany, so both pods can mount it at the same time.
+                claimName: firefly-importer-import-pvc

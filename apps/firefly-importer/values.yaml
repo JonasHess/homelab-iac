@@ -69,9 +69,11 @@ digest:
   # exactly one cycle: without it, rent arriving a couple of days late is enough
   # to raise an alarm that the next day's import answers by itself.
   staleMargin: 1.25
-  # How far back to scan the importer log. Must comfortably cover the nightly run;
-  # a line-count cap does not, because the Enable Banking debug output is huge.
-  logSeconds: 43200
+  # The newest auto-import pod must have started within this many hours, or the
+  # digest reports that no import ran tonight. Must exceed the gap between the
+  # auto-import schedule and the digest schedule, and stay below a day so that
+  # yesterday's run cannot pass for tonight's.
+  runMaxAgeHours: 12
   # Mail only when something needs attention. A daily "all fine" message is the
   # fastest way to train yourself to ignore the one that matters.
   alwaysSend: false

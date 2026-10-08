@@ -12,11 +12,17 @@ data:
   TRUSTED_PROXIES: "**"
   TZ: "Europe/Berlin"
   LOG_CHANNEL: "stdout"
+  # The importer defaults to debug, which dumps every Enable Banking response in
+  # full: one nightly run fills a 10Mi container log file in about a minute.
+  # Nothing reads debug lines - the digest gets per-config progress from the
+  # auto-import job's console output, which is printed regardless of this level.
+  # Set to debug temporarily to troubleshoot a bank connection.
+  LOG_LEVEL: "info"
   # Enable Banking reads the client IP from the forwarded header set by Envoy.
   ENABLE_BANKING_IMPORT_IP_HEADER: "X-Forwarded-For"
-  # Headless auto-import: the /autoimport endpoint runs every config JSON found in
-  # IMPORT_DIR_ALLOWLIST, gated by AUTO_IMPORT_SECRET (>=16 chars). The daily
-  # firefly-importer-autoimport CronJob calls it.
+  # The /autoimport endpoint runs every config JSON found in IMPORT_DIR_ALLOWLIST,
+  # gated by AUTO_IMPORT_SECRET (>=16 chars). The nightly run does not use it (see
+  # the firefly-importer-autoimport CronJob); it stays enabled as a manual trigger.
   CAN_POST_AUTOIMPORT: "true"
   IMPORT_DIR_ALLOWLIST: "/import"
 {{- if .Values.smtp.enabled }}
