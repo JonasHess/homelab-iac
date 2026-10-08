@@ -41,15 +41,34 @@ spec:
                 # playwright Python package ships only in that extra. The base image
                 # provides the browser binaries and system libraries, not the package.
                 pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
-                pytr dl_docs -path /downloads ; \
-                rc=$? && \
-                rm -f /home/pytr/.pytr/credentials && \
-                chown -R 1000:1000 /downloads && \
-                chmod -R u+rwX /downloads && \
+                # pytr skips a document only when its target file is already on disk; it keeps
+                # no download ledger (0.4.10 removed the one 0.4.9 had). Downloading straight
+                # into the Paperless consume directory therefore refetches the whole history on
+                # every run, because Paperless deletes each file it ingests. /archive is the
+                # durable copy that makes the skip work, and only files this run created are
+                # handed to Paperless.
+                # The output directory is POSITIONAL. Writing "-path /x" parses as "-p ath",
+                # i.e. --pin, and silently logs in with the PIN "ath".
+                { [ -f /archive/.synced ] && seeded=1 || seeded=0 ; } && \
+                pytr dl_docs /archive ; \
+                rc=$? ; \
+                # First run only: /archive starts empty, so everything looks new. Paperless
+                # already holds these documents, so stamp .synced and copy nothing rather than
+                # pushing ~500 files through the consumer to be rejected one by one.
+                if [ "$seeded" = 1 ]; then ( cd /archive && find . -name '*.pdf' -newer .synced -exec cp --parents -t /downloads {} + ) ; fi ; \
+                # Unconditional: the CSV is rewritten every run, is not a *.pdf, and the
+                # csv-versions job needs it to reach Paperless to fold it into its document.
+                cp -f /archive/account_transactions.csv /downloads/ 2>/dev/null ; \
+                touch /archive/.synced ; \
+                rm -f /home/pytr/.pytr/credentials ; \
+                chown -R 1000:1000 /archive /downloads ; \
+                chmod -R u+rwX /archive /downloads ; \
                 exit $rc
             volumeMounts:
             - name: pytr-session
               mountPath: /home/pytr/.pytr
+            - name: pytr-archive
+              mountPath: /archive
             - name: pytr-downloads
               mountPath: /downloads
             - name: tmp
@@ -58,6 +77,9 @@ spec:
           - name: pytr-session
             persistentVolumeClaim:
               claimName: {{ .Values.appName }}-credentials-pvc
+          - name: pytr-archive
+            persistentVolumeClaim:
+              claimName: {{ .Values.appName }}-archive-pvc
           - name: pytr-downloads
             persistentVolumeClaim:
               claimName: {{ .Values.appName }}-downloads-pvc
