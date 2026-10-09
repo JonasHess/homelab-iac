@@ -13,3 +13,4 @@ settings.local.json
 
 # Rendered by tests/alert-rules/render-rules.sh; regenerated on every run.
 tests/alert-rules/.rendered/
+tests/firefly-jobs/.rendered/

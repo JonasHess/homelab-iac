@@ -1,0 +1,17 @@
+# Minimum needed to render apps/firefly-importer. Every job is switched on so the
+# rendered ConfigMaps exist to be checked; nothing here reaches a cluster.
+generic:
+  appName: firefly-importer
+  deployment:
+    pvcMounts:
+      import:
+        hostPath: /tmp/firefly-import
+digest:
+  enabled: true
+loanSplit:
+  enabled: true
+  loans:
+    - label: Example
+      payee: 1
+      liability: 2
+      interest: 3
