@@ -111,3 +111,64 @@ class TestUncategorised:
 
     def test_clean_ledger_returns_nothing(self):
         assert lc.uncategorised([grp("36", split())]) == []
+
+
+class TestDuplicatePayees:
+    def test_iban_suffixed_twin(self):
+        rows = lc.duplicate_payees([
+            ("241", "revenue", "Mieterin Beispiel"),
+            ("1013", "revenue", "Mieterin Beispiel (DE00100000000000000004)")])
+        assert len(rows) == 1 and "#241" in rows[0] and "#1013" in rows[0]
+
+    def test_case_only_twin(self):
+        # Hetzner really exists twice this way; `contains` rules hide it, reports should not.
+        rows = lc.duplicate_payees([
+            ("1", "expense", "Hetzner Online GmbH"),
+            ("2", "expense", "HETZNER ONLINE GMBH")])
+        assert len(rows) == 1
+
+    def test_revenue_and_expense_pair_is_not_a_duplicate(self):
+        # Firefly keeps the two namespaces apart; one of each is correct for anyone you
+        # both pay and receive from. Flagging these would mail noise forever.
+        assert lc.duplicate_payees([
+            ("61", "revenue", "MIETER BEISPIEL"),
+            ("571", "expense", "Mieter Beispiel")]) == []
+
+    def test_distinct_payees_are_clean(self):
+        assert lc.duplicate_payees([
+            ("1", "expense", "Supermarkt Nord"),
+            ("2", "expense", "Discounter Sued")]) == []
+
+    def test_three_way_group_reported_once(self):
+        rows = lc.duplicate_payees([
+            ("1", "expense", "Kontoinhaber"),
+            ("2", "expense", "Kontoinhaber (DE00100000000000000001)"),
+            ("3", "expense", "Kontoinhaber (DE00100000000000000005)")])
+        assert len(rows) == 1 and rows[0].count("#") == 3
+
+    def test_whitespace_and_punctuation_only_twin(self):
+        rows = lc.duplicate_payees([
+            ("1", "expense", "Vodafone West GmbH"),
+            ("2", "expense", "VodafoneWestGmbH")])
+        assert len(rows) == 1
+
+    def test_ignored_counterparty_is_not_reported(self):
+        # The self-payees are kept on purpose - they are what the unlinked-transfer
+        # scan matches on - so reporting them would mail every night forever.
+        payees = [("4", "expense", "Kontoinhaber"),
+                  ("50", "expense", "Kontoinhaber (DE00100000000000000006)")]
+        assert lc.duplicate_payees(payees) != []
+        assert lc.duplicate_payees(payees, ignore=["Kontoinhaber"]) == []
+
+    def test_ignore_matches_on_the_normalised_name(self):
+        payees = [("1", "expense", "Dritter Inhaber"),
+                  ("141", "expense", "Dritter Inhaber (DE00100000000000000007)")]
+        assert lc.duplicate_payees(payees, ignore=["dritter  inhaber"]) == []
+
+    def test_ignoring_one_name_does_not_hide_others(self):
+        payees = [("4", "expense", "Kontoinhaber"),
+                  ("50", "expense", "Kontoinhaber (DE0010)"),
+                  ("1035", "expense", "HETZNER ONLINE GMBH"),
+                  ("279", "expense", "Hetzner Online GmbH")]
+        rows = lc.duplicate_payees(payees, ignore=["Kontoinhaber"])
+        assert len(rows) == 1 and "etzner" in rows[0].lower()

@@ -116,6 +116,43 @@ def uncategorised(groups):
             for cp, (n, tot) in sorted(agg.items(), key=lambda x: -x[1][1])]
 
 
+# A payee account whose name is "X (DE12...)" sitting next to one named plainly "X" is
+# the same counterparty twice, and so is a pair differing only in case or spacing. Both
+# appear when someone changes bank: the importer matches on IBAN, so a new IBAN makes a
+# new payee and the history silently splits in two.
+#
+# Grouped per account TYPE on purpose. Firefly keeps revenue and expense accounts in
+# separate namespaces, so one of each for the same person is correct, not a duplicate -
+# that is normal for anyone you both pay and receive from.
+IBAN_SUFFIX = re.compile(r"\s*\((?:[A-Z]{2}\d{10,30})\)\s*$")
+
+
+def _payee_key(name):
+    return re.sub(r"[^a-z0-9]", "", IBAN_SUFFIX.sub("", name).lower())
+
+
+def duplicate_payees(payees, ignore=()):
+    """payees: iterable of (id, type, name). Returns one line per duplicate group.
+
+    `ignore` names counterparties that are legitimately split and would otherwise be
+    reported every single night: the self-payees that exist one per own-account IBAN
+    and are deliberately kept (they are what the unlinked-transfer scan matches on),
+    and people who genuinely hold two accounts at the same bank.
+    """
+    skip = {_payee_key(n) for n in ignore}
+    groups = defaultdict(list)
+    for pid, kind, name in payees:
+        key = _payee_key(name)
+        if key and key not in skip:
+            groups[(kind, key)].append((pid, name))
+    out = []
+    for (kind, _), members in sorted(groups.items()):
+        if len(members) > 1:
+            listed = " | ".join(f"#{pid} {name!r}" for pid, name in sorted(members))
+            out.append(f"[{kind}] {listed}")
+    return out
+
+
 def api(path):
     base = os.environ["FIREFLY_III_URL"].rstrip("/")
     token = os.environ["FIREFLY_III_ACCESS_TOKEN"]
@@ -143,6 +180,7 @@ def main():
     window = int(os.environ.get("LEDGER_CHECK_WINDOW_DAYS", "90"))
     loan_payees = {str(p) for p in json.loads(os.environ.get("LEDGER_CHECK_LOAN_PAYEES", "[]"))}
     extra_ibans = json.loads(os.environ.get("LEDGER_CHECK_EXTRA_OWN_IBANS", "{}"))
+    ignore_payees = json.loads(os.environ.get("LEDGER_CHECK_IGNORE_PAYEES", "[]"))
 
     own_ibans = dict(extra_ibans)
     for kind in ("asset", "liabilities"):
@@ -150,6 +188,16 @@ def main():
             iban = (a["attributes"].get("iban") or "").strip()
             if iban:
                 own_ibans[iban] = a["attributes"]["name"]
+
+    payees = []
+    for kind in ("revenue", "expense"):
+        page = 1
+        while True:
+            d = api(f"/api/v1/accounts?type={kind}&limit=400&page={page}")
+            payees += [(a["id"], kind, a["attributes"]["name"]) for a in d["data"]]
+            if page >= max(1, d["meta"]["pagination"]["total_pages"]):
+                break
+            page += 1
 
     today = datetime.date.today()
     since = (today - datetime.timedelta(days=window)).isoformat()
@@ -166,10 +214,13 @@ def main():
     unlinked = unlinked_transfers(groups, own_ibans, loan_payees)
     definite, review = duplicates(groups)
     uncat = uncategorised(groups)
+    dup_payees = duplicate_payees(payees, ignore_payees)
 
-    print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_ibans)} own IBANs known)")
+    print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_ibans)} own IBANs, "
+          f"{len(payees)} payees)")
     print(f"unlinked transfers: {len(unlinked)}   duplicates: {len(definite)} definite "
-          f"/ {review} review   uncategorised: {len(uncat)} counterparties")
+          f"/ {review} review   uncategorised: {len(uncat)} counterparties   "
+          f"duplicate payees: {len(dup_payees)}")
 
     sections = []
     if unlinked:
@@ -178,6 +229,8 @@ def main():
         sections.append(("Duplicate imports (same external_id)", definite))
     if uncat:
         sections.append(("Uncategorised, by counterparty", uncat))
+    if dup_payees:
+        sections.append(("Same counterparty under two payee accounts", dup_payees))
 
     if not sections:
         print("ledger clean - no mail sent")
@@ -199,6 +252,7 @@ def main():
     if unlinked: bits.append(f"{len(unlinked)} unlinked")
     if definite: bits.append(f"{len(definite)} duplicate")
     if uncat:    bits.append(f"{len(uncat)} uncategorised")
+    if dup_payees: bits.append(f"{len(dup_payees)} duplicate payees")
 
     if not os.environ.get("MAIL_HOST"):
         print("no MAIL_HOST configured - not mailing")
