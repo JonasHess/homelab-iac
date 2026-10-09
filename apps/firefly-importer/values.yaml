@@ -71,6 +71,9 @@ ledgerCheck:
   loanPayees: []
   # IBAN -> label for own accounts Firefly holds no IBAN for at all.
   extraOwnIbans: {}
+  # Counterparties that legitimately exist as more than one payee account and would
+  # otherwise be reported every night. Matched on the same normalised name as the scan.
+  ignorePayees: []
 
 # Splits each monthly mortgage lump into its Zins and Tilgung legs. Off by default:
 # `loans` maps Firefly account ids, which are per-instance, so a wrong id would book

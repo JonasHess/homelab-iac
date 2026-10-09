@@ -59,6 +59,8 @@ spec:
                   value: {{ .Values.ledgerCheck.loanPayees | toJson | quote }}
                 - name: LEDGER_CHECK_EXTRA_OWN_IBANS
                   value: {{ .Values.ledgerCheck.extraOwnIbans | toJson | quote }}
+                - name: LEDGER_CHECK_IGNORE_PAYEES
+                  value: {{ .Values.ledgerCheck.ignorePayees | toJson | quote }}
               command: ["python3", "/script/ledger_check.py"]
               volumeMounts:
                 - name: script
