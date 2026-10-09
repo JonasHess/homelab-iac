@@ -227,14 +227,30 @@ data:
             # The importer processes one config at a time, and every line between two
             # "Going to convert" markers belongs to that config, which is what allows
             # the empty-download noise to be judged and suppressed per account below.
-            current = "(before the first import)"
+            #
+            # A config can fail BEFORE its "Going to convert" line: the importer first
+            # fetches the account details from the bank, and an error there aborts the
+            # config with only 'Could not complete import from file "..."' naming it.
+            # So errors after a "Done!" are held as unassigned until a line names
+            # their config, instead of being charged to the config that just finished.
+            UNASSIGNED = "(between configs)"
+            def assign_held(cfg):
+                per_config[cfg] = per_config.pop(UNASSIGNED, []) + per_config.get(cfg, [])
+            current = UNASSIGNED
             for ln in log.splitlines():
                 m = re.search(r"Going to convert from file .* using configuration (\S+) and flow", ln)
                 if m:
                     current = os.path.basename(m.group(1))
                     attempted.append(current)
+                    assign_held(current)
+                m = re.search(r'Could not complete import from file "([^"]+)"', ln)
+                if m and current == UNASSIGNED:
+                    current = os.path.basename(m.group(1))
+                    attempted.append(current)
+                    assign_held(current)
                 if ln.strip() == "Done!":
                     finished.append(current)
+                    current = UNASSIGNED
                 m = re.match(r"importer exit code: (\d+)", ln)
                 if m: exit_code = int(m.group(1))
                 if "production.ERROR" in ln and not any(x in ln for x in NOT_A_FAILURE):
