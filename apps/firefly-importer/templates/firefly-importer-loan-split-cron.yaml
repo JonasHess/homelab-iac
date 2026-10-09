@@ -1,0 +1,235 @@
+{{- if .Values.loanSplit.enabled }}
+{{- /*
+  Splits each monthly mortgage payment into its Zins and Tilgung legs.
+
+  The bank debits one lump sum and names the breakdown in the description, but the
+  import has no way to act on it: it books a single withdrawal to a self-payee whose
+  IBAN happens to be the loan account. Left alone that overstates interest expense and
+  hides the debt paydown entirely, and it drifts silently - nothing about the ledger
+  looks wrong, the liability simply never moves.
+
+  Deliberately timid. A job that rewrites transactions can lose real money, so it acts
+  only when the destination is a configured loan payee, the description matches a known
+  bank wording, and Zins + Tilgung equal the lump to the cent. Anything else is left
+  untouched and reported.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-loan-split-script
+  namespace: {{ .Release.Namespace }}
+data:
+  loan_split.py: |
+    import datetime, json, os, re, smtplib, ssl, urllib.error, urllib.request
+    from email.message import EmailMessage
+
+    BASE     = os.environ["FIREFLY_III_URL"].rstrip("/")
+    TOKEN    = os.environ["FIREFLY_III_ACCESS_TOKEN"]
+    LOANS    = json.loads(os.environ.get("LOAN_SPLIT_LOANS", "[]"))
+    LOOKBACK = int(os.environ.get("LOAN_SPLIT_LOOKBACK_DAYS", "45"))
+    DRY_RUN  = os.environ.get("LOAN_SPLIT_DRY_RUN", "false").lower() == "true"
+
+    def api(path, method="GET", payload=None):
+        body = json.dumps(payload).encode() if payload is not None else None
+        req = urllib.request.Request(
+            BASE + path, data=body, method=method,
+            headers={"Authorization": "Bearer " + TOKEN,
+                     "Accept": "application/json",
+                     "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.load(r) if r.status != 204 else {}
+
+    # Amounts are compared in integer cents. The guard that makes this job safe is
+    # "the legs sum to the lump exactly", and float arithmetic cannot express that.
+    def cents_de(s):
+        return int(round(float(s.replace(".", "").replace(",", ".")) * 100))
+
+    def cents(s):
+        return int(round(float(s) * 100))
+
+    def amount(c):
+        return f"{c // 100}.{abs(c) % 100:02d}"
+
+    # Each bank words the breakdown differently AND orders the two numbers differently,
+    # so the order is part of the pattern, not an assumption.
+    PATTERNS = [
+        (re.compile(r"RECHN\.ZINS\s+([\d.]+,\d{2})\s+TILG\./ENTG\.\s+([\d.]+,\d{2})"), "zins_first"),
+        (re.compile(r"Tilgung\s+([\d.]+,\d{2})\s+Zinsen\s+([\d.]+,\d{2})"), "tilgung_first"),
+    ]
+
+    def breakdown(desc):
+        for rx, order in PATTERNS:
+            m = rx.search(desc or "")
+            if not m:
+                continue
+            a, b = cents_de(m.group(1)), cents_de(m.group(2))
+            return (a, b) if order == "zins_first" else (b, a)
+        return None
+
+    by_payee = {str(l["payee"]): l for l in LOANS}
+    today = datetime.date.today()
+    since = (today - datetime.timedelta(days=LOOKBACK)).isoformat()
+
+    groups, page = [], 1
+    while True:
+        d = api(f"/api/v1/transactions?start={since}&end={today.isoformat()}"
+                f"&type=withdrawal&limit=500&page={page}")
+        groups.extend(d["data"])
+        if page >= d["meta"]["pagination"]["total_pages"]:
+            break
+        page += 1
+
+    # A group sitting on a page boundary comes back on two consecutive pages, so the
+    # same payment would otherwise be split twice (the second attempt failing, loudly).
+    seen, unique = set(), []
+    for g in groups:
+        if g["id"] in seen:
+            continue
+        seen.add(g["id"])
+        unique.append(g)
+
+    done, problems, skipped = [], [], []
+    for g in unique:
+        splits = g["attributes"]["transactions"]
+        if len(splits) != 1:
+            continue                      # already split
+        s = splits[0]
+        loan = by_payee.get(str(s["destination_id"]))
+        if loan is None:
+            continue
+        total = cents(s["amount"])
+        parsed = breakdown(s["description"])
+        if parsed is None:
+            problems.append(f"g{g['id']} {s['date'][:10]} {loan['label']}: "
+                            f"payment of {amount(total)} to the loan payee, but no known "
+                            f"Zins/Tilgung wording in: {s['description'][:120]!r}")
+            continue
+        zins, tilg = parsed
+        if zins + tilg != total:
+            problems.append(f"g{g['id']} {s['date'][:10]} {loan['label']}: Zins {amount(zins)} "
+                            f"+ Tilgung {amount(tilg)} != lump {amount(total)} - left alone")
+            continue
+
+        date = s["date"][:10]
+        de = f"{date[8:10]}.{date[5:7]}.{date[:4]}"
+        if DRY_RUN:
+            skipped.append(f"g{g['id']} {date} {loan['label']}: would split "
+                           f"{amount(total)} into Zins {amount(zins)} / Tilgung {amount(tilg)}")
+            continue
+
+        before = float(api(f"/api/v1/accounts/{loan['liability']}")["data"]["attributes"]["current_balance"])
+        try:
+            api(f"/api/v1/transactions/{g['id']}", "PUT", {
+                "group_title": f"Teilzahlung Darlehen {loan['label']} {de}",
+                "transactions": [
+                    # The external_id rides on the Tilgung leg: replacing the splits would
+                    # otherwise drop it, and while the row is still inside the importer's
+                    # re-fetch window that makes the bank's lump look unseen and reappear.
+                    {"type": "withdrawal", "date": date, "amount": amount(tilg),
+                     "source_id": str(s["source_id"]), "destination_id": str(loan["liability"]),
+                     "description": f"Darlehen {loan['label']} Tilgung ({de})",
+                     "category_name": s.get("category_name") or "",
+                     "external_id": s.get("external_id") or ""},
+                    {"type": "withdrawal", "date": date, "amount": amount(zins),
+                     "source_id": str(s["source_id"]), "destination_id": str(loan["interest"]),
+                     "description": f"Darlehen {loan['label']} Zins ({de})",
+                     "category_name": s.get("category_name") or ""},
+                ]})
+        except urllib.error.HTTPError as e:
+            problems.append(f"g{g['id']} {date} {loan['label']}: PUT failed HTTP {e.code} "
+                            f"{e.read()[:200].decode(errors='replace')}")
+            continue
+
+        # The split is only correct if the debt actually fell by the Tilgung. Anything
+        # else means the legs went somewhere other than the liability.
+        after = float(api(f"/api/v1/accounts/{loan['liability']}")["data"]["attributes"]["current_balance"])
+        moved = cents(str(round(after - before, 2)))
+        if moved != tilg:
+            problems.append(f"g{g['id']} {date} {loan['label']}: split written, but the liability "
+                            f"moved {amount(moved)} instead of {amount(tilg)} - CHECK THIS")
+        else:
+            done.append(f"g{g['id']} {date} {loan['label']}: Zins {amount(zins)} / "
+                        f"Tilgung {amount(tilg)}, debt now {after:,.2f}")
+
+    for line in done:     print("split   :", line)
+    for line in skipped:  print("dry-run :", line)
+    for line in problems: print("PROBLEM :", line)
+
+    if not (done or problems or skipped):
+        print("nothing to split - no mail sent")
+        raise SystemExit(0)
+
+    bits = []
+    if done:     bits.append(f"{len(done)} split")
+    if problems: bits.append(f"{len(problems)} needing attention")
+    if skipped:  bits.append(f"{len(skipped)} dry-run")
+    body = ""
+    if done:     body += "Split:\n"              + "".join(f"  - {l}\n" for l in done) + "\n"
+    if skipped:  body += "Dry run, not written:\n" + "".join(f"  - {l}\n" for l in skipped) + "\n"
+    if problems: body += "Needs attention:\n"    + "".join(f"  - {l}\n" for l in problems) + "\n"
+
+    if not os.environ.get("MAIL_HOST"):
+        print("no MAIL_HOST configured - not mailing")
+        raise SystemExit(1 if problems else 0)
+
+    msg = EmailMessage()
+    msg["Subject"] = "Firefly loan splits: " + ", ".join(bits)
+    msg["From"] = f"{os.environ.get('MAIL_FROM_NAME','Firefly')} <{os.environ['MAIL_FROM_ADDRESS']}>"
+    msg["To"] = os.environ["MAIL_DESTINATION"]
+    msg.set_content(body)
+    with smtplib.SMTP(os.environ["MAIL_HOST"], int(os.environ.get("MAIL_PORT", "587")), timeout=30) as sm:
+        if os.environ.get("MAIL_ENCRYPTION", "tls") == "tls":
+            sm.starttls(context=ssl.create_default_context())
+        sm.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
+        sm.send_message(msg)
+    print("mail sent")
+    raise SystemExit(1 if problems else 0)
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-loan-split
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: loan-split
+spec:
+  schedule: {{ .Values.loanSplit.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: loan-split
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: loan-split
+              image: {{ .Values.loanSplit.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: LOAN_SPLIT_LOANS
+                  value: {{ .Values.loanSplit.loans | toJson | quote }}
+                - name: LOAN_SPLIT_LOOKBACK_DAYS
+                  value: {{ .Values.loanSplit.lookbackDays | quote }}
+                - name: LOAN_SPLIT_DRY_RUN
+                  value: {{ .Values.loanSplit.dryRun | quote }}
+              command: ["python3", "/script/loan_split.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-loan-split-script
+{{- end }}
