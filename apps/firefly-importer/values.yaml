@@ -52,6 +52,26 @@ smtp:
 # Post-import summary mail. Answers "did every account receive data?" rather than
 # listing rejected lines, so a dead bank connection is visible even when the
 # importer aborts before writing a report of its own. Reuses the smtp block above.
+# Read-only nightly checks: own-account transfers imported as two halves, duplicate
+# imports, and transactions no categorise rule matched. Silent unless one of them has
+# something to report.
+ledgerCheck:
+  enabled: false
+  # After the digest, so a night produces at most one mail from each job rather than
+  # two interleaved ones.
+  schedule: "45 4 * * *"
+  image: python:3.14-slim
+  # Long enough that a monthly payment and the importer's own re-fetch window both fall
+  # inside it; short enough that an old, already-accepted oddity is not re-reported
+  # every night forever.
+  windowDays: 90
+  # Payee accounts that are really your own accounts. Needed because an own account
+  # with no IBAN in Firefly cannot be recognised from the payee name alone, which is
+  # the case for every loan account.
+  loanPayees: []
+  # IBAN -> label for own accounts Firefly holds no IBAN for at all.
+  extraOwnIbans: {}
+
 # Splits each monthly mortgage lump into its Zins and Tilgung legs. Off by default:
 # `loans` maps Firefly account ids, which are per-instance, so a wrong id would book
 # one property's Tilgung against another property's debt.

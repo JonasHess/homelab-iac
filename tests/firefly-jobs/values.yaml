@@ -15,3 +15,8 @@ loanSplit:
       payee: 1
       liability: 2
       interest: 3
+ledgerCheck:
+  enabled: true
+  loanPayees: [1, 2]
+  extraOwnIbans:
+    DE00000000000000000000: Example

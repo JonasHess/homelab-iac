@@ -1,0 +1,70 @@
+{{- if .Values.ledgerCheck.enabled }}
+{{- /*
+  Three read-only checks that each caught real money before being automated:
+
+  - own-account transfers imported as two unrelated halves, which leave net worth
+    right while overstating both income and expenses, so nothing looks wrong
+  - the same bank row imported twice
+  - transactions no auto-categorise rule matched any more, which is silent: a payee
+    pattern with the spaces stripped out never matches and never errors
+
+  Writes nothing, so it is safe to run nightly, and it stays silent unless one of the
+  three has something to say. A mail from this job always means something.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-ledger-check-script
+  namespace: {{ .Release.Namespace }}
+data:
+  ledger_check.py: |
+{{ .Files.Get "scripts/ledger_check.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-ledger-check
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: ledger-check
+spec:
+  schedule: {{ .Values.ledgerCheck.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: ledger-check
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ledger-check
+              image: {{ .Values.ledgerCheck.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: LEDGER_CHECK_WINDOW_DAYS
+                  value: {{ .Values.ledgerCheck.windowDays | quote }}
+                - name: LEDGER_CHECK_LOAN_PAYEES
+                  value: {{ .Values.ledgerCheck.loanPayees | toJson | quote }}
+                - name: LEDGER_CHECK_EXTRA_OWN_IBANS
+                  value: {{ .Values.ledgerCheck.extraOwnIbans | toJson | quote }}
+              command: ["python3", "/script/ledger_check.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-ledger-check-script
+{{- end }}
