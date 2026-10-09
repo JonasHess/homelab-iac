@@ -1,0 +1,58 @@
+name: Firefly Jobs
+
+# The firefly-importer jobs are Python shipped inside ConfigMaps, so what runs in the
+# cluster is what Helm renders, and nothing in this repo would otherwise notice a
+# syntax error or a template that drops the script entirely. Such a break does not
+# fail a build - it reaches ArgoCD and shows up as a CrashLoopBackOff, or worse, as a
+# job that runs and quietly does nothing.
+#
+# So: render the chart, prove each script survived the render, compile it, and run the
+# unit tests against the files on disk.
+
+on:
+  # Runnable on demand, so a change to this workflow can be verified without a dummy
+  # commit to the chart.
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/firefly-importer/**'
+      - 'apps/generic/**'
+      - 'tests/firefly-jobs/**'
+      - 'tests/alert-rules/values.yaml'
+      - '.github/workflows/firefly-jobs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/firefly-importer/**'
+      - 'apps/generic/**'
+      - 'tests/firefly-jobs/**'
+      - 'tests/alert-rules/values.yaml'
+      # Included so a change to how the tests run is itself tested on main; without it
+      # this workflow is the one thing it cannot validate.
+      - '.github/workflows/firefly-jobs.yml'
+
+jobs:
+  jobs-scripts:
+    name: Render and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          # Keep this in step with the image the CronJobs actually run, so the tests
+          # exercise the same interpreter version as production.
+          python-version: '3.14'
+
+      - name: Install pytest
+        run: pip install --quiet pytest
+
+      - name: Render the chart and compile every job script
+        run: ./tests/firefly-jobs/verify-rendered.sh
+
+      - name: Run the unit tests
+        working-directory: tests/firefly-jobs
+        run: python -m pytest -q
