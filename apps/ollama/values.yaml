@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: ollama/ollama:0.40.1
+    image: ollama/ollama:0.40.2
     ports:
     - containerPort: 11434
     pvcMounts:
