@@ -32,3 +32,41 @@ generic:
     envFrom:
       secretRef: paperlessgpt-secret
       configMapRef: paperlessgpt-config
+# Weekly mail listing what paperless-gpt filed questionably in the last days. Off by
+# default; an environment enables it and sets the SMTP account. The Akeyless entry at
+# smtp.passwordPath must exist before enabling, otherwise the ExternalSecret cannot sync.
+qualityReport:
+  enabled: false
+  # Monday morning, covering the past week.
+  schedule: "0 7 * * 1"
+  image: python:3.14-slim
+  days: 7
+  # A document still carrying the paperless-gpt tag after this long has failed.
+  queueMaxAgeHours: 1
+  publicUrl: ""
+  # Theme tags a document is expected to carry at least one of.
+  themeTags:
+    - Arbeit & Beruf
+    - Reisen & Urlaube
+    - Ausweise & Dokumente
+    - Bank & Finanzen
+    - Bildung & Qualifikationen
+    - Fahrzeug & Transport
+    - Familie & Partnerschaft
+    - Gesundheit & Krankenkasse
+    - Rechnungen & Belege
+    - Rechtliches & Anwaltliches
+    - Freizeit & Persönliches
+    - Steuern & Finanzamt
+    - Versicherung & Vorsorge
+    - Verträge & Abonnements
+    - Wohnung & Immobilien
+  smtp:
+    host: ""
+    port: 587
+    encryption: tls
+    username: ""
+    from: ""
+    fromName: Paperless Qualitätsreport
+    destination: ""
+    passwordPath: /paperlessgpt/MAIL_PASSWORD
