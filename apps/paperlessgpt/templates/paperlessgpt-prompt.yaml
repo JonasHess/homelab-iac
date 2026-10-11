@@ -1,0 +1,24 @@
+{{- /*
+paperless-gpt renders json_prompt.tmpl as a Go template for every document, so the
+files are inserted with .Files.Get and never evaluated by Helm: their {{ ... }}
+placeholders must reach the pod verbatim.
+
+The summary/urgency/action_* fields only exist for the n8n webhook. Without
+N8N_WEBHOOK_URL nobody reads them, so they are left out of the prompt to keep the
+model's task and output short.
+*/ -}}
+{{- $prompt := .Files.Get "json_prompt.tmpl" }}
+{{- $schemaFields := "" }}
+{{- $sections := "" }}
+{{- if .Values.N8N_WEBHOOK_URL }}
+{{- $schemaFields = .Files.Get "json_prompt_n8n_schema.tmpl" }}
+{{- $sections = .Files.Get "json_prompt_n8n_sections.tmpl" }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessgpt-prompt
+  namespace: {{ $.Release.Namespace }}
+data:
+  json_prompt.tmpl: |
+{{ $prompt | replace "@@N8N_SCHEMA_FIELDS@@" $schemaFields | replace "@@N8N_SECTIONS@@" $sections | indent 4 }}

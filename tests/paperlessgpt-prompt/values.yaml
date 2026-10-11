@@ -1,0 +1,7 @@
+# Minimum needed to render apps/paperlessgpt; nothing here reaches a cluster.
+generic:
+  appName: paperlessgpt
+  deployment:
+    pvcMounts:
+      prompts:
+        hostPath: /tmp/paperless-gpt-prompts

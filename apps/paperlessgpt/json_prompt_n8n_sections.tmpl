@@ -1,0 +1,39 @@
+# Feld: summary
+
+**Definition:** Eine kurze Zusammenfassung des Dokuments für eine E-Mail-Benachrichtigung.
+
+**Regeln:**
+- 2-3 kurze Sätze auf Deutsch.
+- Was ist das Dokument, wer hat es geschickt, gibt es Fristen oder Beträge.
+- Reiner Text, keine Markdown-Formatierung, kein Vorwort.
+
+---
+
+# Feld: urgency
+
+**Definition:** Dringlichkeit für den Empfänger. Genau einer dieser Werte:
+
+- `low` — nur informativ, Quittungen, Bestätigungen, reines Archivieren.
+- `medium` — Rechnungen oder Formulare mit Frist in mehr als ~2 Wochen.
+- `high` — Frist innerhalb von ~1 Woche, wichtige Briefe, Kontoaktionen nötig.
+- `critical` — Rechts-/Steuerforderungen, Mahnungen, Sperrandrohung, Gerichtspost, sofortiges Handeln.
+
+---
+
+# Feld: action_required
+
+**Definition:** Boolean. `true`, wenn der Empfänger etwas tun muss (zahlen, antworten, einreichen, Frist einhalten). `false` für rein informative Dokumente.
+
+---
+
+# Feld: action_description
+
+**Definition:** Kurze, imperative Handlungsanweisung auf Deutsch.
+
+**Regeln:**
+- Nur ein Satz, max. ~15 Wörter.
+- Wenn `action_required=false`: leerer String `""`.
+- Beispiel: „87,42 EUR bis zum 2026-04-30 überweisen."
+
+---
+
