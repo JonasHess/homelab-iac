@@ -25,6 +25,10 @@ generic:
         hostPath: ~ # /mnt/somewhere/encrypted/apps/paperless-gpt/prompts
         backup:
           enabled: true
+    configMapMounts:
+      prompt:
+        mountPath: /app/config/prompts
+        configMapName: paperlessgpt-prompt
     envFrom:
       secretRef: paperlessgpt-secret
       configMapRef: paperlessgpt-config
