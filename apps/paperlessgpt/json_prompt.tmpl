@@ -1,18 +1,12 @@
 {{ .PromptPreamble }}
 
-WICHTIG: Antworten Sie AUSSCHLIESSLICH mit einem einzigen validen JSON-Objekt in einer einzigen Zeile. Keine Erklärungen, keine Markdown-Formatierung, keine Backticks, kein Text vor oder nach dem JSON. Wenn ein Feld keinen passenden Wert hat, verwenden Sie null (bei created_date) oder einen leeren Array (bei tags).
-
-Die Ausgabe muss immer auf DEUTSCH erfolgen, unabhängig von der Sprache des Dokuments.
-Die Sprache des Dokuments ist wahrscheinlich: {{.Language}}
-
----
-
 # Aufgabe
 
-Ich stelle dir den Inhalt eines Dokuments zur Verfügung, das teilweise per OCR gelesen wurde (es kann Fehler, fehlende Zeichen oder unvollständige Passagen enthalten).
-Analysiere den Inhalt und befülle die folgenden JSON-Felder so präzise wie möglich.
+Du ordnest ein Dokument aus einem privaten Paperless-Archiv ein. Der Text unten wurde teilweise per OCR gelesen und kann Fehler, fehlende Zeichen oder unvollständige Passagen enthalten.
 
----
+Deine Antwort wird von einem Programm gelesen, nicht von einem Menschen. Antworte deshalb nur mit einem einzigen JSON-Objekt nach dem Schema unten, ohne Text davor oder danach. Alle Werte auf Deutsch, auch wenn das Dokument in einer anderen Sprache ist (wahrscheinliche Sprache des Dokuments: {{.Language}}).
+
+Das Programm gleicht `correspondent`, `document_type` und `tags` Zeichen für Zeichen mit den Listen unten ab. Jede Abweichung, auch nur eine andere Schreibweise oder ein Zusatz wie „GmbH", legt einen neuen Eintrag an und erzeugt ein Duplikat im Archiv. Übernimm Namen aus den Listen deshalb immer exakt so, wie sie dort stehen.
 
 # JSON-Schema
 
@@ -26,73 +20,56 @@ Analysiere den Inhalt und befülle die folgenden JSON-Felder so präzise wie mö
 }
 ```
 
----
-
 # Feld: correspondent
 
-**Definition:** Der wichtigste Absender oder Empfänger des Dokuments – je nach Richtung der Kommunikation.
+Die Organisation oder Person, von der das Dokument stammt; bei Schreiben, die von uns ausgehen, der Empfänger.
 
-**Regeln:**
-- Kurze, gebräuchliche Firmennamen ohne juristische Suffixe: „Microsoft" statt „Microsoft Ireland Operations Limited", „Amazon" statt „Amazon EU S.à r.l."
-- Wenn ein ähnlicher Name bereits in der Liste vorhanden ist, genau diesen Namen verwenden (auch bei abweichender Schreibweise, Abkürzung, Filiale oder Rechtsform). Einen neuen Namen nur verwenden, wenn der Korrespondent wirklich noch nicht in der Liste steht.
-- Keine Namen aus der Blacklist verwenden (auch keine Variationen).
-- Fallback: „Unbekannt" – nur wenn kein Korrespondent identifizierbar ist.
+- Wenn die Organisation in der Liste steht, nimm den Listeneintrag, auch wenn das Dokument sie anders schreibt (Rechtsform, Filiale, Standort, Abkürzung, Marke statt Betreiber).
+- Nur wenn sie wirklich nicht in der Liste steht: ein neuer, kurzer und gebräuchlicher Name ohne Rechtsform, z. B. „Microsoft" statt „Microsoft Ireland Operations Limited".
+- Namen aus der Blacklist (und Varianten davon) sind wir selbst, nie der Korrespondent.
+- „Unbekannt" nur, wenn sich wirklich kein Absender oder Empfänger erkennen lässt.
 
-**Verfügbare Korrespondenten:**
+Verfügbare Korrespondenten:
 {{.AvailableCorrespondents | join ", "}}
 
-**Blacklist (diese und Variationen davon vermeiden):**
+Blacklist:
 {{.BlackList | join ", "}}
 
 {{.CorrespondentExplanation}}
 
----
-
-# Feld: title
-
-**Definition:** Ein prägnanter, beschreibender Titel, der das Dokument eindeutig identifizierbar macht.
-
-**Regeln:**
-- Den Korrespondenten NICHT im Titel erwähnen (auch keine Abkürzungen oder Variationen).
-- Die wahrscheinliche Dokumentenart angeben (z. B. Rechnung, Vertrag, Kontoauszug, Bescheid).
-- Bei Geldbeträgen: den Betrag im Titel nennen, wenn möglich.
-- Bei Rechnungen: beschreiben, was gekauft wurde oder welche Dienstleistung erbracht wurde.
-- Nicht einfach den ersten Satz des Dokuments kopieren – so beschreibend wie möglich sein.
-- Fallback: „Kein Titel gefunden" – nur wenn gar kein Titel ableitbar ist.
-
-{{.TitleExplanation}}
-
----
-
 # Feld: document_type
 
-**Definition:** Die Kategorie aus der Liste, die den Hauptinhalt des Dokuments am besten beschreibt.
+Die Art des Dokuments.
 
-**Regeln:**
-- Immer einen Typ aus der Liste wählen, auch wenn er nur ungefähr passt. Allgemeine Typen wie „Rechnung", „Vertrag" oder „Kontoauszug" sind besser als zu spezielle.
-- Nur wenn wirklich kein Typ aus der Liste den Hauptinhalt beschreibt, einen neuen Typ verwenden. Dieser muss kurz und allgemein sein (ein bis zwei Wörter, z. B. „Rechnung", nicht „Tierarztrechnung" oder „Rechnung für Hundefutter").
-- Dieses Feld NIEMALS leer lassen.
+- Wähle den passenden Typ aus der Liste. Die Liste ist bewusst kurz gehalten; ein allgemeiner Typ wie „Rechnung", „Vertrag" oder „Mitteilung" ist besser als ein neuer, spezieller.
+- Nur wenn wirklich keiner passt: ein neuer Typ mit ein bis zwei Wörtern, im Singular.
 
-**Verfügbare Dokumenttypen:**
+Verfügbare Dokumenttypen:
 {{.AvailableDocumentTypes | join ", "}}
 
 {{.DocumentTypeExplanation}}
 
----
+# Feld: title
+
+Ein kurzer, beschreibender Titel, an dem man das Dokument in einer Liste wiedererkennt.
+
+- Ohne den Korrespondenten, der steht schon in einem eigenen Feld.
+- Mit der Dokumentart (z. B. Rechnung, Vertrag, Kontoauszug, Bescheid) und dem Kern des Inhalts: bei Rechnungen, was gekauft oder geleistet wurde; bei Geldbeträgen der Betrag.
+- Nicht einfach den ersten Satz des Dokuments übernehmen.
+- „Kein Titel gefunden" nur, wenn sich gar nichts ableiten lässt.
+
+{{.TitleExplanation}}
 
 # Feld: tags
 
-**Definition:** Eine kurze Liste der relevantesten Tags aus der Auswahlliste.
+Bis zu 4 Tags aus der Liste, lieber weniger und treffend. Keine neuen Tags erfinden; wenn keiner passt, eine leere Liste `[]`.
 
-**Regeln:**
-- Maximal 4 Tags auswählen – lieber weniger, aber treffende Tags.
-- NUR Tags aus der bereitgestellten Liste verwenden – keine eigenen erfinden.
-- Wenn kein Tag passt: leere Liste `[]` zurückgeben.
+Die Liste enthält auch Tags, die andere Programme automatisch vergeben (z. B. für Banken, Depots oder Importe). Verwende nur die unten beschriebenen Tags.
 
-**Verfügbare Tags:**
+Verfügbare Tags:
 {{.AvailableTags | join ", "}}
 
-**Tag-Bedeutungen (zur Orientierung):**
+Bedeutung der Themen-Tags:
 - **Arbeit & Beruf**: Arbeitsverträge, Lohnabrechnungen, arbeitsbezogene Korrespondenz.
 - **Reisen & Urlaube**: Fahrkarten, Hotelreservierungen, Visa, Reiseversicherungen, Reiserouten.
 - **Ausweise & Dokumente**: Personalausweis, Reisepass, Führerschein, amtliche Ausweise.
@@ -111,17 +88,9 @@ Analysiere den Inhalt und befülle die folgenden JSON-Felder so präzise wie mö
 
 {{.TagsExplanation}}
 
----
-
 # Feld: created_date
 
-**Definition:** Das wahrscheinlichste Erstellungsdatum des Dokuments.
-
-**Regeln:**
-- Format: `"YYYY-MM-DD"` (z. B. `"2024-03-15"`).
-- Wenn kein Datum erkennbar ist: `null`.
-
----
+Das Datum, an dem das Dokument erstellt oder versendet wurde, im Format `YYYY-MM-DD`. Wenn keins erkennbar ist: `null`.
 
 @@N8N_SECTIONS@@# Dokumentinhalt
 
