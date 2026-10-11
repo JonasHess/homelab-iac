@@ -1,0 +1,113 @@
+{{- if .Values.qualityReport.enabled }}
+{{- /*
+  Weekly quality report: lists what paperless-gpt filed questionably in the last
+  days (likely duplicate correspondents, new document types, documents without a
+  person or theme tag, documents stuck in the queue) and mails it. Read-only.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: paperlessgpt-quality-report-script
+  namespace: {{ .Release.Namespace }}
+data:
+  quality_report.py: |
+{{ .Files.Get "scripts/quality_report.py" | indent 4 }}
+---
+{{- /*
+  The mailbox password lives in its own Secret: a missing Akeyless entry must not
+  break the sync of paperlessgpt-secret, which paperless-gpt itself depends on.
+*/}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: paperlessgpt-quality-report-external-secret
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: {{ $.Values.global.externalSecrets.refreshInterval | default "1h" }}
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: {{ $.Values.global.externalSecrets.clusterSecretStoreRef.name }}
+  target:
+    name: paperlessgpt-quality-report
+    creationPolicy: Owner
+  data:
+    - secretKey: "MAIL_PASSWORD"
+      remoteRef:
+        key: "{{ $.Values.global.akeyless.path }}{{ .Values.qualityReport.smtp.passwordPath }}"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: paperlessgpt-quality-report
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: paperlessgpt
+    component: quality-report
+spec:
+  schedule: {{ .Values.qualityReport.schedule | quote }}
+  concurrencyPolicy: Forbid
+  # The pod log holds the full report, so keep a few weeks of it.
+  successfulJobsHistoryLimit: 4
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: paperlessgpt
+            component: quality-report
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: quality-report
+              image: {{ .Values.qualityReport.image | quote }}
+              env:
+                # Only the API token, not the whole paperlessgpt-secret: the job does
+                # not need the LLM keys.
+                - name: PAPERLESS_API_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: paperlessgpt-secret
+                      key: PAPERLESS_API_TOKEN
+                - name: PAPERLESS_BASE_URL
+                  value: "http://paperlessngx-service:8000"
+                - name: REPORT_PUBLIC_URL
+                  value: {{ .Values.qualityReport.publicUrl | quote }}
+                - name: REPORT_DAYS
+                  value: {{ .Values.qualityReport.days | quote }}
+                - name: REPORT_QUEUE_MAX_AGE_HOURS
+                  value: {{ .Values.qualityReport.queueMaxAgeHours | quote }}
+                - name: REPORT_THEME_TAGS
+                  value: {{ .Values.qualityReport.themeTags | toJson | quote }}
+                - name: MAIL_HOST
+                  value: {{ .Values.qualityReport.smtp.host | quote }}
+                - name: MAIL_PORT
+                  value: {{ .Values.qualityReport.smtp.port | quote }}
+                - name: MAIL_ENCRYPTION
+                  value: {{ .Values.qualityReport.smtp.encryption | quote }}
+                - name: MAIL_USERNAME
+                  value: {{ .Values.qualityReport.smtp.username | quote }}
+                - name: MAIL_FROM_ADDRESS
+                  value: {{ .Values.qualityReport.smtp.from | quote }}
+                - name: MAIL_FROM_NAME
+                  value: {{ .Values.qualityReport.smtp.fromName | quote }}
+                - name: MAIL_DESTINATION
+                  value: {{ .Values.qualityReport.smtp.destination | quote }}
+                - name: MAIL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: paperlessgpt-quality-report
+                      key: MAIL_PASSWORD
+              command: ["python3", "/script/quality_report.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: paperlessgpt-quality-report-script
+{{- end }}

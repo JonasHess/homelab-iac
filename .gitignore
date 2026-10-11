@@ -15,3 +15,4 @@ settings.local.json
 tests/alert-rules/.rendered/
 tests/firefly-jobs/.rendered/
 tests/paperlessgpt-prompt/.rendered/
+tests/paperlessgpt-report/.rendered/
