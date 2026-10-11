@@ -45,7 +45,7 @@ jobs:
         with:
           # Keep this in step with the image the CronJobs actually run, so the tests
           # exercise the same interpreter version as production.
-          python-version: '3.14'
+          python-version: '3.15'
 
       - name: Install pytest
         run: pip install --quiet pytest
