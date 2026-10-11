@@ -41,7 +41,7 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v5
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           # Keep this in step with the image the CronJobs actually run, so the tests
           # exercise the same interpreter version as production.
