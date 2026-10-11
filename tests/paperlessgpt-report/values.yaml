@@ -1,0 +1,9 @@
+# Enables the report for rendering; nothing here reaches a cluster.
+qualityReport:
+  enabled: true
+  publicUrl: https://paperless.test.example
+  smtp:
+    host: mail.test.example
+    username: report@test.example
+    from: report@test.example
+    destination: me@test.example
