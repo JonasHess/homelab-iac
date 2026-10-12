@@ -36,6 +36,32 @@ spec:
     - secretKey: "MAIL_PASSWORD"
       remoteRef:
         key: "{{ $.Values.global.akeyless.path }}{{ .Values.qualityReport.smtp.passwordPath }}"
+{{- if .Values.qualityReport.heartbeat.enabled }}
+---
+{{- /*
+  Ping URL of the dead man's switch. It is a capability URL - anyone holding it can
+  keep the check green - so it stays out of Git and out of the mail secret above.
+*/}}
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: paperlessgpt-quality-report-heartbeat-external-secret
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: {{ $.Values.global.externalSecrets.refreshInterval | default "1h" }}
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: {{ $.Values.global.externalSecrets.clusterSecretStoreRef.name }}
+  target:
+    name: paperlessgpt-quality-report-heartbeat
+    creationPolicy: Owner
+  data:
+    - secretKey: "REPORT_HEARTBEAT_URL"
+      remoteRef:
+        key: "{{ $.Values.global.akeyless.path }}{{ .Values.qualityReport.heartbeat.urlPath }}"
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -81,6 +107,8 @@ spec:
                   value: {{ .Values.qualityReport.days | quote }}
                 - name: REPORT_QUEUE_MAX_AGE_HOURS
                   value: {{ .Values.qualityReport.queueMaxAgeHours | quote }}
+                - name: REPORT_ALWAYS_SEND
+                  value: {{ .Values.qualityReport.alwaysSend | quote }}
                 - name: REPORT_THEME_TAGS
                   value: {{ .Values.qualityReport.themeTags | toJson | quote }}
                 - name: MAIL_HOST
@@ -102,6 +130,11 @@ spec:
                     secretKeyRef:
                       name: paperlessgpt-quality-report
                       key: MAIL_PASSWORD
+              {{- if .Values.qualityReport.heartbeat.enabled }}
+              envFrom:
+                - secretRef:
+                    name: paperlessgpt-quality-report-heartbeat
+              {{- end }}
               command: ["python3", "/script/quality_report.py"]
               volumeMounts:
                 - name: script

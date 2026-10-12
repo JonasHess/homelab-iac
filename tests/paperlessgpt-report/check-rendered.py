@@ -29,4 +29,9 @@ for key in ("MAIL_PASSWORD", "PAPERLESS_API_TOKEN"):
     if "secretKeyRef" not in env[key].get("valueFrom", {}):
         fail(f"{key} must come from a Secret")
 es = next(d for d in docs if d["kind"] == "ExternalSecret" and d["spec"]["target"]["name"] == "paperlessgpt-quality-report")
+container = cron["spec"]["jobTemplate"]["spec"]["template"]["spec"]["containers"][0]
+if {"secretRef": {"name": "paperlessgpt-quality-report-heartbeat"}} not in container.get("envFrom", []):
+    fail("heartbeat enabled but its Secret is not mounted")
+if not any(d["kind"] == "ExternalSecret" and d["spec"]["target"]["name"] == "paperlessgpt-quality-report-heartbeat" for d in docs):
+    fail("heartbeat enabled but no ExternalSecret for its URL")
 print(f"ok  CronJob {cron['spec']['schedule']!r}, {len(themes)} themes, password from {es['spec']['data'][0]['remoteRef']['key']}")
