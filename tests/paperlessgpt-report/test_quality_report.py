@@ -79,3 +79,32 @@ def test_report_says_so_when_there_is_nothing_to_check():
     subject, body = qr.render(report, "https://paperless.example")
     assert "nothing to check" in subject
     assert "Keine Auffälligkeiten" in body
+
+
+def _empty_report(**kw):
+    r = {"since": "2026-10-05", "documents": 3, "new_correspondents": [], "new_types": [], "stuck": [],
+         "findings": {k: [] for k in ("no_person", "two_persons", "unknown_correspondent", "unknown_type", "no_theme", "weak_title")}}
+    r.update(kw)
+    return r
+
+
+def test_to_check_counts_only_what_needs_attention():
+    assert qr.to_check(_empty_report()) == 0
+    # A new correspondent without a similar existing one is expected, not a problem.
+    assert qr.to_check(_empty_report(new_correspondents=[{"id": 1, "name": "Fremdfirma", "documents": 1, "similar": []}])) == 0
+    assert qr.to_check(_empty_report(new_correspondents=[{"id": 1, "name": "Stadt Musterstadt", "documents": 1, "similar": ["Stadtverwaltung Musterstadt"]}])) == 1
+    assert qr.to_check(_empty_report(new_types=[{"id": 1, "name": "Bewertung", "documents": 2}], stuck=[doc(9)])) == 2
+
+
+def test_heartbeat_pings_the_configured_url_and_never_fails_the_job(monkeypatch):
+    calls = []
+    def fake_urlopen(url, timeout):
+        calls.append(url)
+        raise OSError("unreachable")
+    monkeypatch.setattr(qr.urllib.request, "urlopen", fake_urlopen)
+    monkeypatch.delenv("REPORT_HEARTBEAT_URL", raising=False)
+    qr.heartbeat()
+    assert calls == []
+    monkeypatch.setenv("REPORT_HEARTBEAT_URL", "https://hc-ping.example/abc")
+    qr.heartbeat()  # must not raise although the ping fails
+    assert calls == ["https://hc-ping.example/abc"]

@@ -41,6 +41,14 @@ qualityReport:
   schedule: "0 7 * * 1"
   image: python:3.14-slim
   days: 7
+  # Mail only when something needs a look; true also mails quiet weeks.
+  alwaysSend: false
+  # Dead man's switch: every completed run pings this URL, so a job that stops running
+  # is noticed although quiet weeks send no mail. Enable only after the Akeyless entry
+  # at urlPath exists.
+  heartbeat:
+    enabled: false
+    urlPath: /paperlessgpt/REPORT_HEARTBEAT_URL
   # A document still carrying the paperless-gpt tag after this long has failed.
   queueMaxAgeHours: 1
   publicUrl: ""

@@ -99,39 +99,58 @@ SECTIONS = [
 ]
 
 
+def to_check(report):
+    """Number of entries that need a look. A new correspondent only counts when it
+    resembles an existing one; new senders are normal."""
+    return (sum(1 for c in report["new_correspondents"] if c["similar"]) + len(report["new_types"])
+            + len(report["stuck"]) + sum(len(v) for v in report["findings"].values()))
+
+
 def render(report, base_url):
     """Subject and plain-text body of the report mail."""
     link = lambda d: f"{base_url}/documents/{d['id']}/details"
-    lines, count = [], 0
+    lines, count = [], to_check(report)
     if report["new_correspondents"]:
         lines.append("Neue Korrespondenten:")
         for c in report["new_correspondents"]:
             hint = f"  (ähnlich: {', '.join(c['similar'])})" if c["similar"] else ""
             lines.append(f"  - {c['name']} ({c['documents']} Dok.){hint}")
-            count += 1 if c["similar"] else 0
         lines.append("")
     if report["new_types"]:
         lines.append("Neue Dokumenttypen:")
         lines += [f"  - {t['name']} ({t['documents']} Dok.)" for t in report["new_types"]]
-        count += len(report["new_types"])
         lines.append("")
     if report["stuck"]:
         lines.append("Hängen in der paperless-gpt-Warteschlange:")
         lines += [f"  - {d['title']}  {link(d)}" for d in report["stuck"]]
-        count += len(report["stuck"])
         lines.append("")
     for key, heading in SECTIONS:
         docs = report["findings"][key]
         if docs:
             lines.append(f"{heading}:")
             lines += [f"  - {d['title']}  {link(d)}" for d in docs]
-            count += len(docs)
             lines.append("")
     head = f"Dokumente seit {report['since']}: {report['documents']}"
     if not count:
         lines = ["Keine Auffälligkeiten."] + ([""] + lines if lines else [])
     subject = f"Paperless quality report since {report['since']}: " + (f"{count} to check" if count else "nothing to check")
     return subject, "\n".join([head, ""] + lines).rstrip() + "\n"
+
+
+def heartbeat():
+    """Tell the dead man's switch this run finished.
+
+    A quiet week sends no mail, so an absent mail alone cannot tell "nothing to check"
+    from a suspended CronJob, a crashed run or a dead mailbox. The far end alerts when
+    this ping stops arriving. Called only after a run got all the way through.
+    """
+    url = os.environ.get("REPORT_HEARTBEAT_URL", "")
+    if not url:
+        return
+    try:
+        urllib.request.urlopen(url, timeout=10).read()
+    except Exception as e:  # a missed ping is not worth failing the job over
+        print(f"heartbeat ping failed: {e}")
 
 
 def main():
@@ -193,6 +212,12 @@ def main():
     if os.environ.get("REPORT_DRY_RUN") == "1":
         print("dry run - no mail sent")
         return
+    # A quiet week sends nothing: a weekly "all fine" mail is noise that trains you to
+    # skip the one that matters. The pod log still holds the full report.
+    if not to_check(report) and os.environ.get("REPORT_ALWAYS_SEND", "false").lower() != "true":
+        print("nothing to check - no mail sent")
+        heartbeat()
+        return
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -205,6 +230,7 @@ def main():
         s.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
         s.send_message(msg)
     print("mail sent to", os.environ["MAIL_DESTINATION"])
+    heartbeat()
 
 
 if __name__ == "__main__":
