@@ -60,7 +60,7 @@ ledgerCheck:
   # After the digest, so a night produces at most one mail from each job rather than
   # two interleaved ones.
   schedule: "45 4 * * *"
-  image: python:3.14-slim
+  image: python:3.15-slim
   # Long enough that a monthly payment and the importer's own re-fetch window both fall
   # inside it; short enough that an old, already-accepted oddity is not re-reported
   # every night forever.
@@ -83,7 +83,7 @@ loanSplit:
   # After the 04:00 auto-import, before the 04:30 digest, so the digest reports on an
   # already-corrected ledger.
   schedule: "15 4 * * *"
-  image: python:3.14-slim
+  image: python:3.15-slim
   # One monthly cycle plus slack: the Sparkasse loan is debited at month end, the two
   # PSD/BBBank ones at the start, so a 30-day window can straddle awkwardly.
   lookbackDays: 45
@@ -97,7 +97,7 @@ digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.
   schedule: "30 4 * * *"
-  image: python:3.14-slim
+  image: python:3.15-slim
   # An account is flagged only when its silence exceeds BOTH this absolute floor
   # and the longest stretch that account has already been quiet in its own
   # history. A fixed day count cannot work: some accounts move daily, others a
