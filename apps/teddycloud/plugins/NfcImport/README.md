@@ -38,6 +38,9 @@ Boxine.
 
 ## Changelog
 
+- **1.1.1** - Check for an existing JSON through the folder listing and read
+  its `source` through `/content/json/get/`; `/api/getFile/content/` answers
+  404 for content files, so neither check could see them.
 - **1.1.0** - Let TeddyCloud cache the TAF on its own and poll for the result
   instead of streaming it through the browser, where a proxy timeout could
   break a long download.
