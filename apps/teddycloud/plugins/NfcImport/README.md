@@ -38,6 +38,9 @@ Boxine.
 
 ## Changelog
 
+- **1.1.0** - Let TeddyCloud cache the TAF on its own and poll for the result
+  instead of streaming it through the browser, where a proxy timeout could
+  break a long download.
 - **1.0.0** - Initial NFC dump import.
 
 ---
