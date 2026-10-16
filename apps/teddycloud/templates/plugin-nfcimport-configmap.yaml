@@ -1,0 +1,11 @@
+# The NfcImport web plugin, shipped from git instead of being copied onto the
+# plugins volume by hand. values.yaml mounts it as one folder inside the
+# plugins directory; teddyCloud lists every folder there that has a
+# plugin.json, so mounting it is all it takes to enable the plugin.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teddycloud-plugin-nfcimport
+  namespace: {{ .Release.Namespace }}
+data:
+{{ (.Files.Glob "plugins/NfcImport/*").AsConfig | indent 2 }}
