@@ -59,20 +59,33 @@
       .join("/");
   }
 
-  async function ensureContentFolder(folder) {
-    const indexResponse = await fetch(
-      "/api/fileIndex?special=content&path=/"
+  async function listContentFiles(path) {
+    const response = await fetch(
+      `/api/fileIndex?special=content&path=${encodeURIComponent(path)}`,
+      { cache: "no-store" }
     );
-    if (!indexResponse.ok) {
+    if (!response.ok) {
       throw new Error(
-        `Could not read the content directory (HTTP ${indexResponse.status}).`
+        `Could not read the content directory ${path} (HTTP ${response.status}).`
       );
     }
+    const index = await response.json();
+    return Array.isArray(index.files) ? index.files : [];
+  }
 
-    const index = await indexResponse.json();
-    const entry = Array.isArray(index.files)
-      ? index.files.find((item) => item.name === folder)
-      : null;
+  async function contentFileExists(folder, name) {
+    const rootFiles = await listContentFiles("/");
+    if (!rootFiles.some((item) => item.name === folder && item.isDirectory)) {
+      return false;
+    }
+    const files = await listContentFiles(`/${folder}`);
+    return files.some((item) => item.name === name && !item.isDirectory);
+  }
+
+  async function ensureContentFolder(folder) {
+    const entry = (await listContentFiles("/")).find(
+      (item) => item.name === folder
+    );
     if (entry && entry.isDirectory) return;
     if (entry) {
       throw new Error(`The target path ${folder} is not a content directory.`);
@@ -157,27 +170,21 @@
   // TeddyCloud writes the download to "<file>.tmp" and renames it to
   // "<file>" only once it is a valid TAF. With cloud.cacheToLibrary it then
   // moves the TAF into the library and points the content JSON's "source"
-  // at it. Either outcome means the TAF is complete.
+  // at it. Either outcome means the TAF is complete. Errors count as "not yet"
+  // so that one failed poll does not end the wait.
   async function isTafCached(dump) {
-    const jsonResponse = await fetch(
-      `/api/getFile/content/${contentPath(dump.folder, dump.file, "json")}`,
-      { cache: "no-store" }
-    );
-    if (jsonResponse.ok) {
-      const json = await jsonResponse.json();
-      if (json.source) return true;
+    try {
+      const jsonResponse = await fetch(`/content/json/get/${dump.ruid}`, {
+        cache: "no-store",
+      });
+      if (jsonResponse.ok) {
+        const json = await jsonResponse.json();
+        if (json.source) return true;
+      }
+      return await contentFileExists(dump.folder, dump.file);
+    } catch (_) {
+      return false;
     }
-
-    const indexResponse = await fetch(
-      `/api/fileIndex?special=content&path=/${encodeURIComponent(dump.folder)}`,
-      { cache: "no-store" }
-    );
-    if (!indexResponse.ok) return false;
-    const index = await indexResponse.json();
-    return (
-      Array.isArray(index.files) &&
-      index.files.some((item) => item.name === dump.file && !item.isDirectory)
-    );
   }
 
   async function waitForCachedTaf(dump) {
@@ -247,15 +254,13 @@
         selectedDump.file,
         "json"
       );
-      const existing = await fetch(`/api/getFile/content/${path}`);
-      if (existing.ok && !window.confirm(`The file ${path} already exists. Overwrite it?`)) {
+      const exists = await contentFileExists(
+        selectedDump.folder,
+        `${selectedDump.file}.json`
+      );
+      if (exists && !window.confirm(`The file ${path} already exists. Overwrite it?`)) {
         setStatus("Import cancelled; the existing JSON file was left unchanged.", "");
         return;
-      }
-      if (!existing.ok && existing.status !== 404) {
-        throw new Error(
-          `Could not check the existing content file (HTTP ${existing.status}).`
-        );
       }
 
       const uploadedPath = await uploadJson(selectedDump);
