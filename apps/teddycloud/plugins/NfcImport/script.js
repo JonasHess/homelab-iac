@@ -131,34 +131,74 @@
     return contentPath(dump.folder, dump.file, "json");
   }
 
-  async function fetchAndCacheTaf(dump) {
+  const CACHE_POLL_INTERVAL_MS = 2000;
+  const CACHE_POLL_TIMEOUT_MS = 10 * 60 * 1000;
+
+  // Starts the Boxine download in TeddyCloud and hangs up as soon as the
+  // response headers arrive. TeddyCloud keeps reading from Boxine and caching
+  // after its client disconnects, so the TAF never has to pass through the
+  // browser, where a reverse proxy may cut a long transfer. The cost: an
+  // error that Boxine reports mid-stream is not seen here, only as a cache
+  // that never shows up (see waitForCachedTaf).
+  async function startTafCaching(dump) {
     const jsonPath = contentPath(dump.folder, dump.file, "json");
-    const response = await fetch(`/content/download/${jsonPath}`);
+    const controller = new AbortController();
+    const response = await fetch(`/content/download/${jsonPath}`, {
+      signal: controller.signal,
+    });
+    controller.abort();
     if (!response.ok) {
       throw new Error(
         `Boxine retrieval failed (HTTP ${response.status} ${response.statusText}).`
       );
     }
+  }
 
-    let receivedBytes = 0;
-    if (response.body) {
-      const reader = response.body.getReader();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        receivedBytes += value.byteLength;
+  // TeddyCloud writes the download to "<file>.tmp" and renames it to
+  // "<file>" only once it is a valid TAF. With cloud.cacheToLibrary it then
+  // moves the TAF into the library and points the content JSON's "source"
+  // at it. Either outcome means the TAF is complete.
+  async function isTafCached(dump) {
+    const jsonResponse = await fetch(
+      `/api/getFile/content/${contentPath(dump.folder, dump.file, "json")}`,
+      { cache: "no-store" }
+    );
+    if (jsonResponse.ok) {
+      const json = await jsonResponse.json();
+      if (json.source) return true;
+    }
+
+    const indexResponse = await fetch(
+      `/api/fileIndex?special=content&path=/${encodeURIComponent(dump.folder)}`,
+      { cache: "no-store" }
+    );
+    if (!indexResponse.ok) return false;
+    const index = await indexResponse.json();
+    return (
+      Array.isArray(index.files) &&
+      index.files.some((item) => item.name === dump.file && !item.isDirectory)
+    );
+  }
+
+  async function waitForCachedTaf(dump) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < CACHE_POLL_TIMEOUT_MS) {
+      if (await isTafCached(dump)) {
+        setStatus(
+          "JSON created and TAF retrieved from Boxine. TeddyCloud has stored the TAF file.",
+          "success"
+        );
+        return;
       }
-    }
-
-    if (receivedBytes === 0) {
-      throw new Error(
-        "TeddyCloud did not return any TAF data from Boxine."
+      const seconds = Math.round((Date.now() - startedAt) / 1000);
+      setStatus(
+        `TeddyCloud is retrieving the TAF file from Boxine ... (${seconds} s)`,
+        ""
       );
+      await new Promise((resolve) => setTimeout(resolve, CACHE_POLL_INTERVAL_MS));
     }
-
-    setStatus(
-      "JSON created and TAF retrieved from Boxine. The TAF file was transferred to TeddyCloud.",
-      "success"
+    throw new Error(
+      "TeddyCloud did not store the TAF file within 10 minutes. Check that cloud.enabled and cloud.cacheContent are on, and look at the TeddyCloud log."
     );
   }
 
@@ -223,7 +263,8 @@
         `Content JSON created: ${uploadedPath}. TeddyCloud is now retrieving the TAF file from Boxine ...`,
         ""
       );
-      await fetchAndCacheTaf(selectedDump);
+      await startTafCaching(selectedDump);
+      await waitForCachedTaf(selectedDump);
     } catch (error) {
       setStatus(error.message, "error");
     } finally {
