@@ -88,8 +88,7 @@ generic:
         hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/custom_img
         backup:
           enabled: true
-      # Web plugins installed by hand through the UI or SFTP. Plugins that
-      # live in this chart are mounted on top, see configMapMounts.
+      # Web plugins installed by hand through the UI or SFTP.
       plugins:
         mountPath: /teddycloud/data/www/plugins
         hostPath:   # /mnt/somewhere/encrypted/apps/teddycloud/plugins
@@ -99,13 +98,6 @@ generic:
       cache:
         mountPath: /teddycloud/data/cache
         hostPath:   # /mnt/somewhere/unencrypted/apps/teddycloud/cache
-    # Plugins kept in this chart (plugins/<name>/), one read-only folder each
-    # inside the plugins volume. The runtime creates the mount point in the
-    # hostPath directory, which is how teddyCloud finds the plugin.
-    configMapMounts:
-      plugin-nfcimport:
-        mountPath: /teddycloud/data/www/plugins/NfcImport
-        configMapName: teddycloud-plugin-nfcimport
   service:
     ports:
       - name: http
