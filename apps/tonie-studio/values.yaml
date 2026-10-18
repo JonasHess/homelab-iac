@@ -15,7 +15,7 @@ generic:
       TS_DATA_DIR: "/data"
   deployment:
     # Public on Docker Hub, so no pull secret.
-    image: docker.io/zimmermq/tonie-studio:v0.3.8@sha256:fed463e8f204cfeabaaad0036b16830da90665d877e7b0bf72fb8af8e0ec1100
+    image: docker.io/zimmermq/tonie-studio:v0.3.9@sha256:8ddaa3f96e348d9ee23332a3dbf03b2e723d9a556db8f32586f05aade66695c3
     ports:
       - containerPort: 8080
     # /health answers without touching teddyCloud or the archive on purpose: a
