@@ -45,6 +45,9 @@ generic:
     # The initial delay covers the first-start key generation (up to the
     # readiness window above); five misses a minute apart restart the pod after
     # about five minutes of a dead port 80, which slow encodes never come near.
+    # The deadlock is fixed on teddyCloud's develop branch but in no release
+    # yet (teddycloud#544). With an image that has the fix, the probe only
+    # guards against hangs nobody has seen; keep or drop it then.
     livenessProbe:
       tcpSocket:
         port: 80
