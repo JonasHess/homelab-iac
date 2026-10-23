@@ -178,6 +178,13 @@
       ]
     },
     {
+      "description": "Private ECR images: Renovate has no ECR credentials, and each app's own release workflow opens the update PR here",
+      "matchPackageNames": [
+        "/^\\d{12}\\.dkr\\.ecr\\.[a-z0-9-]+\\.amazonaws\\.com\\//"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Use semantic versioning for qBittorrent and constrain versions",
       "matchPackageNames": [
         "lscr.io/linuxserver/qbittorrent"
@@ -200,12 +207,6 @@
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d{8})$"
     }
-  ],
-  "ignoreDeps": [
-    "629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/prompt-util",
-    "629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4-ui",
-    "629099703604.dkr.ecr.eu-central-1.amazonaws.com/hess.pm/smarthome4",
-    "339712710461.dkr.ecr.eu-central-1.amazonaws.com/c24-document-downloader"
   ],
   "hostRules": [],
   "customManagers": [
