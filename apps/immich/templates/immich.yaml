@@ -19,7 +19,7 @@ spec:
     spec:
       initContainers:
         - name: init-config
-          image: alpine:3.24.2
+          image: alpine:3.24.3
           command: ["/bin/sh", "-c"]
           args:
             - |
