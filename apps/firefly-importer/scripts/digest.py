@@ -6,7 +6,9 @@ TOKEN = os.environ["FIREFLY_III_ACCESS_TOKEN"]
 STALE = int(os.environ.get("DIGEST_STALE_DAYS", "3"))      # absolute floor
 CAP   = int(os.environ.get("DIGEST_STALE_MAX_DAYS", "60"))  # absolute ceiling
 MARGIN= float(os.environ.get("DIGEST_STALE_MARGIN", "1.25")) # slack on the record
-RUN_MAX_AGE = int(os.environ.get("DIGEST_RUN_MAX_AGE_HOURS", "12"))  # newest import pod must be younger
+RUN_MAX_AGE = int(os.environ.get("DIGEST_RUN_MAX_AGE_HOURS", "12"))
+CONSENT_DAYS = int(os.environ.get("DIGEST_CONSENT_DAYS", "90"))       # PSD2 RTS maximum
+CONSENT_WARN = int(os.environ.get("DIGEST_CONSENT_WARN_DAYS", "7"))   # notice wanted  # newest import pod must be younger
 # Accounts that legitimately go quiet (manually maintained, dormant). Without
 # this they would trip the staleness check every single night, and a warning
 # that fires every night is one nobody reads.
@@ -276,6 +278,33 @@ elif run_seen and not attempted and not real_errors:
 # collapse repeats, keep order
 real_errors = list(dict.fromkeys(real_errors))[:12]
 
+# A PSD2 bank consent dies on its own after ~90 days and takes the nightly import with
+# it, silently: the log only complains once it is already too late. The downloaded
+# config carries the authorisation time, so the expiry is predictable to the day, which
+# turns a multi-day outage into advance notice. Measured against created_at because
+# that is when the SCA happened; bank a and bank b were both authorised 2026-07-25 and
+# both stopped working on day 91.
+#
+# Wrapped like the log read: monitoring must never be the thing that breaks.
+expiring = []
+try:
+    import glob
+    for path in sorted(glob.glob("/import/*.json")):
+        try:
+            cfg = json.load(open(path))
+        except Exception:
+            continue                      # a .bak or half-written file is not our problem
+        if cfg.get("flow") != "eb" or not cfg.get("created_at"):
+            continue                      # only Enable Banking configs hold a consent
+        authorised = datetime.datetime.fromisoformat(cfg["created_at"]).date()
+        left = (authorised + datetime.timedelta(days=CONSENT_DAYS) - today).days
+        if left <= CONSENT_WARN:
+            expiring.append((os.path.basename(path), cfg.get("enable_banking_bank") or "?",
+                             authorised.isoformat(), left))
+    expiring.sort(key=lambda e: e[3])
+except Exception as e:
+    per_config.setdefault("(digest)", []).append(f"(could not read /import: {e})")
+
 subject = f"Firefly import digest {today} - {sum(r[1] for r in rows)} new"
 # Zero new transactions is NOT an alarm on its own - a quiet weekend looks
 # identical to a broken importer. The per-account staleness check below is the
@@ -284,6 +313,7 @@ bits = []
 if aborted:     bits.append(f"{len(aborted)} import(s) failed")
 if real_errors: bits.append(f"{len(real_errors)} error(s)")
 if stale:       bits.append(f"{len(stale)} stale")
+if expiring:    bits.append(f"{len(expiring)} consent(s) expiring")
 if bits:
     subject = "[!] " + subject + " - " + ", ".join(bits)
     lines += [""]
@@ -291,6 +321,12 @@ if bits:
         lines += ["Import did NOT complete for:"] + [f"  - {c}" for c in aborted]
     if real_errors:
         lines += ["", "Errors (routine noise excluded):"] + [f"  - {e}" for e in real_errors]
+    if expiring:
+        lines += ["", "Bank consent expiring - re-authorise before the import breaks:"]
+        lines += [f"  - {cfg} ({bank}): authorised {auth}, "
+                  + (f"EXPIRED {-left} day(s) ago" if left < 0 else
+                     "expires TODAY" if left == 0 else f"{left} day(s) left")
+                  for cfg, bank, auth, left in expiring]
     if stale:
         lines += ["", "Silent longer than ever before - check the bank connection:"]
         lines += [f"  - {n}: last {d}, {a} days ago "
