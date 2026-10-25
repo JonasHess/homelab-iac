@@ -99,6 +99,10 @@ spec:
                   value: {{ .Values.digest.staleMargin | quote }}
                 - name: DIGEST_RUN_MAX_AGE_HOURS
                   value: {{ .Values.digest.runMaxAgeHours | quote }}
+                - name: DIGEST_CONSENT_DAYS
+                  value: {{ .Values.digest.consentDays | quote }}
+                - name: DIGEST_CONSENT_WARN_DAYS
+                  value: {{ .Values.digest.consentWarnDays | quote }}
                 - name: DIGEST_IGNORE_STALE
                   value: {{ .Values.digest.ignoreStale | toJson | quote }}
                 - name: DIGEST_ALWAYS_SEND
@@ -107,8 +111,18 @@ spec:
               volumeMounts:
                 - name: script
                   mountPath: /script
+                # Read-only, and only to read each config's created_at so the ~90-day
+                # bank consent can be reported before it expires rather than after.
+                # The claim is RWX, so sharing it with the importer is fine.
+                - name: import
+                  mountPath: /import
+                  readOnly: true
           volumes:
             - name: script
               configMap:
                 name: firefly-importer-digest-script
+            - name: import
+              persistentVolumeClaim:
+                claimName: {{ .Values.generic.appName }}-import-pvc
+                readOnly: true
 {{- end }}
