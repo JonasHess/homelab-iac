@@ -139,6 +139,17 @@ ZERO_DOWNLOAD = re.compile(r"Zero transactions!|\[eb003\]|\[a111\]")
 # download was the only thing wrong; a higher count means something else
 # failed as well, so the message is kept.
 TOO_MANY      = re.compile(r"Too many errors in the data conversion \((\d+)\)")
+# A bank consent under PSD2 lasts ~90 days and then simply stops working. Enable
+# Banking answers every call with 401 CLOSED_SESSION, which the importer relays as a
+# wall of API-error, response-body and could-not-complete lines per account. None of
+# them say "re-authorise", which is the only thing the reader needs to know.
+CONSENT_EXPIRED = re.compile(r"CLOSED_SESSION|Session is closed")
+# The echo of that one failure: Enable Banking is asked for each account in turn and
+# every call fails the same way, so one dead consent yields several API-error,
+# response-body and could-not-complete lines. They arrive through the production.ERROR
+# branch, not CONSOLE_ERROR, which is why suppressing them needs its own pattern.
+EB_FAILURE_ECHO = re.compile(r"Enable Banking API error|Response body:"
+                             r"|Could not complete import from file")
 # Failures the CLI prints to the console only, without a matching ERROR log line.
 CONSOLE_ERROR = re.compile(r"Too many errors in the data conversion|^Error message: "
                            r"|requisition|No access, or no connection"
@@ -224,8 +235,25 @@ real_errors = []
 # Configs that ended early only because their bank had nothing new. The CLI
 # prints no "Done!" for them, yet nothing failed.
 quiet = set()
+# Judged per run, not per config. Enable Banking is asked for each account in turn, so
+# the one line that actually says CLOSED_SESSION can land against whichever config was
+# current at the time, while the config it belongs to only shows the echo afterwards.
+# Both configs were hit on 2026-10-24 yet only c24 carried the telling line.
+run_consent_expired = any(CONSENT_EXPIRED.search(m)
+                          for ms in per_config.values() for m in ms)
 for cfg, msgs in per_config.items():
     empty = any(ZERO_DOWNLOAD.search(m) for m in msgs)
+    if run_consent_expired and any(EB_FAILURE_ECHO.search(m) or CONSENT_EXPIRED.search(m)
+                                   for m in msgs):
+        real_errors.append(
+            f"{cfg}: Enable Banking consent has EXPIRED (the run reported a closed session). "
+            f"This bank needs "
+            f"re-authorising interactively (SCA) in the importer; afterwards the fresh config "
+            f"needs its account mapping re-fixed plus duplicate_detection_method=cell and "
+            f"nordigen_max_days=30, which a downloaded config resets to the defaults.")
+        # Everything else this config logged is the same failure echoed per account.
+        msgs = [m for m in msgs
+                if not CONSENT_EXPIRED.search(m) and not EB_FAILURE_ECHO.search(m)]
     for m in msgs:
         if empty and ZERO_DOWNLOAD.search(m):
             continue
