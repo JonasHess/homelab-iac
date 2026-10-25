@@ -115,6 +115,11 @@ digest:
   # auto-import schedule and the digest schedule, and stay below a day so that
   # yesterday's run cannot pass for tonight's.
   runMaxAgeHours: 12
+  # A PSD2 consent lasts at most 90 days from the SCA, then the import stops with a
+  # 401 and nothing warns beforehand. Reported this many days ahead so there is time
+  # to re-authorise; 90 is the regulatory maximum, lower it if a bank grants less.
+  consentDays: 90
+  consentWarnDays: 7
   # Mail only when something needs attention. A daily "all fine" message is the
   # fastest way to train yourself to ignore the one that matters.
   alwaysSend: false
