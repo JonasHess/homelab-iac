@@ -103,6 +103,16 @@ spec:
                   value: {{ .Values.digest.consentDays | quote }}
                 - name: DIGEST_CONSENT_WARN_DAYS
                   value: {{ .Values.digest.consentWarnDays | quote }}
+                {{- with .Values.digest.importerUrl }}
+                # Only used to put a clickable entry point in the re-authorisation
+                # instructions; the digest itself never calls the importer.
+                - name: DIGEST_IMPORTER_URL
+                  value: {{ . | quote }}
+                {{- end }}
+                # Decides whether those instructions end in "copy four fields across" or
+                # "nothing further" - the sync job does that copy where it is enabled.
+                - name: DIGEST_CONSENT_SYNCED
+                  value: {{ .Values.syncConsent.enabled | quote }}
                 - name: DIGEST_IGNORE_STALE
                   value: {{ .Values.digest.ignoreStale | toJson | quote }}
                 - name: DIGEST_ALWAYS_SEND
