@@ -20,6 +20,14 @@ generic:
       import:
         mountPath: /import
         hostPath:
+      # The wizard's own job files, which hold the only copy of a freshly authorised
+      # bank consent. On the container filesystem they are lost on every restart, and
+      # a restart between the SCA and the consent being carried over means doing the
+      # SCA again. Persisted so no other pod has to race the importer for them.
+      # The importer writes here as uid 33, so the host directory must be owned by it.
+      import-jobs:
+        mountPath: /var/www/html/storage/import-jobs
+        hostPath:
     envFrom:
       configMapRef: firefly-importer-config
       secretRef: firefly-importer-secret
@@ -93,6 +101,20 @@ loanSplit:
   # interest  - the expense account the Zins belongs to
   loans: []
 
+# Carries a bank consent renewed in the web wizard into the configuration the nightly
+# import reads, which is otherwise a manual copy of four fields and the one step of a
+# re-authorisation that is easy to forget - leaving the import broken although the
+# browser said it worked. Off by default: it needs the wizard's job directory persisted
+# and mounted, which an instance only has once pvcMounts.import-jobs is given a host
+# path.
+syncConsent:
+  enabled: false
+  # Ahead of the 04:00 auto-import, so the first night after an SCA already uses the new
+  # consent instead of wasting a run on the dead one.
+  schedule: "50 3 * * *"
+  image: python:3.14-slim
+  dryRun: false
+
 digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.
@@ -120,6 +142,10 @@ digest:
   # to re-authorise; 90 is the regulatory maximum, lower it if a bank grants less.
   consentDays: 90
   consentWarnDays: 7
+  # Entry point quoted in the re-authorisation instructions that ride along with that
+  # warning, so the mail can be acted on without looking the address up first. Left
+  # empty the instructions still go out, just without a link.
+  importerUrl: ""
   # Mail only when something needs attention. A daily "all fine" message is the
   # fastest way to train yourself to ignore the one that matters.
   alwaysSend: false

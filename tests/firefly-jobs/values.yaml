@@ -6,6 +6,8 @@ generic:
     pvcMounts:
       import:
         hostPath: /tmp/firefly-import
+      import-jobs:
+        hostPath: /tmp/firefly-import-jobs
 digest:
   enabled: true
 loanSplit:
@@ -20,3 +22,5 @@ ledgerCheck:
   loanPayees: [1, 2]
   extraOwnIbans:
     DE00000000000000000000: Example
+syncConsent:
+  enabled: true
