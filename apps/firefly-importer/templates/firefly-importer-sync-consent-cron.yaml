@@ -1,0 +1,92 @@
+{{- if .Values.syncConsent.enabled }}
+{{- /*
+  Carries a freshly authorised bank consent from the web wizard into the configuration
+  the nightly import actually reads.
+
+  A PSD2 consent dies after about 90 days and can only be renewed interactively, by
+  completing the bank's SCA in the importer's wizard. The wizard records the result in
+  its own job file and never writes back to the import directory, so a renewal that
+  plainly worked in the browser leaves the nightly import failing exactly as before -
+  until somebody copies four fields across by hand. This job is that copy, scheduled
+  ahead of the import so the first night after an SCA already uses the new consent.
+
+  It refuses rather than guesses: a run that created accounts instead of mapping them,
+  or that maps a different set of Firefly accounts than the configuration already had,
+  is reported and left alone. Which bank account feeds which Firefly account is a
+  decision, and on the wizard's mapping form every account carries the same holder
+  name, so a misclick there is both easy and invisible.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-sync-consent-script
+  namespace: {{ .Release.Namespace }}
+data:
+  sync_consent.py: |
+{{ .Files.Get "scripts/sync_consent.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-sync-consent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: sync-consent
+spec:
+  # Must sit before the auto-import: carrying the consent afterwards wastes a night.
+  schedule: {{ .Values.syncConsent.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: sync-consent
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: sync-consent
+              image: {{ .Values.syncConsent.image | quote }}
+              envFrom:
+                # Only for the mail credentials. This job never calls Firefly III.
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: SYNC_CONSENT_IMPORT_DIR
+                  value: /import
+                - name: SYNC_CONSENT_JOBS_DIR
+                  value: /import-jobs
+                - name: SYNC_CONSENT_DRY_RUN
+                  value: {{ .Values.syncConsent.dryRun | quote }}
+              command: ["python3", "/script/sync_consent.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                # Writable: this is the one job that changes an import configuration.
+                - name: import
+                  mountPath: /import
+                # The wizard's own job files. Read-only - they belong to the importer,
+                # and this job has no business editing them.
+                - name: import-jobs
+                  mountPath: /import-jobs
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-sync-consent-script
+            - name: import
+              persistentVolumeClaim:
+                claimName: {{ .Values.generic.appName }}-import-pvc
+            - name: import-jobs
+              persistentVolumeClaim:
+                claimName: {{ .Values.generic.appName }}-import-jobs-pvc
+                readOnly: true
+{{- end }}
