@@ -192,8 +192,14 @@ try:
                 current = os.path.basename(m.group(1))
                 attempted.append(current)
                 assign_held(current)
+            # Switch on any config this line names that is not the current one. Keying
+            # on "unassigned" instead missed the case that matters: only a "Done!"
+            # clears `current`, so when a config FAILS the next config's pre-conversion
+            # errors were charged to the one that failed. With two expired consents on
+            # 2026-10-24 the mail blamed c24.json for Comdirect and left Comdirect out
+            # of the aborted list entirely - i.e. it would have named the wrong bank.
             m = re.search(r'Could not complete import from file "([^"]+)"', ln)
-            if m and current == UNASSIGNED:
+            if m and os.path.basename(m.group(1)) != current:
                 current = os.path.basename(m.group(1))
                 attempted.append(current)
                 assign_held(current)
