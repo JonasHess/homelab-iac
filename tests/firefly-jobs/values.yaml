@@ -24,3 +24,5 @@ ledgerCheck:
     DE00000000000000000000: Example
 syncConsent:
   enabled: true
+linkTransfers:
+  enabled: true

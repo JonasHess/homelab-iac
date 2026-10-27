@@ -115,6 +115,21 @@ syncConsent:
   image: python:3.14-slim
   dryRun: false
 
+# Joins own-account transfers that both banks reported, which arrive as a withdrawal to
+# a payee that is really your own account plus an unrelated deposit. Off by default
+# because it deletes a transaction: it is only safe where payees genuinely carry the
+# IBAN of the receiving account, which is what makes the pairing unambiguous.
+linkTransfers:
+  enabled: false
+  # After the auto-import and the loan split, before the digest and the ledger check, so
+  # neither of those reports what this job has just fixed.
+  schedule: "25 4 * * *"
+  image: python:3.14-slim
+  # Matches the ledger check's window, so everything that check can report is also
+  # within reach of this one.
+  windowDays: 90
+  dryRun: false
+
 digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.

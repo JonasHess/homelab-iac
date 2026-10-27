@@ -1,0 +1,79 @@
+{{- if .Values.linkTransfers.enabled }}
+{{- /*
+  Joins own-account transfers that arrived as two unrelated halves.
+
+  Both banks report the same movement and neither knows about the other, so one side
+  lands as a withdrawal to a payee that is really your own account and the other as an
+  unrelated deposit. Net worth stays right, which is why it goes unnoticed for months,
+  while income and expenses are each overstated by the full amount - for a monthly
+  standing transfer that is twelve times a year on both sides of the report.
+
+  Setting the IBAN on the receiving account does not prevent it: the importer names the
+  payee after the counterparty rather than looking for an asset account holding that
+  IBAN, so the halves arrive unlinked however complete the ledger is.
+
+  The nightly check reports these; this job is the one that writes, so it pairs on
+  stricter grounds: same day, same amount to the cent, the payee's name carrying the
+  IBAN of the very account the other half landed on, exactly one candidate per side,
+  and no splits. It refuses anything else. Afterwards it reads both balances back -
+  joining two halves moves no money, so an unchanged balance is a hard check rather
+  than a hope.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-link-transfers-script
+  namespace: {{ .Release.Namespace }}
+data:
+  link_transfers.py: |
+{{ .Files.Get "scripts/link_transfers.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-link-transfers
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: link-transfers
+spec:
+  # After the auto-import and the loan split, before the digest and the ledger check,
+  # so both of those report on an already-corrected ledger instead of flagging what
+  # this job just fixed.
+  schedule: {{ .Values.linkTransfers.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: link-transfers
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: link-transfers
+              image: {{ .Values.linkTransfers.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: LINK_TRANSFERS_WINDOW_DAYS
+                  value: {{ .Values.linkTransfers.windowDays | quote }}
+                - name: LINK_TRANSFERS_DRY_RUN
+                  value: {{ .Values.linkTransfers.dryRun | quote }}
+              command: ["python3", "/script/link_transfers.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-link-transfers-script
+{{- end }}
