@@ -376,17 +376,13 @@ def main():
     since = ((datetime.date.today() - datetime.timedelta(days=window)).isoformat()
              if window else "")
 
-    if os.environ.get("TR_TIMELINE_EVENTS"):
-        with open(os.environ["TR_TIMELINE_EVENTS"], encoding="utf-8") as fh:
-            events = json.load(fh)
-    elif not session_alive():
+    if not session_alive():
         report("Firefly TR import: Trade Republic login needed",
                "The saved Trade Republic session has expired, so no TR transactions were "
                "imported tonight. Log in once; the next night's run picks it up.\n\n"
                + os.environ.get("TR_LOGIN_HINT", ""))
         return 1
-    else:
-        events = fetch_events(os.environ.get("TR_WORKDIR", "/work"), window)
+    events = fetch_events(os.environ.get("TR_WORKDIR", "/work"), window)
 
     accounts = {cash, depot, *asset_accounts.values()}
     posts, odd = plan_posts(events, existing_external_ids(accounts, since), since, cash, depot,
