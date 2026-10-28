@@ -41,6 +41,11 @@ spec:
                 # playwright Python package ships only in that extra. The base image
                 # provides the browser binaries and system libraries, not the package.
                 pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
+                # Only ever resume the saved session. On an expired one pytr falls back to a
+                # fresh login, which texts a code to the phone in the middle of the night and
+                # then waits for input nobody gives. Logging in is the login job's business.
+                python3 -c 'import sys; from pytr.api import TradeRepublicApi; l = open("/home/pytr/.pytr/credentials").read().split(); sys.exit(0 if TradeRepublicApi(phone_no=l[0], pin=l[1], save_cookies=True).resume_websession() else 1)' || \
+                  { echo "Trade Republic session expired - run the login job, nothing downloaded" ; rm -f /home/pytr/.pytr/credentials ; exit 1 ; } && \
                 # pytr skips a document only when its target file is already on disk; it keeps
                 # no download ledger (0.4.10 removed the one 0.4.9 had). Downloading straight
                 # into the Paperless consume directory therefore refetches the whole history on
