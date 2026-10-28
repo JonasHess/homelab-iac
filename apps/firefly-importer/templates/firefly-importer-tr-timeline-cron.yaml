@@ -1,0 +1,112 @@
+{{- if .Values.trTimeline.enabled }}
+{{- /*
+  Books new Trade Republic transactions from the broker's timeline, fetched with pytr.
+
+  It runs on the web session the pytr chart's login job saved and never logs in itself:
+  a login sends a code to the phone and waits for it to be typed in. When the session
+  has expired it mails the login instructions and books nothing.
+
+  Movements to and from your own bank accounts are left to the bank import, and
+  link-transfers turns them into transfers; booking them here too would count them twice.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-tr-timeline-script
+  namespace: {{ .Release.Namespace }}
+data:
+  tr_timeline.py: |
+{{ .Files.Get "scripts/tr_timeline.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-tr-timeline
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer
+    component: tr-timeline
+spec:
+  # Before link-transfers, the digest and the ledger check, so all three see tonight's
+  # TR rows.
+  schedule: {{ .Values.trTimeline.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # No retry: a failed run is reported by mail, and hammering the broker's API
+      # again within minutes gains nothing.
+      backoffLimit: 0
+      activeDeadlineSeconds: 900
+      template:
+        metadata:
+          labels:
+            app: firefly-importer
+            component: tr-timeline
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: tr-timeline
+              image: {{ .Values.trTimeline.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+                - secretRef:
+                    name: {{ required "trTimeline.credentialsSecret is required" .Values.trTimeline.credentialsSecret }}
+              env:
+                - name: HOME
+                  value: /home/pytr
+                - name: TR_CASH_ACCOUNT
+                  value: {{ required "trTimeline.cashAccount is required" .Values.trTimeline.cashAccount | quote }}
+                - name: TR_DEPOT_ACCOUNT
+                  value: {{ required "trTimeline.depotAccount is required" .Values.trTimeline.depotAccount | quote }}
+                - name: TR_ASSET_ACCOUNTS
+                  value: {{ .Values.trTimeline.assetAccounts | toJson | quote }}
+                - name: TR_NAME_ALIAS
+                  value: {{ .Values.trTimeline.nameAlias | toJson | quote }}
+                - name: TR_WINDOW_DAYS
+                  value: {{ .Values.trTimeline.windowDays | quote }}
+                - name: TR_DRY_RUN
+                  value: {{ .Values.trTimeline.dryRun | quote }}
+                - name: TR_LOGIN_HINT
+                  value: {{ .Values.trTimeline.loginHint | quote }}
+              command: ["sh", "-c"]
+              args:
+                - |
+                  pip install --quiet --root-user-action=ignore 'pytr=={{ .Values.trTimeline.pytrVersion }}' || exit 1
+                  # pytr reads the phone number and PIN from this file and only saves the
+                  # session when it exists. Kept in memory and removed afterwards, so the
+                  # PIN never rests on the shared session volume.
+                  printf '%s\n%s\n' "$PHONE_NUMBER" "$PIN" > /tmp/credentials
+                  ln -sf /tmp/credentials /home/pytr/.pytr/credentials
+                  python3 /script/tr_timeline.py
+                  rc=$?
+                  rm -f /home/pytr/.pytr/credentials
+                  exit $rc
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                - name: session
+                  mountPath: /home/pytr/.pytr
+                - name: work
+                  mountPath: /work
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-tr-timeline-script
+            # The pytr chart's volume: one session per TR account, shared with its login
+            # and download jobs, which is why logging in there is all a re-login takes.
+            - name: session
+              persistentVolumeClaim:
+                claimName: {{ required "trTimeline.sessionClaim is required" .Values.trTimeline.sessionClaim }}
+            - name: work
+              emptyDir: {}
+            - name: tmp
+              emptyDir:
+                medium: Memory
+{{- end }}
