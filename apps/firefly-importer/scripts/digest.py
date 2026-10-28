@@ -215,8 +215,8 @@ try:
             # on "unassigned" instead missed the case that matters: only a "Done!"
             # clears `current`, so when a config FAILS the next config's pre-conversion
             # errors were charged to the one that failed. With two expired consents on
-            # 2026-10-24 the mail blamed bank-a.json for Bank B and left Bank B out
-            # of the aborted list entirely - i.e. it would have named the wrong bank.
+            # 2026-10-24 the mail blamed the first config for the second bank and left that
+            # bank out of the aborted list entirely - i.e. it would have named the wrong bank.
             m = re.search(r'Could not complete import from file "([^"]+)"', ln)
             if m and os.path.basename(m.group(1)) != current:
                 current = os.path.basename(m.group(1))
@@ -246,7 +246,7 @@ quiet = set()
 # Judged per run, not per config. Enable Banking is asked for each account in turn, so
 # the one line that actually says CLOSED_SESSION can land against whichever config was
 # current at the time, while the config it belongs to only shows the echo afterwards.
-# Both configs were hit on 2026-10-24 yet only bank a carried the telling line.
+# Both configs were hit on 2026-10-24 yet only one carried the telling line.
 run_consent_expired = any(CONSENT_EXPIRED.search(m)
                           for ms in per_config.values() for m in ms)
 for cfg, msgs in per_config.items():
@@ -286,8 +286,8 @@ real_errors = list(dict.fromkeys(real_errors))[:12]
 # it, silently: the log only complains once it is already too late. The downloaded
 # config carries the authorisation time, so the expiry is predictable to the day, which
 # turns a multi-day outage into advance notice. Measured against created_at because
-# that is when the SCA happened; bank a and bank b were both authorised 2026-07-25 and
-# both stopped working on day 91.
+# that is when the SCA happened; two banks authorised on the same day both stopped
+# working on day 91.
 #
 # Wrapped like the log read: monitoring must never be the thing that breaks.
 #

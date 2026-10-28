@@ -158,10 +158,10 @@ class TestRefusals:
         assert len(updates) == 1
 
     def test_no_config_for_the_bank(self):
-        updates, refusals = sc.plan([("j.json", job(bank="Bank D"))],
+        updates, refusals = sc.plan([("j.json", job(bank="Bank C"))],
                                     [("bank-a.json", config())])
         assert updates == []
-        assert "Bank D".lower() in refusals[0]
+        assert "Bank C".lower() in refusals[0]
 
     def test_two_configs_for_one_bank(self):
         updates, refusals = sc.plan(

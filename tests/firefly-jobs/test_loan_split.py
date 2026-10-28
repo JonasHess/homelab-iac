@@ -3,12 +3,12 @@ from conftest import _load
 
 ls = _load("loan_split")
 
-LOANS = {"50":  {"label": "Objekt A",    "payee": 50,  "liability": 987,  "interest": 994},
-         "49":  {"label": "Objekt B",   "payee": 49,  "liability": 990,  "interest": 995},
-         "244": {"label": "Objekt C", "payee": 244, "liability": 1000, "interest": 1003}}
+LOANS = {"50":  {"label": "Objekt A",  "payee": 50,  "liability": 987,  "interest": 994},
+         "49":  {"label": "Objekt B",  "payee": 49,  "liability": 990,  "interest": 995},
+         "244": {"label": "Objekt C",  "payee": 244, "liability": 1000, "interest": 1003}}
 
-# Real wordings taken from the bank, including the two different orderings.
-Bank C  = "Teilzahlung Darlehen       RECHN.ZINS         312,34  TILG./ENTG.        187,66  TILGUNG PER    01.10.2026"
+# The two wordings lenders use, which differ in the order of the two parts.
+FMT_A  = "Teilzahlung Darlehen       RECHN.ZINS         312,34  TILG./ENTG.        187,66  TILGUNG PER    01.10.2026"
 FMT_B  = "Rechnung Darl.-Leistung 123456789 Tilgung 140,25 Zinsen 159,75"
 BIG  = "Teilzahlung Darlehen       RECHN.ZINS       1.234,56  TILG./ENTG.      2.000,00"
 
@@ -36,10 +36,10 @@ class TestAmounts:
 
 class TestBreakdown:
     def test_zins_first_wording(self):
-        assert ls.breakdown(Bank C) == (31234, 18766)
+        assert ls.breakdown(FMT_A) == (31234, 18766)
 
     def test_tilgung_first_wording(self):
-        # The Bank D names Tilgung first; returning it unswapped would put
+        # One lender names Tilgung first; returning it unswapped would put
         # the interest on the debt and quietly understate the loan.
         assert ls.breakdown(FMT_B) == (15975, 14025)
 
@@ -54,7 +54,7 @@ class TestBreakdown:
 
 class TestPlan:
     def test_actionable_payment(self):
-        actions, problems = ls.plan([group("1", "50", "500.00", Bank C)], LOANS)
+        actions, problems = ls.plan([group("1", "50", "500.00", FMT_A)], LOANS)
         assert problems == []
         assert len(actions) == 1
         a = actions[0]
@@ -63,7 +63,7 @@ class TestPlan:
 
     def test_legs_must_sum_to_the_lump(self):
         # The single guard that stops a misparse from moving money.
-        actions, problems = ls.plan([group("2", "49", "600.00", Bank C)], LOANS)
+        actions, problems = ls.plan([group("2", "49", "600.00", FMT_A)], LOANS)
         assert actions == []
         assert "!= lump" in problems[0]
 
@@ -74,7 +74,7 @@ class TestPlan:
         assert "no known Zins/Tilgung wording" in problems[0]
 
     def test_already_split_is_ignored(self):
-        actions, problems = ls.plan([group("4", "50", "187.66", Bank C, legs=2)], LOANS)
+        actions, problems = ls.plan([group("4", "50", "187.66", FMT_A, legs=2)], LOANS)
         assert (actions, problems) == ([], [])
 
     def test_other_payees_are_ignored(self):
@@ -85,19 +85,19 @@ class TestPlan:
     def test_duplicate_group_id_handled_once(self):
         # The paginated listing repeats a group sitting on a page boundary; acting
         # twice would fail the second time, after the first had already rewritten it.
-        g = group("6", "50", "500.00", Bank C)
+        g = group("6", "50", "500.00", FMT_A)
         actions, problems = ls.plan([g, g], LOANS)
         assert len(actions) == 1
         assert problems == []
 
     def test_no_loans_configured_does_nothing(self):
-        actions, problems = ls.plan([group("7", "50", "500.00", Bank C)], {})
+        actions, problems = ls.plan([group("7", "50", "500.00", FMT_A)], {})
         assert (actions, problems) == ([], [])
 
 
 class TestSplitPayload:
     def setup_method(self):
-        actions, _ = ls.plan([group("8", "50", "500.00", Bank C, ext="ext-1")], LOANS)
+        actions, _ = ls.plan([group("8", "50", "500.00", FMT_A, ext="ext-1")], LOANS)
         self.p = ls.split_payload(actions[0])
 
     def test_two_legs_summing_to_the_lump(self):

@@ -5,12 +5,12 @@ lt = _load("link_transfers")
 
 # The real shape of the case this job exists for: a standing monthly transfer that both
 # banks report, with the paying bank naming the payee after the receiving IBAN.
-BBBANK = "DE00100000000000000002"
-COMDIR = "DE00100000000000000001"
-OWN = {BBBANK: {"id": "2", "name": "Bank A Giro"},
-       COMDIR: {"id": "99", "name": "Bank B Haushalt"}}
+BANK_A = "DE00100000000000000002"
+BANK_B = "DE00100000000000000001"
+OWN = {BANK_A: {"id": "2", "name": "Bank A Giro"},
+       BANK_B: {"id": "99", "name": "Bank B Haushalt"}}
 
-SELF_PAYEE = f"Kontoinhaber ({COMDIR})"
+SELF_PAYEE = f"Kontoinhaber ({BANK_B})"
 
 
 def group(gid, split_list):
@@ -57,7 +57,7 @@ class TestIbanInPayeeName:
         assert lt.own_account_in(spaced, OWN)["id"] == "99"
 
     def test_lowercase_is_found(self):
-        assert lt.own_account_in(f"zahlung an {COMDIR.lower()}", OWN)["id"] == "99"
+        assert lt.own_account_in(f"zahlung an {BANK_B.lower()}", OWN)["id"] == "99"
 
     def test_a_foreign_iban_is_not_a_match(self):
         assert lt.own_account_in("REWE DE89370400440532013000", OWN) is None
@@ -183,14 +183,14 @@ class TestDedupe:
         assert len(pairs) == 1 and refusals == []
 
 
-# Broker is the real case: its import leaves movements to and from own accounts
+# A broker account is the real case: its import leaves movements to and from own accounts
 # out, so the broker-side half never arrives, and it holds no IBAN in Firefly at all.
-TR_IBAN = "DE00100000000000000003"
-SOLE = {TR_IBAN: {"id": "257", "name": "Broker"}}
-TR_PAYEE = f"Kontoinhaber ({TR_IBAN})"
+BROKER_IBAN = "DE00100000000000000003"
+SOLE = {BROKER_IBAN: {"id": "257", "name": "Broker"}}
+BROKER_PAYEE = f"Kontoinhaber ({BROKER_IBAN})"
 
 
-def wd_tr(amount="3000.00", date="2026-10-27", src="2", payee=TR_PAYEE, journal="7363"):
+def wd_broker(amount="3000.00", date="2026-10-27", src="2", payee=BROKER_PAYEE, journal="7363"):
     return {"transaction_journal_id": journal, "type": "withdrawal",
             "date": date + "T00:00:00+01:00", "amount": amount,
             "source_id": src, "source_name": "Bank A Giro",
@@ -200,7 +200,7 @@ def wd_tr(amount="3000.00", date="2026-10-27", src="2", payee=TR_PAYEE, journal=
 
 class TestSoleSourceHalves:
     def test_a_lone_half_is_converted(self):
-        converts, refusals = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)
+        converts, refusals = lt.sole_source_halves([group("7277", [wd_broker()])], SOLE)
         assert refusals == []
         assert len(converts) == 1
         c = converts[0]
@@ -208,30 +208,30 @@ class TestSoleSourceHalves:
         assert c["cents"] == 300000
 
     def test_without_configuration_nothing_happens(self):
-        assert lt.sole_source_halves([group("7277", [wd_tr()])], {}) == ([], [])
-        assert lt.sole_source_halves([group("7277", [wd_tr()])], None) == ([], [])
+        assert lt.sole_source_halves([group("7277", [wd_broker()])], {}) == ([], [])
+        assert lt.sole_source_halves([group("7277", [wd_broker()])], None) == ([], [])
 
     def test_several_on_one_day_are_all_converted(self):
         # Two genuine transfers of the same size on the same day are not ambiguous here:
         # there is no second half to pick between, each one simply needs retyping.
         converts, refusals = lt.sole_source_halves(
-            [group("1", [wd_tr(journal="a")]), group("2", [wd_tr(journal="b")])], SOLE)
+            [group("1", [wd_broker(journal="a")]), group("2", [wd_broker(journal="b")])], SOLE)
         assert refusals == []
         assert sorted(c["group"] for c in converts) == ["1", "2"]
 
     def test_a_payee_for_another_account_is_ignored(self):
-        assert lt.sole_source_halves([group("1", [wd_tr(payee=SELF_PAYEE)])], SOLE) == ([], [])
+        assert lt.sole_source_halves([group("1", [wd_broker(payee=SELF_PAYEE)])], SOLE) == ([], [])
 
     def test_a_plain_payee_is_ignored(self):
-        assert lt.sole_source_halves([group("1", [wd_tr(payee="REWE")])], SOLE) == ([], [])
+        assert lt.sole_source_halves([group("1", [wd_broker(payee="REWE")])], SOLE) == ([], [])
 
     def test_transfers_and_unrelated_deposits_are_ignored(self):
-        already = dict(wd_tr()); already["type"] = "transfer"
+        already = dict(wd_broker()); already["type"] = "transfer"
         assert lt.sole_source_halves([group("1", [already])], SOLE) == ([], [])
         assert lt.sole_source_halves([group("2", [dp()])], SOLE) == ([], [])
 
     def test_a_split_transaction_is_never_touched(self):
-        assert lt.sole_source_halves([group("1", [wd_tr(), wd_tr()])], SOLE) == ([], [])
+        assert lt.sole_source_halves([group("1", [wd_broker(), wd_broker()])], SOLE) == ([], [])
 
     def test_a_matching_deposit_blocks_the_conversion(self):
         # The other side was posted after all; which half to keep is then a decision.
@@ -241,7 +241,7 @@ class TestSoleSourceHalves:
                  "destination_id": "257", "destination_name": "Broker",
                  "description": "Incoming", "external_id": "tr-x"}
         converts, refusals = lt.sole_source_halves(
-            [group("7277", [wd_tr()]), group("9", [other])], SOLE)
+            [group("7277", [wd_broker()]), group("9", [other])], SOLE)
         assert converts == []
         assert len(refusals) == 1 and "matching deposit" in refusals[0]
 
@@ -252,16 +252,16 @@ class TestSoleSourceHalves:
                  "destination_id": "257", "destination_name": "Broker",
                  "description": "Incoming", "external_id": "tr-y"}
         converts, refusals = lt.sole_source_halves(
-            [group("7277", [wd_tr()]), group("9", [other])], SOLE)
+            [group("7277", [wd_broker()]), group("9", [other])], SOLE)
         assert len(converts) == 1 and refusals == []
 
     def test_payee_carrying_its_own_source_iban(self):
-        converts, refusals = lt.sole_source_halves([group("1", [wd_tr(src="257")])], SOLE)
+        converts, refusals = lt.sole_source_halves([group("1", [wd_broker(src="257")])], SOLE)
         assert converts == []
         assert len(refusals) == 1 and "own source account" in refusals[0]
 
 
-def dp_tr(amount="25000.00", date="2026-01-20", dest="2", payee=TR_PAYEE, journal="401"):
+def dp_broker(amount="25000.00", date="2026-01-20", dest="2", payee=BROKER_PAYEE, journal="401"):
     return {"transaction_journal_id": journal, "type": "deposit",
             "date": date + "T00:00:00+01:00", "amount": amount,
             "source_id": "78", "source_name": payee,
@@ -274,14 +274,14 @@ class TestSoleSourceOutgoing:
     # books the arrival as a deposit from a payee carrying the broker's IBAN.
 
     def test_a_lone_deposit_becomes_a_transfer_out_of_the_sole_account(self):
-        converts, refusals = lt.sole_source_halves([group("397", [dp_tr()])], SOLE)
+        converts, refusals = lt.sole_source_halves([group("397", [dp_broker()])], SOLE)
         assert refusals == []
         c = converts[0]
         assert (c["source_id"], c["target_id"]) == ("257", "2")
         assert (c["bank_id"], c["sole_id"], c["sole_delta"]) == ("2", "257", -2500000)
 
     def test_the_incoming_direction_moves_the_sole_account_up(self):
-        c = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0]
+        c = lt.sole_source_halves([group("7277", [wd_broker()])], SOLE)[0][0]
         assert (c["bank_id"], c["sole_id"], c["sole_delta"]) == ("2", "257", 300000)
 
     def test_a_matching_withdrawal_blocks_the_conversion(self):
@@ -291,20 +291,20 @@ class TestSoleSourceOutgoing:
                  "destination_id": "40", "destination_name": "Kontoinhaber",
                  "description": "Outgoing", "external_id": "tlx-x"}
         converts, refusals = lt.sole_source_halves(
-            [group("397", [dp_tr()]), group("9", [other])], SOLE)
+            [group("397", [dp_broker()]), group("9", [other])], SOLE)
         assert converts == []
         assert len(refusals) == 1 and "matching withdrawal" in refusals[0]
 
     def test_payee_carrying_its_own_destination_iban(self):
-        converts, refusals = lt.sole_source_halves([group("1", [dp_tr(dest="257")])], SOLE)
+        converts, refusals = lt.sole_source_halves([group("1", [dp_broker(dest="257")])], SOLE)
         assert converts == []
         assert len(refusals) == 1 and "own destination account" in refusals[0]
 
     def test_a_plain_deposit_is_ignored(self):
-        assert lt.sole_source_halves([group("1", [dp_tr(payee="Arbeitgeber")])], SOLE) == ([], [])
+        assert lt.sole_source_halves([group("1", [dp_broker(payee="Arbeitgeber")])], SOLE) == ([], [])
 
     def test_payload_swaps_in_the_sole_account_as_source(self):
-        c = lt.sole_source_halves([group("397", [dp_tr()])], SOLE)[0][0]
+        c = lt.sole_source_halves([group("397", [dp_broker()])], SOLE)[0][0]
         assert lt.convert_payload(c)["transactions"][0] == {
             "transaction_journal_id": "401", "type": "transfer",
             "source_id": "257", "destination_id": "2"}
@@ -312,7 +312,7 @@ class TestSoleSourceOutgoing:
 
 class TestConvertPayload:
     def test_retypes_only_type_and_destination(self):
-        c = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0]
+        c = lt.sole_source_halves([group("7277", [wd_broker()])], SOLE)[0][0]
         body = lt.convert_payload(c)["transactions"][0]
         assert body == {"transaction_journal_id": "7363", "type": "transfer",
                         "source_id": "2", "destination_id": "257"}
@@ -321,7 +321,7 @@ class TestConvertPayload:
         # The bank's external_id is what its own import recognises the row by on the
         # next fetch, so it must survive untouched or the row is imported again.
         body = lt.convert_payload(
-            lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0])["transactions"][0]
+            lt.sole_source_halves([group("7277", [wd_broker()])], SOLE)[0][0])["transactions"][0]
         for f in ("description", "category_id", "category_name", "external_id"):
             assert f not in body
 
@@ -330,7 +330,7 @@ class TestJoinAndConvertDoNotOverlap:
     def test_the_pairing_pass_ignores_a_sole_source_payee(self):
         # 257 holds no IBAN in Firefly, so it never enters the ledger-read map and the
         # join path cannot see it. The two passes therefore cannot both claim a row.
-        assert lt.plan([group("7277", [wd_tr()])], OWN) == ([], [])
+        assert lt.plan([group("7277", [wd_broker()])], OWN) == ([], [])
 
     def test_the_conversion_pass_ignores_a_joinable_pair(self):
         assert lt.sole_source_halves(canonical(), SOLE) == ([], [])
