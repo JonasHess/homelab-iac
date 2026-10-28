@@ -56,6 +56,10 @@ spec:
                     name: firefly-importer-secret
                 - secretRef:
                     name: {{ required "trTimeline.credentialsSecret is required" .Values.trTimeline.credentialsSecret }}
+                {{- with .Values.trTimeline.aliasSecret }}
+                - secretRef:
+                    name: {{ . }}
+                {{- end }}
               env:
                 - name: HOME
                   value: /home/pytr
@@ -65,8 +69,6 @@ spec:
                   value: {{ required "trTimeline.depotAccount is required" .Values.trTimeline.depotAccount | quote }}
                 - name: TR_ASSET_ACCOUNTS
                   value: {{ .Values.trTimeline.assetAccounts | toJson | quote }}
-                - name: TR_NAME_ALIAS
-                  value: {{ .Values.trTimeline.nameAlias | toJson | quote }}
                 - name: TR_WINDOW_DAYS
                   value: {{ .Values.trTimeline.windowDays | quote }}
                 - name: TR_DRY_RUN

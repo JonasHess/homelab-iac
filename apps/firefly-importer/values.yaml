@@ -157,8 +157,10 @@ trTimeline:
   depotAccount: ""
   # Asset name as the timeline shows it -> account id, for holdings kept outside the depot.
   assetAccounts: {}
-  # Timeline name -> the payee name already in Firefly, so categorise rules keep matching.
-  nameAlias: {}
+  # Secret holding TR_NAME_ALIAS: a JSON object mapping timeline names to the payee names
+  # already in Firefly, so categorise rules keep matching. A secret rather than a value,
+  # because the list of shops says where someone lives and what they do.
+  aliasSecret: ""
   # How far back each night looks; 0 = the whole history. Rows before it are never
   # touched, so a session that stays expired for longer than this leaves a gap - which a
   # single run with 0 fills, since only missing rows are booked.
