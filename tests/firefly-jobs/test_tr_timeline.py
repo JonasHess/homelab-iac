@@ -27,7 +27,11 @@ def run(event, **kw):
 
 
 def cash_effect(ps):
-    return tt.balances(ps)[CASH] / 100
+    c = 0
+    for p in ps:
+        cents = int(round(float(p["amount"]) * 100))
+        c += cents if p.get("destination_id") == CASH else -cents if p.get("source_id") == CASH else 0
+    return c / 100
 
 
 class TestParsing:
@@ -222,8 +226,67 @@ class TestIds:
         assert a[0]["external_id"] != b[0]["external_id"]
 
 
-class TestBalances:
-    def test_net_per_account(self):
-        ps = run(ev("ORDER_EXECUTED", -101.0, [("Transaktion", {tt.FEE: "1,00 \u20ac"})]))
-        bal = tt.balances(ps)
-        assert bal[CASH] == -10100 and bal[DEPOT] == 10000
+class TestUnhandled:
+    def test_a_new_event_type_that_moves_money_is_flagged(self):
+        assert tt.unhandled(ev("SOMETHING_NEW", -12.0))
+
+    def test_a_known_type_is_not_flagged(self):
+        assert not tt.unhandled(ev("CARD_TRANSACTION", -12.0))
+
+    def test_an_own_account_movement_is_not_flagged(self):
+        # Left out on purpose, not overlooked.
+        e = ev("PAYMENT_INBOUND", 150.0, [("\u00dcbersicht", {"IBAN": OWN_IBAN_SPACED})])
+        assert not tt.unhandled(e)
+
+    def test_no_money_or_not_final_is_not_flagged(self):
+        assert not tt.unhandled(ev("SOMETHING_NEW", None))
+        assert not tt.unhandled(ev("SOMETHING_NEW", -12.0, status="CANCELED"))
+
+
+class TestPlanPosts:
+    def events(self):
+        return [ev("CARD_TRANSACTION", -5.0, eid="old", ts="2026-01-01T10:00:00.000+0000"),
+                ev("CARD_TRANSACTION", -6.0, eid="booked", ts="2026-10-20T10:00:00.000+0000"),
+                ev("CARD_TRANSACTION", -7.0, eid="new", ts="2026-10-27T10:00:00.000+0000"),
+                ev("SOMETHING_NEW", -8.0, eid="odd", ts="2026-10-27T10:00:00.000+0000")]
+
+    def test_only_rows_in_the_window_and_not_yet_booked_are_posted(self):
+        posts, odd = tt.plan_posts(self.events(), {"tlx-booked"}, "2026-10-01", CASH, DEPOT)
+        assert [p["external_id"] for p in posts] == ["tlx-new"]
+
+    def test_unhandled_events_in_the_window_are_reported(self):
+        _, odd = tt.plan_posts(self.events(), set(), "2026-10-01", CASH, DEPOT)
+        assert [e["id"] for e in odd] == ["odd"]
+
+    def test_unhandled_events_before_the_window_are_not_reported_again(self):
+        old = [ev("SOMETHING_NEW", -8.0, eid="odd", ts="2026-01-01T10:00:00.000+0000")]
+        assert tt.plan_posts(old, set(), "2026-10-01", CASH, DEPOT) == ([], [])
+
+    def test_a_derived_row_is_posted_even_when_its_parent_exists(self):
+        # Fee and tax rows have ids of their own; one can be missing on its own.
+        sell = ev("ORDER_EXECUTED", 100.0, [("Transaktion", {tt.FEE: "1,00 \u20ac"})],
+                  eid="s", ts="2026-10-27T10:00:00.000+0000")
+        posts, _ = tt.plan_posts([sell], {"tlx-s"}, "2026-10-01", CASH, DEPOT)
+        assert [p["external_id"] for p in posts] == ["tlxfee-s"]
+
+    def test_own_ibans_are_left_out(self):
+        e = ev("PAYMENT_INBOUND", 150.0, [("\u00dcbersicht", {"IBAN": OWN_IBAN_SPACED})],
+               ts="2026-10-27T10:00:00.000+0000")
+        assert tt.plan_posts([e], set(), "2026-10-01", CASH, DEPOT,
+                             own_accounts={OWN_IBAN}) == ([], [])
+
+
+class TestOwnIbans:
+    def accounts(self, monkeypatch, *attrs):
+        monkeypatch.setattr(tt, "api", lambda path, params=None: {"data": [
+            {"attributes": a} for a in attrs]})
+
+    def test_iban_and_account_number_both_count(self, monkeypatch):
+        # A bank merger gives the account a new IBAN; the old one lives on in history.
+        self.accounts(monkeypatch, {"iban": OWN_IBAN_SPACED,
+                                    "account_number": "DE00 9999 8888 7777 6666 55"})
+        assert tt.own_ibans() == {OWN_IBAN, "DE00999988887777666655"}
+
+    def test_an_account_number_that_is_no_iban_is_ignored(self, monkeypatch):
+        self.accounts(monkeypatch, {"iban": None, "account_number": "12345678"})
+        assert tt.own_ibans() == set()

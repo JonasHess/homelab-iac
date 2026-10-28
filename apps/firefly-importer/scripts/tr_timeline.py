@@ -1,18 +1,19 @@
-import collections, json, os, re, sys
+import collections, datetime, json, os, pathlib, re, smtplib, ssl, subprocess, sys
+import urllib.error, urllib.parse, urllib.request
+from email.message import EmailMessage
 
-# Converts Trade Republic timeline events - the raw event list pytr writes with
-# `export_transactions --store-event-database` (all_events.json) - into Firefly III
-# transaction payloads.
+# Books Trade Republic transactions into Firefly III from the broker's timeline - the
+# raw event list pytr writes with `export_transactions` (all_events.json). Runs nightly
+# on a saved web session and never logs in itself; see session_alive().
 #
 # The timeline is used rather than the broker's CSV export because pytr can fetch it
-# unattended. The two sources number their events differently, so a ledger built from
-# one cannot be deduplicated against the other; every row created here carries an
-# external_id derived from the timeline event id.
+# unattended. Every row carries an external_id derived from the timeline event id, which
+# is what makes a re-run add only what is missing.
 #
 # The field titles below are Trade Republic's own and they are German: pytr fetches the
 # timeline in the account's language. They are matched exactly, so a change of account
-# language breaks parsing without an error: fees and taxes read as zero. The account
-# totals main() prints are where that shows.
+# language breaks parsing without an error: fees and taxes read as zero, and the depot
+# drifts from the broker's figures by every fee and every tax since.
 
 CARD_SPEND = {"CARD_TRANSACTION"}
 CARD_REFUND = {"CARD_REFUND"}
@@ -31,8 +32,11 @@ SAVEBACK = {"SAVEBACK_AGGREGATE"}
 GIFT_OUT = {"GIFTER_TRANSACTION"}
 GIFT_IN = {"GIFTING_RECIPIENT_ACTIVITY"}
 BONUS = {"REFERRAL_FIRST_TRADE_EXECUTED_INVITER"}
-# Every other event type moves no money: reports, document notices, device pairings,
-# corporate actions that only rename a holding.
+KNOWN = (CARD_SPEND | CARD_REFUND | CARD_ATM | CARD_FEE | MONEY_IN | MONEY_OUT | INTEREST
+         | DIVIDEND | TAX_ONLY | TRADE | SAVEBACK | GIFT_OUT | GIFT_IN | BONUS)
+# Every other event type is expected to move no money: reports, document notices, device
+# pairings, corporate actions that only rename a holding. One that does carry an amount is
+# a type this reader has never seen, and is reported rather than silently dropped.
 
 # A card payment is shown immediately but can still change or be reversed, and the
 # timeline marks that state in the event's detail rather than in its status. Such events
@@ -239,48 +243,178 @@ def payloads(event, cash, depot, asset_accounts=None, name_alias=None, own_accou
     return out
 
 
-def balances(payloads_):
-    """Net movement per account id in cents."""
-    bal = collections.Counter()
-    for p in payloads_:
-        c = int(round(float(p["amount"]) * 100))
-        if p["type"] in ("withdrawal", "transfer"):
-            bal[str(p["source_id"])] -= c
-        if p["type"] in ("deposit", "transfer"):
-            bal[str(p["destination_id"])] += c
-    return bal
+def unhandled(event):
+    """True for a final event that moves money but is of a type this reader does not know."""
+    return (event.get("eventType") not in KNOWN and bool((event.get("amount") or {}).get("value"))
+            and is_final(event))
+
+
+def plan_posts(events, existing_ids, since, cash, depot, asset_accounts=None, name_alias=None,
+               own_accounts=None):
+    """(payloads to post, unhandled events) for events dated on or after `since`.
+
+    Each row is checked against existing_ids on its own, so a fee or tax row missing
+    beside an existing parent is still posted. Older events are left alone entirely: the
+    ledger before the window is settled, and a row deleted there by hand stays deleted.
+    """
+    posts, odd = [], []
+    for e in events:
+        if (e.get("timestamp") or "")[:10] < since:
+            continue
+        if unhandled(e):
+            odd.append(e)
+            continue
+        for p in payloads(e, cash, depot, asset_accounts, name_alias, own_accounts):
+            if p["external_id"] not in existing_ids:
+                posts.append(p)
+    return posts, odd
+
+
+def api(path, method="GET", payload=None, params=None):
+    base = os.environ["FIREFLY_III_URL"].rstrip("/")
+    q = "?" + urllib.parse.urlencode(params) if params else ""
+    req = urllib.request.Request(
+        base + path + q, method=method,
+        data=json.dumps(payload).encode() if payload is not None else None,
+        headers={"Authorization": f"Bearer {os.environ['FIREFLY_III_ACCESS_TOKEN']}",
+                 "Accept": "application/vnd.api+json", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        raw = r.read()
+    return json.loads(raw) if raw else None
+
+
+def existing_external_ids(accounts, since):
+    ids = set()
+    for acct in accounts:
+        page = 1
+        while True:
+            params = {"limit": 500, "page": page}
+            if since:
+                # Firefly insists on an end date after the start; a week ahead also
+                # covers rows the broker dates a day or two forward.
+                end = (datetime.date.today() + datetime.timedelta(days=7)).isoformat()
+                params.update(start=since, end=end)
+            d = api(f"/api/v1/accounts/{acct}/transactions", params=params)
+            for g in d["data"]:
+                for s in g["attributes"]["transactions"]:
+                    if s.get("external_id"):
+                        ids.add(s["external_id"])
+            if page >= max(1, d["meta"]["pagination"]["total_pages"]):
+                break
+            page += 1
+    return ids
+
+
+def own_ibans():
+    """IBANs of every asset and liability account in Firefly, i.e. your own accounts.
+
+    Read from the ledger rather than configured, so a new bank account is covered as
+    soon as its IBAN is entered there. Firefly holds one IBAN per account, so an
+    account's previous IBAN - a bank merger changes it, while history keeps the old one -
+    goes into its account number field, which is read too.
+    """
+    ibans = set()
+    for kind in ("asset", "liabilities"):
+        for a in api("/api/v1/accounts", params={"type": kind, "limit": 500})["data"]:
+            for field_ in ("iban", "account_number"):
+                v = re.sub(r"[^A-Z0-9]", "", (a["attributes"].get(field_) or "").upper())
+                if re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", v):
+                    ibans.add(v)
+    return ibans
+
+
+def session_alive():
+    """Whether the saved Trade Republic web session can be resumed.
+
+    Checked before pytr runs because pytr falls back to a fresh login when resuming
+    fails, and a login sends a code to the phone and then waits for someone to type it
+    in - at night, in a pod nobody is watching. This job only ever resumes; logging in is
+    left to a person.
+    """
+    from pytr.api import TradeRepublicApi
+    lines = (pathlib.Path.home() / ".pytr" / "credentials").read_text().split("\n")
+    tr = TradeRepublicApi(phone_no=lines[0].strip(), pin=lines[1].strip(), save_cookies=True)
+    return tr.resume_websession()
+
+
+def fetch_events(workdir, days):
+    subprocess.run(["pytr", "export_transactions", "--last_days", str(days),
+                    "--export-format", "json", "--outputdir", workdir], check=True)
+    with open(os.path.join(workdir, "all_events.json"), encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def send_mail(subject, body):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{os.environ.get('MAIL_FROM_NAME','Firefly')} <{os.environ['MAIL_FROM_ADDRESS']}>"
+    msg["To"] = os.environ["MAIL_DESTINATION"]
+    msg.set_content(body)
+    with smtplib.SMTP(os.environ["MAIL_HOST"], int(os.environ.get("MAIL_PORT", "587")), timeout=30) as sm:
+        if os.environ.get("MAIL_ENCRYPTION", "tls") == "tls":
+            sm.starttls(context=ssl.create_default_context())
+        sm.login(os.environ["MAIL_USERNAME"], os.environ["MAIL_PASSWORD"])
+        sm.send_message(msg)
+
+
+def report(subject, body):
+    print(body)
+    if os.environ.get("MAIL_HOST"):
+        send_mail(subject, body)
+    else:
+        print("no MAIL_HOST configured - not mailing")
 
 
 def main():
-    events_path = os.environ["TR_TIMELINE_EVENTS"]
     cash = os.environ.get("TR_CASH_ACCOUNT", "257")
     depot = os.environ.get("TR_DEPOT_ACCOUNT", "258")
-    asset_accounts = json.loads(os.environ.get("TR_ASSET_ACCOUNTS", "{}"))
-    own_accounts = {re.sub(r"[^A-Z0-9]", "", i.upper())
-                    for i in json.loads(os.environ.get("TR_OWN_IBANS", "[]"))}
+    asset_accounts = {k: str(v) for k, v in json.loads(os.environ.get("TR_ASSET_ACCOUNTS", "{}")).items()}
     name_alias = json.loads(os.environ.get("TR_NAME_ALIAS", "{}"))
+    window = int(os.environ.get("TR_WINDOW_DAYS", "90"))
+    dry_run = os.environ.get("TR_DRY_RUN", "false").lower() == "true"
+    # 0 looks at the whole history; a re-run of everything books only what is missing.
+    since = ((datetime.date.today() - datetime.timedelta(days=window)).isoformat()
+             if window else "")
 
-    with open(events_path, encoding="utf-8") as fh:
-        events = json.load(fh)
-    out, skipped = [], 0
-    for e in events:
-        ps = payloads(e, cash, depot, asset_accounts, name_alias, own_accounts)
-        if not ps and (e.get("amount") or {}).get("value") and not is_final(e):
-            skipped += 1
-        out.extend(ps)
+    if os.environ.get("TR_TIMELINE_EVENTS"):
+        with open(os.environ["TR_TIMELINE_EVENTS"], encoding="utf-8") as fh:
+            events = json.load(fh)
+    elif not session_alive():
+        report("Firefly TR import: Trade Republic login needed",
+               "The saved Trade Republic session has expired, so no TR transactions were "
+               "imported tonight. Log in once; the next night's run picks it up.\n\n"
+               + os.environ.get("TR_LOGIN_HINT", ""))
+        return 1
+    else:
+        events = fetch_events(os.environ.get("TR_WORKDIR", "/work"), window)
 
-    ids = [p["external_id"] for p in out]
-    if len(ids) != len(set(ids)):
-        sys.exit("duplicate external_id among the generated payloads - refusing")
+    accounts = {cash, depot, *asset_accounts.values()}
+    posts, odd = plan_posts(events, existing_external_ids(accounts, since), since, cash, depot,
+                            asset_accounts, name_alias, own_ibans())
+    print(f"window {since or 'all'}: {len(events)} events, {len(posts)} new rows, "
+          f"{len(odd)} of an unknown type")
 
-    for p in out:
-        print(json.dumps({"error_if_duplicate_hash": True, "apply_rules": True,
-                          "fire_webhooks": False, "transactions": [p]}, ensure_ascii=False))
-    bal = balances(out)
-    sys.stderr.write(f"{len(events)} events -> {len(out)} payloads "
-                     f"({skipped} not final, left for a later run)\n")
-    for acct in sorted(bal):
-        sys.stderr.write(f"  account {acct}: {bal[acct] / 100:+,.2f}\n")
+    problems = [f"unknown event type {e.get('eventType')} on {e.get('timestamp', '')[:10]}: "
+                f"{(e.get('amount') or {}).get('value')} {e.get('title', '')} - not booked"
+                for e in odd]
+    posted = 0
+    for p in posts:
+        if dry_run:
+            print("would post", p["date"], p["type"], p["amount"], p["description"])
+            continue
+        try:
+            api("/api/v1/transactions", "POST", {"error_if_duplicate_hash": True,
+                                                 "apply_rules": True, "fire_webhooks": False,
+                                                 "transactions": [p]})
+            posted += 1
+        except urllib.error.HTTPError as e:
+            problems.append(f"{p['external_id']} {p['date']} {p['amount']} {p['description']}: "
+                            f"HTTP {e.code} {e.read()[:200].decode(errors='replace')}")
+    print(f"posted {posted}")
+    if problems:
+        report(f"Firefly TR import: {len(problems)} needing attention",
+               "".join(f"  - {l}\n" for l in problems))
+        return 1
     return 0
 
 
