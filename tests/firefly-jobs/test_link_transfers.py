@@ -181,3 +181,107 @@ class TestDedupe:
         w, d = group("7268", [wd()]), group("7270", [dp()])
         pairs, refusals = lt.plan(lt.dedupe([w, d, w, d]), OWN)
         assert len(pairs) == 1 and refusals == []
+
+
+# Trade Republic is the real case: fed by hand from a broker export, so the deposit half
+# of a transfer into it never arrives and it holds no IBAN in Firefly at all.
+TR_IBAN = "DE90100123450119298501"
+SOLE = {TR_IBAN: {"id": "257", "name": "Trade Republic"}}
+TR_PAYEE = f"Michael Zimmermann ({TR_IBAN})"
+
+
+def wd_tr(amount="3000.00", date="2026-10-27", src="2", payee=TR_PAYEE, journal="7363"):
+    return {"transaction_journal_id": journal, "type": "withdrawal",
+            "date": date + "T00:00:00+01:00", "amount": amount,
+            "source_id": src, "source_name": "BBBank Giro",
+            "destination_id": "5", "destination_name": payee,
+            "description": "Aktiendepot", "external_id": "2026-10-27.3"}
+
+
+class TestSoleSourceHalves:
+    def test_a_lone_half_is_converted(self):
+        converts, refusals = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)
+        assert refusals == []
+        assert len(converts) == 1
+        c = converts[0]
+        assert (c["group"], c["source_id"], c["target_id"]) == ("7277", "2", "257")
+        assert c["cents"] == 300000
+
+    def test_without_configuration_nothing_happens(self):
+        assert lt.sole_source_halves([group("7277", [wd_tr()])], {}) == ([], [])
+        assert lt.sole_source_halves([group("7277", [wd_tr()])], None) == ([], [])
+
+    def test_several_on_one_day_are_all_converted(self):
+        # Two genuine transfers of the same size on the same day are not ambiguous here:
+        # there is no second half to pick between, each one simply needs retyping.
+        converts, refusals = lt.sole_source_halves(
+            [group("1", [wd_tr(journal="a")]), group("2", [wd_tr(journal="b")])], SOLE)
+        assert refusals == []
+        assert sorted(c["group"] for c in converts) == ["1", "2"]
+
+    def test_a_payee_for_another_account_is_ignored(self):
+        assert lt.sole_source_halves([group("1", [wd_tr(payee=SELF_PAYEE)])], SOLE) == ([], [])
+
+    def test_a_plain_payee_is_ignored(self):
+        assert lt.sole_source_halves([group("1", [wd_tr(payee="REWE")])], SOLE) == ([], [])
+
+    def test_deposits_and_transfers_are_ignored(self):
+        already = dict(wd_tr()); already["type"] = "transfer"
+        assert lt.sole_source_halves([group("1", [already])], SOLE) == ([], [])
+        assert lt.sole_source_halves([group("2", [dp()])], SOLE) == ([], [])
+
+    def test_a_split_transaction_is_never_touched(self):
+        assert lt.sole_source_halves([group("1", [wd_tr(), wd_tr()])], SOLE) == ([], [])
+
+    def test_a_matching_deposit_blocks_the_conversion(self):
+        # The other side was posted after all; which half to keep is then a decision.
+        other = {"transaction_journal_id": "z", "type": "deposit",
+                 "date": "2026-10-27T00:00:00+01:00", "amount": "3000.00",
+                 "source_id": "27", "source_name": "Michael Zimmermann",
+                 "destination_id": "257", "destination_name": "Trade Republic",
+                 "description": "Incoming", "external_id": "tr-x"}
+        converts, refusals = lt.sole_source_halves(
+            [group("7277", [wd_tr()]), group("9", [other])], SOLE)
+        assert converts == []
+        assert len(refusals) == 1 and "matching deposit" in refusals[0]
+
+    def test_a_deposit_of_another_amount_does_not_block(self):
+        other = {"transaction_journal_id": "z", "type": "deposit",
+                 "date": "2026-10-27T00:00:00+01:00", "amount": "99.00",
+                 "source_id": "27", "source_name": "x",
+                 "destination_id": "257", "destination_name": "Trade Republic",
+                 "description": "Incoming", "external_id": "tr-y"}
+        converts, refusals = lt.sole_source_halves(
+            [group("7277", [wd_tr()]), group("9", [other])], SOLE)
+        assert len(converts) == 1 and refusals == []
+
+    def test_payee_carrying_its_own_source_iban(self):
+        converts, refusals = lt.sole_source_halves([group("1", [wd_tr(src="257")])], SOLE)
+        assert converts == []
+        assert len(refusals) == 1 and "own source account" in refusals[0]
+
+
+class TestConvertPayload:
+    def test_retypes_only_type_and_destination(self):
+        c = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0]
+        body = lt.convert_payload(c)["transactions"][0]
+        assert body == {"transaction_journal_id": "7363", "type": "transfer",
+                        "source_id": "2", "destination_id": "257"}
+
+    def test_leaves_description_category_and_external_id_alone(self):
+        # The paying bank's external_id is what the broker import's duplicate filter
+        # later recognises the row by, so it must survive untouched.
+        body = lt.convert_payload(
+            lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0])["transactions"][0]
+        for f in ("description", "category_id", "category_name", "external_id"):
+            assert f not in body
+
+
+class TestJoinAndConvertDoNotOverlap:
+    def test_the_pairing_pass_ignores_a_sole_source_payee(self):
+        # 257 holds no IBAN in Firefly, so it never enters the ledger-read map and the
+        # join path cannot see it. The two passes therefore cannot both claim a row.
+        assert lt.plan([group("7277", [wd_tr()])], OWN) == ([], [])
+
+    def test_the_conversion_pass_ignores_a_joinable_pair(self):
+        assert lt.sole_source_halves(canonical(), SOLE) == ([], [])

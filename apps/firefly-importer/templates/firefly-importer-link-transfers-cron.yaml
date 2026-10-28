@@ -68,6 +68,8 @@ spec:
                   value: {{ .Values.linkTransfers.windowDays | quote }}
                 - name: LINK_TRANSFERS_DRY_RUN
                   value: {{ .Values.linkTransfers.dryRun | quote }}
+                - name: LINK_TRANSFERS_SOLE_SOURCE_IBANS
+                  value: {{ .Values.linkTransfers.soleSourceIbans | toJson | quote }}
               command: ["python3", "/script/link_transfers.py"]
               volumeMounts:
                 - name: script
