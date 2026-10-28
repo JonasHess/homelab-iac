@@ -183,8 +183,8 @@ class TestDedupe:
         assert len(pairs) == 1 and refusals == []
 
 
-# Broker is the real case: fed by hand from a broker export, so the deposit half
-# of a transfer into it never arrives and it holds no IBAN in Firefly at all.
+# Broker is the real case: its import leaves movements to and from own accounts
+# out, so the broker-side half never arrives, and it holds no IBAN in Firefly at all.
 TR_IBAN = "DE00100000000000000003"
 SOLE = {TR_IBAN: {"id": "257", "name": "Broker"}}
 TR_PAYEE = f"Kontoinhaber ({TR_IBAN})"
@@ -225,7 +225,7 @@ class TestSoleSourceHalves:
     def test_a_plain_payee_is_ignored(self):
         assert lt.sole_source_halves([group("1", [wd_tr(payee="REWE")])], SOLE) == ([], [])
 
-    def test_deposits_and_transfers_are_ignored(self):
+    def test_transfers_and_unrelated_deposits_are_ignored(self):
         already = dict(wd_tr()); already["type"] = "transfer"
         assert lt.sole_source_halves([group("1", [already])], SOLE) == ([], [])
         assert lt.sole_source_halves([group("2", [dp()])], SOLE) == ([], [])
@@ -259,6 +259,55 @@ class TestSoleSourceHalves:
         converts, refusals = lt.sole_source_halves([group("1", [wd_tr(src="257")])], SOLE)
         assert converts == []
         assert len(refusals) == 1 and "own source account" in refusals[0]
+
+
+def dp_tr(amount="25000.00", date="2026-01-20", dest="2", payee=TR_PAYEE, journal="401"):
+    return {"transaction_journal_id": journal, "type": "deposit",
+            "date": date + "T00:00:00+01:00", "amount": amount,
+            "source_id": "78", "source_name": payee,
+            "destination_id": dest, "destination_name": "Bank A Giro",
+            "description": "Auszahlung", "external_id": "2026-01-20.1"}
+
+
+class TestSoleSourceOutgoing:
+    # The other direction: money leaving the broker for an own bank account. The bank
+    # books the arrival as a deposit from a payee carrying the broker's IBAN.
+
+    def test_a_lone_deposit_becomes_a_transfer_out_of_the_sole_account(self):
+        converts, refusals = lt.sole_source_halves([group("397", [dp_tr()])], SOLE)
+        assert refusals == []
+        c = converts[0]
+        assert (c["source_id"], c["target_id"]) == ("257", "2")
+        assert (c["bank_id"], c["sole_id"], c["sole_delta"]) == ("2", "257", -2500000)
+
+    def test_the_incoming_direction_moves_the_sole_account_up(self):
+        c = lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0]
+        assert (c["bank_id"], c["sole_id"], c["sole_delta"]) == ("2", "257", 300000)
+
+    def test_a_matching_withdrawal_blocks_the_conversion(self):
+        other = {"transaction_journal_id": "z", "type": "withdrawal",
+                 "date": "2026-01-20T00:00:00+01:00", "amount": "25000.00",
+                 "source_id": "257", "source_name": "Broker",
+                 "destination_id": "40", "destination_name": "Kontoinhaber",
+                 "description": "Outgoing", "external_id": "tlx-x"}
+        converts, refusals = lt.sole_source_halves(
+            [group("397", [dp_tr()]), group("9", [other])], SOLE)
+        assert converts == []
+        assert len(refusals) == 1 and "matching withdrawal" in refusals[0]
+
+    def test_payee_carrying_its_own_destination_iban(self):
+        converts, refusals = lt.sole_source_halves([group("1", [dp_tr(dest="257")])], SOLE)
+        assert converts == []
+        assert len(refusals) == 1 and "own destination account" in refusals[0]
+
+    def test_a_plain_deposit_is_ignored(self):
+        assert lt.sole_source_halves([group("1", [dp_tr(payee="Arbeitgeber")])], SOLE) == ([], [])
+
+    def test_payload_swaps_in_the_sole_account_as_source(self):
+        c = lt.sole_source_halves([group("397", [dp_tr()])], SOLE)[0][0]
+        assert lt.convert_payload(c)["transactions"][0] == {
+            "transaction_journal_id": "401", "type": "transfer",
+            "source_id": "257", "destination_id": "2"}
 
 
 class TestConvertPayload:

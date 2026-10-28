@@ -113,13 +113,14 @@ def plan(groups, own_by_iban):
 
 
 def sole_source_halves(groups, sole_source):
-    """Withdrawals to an own account that will never report its own side.
+    """Own-account movements whose other side will never be booked.
 
-    Some accounts are not fed by the nightly bank import at all - a securities account
-    refreshed by hand from a broker export, for instance - so the deposit half of a
-    transfer into them never arrives, and waiting for a counterpart waits forever. For
-    those the paying bank's row is the only record there will ever be, and the payee
-    name carrying that account's IBAN is the whole of the available evidence.
+    Some accounts deliberately never record a movement to or from your own bank
+    accounts - a broker account whose import leaves those out because the bank already
+    reports them, for instance. For those the bank's row is the only record there will
+    ever be, and its payee name carrying that account's IBAN is the whole of the
+    available evidence. Both directions occur: a withdrawal to the broker's IBAN is money
+    paid in, a deposit from it is money paid out.
 
     sole_source maps IBAN -> {"id", "name"} and must name only such accounts. It is
     separate from the IBANs read off the ledger precisely because this is a judgement
@@ -130,59 +131,73 @@ def sole_source_halves(groups, sole_source):
     Converting is also milder than joining: nothing is deleted, only retyped, so the row
     and its external_id survive and the step is reversible.
 
-    Returns (converts, refusals). A withdrawal that does have a matching deposit is
-    refused rather than converted - that means the other side was posted after all, and
-    which of the two to keep is not this function's call.
+    Returns (converts, refusals). Each convert names the transfer it becomes (source_id,
+    target_id), the bank account whose balance must not move (bank_id) and the change
+    the sole account must show in cents (sole_id, sole_delta). A row that does have its
+    counterpart on the sole account is refused rather than converted - that means the
+    other side was booked after all, and which of the two to keep is not this function's
+    call.
     """
     by_iban, converts, refusals = sole_source or {}, [], []
     if not by_iban:
         return converts, refusals
     ids = {a["id"] for a in by_iban.values()}
 
-    deposits = set()
+    singles = []
     for g in groups:
         txs = g["attributes"]["transactions"]
-        if len(txs) != 1:
-            continue
-        s = txs[0]
-        if s["type"] == "deposit" and str(s.get("destination_id")) in ids:
-            deposits.add((s["date"][:10], cents(s["amount"]), str(s["destination_id"])))
+        if len(txs) == 1:
+            singles.append((g["id"], txs[0]))
 
-    for g in groups:
-        txs = g["attributes"]["transactions"]
-        if len(txs) != 1:
+    # What the sole account itself already holds, keyed by the side it would be on.
+    on_sole = set()
+    for _, s in singles:
+        if s["type"] == "deposit" and str(s.get("destination_id")) in ids:
+            on_sole.add(("in", s["date"][:10], cents(s["amount"]), str(s["destination_id"])))
+        if s["type"] == "withdrawal" and str(s.get("source_id")) in ids:
+            on_sole.add(("out", s["date"][:10], cents(s["amount"]), str(s["source_id"])))
+
+    for gid, s in singles:
+        if s["type"] == "withdrawal":
+            direction, payee, bank = "in", s.get("destination_name"), str(s.get("source_id"))
+            bank_name = s.get("source_name")
+        elif s["type"] == "deposit":
+            direction, payee, bank = "out", s.get("source_name"), str(s.get("destination_id"))
+            bank_name = s.get("destination_name")
+        else:
             continue
-        s = txs[0]
-        if s["type"] != "withdrawal":
-            continue
-        target = own_account_in(s.get("destination_name"), by_iban)
-        if not target:
+        sole = own_account_in(payee, by_iban)
+        if not sole:
             continue
         amt = cents(s["amount"])
-        label = (f"g{g['id']} {s['date'][:10]} {amount(amt)} -> {target['name']} "
-                 f"(payee {s.get('destination_name')})")
-        if str(s.get("source_id")) == target["id"]:
-            refusals.append(f"{label}: payee carries the IBAN of its own source account")
+        if direction == "in":
+            src, src_name, dst, dst_name = bank, bank_name, sole["id"], sole["name"]
+        else:
+            src, src_name, dst, dst_name = sole["id"], sole["name"], bank, bank_name
+        label = f"g{gid} {s['date'][:10]} {amount(amt)} {src_name} -> {dst_name} (payee {payee})"
+        if bank == sole["id"]:
+            side = "source" if direction == "in" else "destination"
+            refusals.append(f"{label}: payee carries the IBAN of its own {side} account")
             continue
-        if (s["date"][:10], amt, target["id"]) in deposits:
-            refusals.append(f"{label}: a matching deposit exists after all, so which half "
+        if (direction, s["date"][:10], amt, sole["id"]) in on_sole:
+            other = "deposit" if direction == "in" else "withdrawal"
+            refusals.append(f"{label}: a matching {other} exists after all, so which half "
                             f"to keep is a decision, not a conversion")
             continue
-        converts.append({"group": g["id"], "split": s, "cents": amt,
-                         "date": s["date"][:10],
-                         "source_id": str(s["source_id"]), "source_name": s["source_name"],
-                         "target_id": target["id"], "target_name": target["name"]})
+        converts.append({"group": gid, "split": s, "cents": amt, "date": s["date"][:10],
+                         "source_id": src, "source_name": src_name,
+                         "target_id": dst, "target_name": dst_name,
+                         "bank_id": bank, "sole_id": sole["id"],
+                         "sole_delta": amt if direction == "in" else -amt})
     return converts, refusals
 
 
 def convert_payload(conv):
-    """Retype the paying bank's row as the transfer it always was.
+    """Retype the bank's row as the transfer it always was.
 
-    Only the type and the destination change. The description, the category and the
-    external_id are the paying bank's own and stay, which is also what keeps the row
-    recognisable to the broker import's duplicate filter later on: that filter only
-    inspects rows touching the securities accounts, so until this conversion happens the
-    movement is invisible to it and would be imported a second time.
+    Only the type and the two accounts change. The description, the category and the
+    external_id are the bank's own and stay, so the row remains recognisable to the
+    bank import's duplicate check.
     """
     return {"transactions": [{
         "transaction_journal_id": conv["split"]["transaction_journal_id"],
@@ -335,24 +350,23 @@ def main():
         if dry_run:
             done.append("would convert " + label)
             continue
-        before_src, before_dst = balance(c["source_id"]), balance(c["target_id"])
+        before_bank, before_sole = balance(c["bank_id"]), balance(c["sole_id"])
         try:
             api(f"/api/v1/transactions/{c['group']}", "PUT", convert_payload(c))
         except urllib.error.HTTPError as e:
             refusals.append(f"{label}: PUT failed HTTP {e.code} "
                             f"{e.read()[:200].decode(errors='replace')}")
             continue
-        # Unlike a join, a conversion DOES move money: the amount had already left the
-        # paying account and now arrives on the receiving one, which is the whole point.
-        # So the source must be untouched and the destination must rise by exactly the
-        # amount. Any other outcome means the retyping hit the wrong account.
-        after_src, after_dst = balance(c["source_id"]), balance(c["target_id"])
-        if after_src != before_src or after_dst - before_dst != c["cents"]:
+        # Unlike a join, a conversion DOES move money: the bank side had already been
+        # booked and stays as it was, while the sole account now shows the movement for
+        # the first time. Any other outcome means the retyping hit the wrong account.
+        after_bank, after_sole = balance(c["bank_id"]), balance(c["sole_id"])
+        if after_bank != before_bank or after_sole - before_sole != c["sole_delta"]:
             refusals.append(
-                f"{label}: converted, but the balances are wrong - source "
-                f"{amount(before_src)} -> {amount(after_src)} (expected unchanged), "
-                f"destination {amount(before_dst)} -> {amount(after_dst)} (expected "
-                f"+{amount(c['cents'])}) - CHECK THIS")
+                f"{label}: converted, but the balances are wrong - bank account "
+                f"{amount(before_bank)} -> {amount(after_bank)} (expected unchanged), "
+                f"{c['sole_id']} {amount(before_sole)} -> {amount(after_sole)} (expected "
+                f"{c['sole_delta'] / 100:+,.2f}) - CHECK THIS")
         else:
             done.append("converted " + label)
 
