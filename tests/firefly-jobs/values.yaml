@@ -20,14 +20,12 @@ loanSplit:
 ledgerCheck:
   enabled: true
   loanPayees: [1, 2]
-  extraOwnIbans:
-    DE00000000000000000000: Example
+  ignorePayeeIds: [3]
 syncConsent:
   enabled: true
 linkTransfers:
   enabled: true
-  soleSourceIbans:
-    DE00000000000000000001: 257
+  soleSourceAccounts: [257]
 trTimeline:
   enabled: true
   credentialsSecret: example-credentials

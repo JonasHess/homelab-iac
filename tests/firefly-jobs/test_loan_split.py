@@ -118,4 +118,15 @@ class TestSplitPayload:
         assert "external_id" not in zins
 
     def test_group_title_is_required_by_the_api(self):
-        assert self.p["group_title"] == "Teilzahlung Darlehen Objekt A 05.11.2026"
+        assert self.p["group_title"] == "Teilzahlung Objekt A 05.11.2026"
+
+
+class TestLabels:
+    def test_a_configured_label_is_kept(self):
+        loans = [{"label": "Objekt A", "payee": 50, "liability": 987, "interest": 994}]
+        assert ls.label_loans(loans, {"987": "Darlehen X"})[0]["label"] == "Objekt A"
+
+    def test_without_a_label_the_liability_name_is_used(self):
+        # So the configuration needs no name for the property or the lender.
+        loans = [{"payee": 50, "liability": 987, "interest": 994}]
+        assert ls.label_loans(loans, {"987": "Darlehen X"})[0]["label"] == "Darlehen X"

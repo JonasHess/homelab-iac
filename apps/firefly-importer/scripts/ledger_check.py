@@ -139,19 +139,24 @@ def _payee_key(name):
     return key.replace("ae", "a").replace("oe", "o").replace("ue", "u")
 
 
-def duplicate_payees(payees, ignore=()):
+def duplicate_payees(payees, ignore_ids=(), own_ibans=()):
     """payees: iterable of (id, type, name). Returns one line per duplicate group.
 
-    `ignore` names counterparties that are legitimately split and would otherwise be
-    reported every single night: the self-payees that exist one per own-account IBAN
-    and are deliberately kept (they are what the unlinked-transfer scan matches on),
-    and people who genuinely hold two accounts at the same bank.
+    Self-payees - named after one of your own accounts' IBANs, one per account - are
+    left out: they are what the unlinked-transfer scan matches on and are kept on
+    purpose, and a new one appears whenever an account is added. `ignore_ids` names
+    payee accounts that are legitimately split in some other way, such as a person who
+    really holds two accounts at the same bank.
     """
-    skip = {_payee_key(n) for n in ignore}
+    skip = {str(i) for i in ignore_ids}
+    own = {re.sub(r"[^A-Z0-9]", "", i.upper()) for i in own_ibans}
     groups = defaultdict(list)
     for pid, kind, name in payees:
+        digits = re.sub(r"[^A-Z0-9]", "", name.upper())
+        if str(pid) in skip or any(i in digits for i in own):
+            continue
         key = _payee_key(name)
-        if key and key not in skip:
+        if key:
             groups[(kind, key)].append((pid, name))
     out = []
     for (kind, _), members in sorted(groups.items()):
@@ -187,15 +192,18 @@ def send_mail(subject, body):
 def main():
     window = int(os.environ.get("LEDGER_CHECK_WINDOW_DAYS", "90"))
     loan_payees = {str(p) for p in json.loads(os.environ.get("LEDGER_CHECK_LOAN_PAYEES", "[]"))}
-    extra_ibans = json.loads(os.environ.get("LEDGER_CHECK_EXTRA_OWN_IBANS", "{}"))
-    ignore_payees = json.loads(os.environ.get("LEDGER_CHECK_IGNORE_PAYEES", "[]"))
+    ignore_payees = json.loads(os.environ.get("LEDGER_CHECK_IGNORE_PAYEE_IDS", "[]"))
 
-    own_ibans = dict(extra_ibans)
+    # Firefly holds one IBAN per account. An account's other IBAN - the one before a bank
+    # merger, or one the account field cannot take because the bank never reports it -
+    # goes into the account number field, so both are read.
+    own_ibans = {}
     for kind in ("asset", "liabilities"):
         for a in api(f"/api/v1/accounts?type={kind}&limit=200")["data"]:
-            iban = (a["attributes"].get("iban") or "").strip()
-            if iban:
-                own_ibans[iban] = a["attributes"]["name"]
+            for field in ("iban", "account_number"):
+                iban = re.sub(r"[^A-Z0-9]", "", (a["attributes"].get(field) or "").upper())
+                if re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", iban):
+                    own_ibans[iban] = a["attributes"]["name"]
 
     payees = []
     for kind in ("revenue", "expense"):
@@ -222,7 +230,9 @@ def main():
     unlinked = unlinked_transfers(groups, own_ibans, loan_payees)
     definite, review = duplicates(groups)
     uncat = uncategorised(groups)
-    dup_payees = duplicate_payees(payees, ignore_payees)
+    # Loan self-payees are self-payees too; their accounts just carry no IBAN to know
+    # them by, which is why they are configured.
+    dup_payees = duplicate_payees(payees, set(ignore_payees) | loan_payees, own_ibans)
 
     print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_ibans)} own IBANs, "
           f"{len(payees)} payees)")

@@ -90,22 +90,29 @@ def api(path, method="GET", payload=None):
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.load(r) if r.status != 204 else {}
 
+def label_loans(loans, account_names):
+    """Each loan with a label: the configured one, else the liability account's name in
+    Firefly, so the configuration can do without naming the property or the lender."""
+    return [dict(l, label=l.get("label") or account_names.get(str(l["liability"]), str(l["liability"])))
+            for l in loans]
+
+
 def split_payload(a):
     date, loan = a["date"], a["loan"]
     de = f"{date[8:10]}.{date[5:7]}.{date[:4]}"
     return {
-        "group_title": f"Teilzahlung Darlehen {loan['label']} {de}",
+        "group_title": f"Teilzahlung {loan['label']} {de}",
         "transactions": [
             # The external_id rides on the Tilgung leg: replacing the splits would
             # otherwise drop it, and while the row is still inside the importer's
             # re-fetch window that makes the bank's lump look unseen and reappear.
             {"type": "withdrawal", "date": date, "amount": amount(a["tilgung"]),
              "source_id": a["source_id"], "destination_id": str(loan["liability"]),
-             "description": f"Darlehen {loan['label']} Tilgung ({de})",
+             "description": f"{loan['label']} Tilgung ({de})",
              "category_name": a["category"], "external_id": a["external_id"]},
             {"type": "withdrawal", "date": date, "amount": amount(a["zins"]),
              "source_id": a["source_id"], "destination_id": str(loan["interest"]),
-             "description": f"Darlehen {loan['label']} Zins ({de})",
+             "description": f"{loan['label']} Zins ({de})",
              "category_name": a["category"]},
         ]}
 
@@ -125,7 +132,9 @@ def send_mail(subject, body):
         sm.send_message(msg)
 
 def main():
-    loans    = json.loads(os.environ.get("LOAN_SPLIT_LOANS", "[]"))
+    names    = {a["id"]: a["attributes"]["name"]
+                for a in api("/api/v1/accounts?type=liabilities&limit=200")["data"]}
+    loans    = label_loans(json.loads(os.environ.get("LOAN_SPLIT_LOANS", "[]")), names)
     lookback = int(os.environ.get("LOAN_SPLIT_LOOKBACK_DAYS", "45"))
     dry_run  = os.environ.get("LOAN_SPLIT_DRY_RUN", "false").lower() == "true"
     by_payee = {str(l["payee"]): l for l in loans}

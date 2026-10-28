@@ -77,11 +77,12 @@ ledgerCheck:
   # with no IBAN in Firefly cannot be recognised from the payee name alone, which is
   # the case for every loan account.
   loanPayees: []
-  # IBAN -> label for own accounts Firefly holds no IBAN for at all.
-  extraOwnIbans: {}
-  # Counterparties that legitimately exist as more than one payee account and would
-  # otherwise be reported every night. Matched on the same normalised name as the scan.
-  ignorePayees: []
+  # Payee account ids that legitimately exist more than once and would otherwise be
+  # reported every night, e.g. someone who holds two accounts at the same bank. Ids
+  # rather than names, so no personal name has to sit in this file. Own accounts'
+  # self-payees need no entry: they are recognised by IBAN, read from Firefly (iban
+  # and account number fields).
+  ignorePayeeIds: []
 
 # Splits each monthly mortgage lump into its Zins and Tilgung legs. Off by default:
 # `loans` maps Firefly account ids, which are per-instance, so a wrong id would book
@@ -99,6 +100,7 @@ loanSplit:
   # payee     - the self-payee expense account the bank's lump lands on
   # liability - the loan account the Tilgung belongs to
   # interest  - the expense account the Zins belongs to
+  # label     - optional, for titles and mails; defaults to the liability's name
   loans: []
 
 # Carries a bank consent renewed in the web wizard into the configuration the nightly
@@ -129,14 +131,14 @@ linkTransfers:
   # within reach of this one.
   windowDays: 90
   dryRun: false
-  # IBAN -> account id for accounts whose side of an own-account movement NEVER arrives,
-  # because their import deliberately leaves such movements to the bank (the TR timeline
-  # import does). For those the bank's row is the only record there will be, so it is
-  # retyped as a transfer, in either direction, instead of waiting for a counterpart.
-  # Nothing is deleted. Only list accounts that hold no IBAN in Firefly: an account the
-  # ledger knows the IBAN of is covered by the ordinary pairing, and converting its lone
+  # Account ids whose side of an own-account movement NEVER arrives, because their
+  # import deliberately leaves such movements to the bank (the TR timeline import does).
+  # For those the bank's row is the only record there will be, so it is retyped as a
+  # transfer, in either direction, instead of waiting for a counterpart. Nothing is
+  # deleted. Each account must carry its IBAN in Firefly's account number field, not in
+  # the IBAN field: there the ordinary pairing would cover it, and converting its lone
   # half early would turn one movement into two.
-  soleSourceIbans: {}
+  soleSourceAccounts: []
 
 # Books new Trade Republic transactions from the broker's timeline (pytr). Off by default:
 # the account ids are per instance, and it needs the pytr chart's saved session.
@@ -200,7 +202,7 @@ digest:
   # fastest way to train yourself to ignore the one that matters.
   alwaysSend: false
   # Accounts that are not nightly-imported and would otherwise be flagged forever
-  # (manually refreshed depots, closed cards). Exact account names.
+  # (manually refreshed depots, closed cards). Account ids.
   ignoreStale: []
   # Dead man's switch for this job. Because a healthy night sends no mail at all,
   # a suspended CronJob, a crashed run and a dead mailbox are indistinguishable

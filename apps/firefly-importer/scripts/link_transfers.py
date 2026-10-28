@@ -260,31 +260,35 @@ def main():
     window  = int(os.environ.get("LINK_TRANSFERS_WINDOW_DAYS", "90"))
     dry_run = os.environ.get("LINK_TRANSFERS_DRY_RUN", "false").lower() == "true"
 
-    own_by_iban, names = {}, {}
+    own_by_iban, names, account_numbers = {}, {}, {}
     for kind in ("asset", "liabilities"):
         for a in api(f"/api/v1/accounts?type={kind}&limit=200")["data"]:
             names[a["id"]] = a["attributes"]["name"]
+            account_numbers[a["id"]] = a["attributes"].get("account_number") or ""
             iban = re.sub(r"[^A-Z0-9]", "", (a["attributes"].get("iban") or "").upper())
             if iban:
                 own_by_iban[iban] = {"id": a["id"], "name": a["attributes"]["name"]}
 
     # Accounts whose own side never arrives, named by configuration because nothing in
-    # Firefly records how an account is fed. Resolved against the real account list so a
-    # stale id is reported rather than written to.
+    # Firefly records how an account is fed. Their IBAN sits in the account number field
+    # rather than the IBAN field: in the IBAN field the ordinary pairing would claim it,
+    # and converting a lone half of a normally imported account would double-count.
     sole_source, config_errors = {}, []
-    for iban, acc in json.loads(os.environ.get("LINK_TRANSFERS_SOLE_SOURCE_IBANS", "{}")).items():
-        key = re.sub(r"[^A-Z0-9]", "", str(iban).upper())
+    for acc in json.loads(os.environ.get("LINK_TRANSFERS_SOLE_SOURCE_ACCOUNTS", "[]")):
         aid = str(acc)
         if aid not in names:
-            config_errors.append(f"soleSourceIbans: {iban} names account {aid}, which is "
-                                 f"not an asset or liability account here")
+            config_errors.append(f"soleSourceAccounts: {aid} is not an asset or liability "
+                                 f"account here")
+            continue
+        key = re.sub(r"[^A-Z0-9]", "", account_numbers[aid].upper())
+        if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", key):
+            config_errors.append(f"soleSourceAccounts: account {aid} has no IBAN in its "
+                                 f"account number field")
             continue
         if key in own_by_iban:
-            # Then the ledger holds this IBAN itself and the ordinary pairing applies.
-            # Converting a lone half of a normally imported account would double-count.
-            config_errors.append(f"soleSourceIbans: {iban} is already on account "
-                                 f"{own_by_iban[key]['id']} in Firefly - remove it from the "
-                                 f"configuration, the ordinary pairing covers it")
+            config_errors.append(f"soleSourceAccounts: the IBAN of account {aid} is also on "
+                                 f"account {own_by_iban[key]['id']} - the ordinary pairing "
+                                 f"covers it, remove it from the configuration")
             continue
         sole_source[key] = {"id": aid, "name": names[aid]}
 

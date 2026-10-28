@@ -167,23 +167,30 @@ class TestDuplicatePayees:
             ("2", "expense", "VodafoneWestGmbH")])
         assert len(rows) == 1
 
-    def test_ignored_counterparty_is_not_reported(self):
-        # The self-payees are kept on purpose - they are what the unlinked-transfer
-        # scan matches on - so reporting them would mail every night forever.
+    def test_self_payees_of_own_accounts_are_not_reported(self):
+        # The importer names a payee after an own account's IBAN, one per account. They
+        # are what the unlinked-transfer scan matches on, so they are kept on purpose.
         payees = [("4", "expense", "Kontoinhaber"),
                   ("50", "expense", "Kontoinhaber (DE00100000000000000006)")]
         assert lc.duplicate_payees(payees) != []
-        assert lc.duplicate_payees(payees, ignore=["Kontoinhaber"]) == []
+        assert lc.duplicate_payees(payees, own_ibans={"DE00100000000000000006"}) == []
 
-    def test_ignore_matches_on_the_normalised_name(self):
+    def test_a_new_self_payee_needs_no_configuration(self):
+        payees = [("4", "expense", "Kontoinhaber"),
+                  ("50", "expense", "Kontoinhaber (DE00100000000000000006)"),
+                  ("999", "expense", "Kontoinhaber (DE00100000000000000008)")]
+        own = {"DE00100000000000000006", "DE00100000000000000008"}
+        assert lc.duplicate_payees(payees, own_ibans=own) == []
+
+    def test_ignored_ids_are_not_reported(self):
         payees = [("1", "expense", "Dritter Inhaber"),
                   ("141", "expense", "Dritter Inhaber (DE00100000000000000007)")]
-        assert lc.duplicate_payees(payees, ignore=["dritter  inhaber"]) == []
+        assert lc.duplicate_payees(payees, ignore_ids={"1", "141"}) == []
 
-    def test_ignoring_one_name_does_not_hide_others(self):
-        payees = [("4", "expense", "Kontoinhaber"),
-                  ("50", "expense", "Kontoinhaber (DE0010)"),
+    def test_ignoring_some_does_not_hide_others(self):
+        payees = [("1", "expense", "Dritter Inhaber"),
+                  ("141", "expense", "Dritter Inhaber (DE00100000000000000007)"),
                   ("1035", "expense", "HETZNER ONLINE GMBH"),
                   ("279", "expense", "Hetzner Online GmbH")]
-        rows = lc.duplicate_payees(payees, ignore=["Kontoinhaber"])
+        rows = lc.duplicate_payees(payees, ignore_ids={"1", "141"})
         assert len(rows) == 1 and "etzner" in rows[0].lower()

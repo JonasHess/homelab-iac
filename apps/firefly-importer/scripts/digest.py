@@ -14,7 +14,7 @@ CONSENT_SYNCED = os.environ.get("DIGEST_CONSENT_SYNCED", "false").lower() == "tr
 # Accounts that legitimately go quiet (manually maintained, dormant). Without
 # this they would trip the staleness check every single night, and a warning
 # that fires every night is one nobody reads.
-IGNORE = set(json.loads(os.environ.get("DIGEST_IGNORE_STALE", "[]")))
+IGNORE = {str(i) for i in json.loads(os.environ.get("DIGEST_IGNORE_STALE", "[]"))}
 ALWAYS = os.environ.get("DIGEST_ALWAYS_SEND", "false").lower() == "true"
 WINDOW= int(os.environ.get("DIGEST_WINDOW_HOURS", "24"))
 
@@ -91,7 +91,7 @@ for a in api("/api/v1/accounts?type=asset&limit=200")["data"]:
     age  = (today - datetime.date.fromisoformat(last)).days if last else None
     n    = fresh.get(at["name"], 0)
     rows.append((at["name"], n, last or "-", age))
-    if age is None or at["name"] in IGNORE:
+    if age is None or a["id"] in IGNORE:
         continue
     rec = quiet_record(a["id"])
     if rec is None:
