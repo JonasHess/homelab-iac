@@ -112,6 +112,86 @@ def plan(groups, own_by_iban):
     return pairs, refusals
 
 
+def sole_source_halves(groups, sole_source):
+    """Withdrawals to an own account that will never report its own side.
+
+    Some accounts are not fed by the nightly bank import at all - a securities account
+    refreshed by hand from a broker export, for instance - so the deposit half of a
+    transfer into them never arrives, and waiting for a counterpart waits forever. For
+    those the paying bank's row is the only record there will ever be, and the payee
+    name carrying that account's IBAN is the whole of the available evidence.
+
+    sole_source maps IBAN -> {"id", "name"} and must name only such accounts. It is
+    separate from the IBANs read off the ledger precisely because this is a judgement
+    about how an account is fed, which no field in Firefly records. Applying this to a
+    normally imported account would be wrong: there the counterpart arrives a day or two
+    later, and converting early turns one movement into two.
+
+    Converting is also milder than joining: nothing is deleted, only retyped, so the row
+    and its external_id survive and the step is reversible.
+
+    Returns (converts, refusals). A withdrawal that does have a matching deposit is
+    refused rather than converted - that means the other side was posted after all, and
+    which of the two to keep is not this function's call.
+    """
+    by_iban, converts, refusals = sole_source or {}, [], []
+    if not by_iban:
+        return converts, refusals
+    ids = {a["id"] for a in by_iban.values()}
+
+    deposits = set()
+    for g in groups:
+        txs = g["attributes"]["transactions"]
+        if len(txs) != 1:
+            continue
+        s = txs[0]
+        if s["type"] == "deposit" and str(s.get("destination_id")) in ids:
+            deposits.add((s["date"][:10], cents(s["amount"]), str(s["destination_id"])))
+
+    for g in groups:
+        txs = g["attributes"]["transactions"]
+        if len(txs) != 1:
+            continue
+        s = txs[0]
+        if s["type"] != "withdrawal":
+            continue
+        target = own_account_in(s.get("destination_name"), by_iban)
+        if not target:
+            continue
+        amt = cents(s["amount"])
+        label = (f"g{g['id']} {s['date'][:10]} {amount(amt)} -> {target['name']} "
+                 f"(payee {s.get('destination_name')})")
+        if str(s.get("source_id")) == target["id"]:
+            refusals.append(f"{label}: payee carries the IBAN of its own source account")
+            continue
+        if (s["date"][:10], amt, target["id"]) in deposits:
+            refusals.append(f"{label}: a matching deposit exists after all, so which half "
+                            f"to keep is a decision, not a conversion")
+            continue
+        converts.append({"group": g["id"], "split": s, "cents": amt,
+                         "date": s["date"][:10],
+                         "source_id": str(s["source_id"]), "source_name": s["source_name"],
+                         "target_id": target["id"], "target_name": target["name"]})
+    return converts, refusals
+
+
+def convert_payload(conv):
+    """Retype the paying bank's row as the transfer it always was.
+
+    Only the type and the destination change. The description, the category and the
+    external_id are the paying bank's own and stay, which is also what keeps the row
+    recognisable to the broker import's duplicate filter later on: that filter only
+    inspects rows touching the securities accounts, so until this conversion happens the
+    movement is invisible to it and would be imported a second time.
+    """
+    return {"transactions": [{
+        "transaction_journal_id": conv["split"]["transaction_journal_id"],
+        "type": "transfer",
+        "source_id": conv["source_id"],
+        "destination_id": conv["target_id"],
+    }]}
+
+
 def api(path, method="GET", payload=None):
     base = os.environ["FIREFLY_III_URL"].rstrip("/")
     token = os.environ["FIREFLY_III_ACCESS_TOKEN"]
@@ -165,12 +245,33 @@ def main():
     window  = int(os.environ.get("LINK_TRANSFERS_WINDOW_DAYS", "90"))
     dry_run = os.environ.get("LINK_TRANSFERS_DRY_RUN", "false").lower() == "true"
 
-    own_by_iban = {}
+    own_by_iban, names = {}, {}
     for kind in ("asset", "liabilities"):
         for a in api(f"/api/v1/accounts?type={kind}&limit=200")["data"]:
+            names[a["id"]] = a["attributes"]["name"]
             iban = re.sub(r"[^A-Z0-9]", "", (a["attributes"].get("iban") or "").upper())
             if iban:
                 own_by_iban[iban] = {"id": a["id"], "name": a["attributes"]["name"]}
+
+    # Accounts whose own side never arrives, named by configuration because nothing in
+    # Firefly records how an account is fed. Resolved against the real account list so a
+    # stale id is reported rather than written to.
+    sole_source, config_errors = {}, []
+    for iban, acc in json.loads(os.environ.get("LINK_TRANSFERS_SOLE_SOURCE_IBANS", "{}")).items():
+        key = re.sub(r"[^A-Z0-9]", "", str(iban).upper())
+        aid = str(acc)
+        if aid not in names:
+            config_errors.append(f"soleSourceIbans: {iban} names account {aid}, which is "
+                                 f"not an asset or liability account here")
+            continue
+        if key in own_by_iban:
+            # Then the ledger holds this IBAN itself and the ordinary pairing applies.
+            # Converting a lone half of a normally imported account would double-count.
+            config_errors.append(f"soleSourceIbans: {iban} is already on account "
+                                 f"{own_by_iban[key]['id']} in Firefly - remove it from the "
+                                 f"configuration, the ordinary pairing covers it")
+            continue
+        sole_source[key] = {"id": aid, "name": names[aid]}
 
     today = datetime.date.today()
     since = (today - datetime.timedelta(days=window)).isoformat()
@@ -185,8 +286,12 @@ def main():
     groups = dedupe(groups)
 
     pairs, refusals = plan(groups, own_by_iban)
-    print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_by_iban)} own IBANs)")
-    print(f"pairs to join: {len(pairs)}   refused: {len(refusals)}")
+    converts, conv_refusals = sole_source_halves(groups, sole_source)
+    refusals = config_errors + refusals + conv_refusals
+    print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_by_iban)} own IBANs, "
+          f"{len(sole_source)} sole-source)")
+    print(f"pairs to join: {len(pairs)}   lone halves to convert: {len(converts)}   "
+          f"refused: {len(refusals)}")
 
     done = []
     for p in pairs:
@@ -224,21 +329,48 @@ def main():
         else:
             done.append("joined " + label)
 
-    for line in done:     print("join    :", line)
+    for c in converts:
+        label = (f"{c['date']} {amount(c['cents'])} {c['source_name']} -> {c['target_name']} "
+                 f"(g{c['group']})")
+        if dry_run:
+            done.append("would convert " + label)
+            continue
+        before_src, before_dst = balance(c["source_id"]), balance(c["target_id"])
+        try:
+            api(f"/api/v1/transactions/{c['group']}", "PUT", convert_payload(c))
+        except urllib.error.HTTPError as e:
+            refusals.append(f"{label}: PUT failed HTTP {e.code} "
+                            f"{e.read()[:200].decode(errors='replace')}")
+            continue
+        # Unlike a join, a conversion DOES move money: the amount had already left the
+        # paying account and now arrives on the receiving one, which is the whole point.
+        # So the source must be untouched and the destination must rise by exactly the
+        # amount. Any other outcome means the retyping hit the wrong account.
+        after_src, after_dst = balance(c["source_id"]), balance(c["target_id"])
+        if after_src != before_src or after_dst - before_dst != c["cents"]:
+            refusals.append(
+                f"{label}: converted, but the balances are wrong - source "
+                f"{amount(before_src)} -> {amount(after_src)} (expected unchanged), "
+                f"destination {amount(before_dst)} -> {amount(after_dst)} (expected "
+                f"+{amount(c['cents'])}) - CHECK THIS")
+        else:
+            done.append("converted " + label)
+
+    for line in done:     print("fix     :", line)
     for line in refusals: print("PROBLEM :", line)
 
     if not (done or refusals):
-        print("no half-booked own-account transfers to join")
+        print("no half-booked own-account transfers to join or convert")
         return 0
 
     bits = []
-    if done:     bits.append(f"{len(done)} dry-run" if dry_run else f"{len(done)} joined")
+    if done:     bits.append(f"{len(done)} dry-run" if dry_run else f"{len(done)} fixed")
     if refusals: bits.append(f"{len(refusals)} needing attention")
     body = ""
     if done and dry_run:
         body += "Dry run, nothing written:\n" + "".join(f"  - {l}\n" for l in done) + "\n"
     elif done:
-        body += "Joined into a single transfer:\n" + "".join(f"  - {l}\n" for l in done) + "\n"
+        body += "Booked as the single transfer it was:\n" + "".join(f"  - {l}\n" for l in done) + "\n"
     if refusals:
         body += "Needs attention:\n" + "".join(f"  - {l}\n" for l in refusals) + "\n"
 

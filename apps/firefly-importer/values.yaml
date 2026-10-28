@@ -129,6 +129,13 @@ linkTransfers:
   # within reach of this one.
   windowDays: 90
   dryRun: false
+  # IBAN -> account id for accounts whose own side NEVER arrives, because they are fed by
+  # hand from a broker export rather than by the nightly bank import. For those the paying
+  # bank's row is the only record there will be, so it is retyped as a transfer instead of
+  # waiting for a counterpart. Nothing is deleted. Only list accounts that hold no IBAN in
+  # Firefly: an account the ledger knows the IBAN of is covered by the ordinary pairing,
+  # and converting its lone half early would turn one movement into two.
+  soleSourceIbans: {}
 
 digest:
   enabled: false

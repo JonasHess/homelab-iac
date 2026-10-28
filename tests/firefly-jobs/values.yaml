@@ -26,3 +26,5 @@ syncConsent:
   enabled: true
 linkTransfers:
   enabled: true
+  soleSourceIbans:
+    DE00000000000000000001: 257
