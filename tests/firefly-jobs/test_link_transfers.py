@@ -318,8 +318,8 @@ class TestConvertPayload:
                         "source_id": "2", "destination_id": "257"}
 
     def test_leaves_description_category_and_external_id_alone(self):
-        # The paying bank's external_id is what the broker import's duplicate filter
-        # later recognises the row by, so it must survive untouched.
+        # The bank's external_id is what its own import recognises the row by on the
+        # next fetch, so it must survive untouched or the row is imported again.
         body = lt.convert_payload(
             lt.sole_source_halves([group("7277", [wd_tr()])], SOLE)[0][0])["transactions"][0]
         for f in ("description", "category_id", "category_name", "external_id"):
