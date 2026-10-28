@@ -1,4 +1,4 @@
-import collections, datetime, json, os, re, sys
+import collections, json, os, re, sys
 
 # Converts Trade Republic timeline events - the raw event list pytr writes with
 # `export_transactions --store-event-database` (all_events.json) - into Firefly III
@@ -11,8 +11,8 @@ import collections, datetime, json, os, re, sys
 #
 # The field titles below are Trade Republic's own and they are German: pytr fetches the
 # timeline in the account's language. They are matched exactly, so a change of account
-# language breaks parsing - and it breaks loudly, because the reconciliation in main()
-# stops agreeing with the ledger.
+# language breaks parsing without an error: fees and taxes read as zero. The account
+# totals main() prints are where that shows.
 
 CARD_SPEND = {"CARD_TRANSACTION"}
 CARD_REFUND = {"CARD_REFUND"}
@@ -39,14 +39,6 @@ BONUS = {"REFERRAL_FIRST_TRADE_EXECUTED_INVITER"}
 # are left out and picked up once final, which is also why the broker's own export lags
 # a few days behind.
 NOT_FINAL = {"ausstehend", "abgelehnt", "storniert", "abgebrochen", "pending"}
-
-# Own-account movements: "transfer" books them as a transfer between the cash account
-# and the configured own account; "skip" leaves them out. Rebuilding history needs
-# "transfer" - nothing else will create those rows. Day-to-day importing needs "skip":
-# the paying bank reports the same movement, usually a day or two later, and is the one
-# that owns it (with `link_transfers` retyping it); booking it here as well would debit
-# that bank account twice.
-OWN_TRANSFER, OWN_SKIP = "transfer", "skip"
 
 FEE = "Geb\u00fchr"
 TAXES = ("Steuern", "Steuer")
@@ -117,22 +109,22 @@ def is_final(event):
     return True
 
 
-def payloads(event, cash, depot, asset_accounts=None, name_alias=None,
-             own_accounts=None, own_mode=OWN_SKIP):
+def payloads(event, cash, depot, asset_accounts=None, name_alias=None, own_accounts=None):
     """Firefly transaction dicts for one event, without the API envelope.
 
     cash, depot     - Firefly account ids of the cash account and the securities account
     asset_accounts  - asset name -> account id, for holdings kept outside the depot
     name_alias      - timeline counterparty name -> the payee name already in Firefly
-    own_accounts    - IBAN -> account id of accounts that are your own; several IBANs may
-                      name one account, since a bank merger changes the IBAN only
-    own_mode        - OWN_TRANSFER or OWN_SKIP, see above
+    own_accounts    - IBANs of your own accounts. Movements to and from them are left out:
+                      the other bank reports the same movement and owns it (with
+                      `link_transfers` turning it into a transfer); booking it here too
+                      would count it twice.
 
     Returns [] for anything that moves no money or is not final.
     """
     asset_accounts = asset_accounts or {}
     name_alias = name_alias or {}
-    own_accounts = own_accounts or {}
+    own_accounts = set(own_accounts or ())
     et = event.get("eventType")
     eid = event.get("id")
     amt = (event.get("amount") or {}).get("value")
@@ -182,14 +174,8 @@ def payloads(event, cash, depot, asset_accounts=None, name_alias=None,
                       "Bargeld/ATM"))
     elif et in CARD_FEE and amt:
         out.append(wd(amt, "Trade Republic", title, f"tlx-{eid}", CAT_FEES))
-    elif et in MONEY_IN | MONEY_OUT and amt:
-        own = own_accounts.get(counterparty_iban(event) or "")
-        incoming = et in MONEY_IN
-        if own:
-            if own_mode == OWN_TRANSFER:
-                out.append(tf(amt, own, cash, title, f"tlx-{eid}") if incoming
-                           else tf(amt, cash, own, title, f"tlx-{eid}"))
-        elif incoming:
+    elif et in MONEY_IN | MONEY_OUT and amt and counterparty_iban(event) not in own_accounts:
+        if et in MONEY_IN:
             party = alias(field(event, "Von", "Absender", "Name") or title)
             out.append(dp(amt, party, title, f"tlx-{eid}"))
         else:
@@ -253,93 +239,8 @@ def payloads(event, cash, depot, asset_accounts=None, name_alias=None,
     return out
 
 
-def snapshot_rows(groups, accounts):
-    """Flatten Firefly transaction groups into the rows a rebuild has to preserve.
-
-    One row per side that touches one of `accounts`, with the signed amount in cents as
-    seen from that account. Groups the paginated listing returned twice count once.
-    """
-    rows, seen = [], set()
-    for g in groups:
-        for s in g["attributes"]["transactions"]:
-            key = (g["id"], s["transaction_journal_id"])
-            if key in seen:
-                continue
-            seen.add(key)
-            c = int(round(float(s["amount"]) * 100))
-            src, dst = str(s["source_id"]), str(s["destination_id"])
-            for acct, signed in ((src, -c), (dst, c)):
-                if acct in accounts:
-                    rows.append({"acct": acct, "cents": signed, "date": s["date"][:10],
-                                 "gid": g["id"], "type": s["type"],
-                                 "source_name": s.get("source_name"),
-                                 "destination_name": s.get("destination_name"),
-                                 "category_name": s.get("category_name")})
-    return rows
-
-
-def _signed_on(payload, account):
-    c = int(round(float(payload["amount"]) * 100))
-    if payload.get("source_id") == account:
-        return -c
-    if payload.get("destination_id") == account:
-        return c
-    return None
-
-
-def restore_from_snapshot(payloads_, rows, cash, tol_days=3):
-    """Give each rebuilt payload the payee and category of the ledger row it replaces.
-
-    A rebuild should change nothing a person can see except the identifiers, so names and
-    categories chosen by hand are carried over instead of being recomputed. Matching is on
-    the cash side: same signed amount in cents, nearest date within tol_days - the two
-    sources date the same movement by order time and by booking day respectively.
-
-    Returns (payloads, report). report["lost_categories"] lists ledger rows that carried a
-    category and found no successor; a rebuild must not proceed while that is non-empty
-    unless each one is understood.
-    """
-    pool = [r for r in rows if r["acct"] == cash]
-    used, out = set(), []
-    report = collections.Counter()
-    for p in payloads_:
-        q = dict(p)
-        signed = _signed_on(p, cash)
-        if signed is None:
-            out.append(q)
-            report["not_on_cash"] += 1
-            continue
-        d0 = datetime.date.fromisoformat(p["date"])
-        best = None
-        for i, r in enumerate(pool):
-            if i in used or r["cents"] != signed:
-                continue
-            dist = abs((datetime.date.fromisoformat(r["date"]) - d0).days)
-            if dist <= tol_days and (best is None or dist < best[0]):
-                best = (dist, i)
-        if best is None:
-            out.append(q)
-            report["no_template"] += 1
-            continue
-        used.add(best[1])
-        r = pool[best[1]]
-        if p["type"] == "withdrawal" and r.get("destination_name"):
-            q["destination_name"] = r["destination_name"]
-        if p["type"] == "deposit" and r.get("source_name"):
-            q["source_name"] = r["source_name"]
-        if r.get("category_name"):
-            q["category_name"] = r["category_name"]
-        out.append(q)
-        report["restored"] += 1
-    rep = dict(report)
-    rep["lost_categories"] = [r for i, r in enumerate(pool)
-                              if i not in used and r.get("category_name")]
-    return out, rep
-
-
 def balances(payloads_):
-    """Net movement per account id in cents. The rebuild's proof of correctness: the
-    totals produced from the timeline must equal what the ledger holds today."""
+    """Net movement per account id in cents."""
     bal = collections.Counter()
     for p in payloads_:
         c = int(round(float(p["amount"]) * 100))
@@ -355,18 +256,15 @@ def main():
     cash = os.environ.get("TR_CASH_ACCOUNT", "257")
     depot = os.environ.get("TR_DEPOT_ACCOUNT", "258")
     asset_accounts = json.loads(os.environ.get("TR_ASSET_ACCOUNTS", "{}"))
-    own_accounts = {re.sub(r"[^A-Z0-9]", "", k.upper()): str(v)
-                    for k, v in json.loads(os.environ.get("TR_OWN_ACCOUNTS", "{}")).items()}
+    own_accounts = {re.sub(r"[^A-Z0-9]", "", i.upper())
+                    for i in json.loads(os.environ.get("TR_OWN_IBANS", "[]"))}
     name_alias = json.loads(os.environ.get("TR_NAME_ALIAS", "{}"))
-    own_mode = os.environ.get("TR_OWN_MODE", OWN_SKIP)
-    if own_mode not in (OWN_TRANSFER, OWN_SKIP):
-        sys.exit(f"TR_OWN_MODE must be {OWN_TRANSFER!r} or {OWN_SKIP!r}, not {own_mode!r}")
 
     with open(events_path, encoding="utf-8") as fh:
         events = json.load(fh)
     out, skipped = [], 0
     for e in events:
-        ps = payloads(e, cash, depot, asset_accounts, name_alias, own_accounts, own_mode)
+        ps = payloads(e, cash, depot, asset_accounts, name_alias, own_accounts)
         if not ps and (e.get("amount") or {}).get("value") and not is_final(e):
             skipped += 1
         out.extend(ps)
