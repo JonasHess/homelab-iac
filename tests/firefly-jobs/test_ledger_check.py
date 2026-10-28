@@ -134,6 +134,21 @@ class TestDuplicatePayees:
             ("61", "revenue", "MIETER BEISPIEL"),
             ("571", "expense", "Mieter Beispiel")]) == []
 
+    def test_umlaut_spellings_are_one_payee(self):
+        # Card terminals drop the umlaut, broker exports transliterate it, other sources
+        # keep it - three spellings of one shop, and Firefly makes each its own payee.
+        rows = lc.duplicate_payees([
+            ("1", "expense", "Br\u00e4ustube Beispiel"),
+            ("2", "expense", "Braeustube Beispiel"),
+            ("3", "expense", "BRAUSTUBE BEISPIEL")])
+        assert len(rows) == 1 and rows[0].count("#") == 3
+
+    def test_eszett_and_ss_are_one_payee(self):
+        rows = lc.duplicate_payees([
+            ("1", "expense", "Gro\u00dfmarkt Beispiel"),
+            ("2", "expense", "GROSSMARKT BEISPIEL")])
+        assert len(rows) == 1
+
     def test_distinct_payees_are_clean(self):
         assert lc.duplicate_payees([
             ("1", "expense", "Supermarkt Nord"),

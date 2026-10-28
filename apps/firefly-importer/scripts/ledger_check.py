@@ -127,8 +127,16 @@ def uncategorised(groups):
 IBAN_SUFFIX = re.compile(r"\s*\((?:[A-Z]{2}\d{10,30})\)\s*$")
 
 
+# Umlauts reach Firefly in three spellings depending on the source - kept, transliterated
+# (ae) or dropped (a) - so all three fold to the plain vowel. This can merge two genuinely
+# different names that differ only there; that costs one line in the report, while missing
+# the fold lets a payee split unnoticed.
+UMLAUTS = str.maketrans({"\u00e4": "a", "\u00f6": "o", "\u00fc": "u", "\u00df": "ss"})
+
+
 def _payee_key(name):
-    return re.sub(r"[^a-z0-9]", "", IBAN_SUFFIX.sub("", name).lower())
+    key = re.sub(r"[^a-z0-9]", "", IBAN_SUFFIX.sub("", name).lower().translate(UMLAUTS))
+    return key.replace("ae", "a").replace("oe", "o").replace("ue", "u")
 
 
 def duplicate_payees(payees, ignore=()):
