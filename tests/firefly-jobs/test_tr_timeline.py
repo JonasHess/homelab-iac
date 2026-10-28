@@ -4,7 +4,7 @@ from conftest import _load
 tt = _load("tr_timeline")
 
 # Synthetic fixtures only. Real timeline events carry names, e-mail addresses and IBANs.
-CASH, DEPOT, OWN_ACCT = "257", "258", "2"
+CASH, DEPOT = "257", "258"
 OWN_IBAN_SPACED = "DE00 1111 2222 3333 4444 55"
 OWN_IBAN = "DE00111122223333444455"
 OTHER_IBAN_SPACED = "DE00 9999 8888 7777 6666 55"
@@ -27,7 +27,7 @@ def run(event, **kw):
 
 
 def cash_effect(ps):
-    return sum((tt._signed_on(p, CASH) or 0) for p in ps) / 100
+    return tt.balances(ps)[CASH] / 100
 
 
 class TestParsing:
@@ -169,31 +169,21 @@ class TestOwnAccounts:
             ("Absender", {"IBAN": OWN_IBAN_SPACED}),
         ])
 
-    def test_skipping_is_the_default(self):
-        # The safe default: day to day the paying bank owns these.
-        assert run(self.incoming(), own_accounts={OWN_IBAN: OWN_ACCT}) == []
+    def test_incoming_from_an_own_account_is_left_to_the_paying_bank(self):
+        assert run(self.incoming(), own_accounts={OWN_IBAN}) == []
 
-    def test_rebuild_books_a_transfer_in(self):
-        ps = run(self.incoming(), own_accounts={OWN_IBAN: OWN_ACCT}, own_mode=tt.OWN_TRANSFER)
-        assert len(ps) == 1
-        assert (ps[0]["type"], ps[0]["source_id"], ps[0]["destination_id"]) == ("transfer", OWN_ACCT, CASH)
-
-    def test_rebuild_books_a_transfer_out(self):
+    def test_outgoing_to_an_own_account_is_left_out(self):
         out = ev("PAYMENT_OUTBOUND", -25000.0, [("\u00dcbersicht", {"An": "Kontoinhaber",
                                                                    "IBAN": OWN_IBAN_SPACED})])
-        ps = run(out, own_accounts={OWN_IBAN: OWN_ACCT}, own_mode=tt.OWN_TRANSFER)
-        assert (ps[0]["source_id"], ps[0]["destination_id"], ps[0]["amount"]) == (CASH, OWN_ACCT, "25000.00")
+        assert run(out, own_accounts={OWN_IBAN}) == []
 
-    def test_two_ibans_can_name_one_account(self):
-        # A bank merger changes the IBAN, not the account.
-        old = ev("PAYMENT_INBOUND", 150.0, [("\u00dcbersicht", {"IBAN": OTHER_IBAN_SPACED})])
-        own = {OWN_IBAN: OWN_ACCT, "DE00999988887777666655": OWN_ACCT}
-        ps = run(old, own_accounts=own, own_mode=tt.OWN_TRANSFER)
-        assert ps[0]["source_id"] == OWN_ACCT
+    def test_without_own_ibans_it_is_an_ordinary_deposit(self):
+        ps = run(self.incoming())
+        assert (ps[0]["type"], ps[0]["destination_id"]) == ("deposit", CASH)
 
     def test_a_foreign_iban_is_an_ordinary_deposit(self):
         e = ev("PAYMENT_INBOUND", 500.0, [("\u00dcbersicht", {"Von": "Jemand", "IBAN": OTHER_IBAN_SPACED})])
-        ps = run(e, own_accounts={OWN_IBAN: OWN_ACCT}, own_mode=tt.OWN_TRANSFER)
+        ps = run(e, own_accounts={OWN_IBAN})
         assert (ps[0]["type"], ps[0]["source_name"]) == ("deposit", "Jemand")
 
 
@@ -230,58 +220,6 @@ class TestIds:
         a = run(ev("CARD_TRANSACTION", -1.0, eid="a"))
         b = run(ev("CARD_TRANSACTION", -1.0, eid="b"))
         assert a[0]["external_id"] != b[0]["external_id"]
-
-
-def ledger_group(gid, typ, amount, date, src, dst, src_name="", dst_name="", cat=None, jid="j"):
-    return {"id": gid, "attributes": {"transactions": [{
-        "transaction_journal_id": jid, "type": typ, "amount": amount,
-        "date": date + "T00:00:00+01:00", "source_id": src, "destination_id": dst,
-        "source_name": src_name, "destination_name": dst_name, "category_name": cat}]}}
-
-
-class TestSnapshot:
-    def test_rows_seen_twice_count_once(self):
-        g = ledger_group("1", "transfer", "10.00", "2026-05-04", CASH, DEPOT)
-        rows = tt.snapshot_rows([g, g], {CASH, DEPOT})
-        assert len(rows) == 2                      # one per side, not four
-
-    def test_signed_from_each_side(self):
-        rows = tt.snapshot_rows([ledger_group("1", "transfer", "10.00", "2026-05-04", CASH, DEPOT)],
-                                {CASH, DEPOT})
-        assert {(r["acct"], r["cents"]) for r in rows} == {(CASH, -1000), (DEPOT, 1000)}
-
-
-class TestRestore:
-    def test_payee_and_category_are_carried_over(self):
-        ledger = [ledger_group("9", "withdrawal", "45.00", "2026-10-17", CASH, "40",
-                               dst_name="Gasthaus Alt", cat="Restaurant")]
-        new = run(ev("CARD_TRANSACTION", -45.0, [("\u00dcbersicht", {"H\u00e4ndler": "Gasthaus"})],
-                     ts="2026-10-16T12:00:00.000+0000"))
-        out, rep = tt.restore_from_snapshot(new, tt.snapshot_rows(ledger, {CASH}), CASH)
-        assert out[0]["destination_name"] == "Gasthaus Alt"
-        assert out[0]["category_name"] == "Restaurant"
-        assert rep["restored"] == 1 and rep["lost_categories"] == []
-
-    def test_a_category_without_successor_is_reported(self):
-        ledger = [ledger_group("9", "deposit", "44.80", "2024-07-04", "x", CASH, cat="Kapitalertr\u00e4ge")]
-        out, rep = tt.restore_from_snapshot([], tt.snapshot_rows(ledger, {CASH}), CASH)
-        assert len(rep["lost_categories"]) == 1
-
-    def test_outside_the_date_tolerance_there_is_no_template(self):
-        ledger = [ledger_group("9", "withdrawal", "45.00", "2026-10-01", CASH, "40", cat="Restaurant")]
-        new = run(ev("CARD_TRANSACTION", -45.0, ts="2026-10-17T12:00:00.000+0000"))
-        out, rep = tt.restore_from_snapshot(new, tt.snapshot_rows(ledger, {CASH}), CASH)
-        assert rep.get("no_template") == 1
-        assert "category_name" not in out[0]
-
-    def test_the_nearest_date_wins(self):
-        ledger = [ledger_group("8", "withdrawal", "45.00", "2026-10-14", CASH, "40",
-                               dst_name="Weiter weg", cat="A", jid="j8"),
-                  ledger_group("9", "withdrawal", "45.00", "2026-10-16", CASH, "40",
-                               dst_name="Naeher dran", cat="B", jid="j9")]
-        new = run(ev("CARD_TRANSACTION", -45.0, ts="2026-10-17T12:00:00.000+0000"))
-        out, _ = tt.restore_from_snapshot(new, tt.snapshot_rows(ledger, {CASH}), CASH)
-        assert out[0]["destination_name"] == "Naeher dran"
 
 
 class TestBalances:
