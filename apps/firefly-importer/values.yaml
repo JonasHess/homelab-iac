@@ -138,6 +138,33 @@ linkTransfers:
   # half early would turn one movement into two.
   soleSourceIbans: {}
 
+# Books new Trade Republic transactions from the broker's timeline (pytr). Off by default:
+# the account ids are per instance, and it needs the pytr chart's saved session.
+trTimeline:
+  enabled: false
+  # After the 04:00 auto-import, before link-transfers (04:25) and the digest (04:30).
+  schedule: "10 4 * * *"
+  image: python:3.14-slim
+  # Without the playwright extra: that is only needed to log in, which this job never does.
+  pytrVersion: "0.4.10"
+  # Secret with PHONE_NUMBER and PIN, and the PVC holding the saved session - both the
+  # pytr chart's own.
+  credentialsSecret: ""
+  sessionClaim: ""
+  cashAccount: ""
+  depotAccount: ""
+  # Asset name as the timeline shows it -> account id, for holdings kept outside the depot.
+  assetAccounts: {}
+  # Timeline name -> the payee name already in Firefly, so categorise rules keep matching.
+  nameAlias: {}
+  # How far back each night looks; 0 = the whole history. Rows before it are never
+  # touched, so a session that stays expired for longer than this leaves a gap - which a
+  # single run with 0 fills, since only missing rows are booked.
+  windowDays: 90
+  dryRun: false
+  # Mailed when the session has expired: how to log in again on this instance.
+  loginHint: ""
+
 digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.

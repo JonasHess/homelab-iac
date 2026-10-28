@@ -28,3 +28,9 @@ linkTransfers:
   enabled: true
   soleSourceIbans:
     DE00000000000000000001: 257
+trTimeline:
+  enabled: true
+  credentialsSecret: example-credentials
+  sessionClaim: example-session
+  cashAccount: 1
+  depotAccount: 2
