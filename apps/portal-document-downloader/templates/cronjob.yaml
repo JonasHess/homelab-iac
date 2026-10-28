@@ -53,6 +53,14 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
+            {{- with $portalConfig.subdirFrom }}
+            # Declared explicitly so subPathExpr below can expand it.
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $portalName }}-credentials
+                  key: {{ . }}
+            {{- end }}
             {{- if $.Values.portalDocumentDownloader.externalSecret.enabled }}
             envFrom:
             - secretRef:
@@ -71,6 +79,13 @@ spec:
             volumeMounts:
             - name: downloads
               mountPath: /app/downloads
+              {{- with $portalConfig.subdirFrom }}
+              # The target folder is named in the portal's secret and resolved when the
+              # pod starts, so a folder name that is personal - an address, say - never
+              # has to appear in the configuration. Paperless tags documents by folder,
+              # so the name must stay exactly as it was.
+              subPathExpr: $({{ . }})
+              {{- end }}
             {{- if $portalConfig.bluetooth }}
             - name: host-dbus
               mountPath: /run/dbus/system_bus_socket
@@ -78,7 +93,7 @@ spec:
           volumes:
           - name: downloads
             persistentVolumeClaim:
-              claimName: {{ $appName }}-downloads-{{ $portalName }}-pvc
+              claimName: {{ $appName }}-{{ $portalConfig.volume | default (printf "downloads-%s" $portalName) }}-pvc
           {{- if $portalConfig.bluetooth }}
           - name: host-dbus
             hostPath:

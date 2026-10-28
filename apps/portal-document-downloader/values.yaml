@@ -30,4 +30,9 @@ portalDocumentDownloader:
   # to give it the host's Bluetooth: the host's D-Bus socket is mounted and the
   # container runs without an AppArmor profile, which loosens its isolation -
   # so only portals that need it should set it.
+  #
+  # By default a portal writes into the volume `downloads-<portal>`. Portals can share
+  # one volume instead and each write into a subfolder named by a key of its secret:
+  #   volume: downloads-shared
+  #   subdirFrom: TREUBAU_SUBDIR      # secret key holding the folder name
   portals: {}
