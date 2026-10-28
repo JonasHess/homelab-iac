@@ -92,8 +92,8 @@ loanSplit:
   # already-corrected ledger.
   schedule: "15 4 * * *"
   image: python:3.14-slim
-  # One monthly cycle plus slack: the Bank D loan is debited at month end, the two
-  # Bank C/Bank A ones at the start, so a 30-day window can straddle awkwardly.
+  # One monthly cycle plus slack: some lenders debit at month end, others at the start,
+  # so a 30-day window can straddle awkwardly.
   lookbackDays: 45
   dryRun: false
   # payee     - the self-payee expense account the bank's lump lands on
