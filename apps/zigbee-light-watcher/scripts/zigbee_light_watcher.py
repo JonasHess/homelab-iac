@@ -19,13 +19,13 @@ copy and a direct command on the same topic):
   * optimistic copy: a light publish within ADJACENT_S of a group command it is a
     member of. Ignored; the group command already set the commanded state.
   * read answer: a light publish while a read of that light is pending.
-  * device report: a light publish whose linkquality differs from the light's
-    previous publish. Optimistic publishes repeat Zigbee2MQTT's cached
-    linkquality, so a new value means the bulb itself sent a message (e.g. a
-    spontaneous attribute report after a reset). Judged like a read answer.
-  * direct command: any other light publish (e.g. Home Assistant controlling the
-    single bulb). A device report whose linkquality happens to equal the cached
-    one is misread as a direct command; the next read detects the mismatch again.
+  * direct command: a light publish within SET_WINDOW_S after a `<base>/<light>/set`
+    (e.g. Home Assistant controlling the single bulb). Zigbee2MQTT publishes it once
+    the bulb acknowledged, so it can lag the /set by its request timeout.
+  * device report: any other light publish, i.e. a message the bulb sent by itself
+    (e.g. a spontaneous attribute report after a reset). Judged like a read answer.
+    Commands sent through the Zigbee2MQTT frontend bypass MQTT /set and are
+    therefore taken for device reports: they raise a mismatch until the next command.
 Messages are therefore classified only ADJACENT_S after arrival, once their
 neighbours are known. A real group command that coincides with a member's read
 answer can be misread as derived; the next command or read corrects the state.
@@ -43,6 +43,9 @@ import sys
 import time
 
 ADJACENT_S = 0.3
+# Exceeds Zigbee2MQTT's request timeout (15 s on the Ember adapter), after which a
+# /set publishes nothing.
+SET_WINDOW_S = 20.0
 
 
 class BulbState:
@@ -58,7 +61,7 @@ class BulbState:
         self.mismatch_kind = None
         self.pending_read_since = None
         self.read_snapshot = None
-        self.last_linkquality = None
+        self.last_set_at = None
 
 
 class Tracker:
@@ -71,11 +74,13 @@ class Tracker:
     # read_timeout_s must exceed Zigbee2MQTT's own request timeout (15 s on the Ember
     # adapter): an answer arriving after it would be taken for a direct command and could
     # hide a ghost light.
-    def __init__(self, sink, settle_s=3.0, read_timeout_s=30.0, adjacent_s=ADJACENT_S):
+    def __init__(self, sink, settle_s=3.0, read_timeout_s=30.0, adjacent_s=ADJACENT_S,
+                 set_window_s=SET_WINDOW_S):
         self.sink = sink
         self.settle_s = settle_s
         self.read_timeout_s = read_timeout_s
         self.adjacent_s = adjacent_s
+        self.set_window_s = set_window_s
         self.bulbs = {}
         self.groups = {}
         self.bulb_groups = {}
@@ -120,16 +125,17 @@ class Tracker:
         if name in self.bulbs:
             bulb = self.bulbs[name]
             pending = bulb.pending_read_since is not None
-            linkquality = payload.get("linkquality")
-            report = (linkquality is not None and bulb.last_linkquality is not None
-                      and linkquality != bulb.last_linkquality)
-            if linkquality is not None:
-                bulb.last_linkquality = linkquality
+            after_set = bulb.last_set_at is not None and now - bulb.last_set_at <= self.set_window_s
             self._items.append({"ts": now, "kind": "bulb", "name": name, "payload": payload,
-                                "pending": pending, "report": report, "done": False})
+                                "pending": pending, "after_set": after_set, "done": False})
         elif name in self.groups:
             self._items.append({"ts": now, "kind": "group", "name": name, "payload": payload,
                                 "pending": False, "done": False})
+
+    def on_set(self, name, now):
+        """A publish on `<base>/<name>/set`, i.e. someone commanding the light."""
+        if name in self.bulbs:
+            self.bulbs[name].last_set_at = now
 
     def on_announce(self, name, now):
         """Returns True when the announced device is a watched light (caller should read it)."""
@@ -197,10 +203,10 @@ class Tracker:
                 return
         if item["pending"]:
             self._read_answer(self.bulbs[name], item["payload"], item["ts"])
-        elif item["report"]:
-            self._device_report(self.bulbs[name], item["payload"], item["ts"])
-        else:
+        elif item["after_set"]:
             self._set_commanded(self.bulbs[name], item["payload"]["state"] == "ON", item["ts"], "direct")
+        else:
+            self._device_report(self.bulbs[name], item["payload"], item["ts"])
 
     # --- state transitions --------------------------------------------------
 
@@ -412,7 +418,7 @@ def main():
     def on_connect(client, userdata, flags, reason_code, properties):
         log_event("mqtt_connected", reason=str(reason_code))
         client.subscribe([(f"{base}/bridge/devices", 0), (f"{base}/bridge/groups", 0),
-                          (f"{base}/bridge/event", 0), (f"{base}/+", 0)])
+                          (f"{base}/bridge/event", 0), (f"{base}/+", 0), (f"{base}/+/set", 0)])
 
     def on_message(client, userdata, msg):
         inbox.put((msg.topic, msg.payload, time.time()))
@@ -457,6 +463,8 @@ def main():
                         request_read(name, ts)
             elif topic.count("/") == 1:
                 tracker.on_message(topic.split("/", 1)[1], data, ts)
+            elif topic.count("/") == 2 and topic.endswith("/set"):
+                tracker.on_set(topic.split("/")[1], ts)
         except queue.Empty:
             pass
 

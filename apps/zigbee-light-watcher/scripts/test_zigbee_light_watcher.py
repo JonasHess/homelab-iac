@@ -133,12 +133,40 @@ class TrackerTest(unittest.TestCase):
         self.assertEqual(self.sink.missed, [])
 
     def test_direct_command_to_single_bulb(self):
-        # Z2M publishes a direct command optimistically, repeating the cached linkquality.
+        # Z2M publishes the new state once the bulb acknowledged, with a fresh linkquality.
         self.baseline_all_off()
-        self.t.on_message("bad_decke3", state("ON", 88), 100)
+        self.t.on_set("bad_decke3", 99.5)
+        self.t.on_message("bad_decke3", state("ON", 84), 100)
         self.t.process(101)
         self.assertTrue(self.sink.commanded_on["bad_decke3"])
         self.assertFalse(self.sink.commanded_on["bad_decke1"])
+        self.assertNotIn("mismatch_start", self.sink.kinds())
+
+    def test_direct_command_ends_mismatch(self):
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220, lq=52)
+        self.t.on_set("bad_decke1", 299)
+        self.t.on_message("bad_decke1", state("OFF", 84), 300)
+        self.t.process(301)
+        self.assertFalse(self.sink.mismatch_on["bad_decke1"])
+        self.assertEqual(self.sink.events[-1][1]["reason"], "command")
+
+    def test_publish_long_after_a_set_is_a_device_report(self):
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.t.on_set("bad_decke1", 170)
+        self.t.on_message("bad_decke1", state("OFF"), 170.5)
+        self.t.process(171)
+        self.t.on_message("bad_decke1", state("ON"), 300)
+        self.t.process(301)
+        self.assertTrue(self.sink.mismatch_on["bad_decke1"])
+        self.assertFalse(self.sink.commanded_on["bad_decke1"])
+
+    def test_set_for_unknown_device_is_ignored(self):
+        self.t.on_set("S99Lidl", 0)
 
     def test_unsolicited_report_does_not_end_mismatch(self):
         self.baseline_all_off()
