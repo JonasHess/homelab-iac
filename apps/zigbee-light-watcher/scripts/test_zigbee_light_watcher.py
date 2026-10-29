@@ -20,6 +20,7 @@ class FakeSink:
     def light_removed(self, bulb): self.removed.append(bulb)
     def commanded(self, bulb, on): self.commanded_on[bulb] = on
     def read_ok(self, bulb, on, lq, ts): pass
+    def reported(self, bulb, on, lq): pass
     def read_failed(self, bulb): self.read_failures.append(bulb)
     def mismatch(self, bulb, flag): self.mismatch_on[bulb] = flag
     def missed_command(self, bulb, source): self.missed.append((bulb, source))
@@ -132,11 +133,41 @@ class TrackerTest(unittest.TestCase):
         self.assertEqual(self.sink.missed, [])
 
     def test_direct_command_to_single_bulb(self):
+        # Z2M publishes a direct command optimistically, repeating the cached linkquality.
         self.baseline_all_off()
-        self.t.on_message("bad_decke3", state("ON"), 100)
+        self.t.on_message("bad_decke3", state("ON", 88), 100)
         self.t.process(101)
         self.assertTrue(self.sink.commanded_on["bad_decke3"])
         self.assertFalse(self.sink.commanded_on["bad_decke1"])
+
+    def test_unsolicited_report_does_not_end_mismatch(self):
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220, lq=52)
+        self.t.on_message("bad_decke1", state("ON", 136), 400)
+        self.t.process(401)
+        self.assertTrue(self.sink.mismatch_on["bad_decke1"])
+        self.assertFalse(self.sink.commanded_on["bad_decke1"])
+        self.assertNotIn("mismatch_end", self.sink.kinds())
+
+    def test_unsolicited_report_reveals_uncommanded_change(self):
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.t.on_message("bad_decke1", state("ON", 132), 200)
+        self.t.process(201)
+        self.assertEqual(self.sink.uncommanded, ["bad_decke1"])
+        self.assertFalse(self.sink.commanded_on["bad_decke1"])
+
+    def test_unsolicited_report_matching_command_ends_mismatch(self):
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "ON", 160, lq=52)
+        self.t.on_message("bad_decke1", state("OFF", 132), 200)
+        self.t.process(201)
+        self.assertFalse(self.sink.mismatch_on["bad_decke1"])
+        self.assertEqual(self.sink.events[-1][1]["reason"], "report")
 
     def test_single_member_group_command(self):
         self.read("flur_decke", "OFF", 0)

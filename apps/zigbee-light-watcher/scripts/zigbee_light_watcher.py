@@ -19,8 +19,13 @@ copy and a direct command on the same topic):
   * optimistic copy: a light publish within ADJACENT_S of a group command it is a
     member of. Ignored; the group command already set the commanded state.
   * read answer: a light publish while a read of that light is pending.
+  * device report: a light publish whose linkquality differs from the light's
+    previous publish. Optimistic publishes repeat Zigbee2MQTT's cached
+    linkquality, so a new value means the bulb itself sent a message (e.g. a
+    spontaneous attribute report after a reset). Judged like a read answer.
   * direct command: any other light publish (e.g. Home Assistant controlling the
-    single bulb).
+    single bulb). A device report whose linkquality happens to equal the cached
+    one is misread as a direct command; the next read detects the mismatch again.
 Messages are therefore classified only ADJACENT_S after arrival, once their
 neighbours are known. A real group command that coincides with a member's read
 answer can be misread as derived; the next command or read corrects the state.
@@ -53,6 +58,7 @@ class BulbState:
         self.mismatch_kind = None
         self.pending_read_since = None
         self.read_snapshot = None
+        self.last_linkquality = None
 
 
 class Tracker:
@@ -114,8 +120,13 @@ class Tracker:
         if name in self.bulbs:
             bulb = self.bulbs[name]
             pending = bulb.pending_read_since is not None
+            linkquality = payload.get("linkquality")
+            report = (linkquality is not None and bulb.last_linkquality is not None
+                      and linkquality != bulb.last_linkquality)
+            if linkquality is not None:
+                bulb.last_linkquality = linkquality
             self._items.append({"ts": now, "kind": "bulb", "name": name, "payload": payload,
-                                "pending": pending, "done": False})
+                                "pending": pending, "report": report, "done": False})
         elif name in self.groups:
             self._items.append({"ts": now, "kind": "group", "name": name, "payload": payload,
                                 "pending": False, "done": False})
@@ -186,6 +197,8 @@ class Tracker:
                 return
         if item["pending"]:
             self._read_answer(self.bulbs[name], item["payload"], item["ts"])
+        elif item["report"]:
+            self._device_report(self.bulbs[name], item["payload"], item["ts"])
         else:
             self._set_commanded(self.bulbs[name], item["payload"]["state"] == "ON", item["ts"], "direct")
 
@@ -217,11 +230,28 @@ class Tracker:
             return
         if sent_at is None or snapshot_at is None or sent_at - snapshot_at < self.settle_s:
             return
+        self._judge(bulb, actual, payload, ts, "read")
 
+    def _device_report(self, bulb, payload, ts):
+        actual = payload["state"] == "ON"
+        bulb.actual = actual
+        self.sink.reported(bulb.name, actual, payload.get("linkquality"))
+
+        if bulb.commanded is None:
+            self._set_commanded(bulb, actual, ts, "baseline")
+            bulb.verified_seq = bulb.command_seq
+            return
+        if ts - bulb.commanded_at < self.settle_s:
+            return
+        self._judge(bulb, actual, payload, ts, "report")
+
+    def _judge(self, bulb, actual, payload, ts, source):
+        """Compares an observed state with the commanded one; `source` names the
+        observation ("read" or "report") that ends a mismatch."""
         if actual == bulb.commanded:
             bulb.verified_seq = bulb.command_seq
             if bulb.mismatch_since is not None:
-                self._end_mismatch(bulb, ts, "read")
+                self._end_mismatch(bulb, ts, source)
         elif bulb.mismatch_since is None:
             kind = "uncommanded_change" if bulb.verified_seq == bulb.command_seq else "missed_command"
             bulb.mismatch_since = ts
@@ -295,6 +325,12 @@ class MetricsSink:
         self.reachable.labels(bulb).set(1)
         self.last_read.labels(bulb).set(ts)
         self.reads.labels(bulb).inc()
+        if linkquality is not None:
+            self.linkquality.labels(bulb).set(linkquality)
+
+    def reported(self, bulb, on, linkquality):
+        self.actual_on.labels(bulb).set(1 if on else 0)
+        self.reachable.labels(bulb).set(1)
         if linkquality is not None:
             self.linkquality.labels(bulb).set(linkquality)
 
