@@ -233,6 +233,17 @@
         "ghcr.io/openccu/openccu"
       ],
       "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d{8})$"
+    },
+    {
+      "description": "Never auto-merge cluster-wide infrastructure: Envoy Gateway carries all ingress, cert-manager all TLS. A 'minor' bump can still break every app at once (Envoy Gateway v1.9 disabled Lua by default and turned all routes using strip-oauth-cookies into HTTP 500)",
+      "matchPackageNames": [
+        "docker.io/envoyproxy/gateway-helm",
+        "cert-manager"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "manual-review"
+      ]
     }
   ],
   "hostRules": [],
