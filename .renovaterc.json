@@ -23,7 +23,7 @@
   "packageRules": [
     {
       "description": "Auto-merge patch and minor updates for Helm charts",
-      "matchCategories": [
+      "matchDatasources": [
         "helm"
       ],
       "matchUpdateTypes": [
@@ -36,7 +36,7 @@
     },
     {
       "description": "Auto-merge patch and minor updates for Docker images",
-      "matchCategories": [
+      "matchDatasources": [
         "docker"
       ],
       "matchUpdateTypes": [
@@ -49,8 +49,8 @@
     },
     {
       "description": "Auto-merge patch and minor updates for Python packages",
-      "matchCategories": [
-        "python"
+      "matchDatasources": [
+        "pypi"
       ],
       "matchUpdateTypes": [
         "patch",
@@ -62,8 +62,8 @@
     },
     {
       "description": "Auto-merge patch and minor updates for JavaScript/Node.js packages",
-      "matchCategories": [
-        "js"
+      "matchDatasources": [
+        "npm"
       ],
       "matchUpdateTypes": [
         "patch",
@@ -75,8 +75,8 @@
     },
     {
       "description": "Auto-merge patch and minor updates for Go modules",
-      "matchCategories": [
-        "golang"
+      "matchDatasources": [
+        "go"
       ],
       "matchUpdateTypes": [
         "patch",
@@ -100,8 +100,21 @@
       "automergeStrategy": "merge-commit"
     },
     {
+      "description": "Auto-merge patch and minor updates for GitHub release versions",
+      "matchDatasources": [
+        "github-releases"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "merge-commit"
+    },
+    {
       "description": "Require manual approval for major Helm chart updates",
-      "matchCategories": [
+      "matchDatasources": [
         "helm"
       ],
       "matchUpdateTypes": [
@@ -114,7 +127,7 @@
     },
     {
       "description": "Require manual approval for major Docker image updates",
-      "matchCategories": [
+      "matchDatasources": [
         "docker"
       ],
       "matchUpdateTypes": [
@@ -127,8 +140,8 @@
     },
     {
       "description": "Require manual approval for major Python package updates",
-      "matchCategories": [
-        "python"
+      "matchDatasources": [
+        "pypi"
       ],
       "matchUpdateTypes": [
         "major"
@@ -140,8 +153,8 @@
     },
     {
       "description": "Require manual approval for major JavaScript/Node.js package updates",
-      "matchCategories": [
-        "js"
+      "matchDatasources": [
+        "npm"
       ],
       "matchUpdateTypes": [
         "major"
@@ -153,8 +166,8 @@
     },
     {
       "description": "Require manual approval for major Go module updates",
-      "matchCategories": [
-        "golang"
+      "matchDatasources": [
+        "go"
       ],
       "matchUpdateTypes": [
         "major"
@@ -168,6 +181,19 @@
       "description": "Require manual approval for major GitHub Actions updates",
       "matchCategories": [
         "ci"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major-update"
+      ]
+    },
+    {
+      "description": "Require manual approval for major GitHub release version updates",
+      "matchDatasources": [
+        "github-releases"
       ],
       "matchUpdateTypes": [
         "major"

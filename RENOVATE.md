@@ -16,6 +16,7 @@ source:
 ## Automation Rules
 
 - **Patch & Minor Updates**: Auto-merged automatically
+- **Matching**: Rules select by datasource (`docker`, `helm`, `pypi`, `npm`, `go`, `github-releases`), not by category. Categories only exist for Renovate's built-in managers, and most dependencies here are found by the regex customManagers, so category rules would silently never apply to them. GitHub Actions still match category `ci` (built-in manager).
 - **Major Updates**: Require manual approval (labeled with `major-update`)
 - **Individual PRs**: One PR per chart update
 - **Schedule**: Weekday early mornings and weekends
