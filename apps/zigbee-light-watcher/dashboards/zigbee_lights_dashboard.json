@@ -34,7 +34,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum((zigbee_light_mismatch == 1) and on (bulb) (zigbee_light_actual_on == 1)) or vector(0)",
+          "expr": "count((max by (bulb) (zigbee_light_mismatch) == 1) and on (bulb) (max by (bulb) (zigbee_light_actual_on) == 1)) or vector(0)",
           "legendFormat": ""
         }
       ],
@@ -168,7 +168,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count(zigbee_light_reachable == 0) or vector(0)",
+          "expr": "count(max by (bulb) (zigbee_light_reachable) == 0) or vector(0)",
           "legendFormat": ""
         }
       ],
@@ -212,7 +212,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "zigbee_light_mismatch",
+          "expr": "max by (bulb) (zigbee_light_mismatch)",
           "legendFormat": "{{bulb}}"
         }
       ],
@@ -282,7 +282,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "zigbee_light_actual_on",
+          "expr": "max by (bulb) (zigbee_light_actual_on)",
           "legendFormat": "{{bulb}}"
         }
       ],
@@ -352,7 +352,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "zigbee_light_commanded_on",
+          "expr": "max by (bulb) (zigbee_light_commanded_on)",
           "legendFormat": "{{bulb}}"
         }
       ],
@@ -504,7 +504,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "zigbee_light_reachable",
+          "expr": "max by (bulb) (zigbee_light_reachable)",
           "legendFormat": "{{bulb}}"
         }
       ],
@@ -574,7 +574,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "zigbee_light_linkquality",
+          "expr": "max by (bulb) (zigbee_light_linkquality)",
           "legendFormat": "{{bulb}}"
         }
       ]
