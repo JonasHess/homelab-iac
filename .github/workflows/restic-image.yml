@@ -12,6 +12,10 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # The last step opens a PR that points apps/restic/values.yaml at the new image.
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout code
@@ -50,3 +54,31 @@ jobs:
           echo "Pushed images:"
           echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_LATEST"
           echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA"
+
+      # Renovate cannot see private ECR images, so the deployed tag is bumped here instead.
+      # Merging this PR does not rebuild the image: values.yaml is excluded from the trigger paths.
+      # Needs "Allow GitHub Actions to create and approve pull requests" in the repo settings.
+      - name: Open a PR that deploys the new image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ steps.login-ecr.outputs.registry }}/homelab-iac/restic:${{ steps.vars.outputs.sha_short }}
+          SHA: ${{ steps.vars.outputs.sha_short }}
+        run: |
+          branch="restic-image-${SHA}"
+          if [ -n "$(gh pr list --head "$branch" --state open --json number --jq '.[].number')" ]; then
+            echo "PR for $branch already open, nothing to do"
+            exit 0
+          fi
+          sed -i -E "s|^(\s*image:\s*)\S+/homelab-iac/restic:\S+|\1${IMAGE}|" apps/restic/values.yaml
+          if git diff --quiet -- apps/restic/values.yaml; then
+            echo "apps/restic/values.yaml already deploys ${IMAGE}"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git commit -m "chore: Update restic image to ${SHA}" -- apps/restic/values.yaml
+          git push --force origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "chore: Update restic image to ${SHA}" \
+            --body "Deploys \`${IMAGE}\`, built from ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} by [this run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
