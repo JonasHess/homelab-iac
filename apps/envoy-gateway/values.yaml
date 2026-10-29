@@ -28,6 +28,6 @@ additionalExposedPorts:
 envoyGateway:
   # Upstream Envoy Gateway helm chart version (oci://docker.io/envoyproxy/gateway-helm).
   # renovate: datasource=docker depName=docker.io/envoyproxy/gateway-helm
-  chartVersion: v1.8.0
+  chartVersion: 1.9.3
   # Namespace where the controller installs (data plane is provisioned here too by default).
   namespace: envoy-gateway-system
