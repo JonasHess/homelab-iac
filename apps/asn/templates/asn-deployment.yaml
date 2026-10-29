@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: asn-node-redirect-container
-          image: node:alpine
+          image: node:25.0.0-alpine
           ports:
             - containerPort: 80
           volumeMounts:

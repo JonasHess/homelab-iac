@@ -246,6 +246,18 @@
     },
     {
       "customType": "regex",
+      "description": "Update versions annotated with '# renovate: datasource=... depName=...' on the line above",
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile[^/]*$/",
+        "/(^|/)apps/.+\\.ya?ml$/",
+        "/^scripts/.+\\.sh$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+extractVersion=(?<extractVersion>\\S+))?(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n\\s*(?:ARG\\s+|ENV\\s+|export\\s+)?[A-Za-z0-9_.-]+\\s*[:=]\\s*[\"']?(?<currentValue>[^\\s\"']+)[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
       "description": "Update Docker image references in YAML files",
       "managerFilePatterns": [
         "/(^|/)apps/.+\\.yaml$/"
