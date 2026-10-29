@@ -8,7 +8,14 @@
 TARGET_DIR="/etc/zfsexporter"
 SERVICE_NAME="zfs_exporter"
 
-FULL_DOWNLOAD_URL="https://github.com/pdf/zfs_exporter/releases/download/v2.3.4/zfs_exporter-2.3.4.linux-amd64.tar.gz"
+# Always installs the newest release; the script is run by hand when setting up a host.
+ZFS_EXPORTER_VERSION=$(wget -qO- https://api.github.com/repos/pdf/zfs_exporter/releases/latest \
+  | sed -n 's/.*"tag_name": *"v\{0,1\}\([^"]*\)".*/\1/p')
+if [ -z "$ZFS_EXPORTER_VERSION" ]; then
+  echo "Could not determine the latest zfs_exporter release" >&2
+  exit 1
+fi
+FULL_DOWNLOAD_URL="https://github.com/pdf/zfs_exporter/releases/download/v${ZFS_EXPORTER_VERSION}/zfs_exporter-${ZFS_EXPORTER_VERSION}.linux-amd64.tar.gz"
 
 # Create the target directory
 echo "Creating target directory: $TARGET_DIR"
