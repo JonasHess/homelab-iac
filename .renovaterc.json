@@ -217,7 +217,7 @@
         "/apps/.+/templates/.+-application\\.yaml$/"
       ],
       "matchStrings": [
-        "chart:\\s+(?<depName>[^\\s\\n]+)[\\s\\S]*?repoURL:\\s+(?<registryUrl>https://[^\\s\\n]+)[\\s\\S]*?targetRevision:\\s+(?<currentValue>[^\\s\\n]+)"
+        "chart:\\s+(?<depName>[^\\s\\n]+)[\\s\\S]*?repoURL:\\s+(?<registryUrl>https://[^\\s\\n]+)[\\s\\S]*?targetRevision:\\s+[\"']?(?<currentValue>[^\\s\"'{][^\\s\"']*)[\"']?"
       ],
       "datasourceTemplate": "helm"
     },
@@ -249,11 +249,20 @@
       "description": "Update versions annotated with '# renovate: datasource=... depName=...' on the line above",
       "managerFilePatterns": [
         "/(^|/)Dockerfile[^/]*$/",
-        "/(^|/)apps/.+\\.ya?ml$/",
-        "/^scripts/.+\\.sh$/"
+        "/(^|/)apps/.+\\.ya?ml$/"
       ],
       "matchStrings": [
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+extractVersion=(?<extractVersion>\\S+))?(?:\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n\\s*(?:ARG\\s+|ENV\\s+|export\\s+)?[A-Za-z0-9_.-]+\\s*[:=]\\s*[\"']?(?<currentValue>[^\\s\"']+)[\"']?"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Update git commits annotated with '# renovate: datasource=git-refs depName=<repo url> branch=<branch>'",
+      "managerFilePatterns": [
+        "/(^|/)apps/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>git-refs)\\s+depName=(?<depName>\\S+)\\s+branch=(?<currentValue>\\S+)\\s*\\n[^\\n]*\\n\\s*value:\\s*[\"']?(?<currentDigest>[0-9a-f]{40})[\"']?"
       ]
     },
     {
@@ -263,7 +272,7 @@
         "/(^|/)apps/.+\\.yaml$/"
       ],
       "matchStrings": [
-        "image:\\s*['\"]?(?<depName>[^:'\"\\s]+):(?<currentValue>[^'\"\\s]+)['\"]?",
+        "image:\\s*['\"]?(?<depName>[^:'\"\\s@]+):(?<currentValue>[^'\"\\s@]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?['\"]?",
         "#\\s*renovate:\\s*depName=(?<depName>[^\\s]+)\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
       ],
       "datasourceTemplate": "docker"

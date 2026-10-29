@@ -15,6 +15,7 @@ generic:
       - name: fetch-infcloud
         image: alpine:3.24
         env:
+          # renovate: datasource=git-refs depName=https://github.com/Unrud/RadicaleInfCloud branch=master
           - name: INFCLOUD_COMMIT
             value: "53d3a95af5b58cfa3242cef645f8d40c731a7d95"
         command: ["/bin/sh", "-c"]

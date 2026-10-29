@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: aleixolucas/duplicati-prometheus-exporter
+    image: aleixolucas/duplicati-prometheus-exporter:latest@sha256:e3e77e2656ce39ef5f6527a852e16d763f071246bba63757280c21bc03c54cda
   service:
     ports:
     - name: http

@@ -34,7 +34,7 @@ render prometheus \
 
 render envoy-gateway --set generic.appName=envoy-gateway
 
-render cert-manager --set generic.appName=cert-manager --set certManager.version=v1.17.2
+render cert-manager --set generic.appName=cert-manager
 
 render restic --set appName=restic --set generic.appName=restic \
   --set generic.persistentVolumeClaims.tank1.hostPath=/tmp/tank1 \
