@@ -17,7 +17,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - pip install --quiet boto3 && python /config/deploy.py
+            - pip install --quiet{{ range .Values.pythonPackages }} {{ . | squote }}{{ end }} && python /config/deploy.py
           env:
             - name: SKILL_ID
               value: {{ .Values.skillId | quote }}
