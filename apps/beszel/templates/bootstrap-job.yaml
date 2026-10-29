@@ -65,7 +65,7 @@ spec:
             name: {{ $appName }}-bootstrap-script
       containers:
         - name: bootstrap
-          image: {{ $bootstrap.image | default "alpine:3.20" }}
+          image: {{ required "beszel bootstrap.image must be set" $bootstrap.image }}
           command: ["sh", "/script/bootstrap.sh"]
           volumeMounts:
             - name: hub-data

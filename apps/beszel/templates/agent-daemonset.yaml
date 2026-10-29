@@ -30,7 +30,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: agent
-          image: {{ $agent.image | default "henrygd/beszel-agent:0.20.0-alpine" }}
+          image: {{ required "beszel agent.image must be set" $agent.image }}
           imagePullPolicy: IfNotPresent
           {{- if $smartDevices }}
           securityContext:

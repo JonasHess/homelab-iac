@@ -36,6 +36,9 @@ jobs:
 
       - name: Install Helm
         uses: azure/setup-helm@v5
+        with:
+          # renovate: datasource=github-releases depName=helm/helm
+          version: v4.3.1
 
       - name: Install promtool
         run: |
