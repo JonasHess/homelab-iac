@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: ghcr.io/open-webui/open-webui:main
+    image: ghcr.io/open-webui/open-webui:v0.12.4
     ports:
     - containerPort: 8080
     pvcMounts:
