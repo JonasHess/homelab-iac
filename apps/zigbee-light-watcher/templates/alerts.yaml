@@ -1,0 +1,42 @@
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Values.appName }}-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on. Without it the rules are created
+    # and silently never loaded.
+    release: kube-prometheus-stack
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+spec:
+  groups:
+    - name: {{ .Values.appName }}
+      interval: 1m
+      rules:
+        {{- /* Only lights that are on: a light that stayed off is noticed by whoever
+               wanted it on, a light left burning is what nobody notices. */}}
+        - alert: ZigbeeGhostLight
+          annotations:
+            summary: "{{ `{{ $labels.bulb }}` }} is on although it was switched off"
+            description: |
+              The real state read from {{ `{{ $labels.bulb }}` }} is ON while its last
+              command was OFF. Home Assistant shows it as off.
+          expr: |
+            (zigbee_light_mismatch == 1) and on (bulb) (zigbee_light_actual_on == 1)
+          for: {{ .Values.alerts.ghostLightFor }}
+          labels:
+            severity: warning
+        - alert: ZigbeeLightWatcherDown
+          annotations:
+            summary: "zigbee-light-watcher is not being scraped"
+            description: "Ghost lights are not detected while the watcher is down."
+          expr: |
+            (up{job="{{ .Values.appName }}"} == 0) or absent(up{job="{{ .Values.appName }}"})
+          for: 10m
+          labels:
+            severity: warning
+{{- end }}

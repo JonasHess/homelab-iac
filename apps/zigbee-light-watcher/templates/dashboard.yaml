@@ -1,0 +1,17 @@
+{{- /*
+  The dashboard ships with the watcher instead of the prometheus app so it only
+  exists where its metrics do. Grafana's dashboard sidecar picks up ConfigMaps with
+  this label from every namespace.
+*/}}
+{{- if (.Values.global.monitoring | default dict).enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-zigbee-lights
+  namespace: {{ .Release.Namespace }}
+  labels:
+    grafana_dashboard: "1"
+data:
+  zigbee_lights_dashboard.json: |-
+    {{ .Files.Get "dashboards/zigbee_lights_dashboard.json" | nindent 4 }}
+{{- end }}

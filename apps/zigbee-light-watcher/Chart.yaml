@@ -1,0 +1,6 @@
+apiVersion: v2
+appVersion: 1.0.0
+description: Polls the real on/off state of Zigbee2MQTT lights and exports ghost lights as metrics
+name: zigbee-light-watcher
+type: application
+version: 0.1.0

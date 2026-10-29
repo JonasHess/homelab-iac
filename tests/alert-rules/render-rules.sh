@@ -39,3 +39,5 @@ render cert-manager --set generic.appName=cert-manager --set certManager.version
 render restic --set appName=restic --set generic.appName=restic \
   --set generic.persistentVolumeClaims.tank1.hostPath=/tmp/tank1 \
   --set generic.persistentVolumeClaims.restoreddata.hostPath=/tmp/restored
+
+render zigbee-light-watcher

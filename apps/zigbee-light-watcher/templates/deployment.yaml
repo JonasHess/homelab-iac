@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.appName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.appName }}
+spec:
+  replicas: 1
+  # Two watchers would double the Zigbee read traffic and split the metrics.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Values.appName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.appName }}
+      annotations:
+        checksum/script: {{ .Files.Get "scripts/zigbee_light_watcher.py" | sha256sum }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+      initContainers:
+        - name: install-deps
+          image: {{ .Values.image | quote }}
+          command: ["pip", "install", "--no-cache-dir", "--target", "/deps"
+            {{- range .Values.pythonPackages }}, {{ . | quote }}{{ end }}]
+          env:
+            - name: HOME
+              value: /tmp
+          volumeMounts:
+            - name: deps
+              mountPath: /deps
+      containers:
+        - name: {{ .Values.appName }}
+          image: {{ .Values.image | quote }}
+          command: ["python", "-u", "/app/zigbee_light_watcher.py"]
+          env:
+            - name: PYTHONPATH
+              value: /deps
+            - name: PROMETHEUS_DISABLE_CREATED_SERIES
+              value: "True"
+            - name: MQTT_HOST
+              value: {{ .Values.mqtt.host | quote }}
+            - name: MQTT_PORT
+              value: {{ .Values.mqtt.port | quote }}
+            - name: Z2M_BASE_TOPIC
+              value: {{ .Values.z2mBaseTopic | quote }}
+            - name: POLL_INTERVAL_SECONDS
+              value: {{ .Values.pollIntervalSeconds | quote }}
+            - name: EXCLUDE_REGEX
+              value: {{ .Values.excludeRegex | quote }}
+            - name: METRICS_PORT
+              value: {{ .Values.metricsPort | quote }}
+          ports:
+            - name: metrics
+              containerPort: {{ .Values.metricsPort }}
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 10m
+              memory: 48Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: deps
+              mountPath: /deps
+              readOnly: true
+            - name: script
+              mountPath: /app
+              readOnly: true
+      volumes:
+        - name: deps
+          emptyDir: {}
+        - name: script
+          configMap:
+            name: {{ .Values.appName }}-script

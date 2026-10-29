@@ -1,0 +1,24 @@
+appName: zigbee-light-watcher
+
+image: python:3.15.2-slim
+# Installed by the init container at pod start; the script needs nothing else.
+# Keep the `name==version` form: Renovate's PyPI manager matches exactly that.
+pythonPackages:
+  - paho-mqtt==2.1.0
+  - prometheus-client==0.26.0
+
+mqtt:
+  # The broker lives in the argocd namespace; this app does not.
+  host: mosquitto-service.argocd.svc.cluster.local
+  port: 1883
+z2mBaseTopic: zigbee2mqtt
+
+# Every light is read once per interval, spread evenly across it.
+pollIntervalSeconds: 60
+# Lights matching this regex are not polled (e.g. lamps usually switched off at the plug).
+excludeRegex: ""
+metricsPort: 9105
+
+alerts:
+  # A light that is ON although it was last commanded OFF, for this long.
+  ghostLightFor: 1m

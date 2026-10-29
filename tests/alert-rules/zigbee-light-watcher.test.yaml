@@ -1,0 +1,79 @@
+# Unit tests for the zigbee-light-watcher alerts, run by promtool against the rules as
+# Helm renders them (see render-rules.sh).
+#
+# ZigbeeGhostLight must fire only for a light that is really on against its last
+# command; a light that stayed off when switched on is deliberately not alerted.
+rule_files:
+  - .rendered/zigbee-light-watcher.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    name: ZigbeeGhostLight fires for a light left on
+    input_series:
+      - series: 'zigbee_light_mismatch{job="zigbee-light-watcher", bulb="bad_decke1"}'
+        values: '0 1x5'
+      - series: 'zigbee_light_actual_on{job="zigbee-light-watcher", bulb="bad_decke1"}'
+        values: '0 1x5'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: ZigbeeGhostLight
+        exp_alerts: []          # "for: 1m" has not elapsed yet
+      - eval_time: 3m
+        alertname: ZigbeeGhostLight
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: zigbee-light-watcher
+              bulb: bad_decke1
+            exp_annotations:
+              summary: "bad_decke1 is on although it was switched off"
+              description: |
+                The real state read from bad_decke1 is ON while its last
+                command was OFF. Home Assistant shows it as off.
+
+  - interval: 1m
+    name: ZigbeeGhostLight stays quiet for a light that stayed off
+    input_series:
+      - series: 'zigbee_light_mismatch{job="zigbee-light-watcher", bulb="bad_decke1"}'
+        values: '1x5'
+      - series: 'zigbee_light_actual_on{job="zigbee-light-watcher", bulb="bad_decke1"}'
+        values: '0x5'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: ZigbeeGhostLight
+        exp_alerts: []
+
+  - interval: 1m
+    name: ZigbeeLightWatcherDown fires when the target is down
+    input_series:
+      - series: 'up{job="zigbee-light-watcher", instance="10.0.0.1:9105"}'
+        values: '0x15'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ZigbeeLightWatcherDown
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: zigbee-light-watcher
+              instance: 10.0.0.1:9105
+            exp_annotations:
+              summary: "zigbee-light-watcher is not being scraped"
+              description: "Ghost lights are not detected while the watcher is down."
+
+  - interval: 1m
+    name: ZigbeeLightWatcherDown fires when the target is missing entirely
+    input_series:
+      - series: 'up{job="something-else"}'
+        values: '1x15'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ZigbeeLightWatcherDown
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              job: zigbee-light-watcher
+            exp_annotations:
+              summary: "zigbee-light-watcher is not being scraped"
+              description: "Ghost lights are not detected while the watcher is down."

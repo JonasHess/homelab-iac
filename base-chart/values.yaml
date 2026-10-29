@@ -763,6 +763,13 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "12"  # Deploy after MQTT broker
+  zigbee-light-watcher:
+    enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: "debug"
+      project: "default"
+      syncWave: "20"  # Deploy after Zigbee2MQTT and kube-prometheus-stack
 
   audiobookshelf:
     enabled: false
