@@ -29,6 +29,10 @@ spec:
             # have no upstream → 404 from Envoy.
             extensionApis:
               enableBackend: true
+              # Required by strip-oauth-cookies.yaml (a Lua EnvoyExtensionPolicy) since
+              # Envoy Gateway v1.9, which disables Lua by default. Without it every route
+              # the policy targets gets a direct HTTP 500 response.
+              enableLua: true
         deployment:
           envoyGateway:
             resources:
