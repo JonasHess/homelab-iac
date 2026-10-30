@@ -399,6 +399,17 @@ def groups_from_bridge(groups, ieee_to_name):
             for g in groups}
 
 
+def apply_mqtt_credentials(client, environ):
+    """Log in with MQTT_USERNAME/MQTT_PASSWORD when a username is set.
+
+    Without one the client connects anonymously, which the broker rejects once
+    anonymous access is switched off there.
+    """
+    username = environ.get("MQTT_USERNAME")
+    if username:
+        client.username_pw_set(username, environ.get("MQTT_PASSWORD"))
+
+
 def main():
     import paho.mqtt.client as mqtt
     from prometheus_client import start_http_server
@@ -426,6 +437,7 @@ def main():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="zigbee-light-watcher")
     client.on_connect = on_connect
     client.on_message = on_message
+    apply_mqtt_credentials(client, os.environ)
     client.reconnect_delay_set(1, 60)
     client.connect_async(host, port, keepalive=30)
     client.loop_start()

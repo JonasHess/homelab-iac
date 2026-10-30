@@ -1,6 +1,6 @@
 import unittest
 
-from zigbee_light_watcher import Tracker, lights_from_devices
+from zigbee_light_watcher import Tracker, apply_mqtt_credentials, lights_from_devices
 
 BAD = ["bad_decke1", "bad_decke2", "bad_decke3"]
 
@@ -283,6 +283,33 @@ class LightsFromDevicesTest(unittest.TestCase):
             {"type": "Router", "friendly_name": "bulb", "definition": {"exposes": [{"type": "light"}]}},
         ]
         self.assertEqual(lights_from_devices(devices, ""), ["bulb"])
+
+
+
+class FakeMqttClient:
+    def __init__(self):
+        self.credentials = None
+
+    def username_pw_set(self, username, password=None):
+        self.credentials = (username, password)
+
+
+class MqttCredentialsTest(unittest.TestCase):
+    def test_sets_username_and_password_when_given(self):
+        client = FakeMqttClient()
+        apply_mqtt_credentials(client, {"MQTT_USERNAME": "watcher", "MQTT_PASSWORD": "secret"})
+        self.assertEqual(client.credentials, ("watcher", "secret"))
+
+    def test_stays_anonymous_without_username(self):
+        client = FakeMqttClient()
+        apply_mqtt_credentials(client, {})
+        self.assertIsNone(client.credentials)
+
+    def test_empty_username_counts_as_none(self):
+        client = FakeMqttClient()
+        apply_mqtt_credentials(client, {"MQTT_USERNAME": "", "MQTT_PASSWORD": "x"})
+        self.assertIsNone(client.credentials)
+
 
 
 if __name__ == "__main__":

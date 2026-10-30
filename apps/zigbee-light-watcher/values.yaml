@@ -9,6 +9,9 @@ mqtt:
   # The broker lives in the argocd namespace; this app does not.
   host: mosquitto-service.argocd.svc.cluster.local
   port: 1883
+  # Akeyless paths (below global.akeyless.path) of the broker login.
+  usernamePath: /smarthome4/MQTT_BROKER_USERNAME
+  passwordPath: /smarthome4/MQTT_BROKER_PASSWORD
 z2mBaseTopic: zigbee2mqtt
 
 # Every light is read once per interval, spread evenly across it.
