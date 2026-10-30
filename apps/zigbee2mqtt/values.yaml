@@ -23,8 +23,6 @@ generic:
       - ZIGBEE2MQTT_CONFIG_MQTT_USER: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_USER"
       - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD"
   deployment:
-    securityContext:
-      privileged: true
     image: koenkk/zigbee2mqtt:2.14.2
     ports:
     - containerPort: 8080
@@ -34,6 +32,9 @@ generic:
         hostPath: ~ # /mnt/somewhere/unencrypted/apps/zigbee2mqtt/data
         backup:
           enabled: true
+    # Only for a USB coordinator. An environment that sets this hostPath must also
+    # set securityContext.privileged: true, or the container cannot open the device.
+    # A network coordinator (SERIAL_PORT tcp://...) needs neither.
     deviceMounts:
       zigbeeusb:
         mountPath: /dev/ttyACM0
