@@ -1,48 +1,62 @@
 # Renovate Configuration
 
-This repository uses Renovate to automatically update Helm chart versions in ArgoCD Application templates.
+Renovate keeps Helm charts, container images, Python packages and pinned tool versions up to date. The configuration is `.renovaterc.json`; this file explains it.
 
-## How It Works
+## What Renovate finds
 
-Renovate scans all files matching `apps/*/templates/*-application.yaml` and looks for patterns like:
+Most dependencies here are found by the regex `customManagers`, not by Renovate's built-in managers:
+
+| Where | What | Manager |
+|---|---|---|
+| `apps/*/templates/*-application.yaml` | `chart` + `repoURL` + `targetRevision` of upstream Helm charts | regex, datasource `helm` |
+| `apps/**/*.yaml` | `image: repo:tag` and `repository:` + `tag:` pairs | regex, datasource `docker` |
+| `apps/**/*.yaml` | pip pins in lists (`- name==1.2.3`), `pytrVersion` | regex, datasource `pypi` |
+| `Dockerfile`s, `apps/**/*.yaml`, `scripts/*.sh`, `.github/workflows/*.yml` | any value with a `# renovate: datasource=... depName=...` comment on the line above | regex |
+| `apps/**/*.yaml` | git commit pins with `# renovate: datasource=git-refs depName=<repo> branch=<branch>` | regex, datasource `git-refs` |
+| `.github/workflows/*.yml` | `uses:` actions | built-in `github-actions` |
+
+To track a new pinned version, add the annotation comment directly above it, e.g.:
 
 ```yaml
-source:
-  chart: <chart-name>
-  repoURL: <helm-repo-url>
-  targetRevision: <version>
+# renovate: datasource=docker depName=python
+python-version: '3.15'
 ```
 
-## Automation Rules
+The same `depName` in several files lands in one PR (e.g. every `python` pin), so related pins move together.
 
-- **Patch & Minor Updates**: Auto-merged automatically
-- **Matching**: Rules select by datasource (`docker`, `helm`, `pypi`, `npm`, `go`, `github-releases`), not by category. Categories only exist for Renovate's built-in managers, and most dependencies here are found by the regex customManagers, so category rules would silently never apply to them. GitHub Actions still match category `ci` (built-in manager).
-- **Rebasing**: `rebaseWhen: conflicted`. With automerge on, Renovate would otherwise rebase every branch that falls behind `main`, which restarts its checks and limits it to one merge per run. Branches are only rebased on real conflicts; `main` does not require PRs to be up to date.
-- **Major Updates**: Require manual approval (labeled with `major-update`)
-- **Individual PRs**: One PR per chart update
-- **Schedule**: Weekday early mornings and weekends
+## Automation rules
 
-## How to Exclude Charts
+- **Patch and minor updates** auto-merge once every CI check passes (Charts, Alert Rules, App Scripts, ...). A red check keeps the PR open, so a bad bump never reaches ArgoCD.
+- **Major updates** need manual approval and get the `major-update` label.
+- **Never auto-merged**, whatever the update type: `envoyproxy/gateway-helm` and `cert-manager` (label `manual-review`). They carry every route and every certificate, so even a minor release can break all apps at once.
+- **Grouped**: all `immich-app/immich-*` images in one PR, because server and machine-learning must run the same version.
+- **Disabled**: private ECR images (`<account>.dkr.ecr.<region>.amazonaws.com/...`). Renovate has no ECR credentials; the app's own image workflow opens the deploy PR (e.g. `.github/workflows/restic-image.yml`).
+- **Custom versioning** for qBittorrent, Jellyfin and OpenCCU, whose tags are not plain semver.
+- **Matching**: rules select by datasource (`docker`, `helm`, `pypi`, `npm`, `go`, `github-releases`), not by category. Categories only exist for Renovate's built-in managers, so a category rule would silently never apply to the regex-found dependencies. GitHub Actions still match category `ci`, which works because the built-in manager finds them.
+- **Rebasing**: `rebaseWhen: conflicted`. With automerge on, Renovate would otherwise rebase every branch that falls behind `main`, which restarts its checks and limits it to one merge per run.
+- **Schedule**: daily between 12:00 and 22:00 (Europe/Berlin).
 
-To exclude specific charts from updates, add them to the `ignoreDeps` array in `.renovaterc.json`:
+## How to exclude a dependency
 
-```json
-"ignoreDeps": [
-  "kube-prometheus-stack",
-  "traefik"
-]
-```
-
-## How to Change Update Policies
-
-You can add per-chart rules in the `packageRules` section. For example, to make a specific chart always require manual approval:
+Add a `packageRules` entry that disables it, with the reason in `description`:
 
 ```json
 {
-  "description": "Always require manual approval for critical chart",
-  "matchCategories": ["helm"],
+  "description": "Pinned on purpose: <why>",
+  "matchPackageNames": ["kube-prometheus-stack"],
+  "enabled": false
+}
+```
+
+## How to change the policy for one dependency
+
+Add a `packageRules` entry matched by package name; later rules override earlier ones:
+
+```json
+{
+  "description": "Always review <name> by hand: <why>",
   "matchPackageNames": ["kube-prometheus-stack"],
   "automerge": false,
-  "addLabels": ["critical-chart"]
+  "addLabels": ["manual-review"]
 }
 ```
