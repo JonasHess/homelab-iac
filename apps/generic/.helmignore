@@ -1,0 +1,2 @@
+# Packaged charts must not end up inside the next package.
+*.tgz
