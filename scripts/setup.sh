@@ -16,7 +16,25 @@ cd "$(dirname "$0")"
 
 # argo-cd Helm chart version (https://github.com/argoproj/argo-helm). Raise it to upgrade Argo CD;
 # read the chart's and Argo CD's upgrade notes for every version skipped in between.
+# renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
 ARGOCD_CHART_VERSION="10.11.6"
+
+# Exits if the cluster already runs a newer argo-cd chart than ARGOCD_CHART_VERSION:
+# "helm upgrade --version" would install the older chart and its older CRDs over it.
+# ALLOW_ARGOCD_DOWNGRADE=1 skips the check for a deliberate downgrade.
+check_no_argocd_downgrade() {
+  local installed
+  installed=$(helm list --kube-context "$1" -n argocd -o json 2>/dev/null \
+    | python3 -c 'import json,sys; print(next((r["chart"].removeprefix("argo-cd-") for r in json.load(sys.stdin) if r["name"] == "argocd"), ""))')
+  if [ -z "$installed" ] || [ "$installed" = "$2" ] || [ "${ALLOW_ARGOCD_DOWNGRADE:-0}" = "1" ]; then
+    return 0
+  fi
+  if [ "$(printf '%s\n%s\n' "$installed" "$2" | sort -V | tail -n 1)" = "$installed" ]; then
+    echo "Error: the cluster runs argo-cd chart $installed, newer than ARGOCD_CHART_VERSION $2."
+    echo "Raise ARGOCD_CHART_VERSION, or set ALLOW_ARGOCD_DOWNGRADE=1 to downgrade on purpose."
+    exit 1
+  fi
+}
 
 show_help() {
   echo "Usage: $0 <repoURL> <targetRevision> <path> [<kube-context>] [--help]"
@@ -140,6 +158,7 @@ helm repo add argo https://argoproj.github.io/argo-helm 2>/dev/null || true
 echo "Updating the ArgoCD Helm repository..."
 helm repo update argo
 
+check_no_argocd_downgrade "$KUBE_CONTEXT" "$ARGOCD_CHART_VERSION"
 echo "Installing/upgrading ArgoCD to chart version $ARGOCD_CHART_VERSION..."
 helm upgrade --install argocd argo/argo-cd \
   --kube-context "$KUBE_CONTEXT" \
