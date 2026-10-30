@@ -119,6 +119,14 @@ def update_dependencies(app_dir):
     except subprocess.CalledProcessError as e:
         sys.exit(f"Error updating dependencies in {app_dir}: {e}")
 
+def ensure_not_registered(app_name, base_chart_values_path):
+    """Exit if the app already has an entry in the base-chart registry."""
+    with open(base_chart_values_path, 'r') as f:
+        values = yaml.safe_load(f)
+    if app_name in (values.get('apps') or {}):
+        sys.exit(f"App '{app_name}' is already registered in {base_chart_values_path}; not touching it.")
+
+
 def update_base_chart_values(app_name, app_display_name, app_description, app_group, base_chart_values_path):
     """Append the app entry to the base-chart values.yaml.
 
@@ -126,11 +134,9 @@ def update_base_chart_values(app_name, app_display_name, app_description, app_gr
     existing comment and the file's formatting survive. This relies on `apps:`
     being the last top-level key of the file.
     """
+    ensure_not_registered(app_name, base_chart_values_path)
     with open(base_chart_values_path, 'r') as f:
         text = f.read()
-    values = yaml.safe_load(text)
-    if app_name in (values.get('apps') or {}):
-        sys.exit(f"App '{app_name}' is already registered in {base_chart_values_path}; not touching it.")
 
     entry = {
         'enabled': False,
@@ -310,6 +316,12 @@ def main():
     # Get app details from user
     app_name, app_display_name, app_description, app_group, app_config = prompt_for_app_details()
 
+    # Before anything touches the disk: an existing chart of a registered app
+    # would otherwise be deleted and replaced by a skeleton.
+    base_chart_values_path = os.path.join(repo_root, 'base-chart', 'values.yaml')
+    if os.path.exists(base_chart_values_path):
+        ensure_not_registered(app_name, base_chart_values_path)
+
     # Create app directory
     app_dir = os.path.join(apps_dir, app_name)
     if os.path.exists(app_dir):
@@ -334,7 +346,6 @@ def main():
     update_dependencies(app_dir)
 
     # Update base-chart values.yaml
-    base_chart_values_path = os.path.join(repo_root, 'base-chart', 'values.yaml')
     if os.path.exists(base_chart_values_path):
         update_base_chart_values(app_name, app_display_name, app_description, app_group, base_chart_values_path)
         print(f"Updated {base_chart_values_path} with new app entry")

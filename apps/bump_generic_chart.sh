@@ -69,10 +69,13 @@ echo -e "${YELLOW}New version: ${new_version}${NC}"
 
 # Write the new version back into the generic chart's Chart.yaml. awk rather than
 # sed, so the dots in the version are plain text and not regex wildcards. The
-# original is kept until packaging succeeds; a failed run must not leave a bumped
-# version behind, or the next run would skip a version.
-cp Chart.yaml Chart.yaml.orig
-awk -v new="$new_version" '/^version: /{print "version: " new; next} {print}' Chart.yaml.orig > Chart.yaml
+# original is kept until packaging succeeds; a failed or interrupted run must not
+# leave a bumped version behind, or the next run would skip a version. The copy
+# lives outside the chart directory so "helm package" can never include it.
+orig_chart="$(mktemp)"
+cp Chart.yaml "$orig_chart"
+trap 'cp "$orig_chart" Chart.yaml; rm -f "$orig_chart"; echo -e "${RED}Interrupted, generic chart left at ${current_version}${NC}"; exit 130' INT TERM
+awk -v new="$new_version" '/^version: /{print "version: " new; next} {print}' "$orig_chart" > Chart.yaml
 echo -e "${GREEN}✓ Updated generic chart version to ${new_version}${NC}"
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -84,11 +87,13 @@ echo -e "${GREEN}✓ Updated generic chart version to ${new_version}${NC}"
 # ──────────────────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Building the generic chart...${NC}"
 if ! helm package .; then
-    mv Chart.yaml.orig Chart.yaml
+    cp "$orig_chart" Chart.yaml
+    rm -f "$orig_chart"
     echo -e "${RED}Packaging failed, generic chart left at ${current_version}${NC}"
     exit 1
 fi
-rm -f Chart.yaml.orig
+trap - INT TERM
+rm -f "$orig_chart"
 echo -e "${GREEN}✓ Successfully built generic chart${NC}"
 
 # Remove .tgz files from previous versions to keep the directory clean
