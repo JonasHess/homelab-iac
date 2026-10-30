@@ -44,7 +44,7 @@ data:
            {
              "port": 2121,
              "tls_mode": 0,
-             "debug": true,
+             "debug": false,
              "active_connections_security": 1
            }
          ]
