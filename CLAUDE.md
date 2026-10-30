@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Kubernetes/Helm-based Infrastructure as Code (IaC) repository for managing a comprehensive homelab environment using GitOps principles with ArgoCD.
 
+This repo holds the charts and defaults only. Each environment (cluster) lives in an env repo that enables apps and sets hostPaths, secrets paths and overrides: `homelab_environments` (zimmermann.lat, raspi.zimmermann.lat) and `homelab-environments` (hess.pm and others). All of them deploy from this repo's `main`, so a change here reaches every environment.
+
 ## Key Commands
 
 ### Initial Setup
@@ -47,7 +49,7 @@ Renovate auto-merges only when every check passes, so a red check stops a bad bu
 ### Key Components
 - **ArgoCD**: Manages all deployments via GitOps from `apps/argocd/`
 - **Akeyless**: Secrets management, integrated via External Secrets Operator
-- **Envoy Gateway**: Gateway API controller (`apps/envoy-gateway/`) handling HTTP/HTTPS/TCP/UDP routing. One `Gateway` in namespace `envoy-gateway`; app HTTPRoutes are created there too. LAN listeners on :443 (`websecure`), Cloudflare-only mTLS listeners on :4443 (`websecure-public`). Details: `docs/gateway-and-oidc.md`
+- **Envoy Gateway**: Gateway API controller (`apps/envoy-gateway/`) handling HTTP/HTTPS/TCP/UDP routing. One `Gateway` in namespace `envoy-gateway`; app HTTPRoutes are created there too. LAN listeners on :443 (`websecure`), Cloudflare-only mTLS listeners on :4443 (`websecure-public`); each has an `-apex` twin for the bare domain, since the wildcard hostname does not match it. Details: `docs/gateway-and-oidc.md`
 - **OIDC**: A Gateway-level `SecurityPolicy` (`gateway-oidc`) puts AWS Cognito login in front of every route by default
 - **cert-manager**: TLS certificate management with Let's Encrypt wildcard certificates via DNS-01 challenge
 - **Base Chart**: Located in `base-chart/`, manages overall ArgoCD applications
@@ -148,13 +150,14 @@ The `base-chart/values.yaml` file serves as the central registry for all applica
 - **External Secrets**: Integration with Akeyless secret store (`akeyless-secret-store`)
 - **Authentication**: Envoy Gateway OIDC with AWS Cognito (`global.oidc`, incl. `defaultGroups`)
 - **Email Settings**: Global email configuration for various services
-- **Sync Policies**: Default per app: automated (prune + selfHeal) with retry (10 attempts, backoff up to 5m); global ignoreDifferences
+- **Sync Policies**: Default per app: automated (prune + selfHeal) with retry (10 attempts, backoff up to 5m, `global.argocd.retry`); `ignoreDifferences` per app via `argocd.ignoreDifferences`, falling back to `global.argocd.ignoreDifferences`
 
 ### Application Registry
 Each application is defined under `apps.<appname>` with:
 - **enabled**: Boolean flag to enable/disable deployment
 - **homer**: Dashboard configuration (group, logo, subtitle, displayName, subdomain)
 - **argocd**: ArgoCD application settings (targetRevision, namespace, project, syncWave)
+- **Second instance of a chart**: an env can register a new key (e.g. `pytr-tatjana`) with `argocd.path: apps/pytr`; `argocd.repoURL` points an app at another repo. Register the key in base-chart too, or it gets wave 0 and no Homer entry.
 
 ### Sync Wave Ordering
 Applications are deployed in phases using `syncWave`:
