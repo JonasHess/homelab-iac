@@ -93,14 +93,20 @@ class ResticOperations:
             )
             
             backup_configs = []
+            # CRDs that matched but cannot be acted on. main() counts them as failed
+            # items, so a volume that silently drops out still fails the job.
+            self.unresolved = []
             for crd in crds.get('items', []):
+                crd_name = crd.get('metadata', {}).get('name', 'unknown')
                 try:
                     config = self.process_backup_crd(crd)
                     if config:
                         backup_configs.append(config)
+                    else:
+                        self.unresolved.append(crd_name)
                 except Exception as e:
-                    crd_name = crd.get('metadata', {}).get('name', 'unknown')
                     self.logger.error(f"Failed to process CRD {crd_name}: {e}")
+                    self.unresolved.append(crd_name)
                     continue
             
             self.logger.info(f"Successfully processed {len(backup_configs)} CRD configurations")
@@ -491,8 +497,20 @@ class ResticOperations:
             
             # Discover CRDs
             items = self.discover_crds(label_selector)
-            
+            unresolved = len(self.unresolved)
+            if unresolved:
+                self.logger.error(f"Could not resolve {unresolved} CRD(s), not processed: {', '.join(self.unresolved)}")
+
             if not items:
+                if unresolved:
+                    return 1
+                # Every app with backup enabled has a ResticBackup, so finding none
+                # means the CRDs or their labels are gone, not that nothing needs
+                # backing up. Restore only acts on CRDs labelled for it, so none is
+                # its normal state.
+                if operation == "backup":
+                    self.logger.error(f"No CRDs found with selector: {label_selector}, nothing was backed up")
+                    return 1
                 self.logger.warning(f"No CRDs found with selector: {label_selector}")
                 return 0
             
@@ -506,8 +524,8 @@ class ResticOperations:
             
             # Report results
             successful = sum(1 for success in results.values() if success)
-            failed = len(results) - successful
-            
+            failed = len(results) - successful + unresolved
+
             self.logger.info(f"Operation completed - Success: {successful}, Failed: {failed}")
             
             # Run maintenance if any operations succeeded

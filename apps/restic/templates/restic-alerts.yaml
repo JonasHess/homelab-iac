@@ -38,4 +38,19 @@ spec:
       for: 10m
       labels:
         severity: critical
+    - alert: BackupNeverSucceeded
+      annotations:
+        summary: "restic-backup has no successful run on record for 36 hours"
+        description: |
+          kube-state-metrics reports no last successful time for the
+          restic-backup CronJob, so BackupTooOld has nothing to measure and
+          cannot fire. This happens when the CronJob was recreated and every
+          run since has failed, or when it has never succeeded at all.
+      # The same 36h as BackupTooOld, held in "for" because an absent series has no
+      # timestamp to subtract. It also covers a fresh install until the first nightly run.
+      expr: |
+        absent(kube_cronjob_status_last_successful_time{cronjob="restic-backup"})
+      for: 36h
+      labels:
+        severity: critical
 {{- end }}

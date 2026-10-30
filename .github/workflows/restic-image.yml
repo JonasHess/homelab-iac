@@ -21,6 +21,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      # The script decides the exit code the BackupTooOld alert relies on, so an image
+      # is only built from a script whose tests pass.
+      - uses: actions/setup-python@v7
+        with:
+          # Keep this in step with the Dockerfile's base image.
+          python-version: '3.15'
+
+      - name: Run the unit tests
+        env:
+          # renovate: datasource=pypi depName=pytest
+          PYTEST_VERSION: 9.2.0
+        run: |
+          pip install --quiet "pytest==${PYTEST_VERSION}" -r apps/restic/assets/requirements.txt
+          python -m pytest -q tests/restic
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 

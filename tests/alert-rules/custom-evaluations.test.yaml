@@ -79,6 +79,41 @@ tests:
         exp_alerts: []
 
   - interval: 1m
+    name: BackupNeverSucceeded fires when the CronJob has no successful run on record
+    # No input series: the metric is absent, which is exactly when BackupTooOld cannot
+    # fire. A placeholder series keeps promtool from rejecting an empty test.
+    input_series:
+      - series: 'up{job="placeholder"}'
+        values: '1x2200'
+    alert_rule_test:
+      - eval_time: 35h
+        alertname: BackupNeverSucceeded
+        exp_alerts: []          # "for: 36h" has not elapsed yet
+      - eval_time: 36h5m
+        alertname: BackupNeverSucceeded
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              cronjob: restic-backup
+            exp_annotations:
+              summary: "restic-backup has no successful run on record for 36 hours"
+              description: |
+                kube-state-metrics reports no last successful time for the
+                restic-backup CronJob, so BackupTooOld has nothing to measure and
+                cannot fire. This happens when the CronJob was recreated and every
+                run since has failed, or when it has never succeeded at all.
+
+  - interval: 1m
+    name: BackupNeverSucceeded stays silent once a run has succeeded
+    input_series:
+      - series: 'kube_cronjob_status_last_successful_time{cronjob="restic-backup", namespace="argocd"}'
+        values: '0x2200'
+    alert_rule_test:
+      - eval_time: 36h5m
+        alertname: BackupNeverSucceeded
+        exp_alerts: []
+
+  - interval: 1m
     name: CertificateExpiringSoon tolerates a certificate with a month left
     input_series:
       - series: 'certmanager_certificate_expiration_timestamp_seconds{name="wildcard-tls", namespace="cert-manager"}'
