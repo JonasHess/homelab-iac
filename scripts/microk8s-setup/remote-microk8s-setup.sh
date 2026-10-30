@@ -3,6 +3,10 @@ set -e
 
 cd "$(dirname "$0")"
 
+# MicroK8s track to install, and the target of an upgrade. An upgrade steps through every minor
+# track in between, because Kubernetes does not support skipping minor versions.
+MICROK8S_TRACK="1.36"
+
 # Function to display the help message
 show_help() {
   echo "Usage: $0 <ip-range> [--help]"
@@ -46,25 +50,75 @@ if ! command -v kubectl &> /dev/null; then
 fi
 
 
+# Set to true by install_microk8s; only a fresh install gets new certificates and a kube-config
+FRESH_INSTALL=false
+
 ensure_microk8s_installed() {
   echo "Checking if microk8s is already installed..."
   if snap list | grep -q microk8s; then
-    echo "microk8s is already installed."
-    if confirm "Do you want to uninstall microk8s? [y/N]"; then
-      microk8s stop
-      snap remove microk8s
-      install_microk8s
-    else
-      echo "Skipping microk8s installation."
-    fi
+    echo "microk8s is already installed (tracking $(current_microk8s_channel))."
+    read -r -p "[u]pgrade to ${MICROK8S_TRACK}/stable, [r]einstall (DELETES the cluster and all its data) or [s]kip? [u/r/S] " response
+    case "$response" in
+      [uU])
+        upgrade_microk8s
+        ;;
+      [rR])
+        if confirm "This removes microk8s and everything running in it. Really reinstall? [y/N]"; then
+          microk8s stop
+          snap remove microk8s
+          install_microk8s
+        else
+          echo "Skipping microk8s installation."
+        fi
+        ;;
+      *)
+        echo "Skipping microk8s installation."
+        ;;
+    esac
   else
     install_microk8s
   fi
 }
 
+current_microk8s_channel() {
+  snap list microk8s | awk 'NR == 2 { print $4 }'
+}
+
+upgrade_microk8s() {
+  local current_channel current_minor target_minor minor
+  current_channel=$(current_microk8s_channel)
+  if [[ ! "$current_channel" =~ ^1\.([0-9]+)/ ]]; then
+    echo "Error: cannot upgrade from channel '$current_channel', expected a 1.<minor>/<risk> track."
+    exit 1
+  fi
+  current_minor=${BASH_REMATCH[1]}
+  target_minor=${MICROK8S_TRACK#1.}
+
+  if (( current_minor >= target_minor )); then
+    echo "microk8s already tracks $current_channel, nothing to upgrade."
+    return
+  fi
+
+  for (( minor = current_minor + 1; minor <= target_minor; minor++ )); do
+    if ! confirm "Upgrade microk8s to 1.${minor}/stable now? All pods restart. [y/N]"; then
+      echo "Stopping the upgrade at $(current_microk8s_channel)."
+      return
+    fi
+    echo "Refreshing microk8s to 1.${minor}/stable..."
+    snap refresh microk8s --channel="1.${minor}/stable"
+    microk8s status --wait-ready
+    until microk8s kubectl wait --for=condition=Ready nodes --all --timeout=600s; do echo "Retrying kubectl wait command..."; sleep 10; done
+    microk8s kubectl get nodes -o wide
+    echo "Pods that are not Running/Completed:"
+    microk8s kubectl get pods -A --no-headers | grep -vE "Running|Completed" || echo "  none"
+  done
+  echo "microk8s upgrade complete!"
+}
+
 install_microk8s() {
+  FRESH_INSTALL=true
   echo "Installing microk8s..."
-  snap install microk8s --classic --channel=1.34/stable
+  snap install microk8s --classic --channel="${MICROK8S_TRACK}/stable"
 
   # Add the calling user to the microk8s group so they can run microk8s without sudo
   if [ -n "$SUDO_USER" ]; then
@@ -226,4 +280,7 @@ set_kubectl_config() {
 }
 
 ensure_microk8s_installed
-set_kubectl_config
+# Refreshing the CA on an existing cluster would invalidate every kube-config and certificate in use
+if [ "$FRESH_INSTALL" = true ]; then
+  set_kubectl_config
+fi

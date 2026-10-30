@@ -2,22 +2,30 @@
 
 # Summary: This script automates the setup of Argo CD in a Kubernetes cluster.
 # It takes git repo URL, target revision, and path to values.yaml as input,
-# clones the repository, reads configuration values, switches the kubectl context to the target cluster,
-# installs Argo CD, configures the service type (NodePort), waits for the Argo CD server to be ready,
-# applies a base configuration, and retrieves the initial admin password.
-# It also sets up port-forwarding to the Argo CD server.
+# clones the repository, reads configuration values, installs or upgrades Argo CD (exposed as NodePort)
+# in the target cluster, waits for the Argo CD server to be ready, applies a base configuration,
+# and retrieves the initial admin password. It also sets up port-forwarding to the Argo CD server.
+# Re-running it on an existing cluster upgrades Argo CD to ARGOCD_CHART_VERSION.
+# Every kubectl/helm call targets <kube-context> explicitly; the current context is never changed.
 #
-# Usage: ./setup.sh <repoURL> <targetRevision> <path>
+# Usage: ./setup.sh <repoURL> <targetRevision> <path> [<kube-context>]
 
 set -e
 
+cd "$(dirname "$0")"
+
+# argo-cd Helm chart version (https://github.com/argoproj/argo-helm). Raise it to upgrade Argo CD;
+# read the chart's and Argo CD's upgrade notes for every version skipped in between.
+ARGOCD_CHART_VERSION="10.11.6"
+
 show_help() {
-  echo "Usage: $0 <repoURL> <targetRevision> <path> [--help]"
+  echo "Usage: $0 <repoURL> <targetRevision> <path> [<kube-context>] [--help]"
   echo
   echo "Arguments:"
   echo "  <repoURL>        The URL of the git repository (e.g., https://github.com/username/repo.git)"
   echo "  <targetRevision> The branch or tag to checkout (e.g., main)"
   echo "  <path>           Path to the values.yaml file within the repository (e.g., cluster/values.yaml)"
+  echo "  <kube-context>   The kubectl context of the target cluster (default: global.cluster.cluster-name)"
   echo "  --help           Display this help message."
   exit 0
 }
@@ -36,6 +44,7 @@ fi
 REPO_URL=$1
 TARGET_REVISION=$2
 VALUES_PATH=$3
+KUBE_CONTEXT=$4
 
 # Create a temporary directory for the git repository
 LOCAL_TMP_DIR=$(mktemp -d /tmp/argocdSetup.XXXXXX)
@@ -91,21 +100,27 @@ fi
 
 echo "Found Akeyless credentials in environment variables."
 
+KUBE_CONTEXT=${KUBE_CONTEXT:-$CLUSTER_NAME}
+if ! kubectl config get-contexts "$KUBE_CONTEXT" > /dev/null 2>&1; then
+  echo "Error: kubectl context '$KUBE_CONTEXT' not found!"
+  echo "Pass the context of the target cluster as the 4th argument (see: kubectl config get-contexts)."
+  rm -rf "$LOCAL_TMP_DIR"
+  exit 1
+fi
+
 # Display the extracted values
 echo "Extracted configuration values:"
 echo "  Cluster Name: $CLUSTER_NAME"
-
-# Switch context to the target environment
-echo "Switching kubectl context to $CLUSTER_NAME..."
-kubectl config use-context "$CLUSTER_NAME"
+echo "  Kube Context: $KUBE_CONTEXT"
+echo "  Argo CD Chart Version: $ARGOCD_CHART_VERSION"
 
 # Create the argocd namespace if it does not exist
 echo "Creating argocd namespace if it doesn't exist..."
-kubectl create namespace argocd 2>/dev/null || true
+kubectl --context "$KUBE_CONTEXT" create namespace argocd 2>/dev/null || true
 
 # Create and apply the Akeyless secret
 echo "Creating the Akeyless secret..."
-cat << EOF | envsubst | kubectl apply -f -
+cat << EOF | envsubst | kubectl --context "$KUBE_CONTEXT" apply -f -
 apiVersion: v1
 kind: Secret
 metadata:
@@ -118,28 +133,22 @@ stringData:
   accessTypeParam: "${AKEYLESS_ACCESS_TYPE_PARAM}"
 EOF
 
-# Install ArgoCD using Helm
+# Install or upgrade ArgoCD using Helm
 echo "Adding ArgoCD Helm repository if it doesn't exist..."
 helm repo add argo https://argoproj.github.io/argo-helm 2>/dev/null || true
-echo "Updating Helm repositories..."
-helm repo update
+echo "Updating the ArgoCD Helm repository..."
+helm repo update argo
 
-# Check if ArgoCD is already installed in the cluster
-if helm list -n argocd | grep -q "argocd"; then
-  echo "ArgoCD is already installed. Upgrading installation..."
-  helm upgrade argocd argo/argo-cd --namespace argocd
-else
-  echo "Installing ArgoCD using Helm..."
-  helm install argocd argo/argo-cd --namespace argocd
-fi
-
-# use nodeport to expose the service
-echo "Configuring argocd-server service as NodePort..."
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
+echo "Installing/upgrading ArgoCD to chart version $ARGOCD_CHART_VERSION..."
+helm upgrade --install argocd argo/argo-cd \
+  --kube-context "$KUBE_CONTEXT" \
+  --namespace argocd \
+  --version "$ARGOCD_CHART_VERSION" \
+  --set server.service.type=NodePort
 
 echo "Waiting for argocd-server pod to be ready..."
 while true; do
-  if kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s > /dev/null 2>&1; then
+  if kubectl --context "$KUBE_CONTEXT" wait --for=condition=Ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s > /dev/null 2>&1; then
     echo "argocd-server is now ready"
     break
   fi
@@ -147,29 +156,19 @@ while true; do
   echo -n "."
 done
 
-# Install or upgrade the bootstrap chart
 echo "Installing/upgrading the bootstrap chart..."
+helm upgrade --install bootstrap ../bootstrap-chart \
+  --kube-context "$KUBE_CONTEXT" \
+  --namespace argocd \
+  --set basechart.values.repoURL="$REPO_URL" \
+  --set basechart.values.targetRevision="$TARGET_REVISION" \
+  --set basechart.values.path="$VALUES_PATH"
 
-# Check if the bootstrap chart is already installed
-if helm list -n argocd | grep -q "bootstrap"; then
-  echo "Bootstrap chart is already installed. Upgrading..."
-  helm upgrade bootstrap ../bootstrap-chart \
-    --namespace argocd \
-    --set basechart.values.repoURL="$REPO_URL" \
-    --set basechart.values.targetRevision="$TARGET_REVISION" \
-    --set basechart.values.path="$VALUES_PATH"
-else
-  echo "Installing bootstrap chart..."
-  helm install bootstrap ../bootstrap-chart \
-    --namespace argocd \
-    --set basechart.values.repoURL="$REPO_URL" \
-    --set basechart.values.targetRevision="$TARGET_REVISION" \
-    --set basechart.values.path="$VALUES_PATH"
+# Argo CD only creates this secret on first install, and it is commonly deleted after the first login
+if kubectl --context "$KUBE_CONTEXT" -n argocd get secret argocd-initial-admin-secret > /dev/null 2>&1; then
+  echo "Initial admin password:"
+  kubectl --context "$KUBE_CONTEXT" -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 fi
-
-# Get the initial admin password
-echo "Initial admin password:"
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 
 # Clean up the local temporary directory
 echo "Cleaning up the local temporary directory..."
@@ -181,6 +180,6 @@ echo ">>>>>>>>>  DONT FORGET TO  RESTART ARGO  ONCE <<<<<<<<<<"
 
 # port-forward to the service
 echo "Port-forwarding to the argocd-server service..."
-kubectl port-forward svc/argocd-server -n argocd 8081:443
+kubectl --context "$KUBE_CONTEXT" port-forward svc/argocd-server -n argocd 8081:443
 
 exit 0

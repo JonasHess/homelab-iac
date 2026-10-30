@@ -7,6 +7,8 @@
 # configures MetalLB with the provided IP range, handles optional GPU driver and operator installation,
 # retrieves the kube-config file, updates it with the correct cluster, user, and context names,
 # and cleans up temporary files on the remote server and local machine.
+# If MicroK8s is already installed, the remote script offers to upgrade it instead; an upgrade
+# produces no new kube-config, so the local kube-config file is left untouched.
 #
 # Usage: ./local-microk8s-setup.sh <repoURL> <targetRevision> <path> <kube-config-path>
 
@@ -27,7 +29,7 @@ show_help() {
   echo "  <repoURL>          The URL of the git repository (e.g., https://github.com/username/repo.git)"
   echo "  <targetRevision>   The branch or tag to checkout (e.g., main)"
   echo "  <path>             Path to the values.yaml file within the repository (e.g., cluster/values.yaml)"
-  echo "  <kube-config-path> The path to the kube-config file (e.g., ~/.kube/config.d/config)"
+  echo "  <kube-config-path> Where to store the kube-config of a fresh install (e.g., ~/.kube/config.d/config)"
   echo "  --help             Display this help message."
   exit 0
 }
@@ -60,16 +62,6 @@ confirm() {
       ;;
   esac
 }
-
-# Check if the kube-config file already exists
-if [ -f "$KUBE_CONFIG_PATH" ]; then
-  if confirm "The file $KUBE_CONFIG_PATH already exists. Do you want to replace it? [y/N]"; then
-    rm -f "$KUBE_CONFIG_PATH"
-  else
-    echo "Cannot proceed with the installation. Cannot replace $KUBE_CONFIG_PATH."
-    exit 1
-  fi
-fi
 
 # Create a temporary directory for the git repository
 LOCAL_TMP_DIR=$(mktemp -d /tmp/microk8sSetup.XXXXXX)
@@ -152,16 +144,26 @@ scp ./remote-microk8s-setup.sh ${USERNAME}@${SERVER_IP}:${REMOTE_TMP_DIR}/remote
 echo "Running the remote-microk8s-setup.sh script on the remote server..."
 ssh -t ${USERNAME}@${SERVER_IP} "sudo -S bash ${REMOTE_TMP_DIR}/remote-microk8s-setup.sh ${IP_RANGE}"
 
-# Copy the kube-config file to the specified path
-echo "Downloading kube-config file to the local machine..."
-scp ${USERNAME}@${SERVER_IP}:${REMOTE_TMP_DIR}/kube-config "$KUBE_CONFIG_PATH"
-echo "Download complete. The kube-config file is stored at $KUBE_CONFIG_PATH"
+# The remote script only writes a kube-config after a fresh install
+NEW_KUBE_CONFIG=false
+if ssh ${USERNAME}@${SERVER_IP} "test -f ${REMOTE_TMP_DIR}/kube-config"; then
+  echo "Downloading kube-config file to the local machine..."
+  scp ${USERNAME}@${SERVER_IP}:${REMOTE_TMP_DIR}/kube-config "$LOCAL_TMP_DIR/kube-config"
+  chmod 600 "$LOCAL_TMP_DIR/kube-config"
 
-# Rename cluster, user and context in kube-config
-update_kube_config "$KUBE_CONFIG_PATH" "$CLUSTER_NAME" "$CLUSTER_NAME" "$CLUSTER_NAME"
+  # Rename cluster, user and context in kube-config
+  update_kube_config "$LOCAL_TMP_DIR/kube-config" "$CLUSTER_NAME" "$CLUSTER_NAME" "$CLUSTER_NAME"
 
-echo "Setting the kube-config file permissions..."
-chmod 600 "$KUBE_CONFIG_PATH"
+  if [ ! -f "$KUBE_CONFIG_PATH" ] || confirm "The file $KUBE_CONFIG_PATH already exists. Do you want to replace it? [y/N]"; then
+    mv "$LOCAL_TMP_DIR/kube-config" "$KUBE_CONFIG_PATH"
+    NEW_KUBE_CONFIG=true
+    echo "The kube-config file is stored at $KUBE_CONFIG_PATH"
+  else
+    echo "Kept the existing $KUBE_CONFIG_PATH, the new kube-config is discarded."
+  fi
+else
+  echo "No new kube-config was created (upgrade or skip), $KUBE_CONFIG_PATH is left untouched."
+fi
 
 # Clean up the remote server
 echo "Cleaning up the remote server..."
@@ -174,7 +176,9 @@ ssh ${USERNAME}@${SERVER_IP} \
 echo "Cleaning up the local temporary directory..."
 rm -rf "$LOCAL_TMP_DIR"
 
-echo "Checking the cluster nodes..."
-kubectl --kubeconfig="$KUBE_CONFIG_PATH" get nodes -o wide
+if [ "$NEW_KUBE_CONFIG" = true ]; then
+  echo "Checking the cluster nodes..."
+  kubectl --kubeconfig="$KUBE_CONFIG_PATH" --context "$CLUSTER_NAME" get nodes -o wide
+fi
 
 echo "$(tput setaf 2)Installation complete!$(tput sgr0)"
