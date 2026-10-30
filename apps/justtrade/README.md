@@ -61,7 +61,7 @@ add `/portal-document-downloader/JUSTTRADE_USERNAME` (Kundennummer) and
 `/portal-document-downloader/JUSTTRADE_PASSWORD` (`global.akeyless.path` is
 prefixed automatically).
 
-The ingress (`jt` subdomain, behind oauth2-proxy) is already declared in this
+The ingress (`jt` subdomain, `oauth: true`, so behind the Gateway's Cognito login) is already declared in this
 chart's `values.yaml`.
 
 ## Logging in

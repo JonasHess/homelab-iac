@@ -21,7 +21,7 @@ generic:
       - subdomain: n8n
         port: 5678
         oauth: true
-    # Bypass oauth2-proxy for webhooks and API
+    # Webhooks and API skip the Cognito login (the longer path prefix wins)
       - subdomain: n8n
         pathPrefixes:
           - /webhook

@@ -9,7 +9,7 @@ generic:
     - subdomain: jt          # https://jt.<domain>/code/<code> for OTP submission
       port: 8080
       service: justtrade-login-service
-      oauth: true            # behind oauth2-proxy (Cognito)
+      oauth: true            # behind the Gateway's Cognito login
 
 justtrade:
   # Reuses the portal-document-downloader image. NOTE: the tag must be a build

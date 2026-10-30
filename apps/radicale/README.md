@@ -1,6 +1,6 @@
 # Radicale
 
-CalDAV/CardDAV server. Auth via htpasswd (bcrypt). **No oauth2-proxy middleware** — DAV clients use HTTP Basic Auth and break on OAuth redirects.
+CalDAV/CardDAV server. Auth via htpasswd (bcrypt). **Its route sets `oauth: false`** (no Cognito login): DAV clients use HTTP Basic Auth and break on OAuth redirects.
 
 ## Prerequisites
 

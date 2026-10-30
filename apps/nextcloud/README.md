@@ -69,5 +69,5 @@ nextcloud:
 
 **Notes**:
 - Subdomains default to `nextcloud` and `office` - override via `collaboraConfig.nextcloudSubdomain` / `collaboraConfig.collaboraSubdomain`
-- `OVERWRITEPROTOCOL` is intentionally not set - relies on `X-Forwarded-Proto` from Traefik
+- `OVERWRITEPROTOCOL` is intentionally not set - relies on `X-Forwarded-Proto` from Envoy Gateway
 - The Collabora `securityContext` is required for Kubernetes compatibility

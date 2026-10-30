@@ -76,7 +76,7 @@ restoreCronjob:
 generic:
   persistentVolumeClaims:
     tank1:
-      hostPath: ~ # /mnt/somewhere/unencrypted/apps/traefik/data
+      hostPath: ~ # /mnt/tank1 (the whole pool the backed-up hostPaths live under)
     restoreddata:
       hostPath: ~ # /mnt/tank1/unencrypted/apps/restic/restored-data
   externalSecrets:
