@@ -87,13 +87,6 @@ global:
     # here, regardless of which namespace their workloads deploy into.
     namespace: argocd
 
-    # Global ignore differences (applied to all apps unless overridden)
-    ignoreDifferences:
-      - group: ""
-        kind: "Secret"
-        jsonPointers:
-          - "/data"
-
 
 # All applications to be deployed by Argo CD
 apps:
