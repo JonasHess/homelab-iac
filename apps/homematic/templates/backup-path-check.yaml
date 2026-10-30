@@ -1,0 +1,7 @@
+{{- /* The backup claim must cover the directory the CCU actually uses; a typo in
+       either path would back up the wrong directory without any error. */ -}}
+{{- $ccu := .Values.persistence.data.mountPath }}
+{{- $backup := .Values.generic.persistentVolumeClaims | dig "ccu-data" "hostPath" "" }}
+{{- if ne $ccu $backup }}
+{{- fail (printf "generic.persistentVolumeClaims.ccu-data.hostPath (%s) must equal persistence.data.mountPath (%s)" $backup $ccu) }}
+{{- end }}

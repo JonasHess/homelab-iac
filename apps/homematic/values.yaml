@@ -1,9 +1,16 @@
 persistence:
   data:
     mountPath: /mnt/somewhere/unencrypted/apps/homematic/ccu_data
-    backup:
-      enabled: true
 generic:
+  # The OpenCCU chart mounts persistence.data.mountPath as a plain hostPath, which
+  # the restic backup cannot see. This claim points at the same directory so the
+  # backup picks it up; it is mounted nowhere. Its hostPath must equal
+  # persistence.data.mountPath (templates/backup-path-check.yaml enforces it).
+  persistentVolumeClaims:
+    ccu-data:
+      hostPath: ~ # same as persistence.data.mountPath
+      backup:
+        enabled: true
   ingress:
     https:
     - subdomain: homematic

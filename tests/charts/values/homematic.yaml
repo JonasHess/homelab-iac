@@ -1,0 +1,9 @@
+# The backup claim must point at the CCU's data directory; the placeholder that
+# fill-host-paths.py generates for it would not match.
+persistence:
+  data:
+    mountPath: /ci/homematic/ccu_data
+generic:
+  persistentVolumeClaims:
+    ccu-data:
+      hostPath: /ci/homematic/ccu_data
