@@ -47,14 +47,16 @@ tests/                   # CI checks: chart render + kubeconform, alert rules, j
 
 ### Bootstrap a cluster
 ```bash
-./scripts/setup.sh        # Installs ArgoCD and registers the base-chart
+# Installs ArgoCD and registers the base-chart for one environment.
+# kube-context defaults to global.cluster.cluster-name from the env values.
+./scripts/setup.sh <repoURL> <targetRevision> <path-to-env-values.yaml> [<kube-context>]
 ```
 
 ### Add a new application
 ```bash
 python scripts/helm-tools/create_app.py   # Interactive scaffolder
 ```
-Then enable the app in `base-chart/values.yaml` under `apps.<name>` with its `homer`, `argocd`, and `syncWave` settings. See `CLAUDE.md` for the full template.
+Then register it in `base-chart/values.yaml` under `apps.<name>` (`enabled: false`, `homer`, `argocd`, `syncWave`) and switch it on in the environment repo (`apps.<name>.enabled: true` plus its `hostPath` values). See `CLAUDE.md` for the full template.
 
 ### Bump the generic chart
 Run **only** when you change something inside `apps/generic/`:
@@ -148,14 +150,16 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 
 Renovate keeps Helm chart versions, Docker images, and language packages up to date. Highlights:
 
-- Patch and minor updates auto-merge; major updates require manual approval.
+- Patch and minor updates auto-merge once every CI check passes; major updates require manual approval.
+- Never auto-merged, whatever the update type: Envoy Gateway and cert-manager (a broken minor release takes down every route or certificate at once).
+- Private ECR images are invisible to Renovate; the app's own image workflow opens the deploy PR instead (e.g. `restic-image.yml`).
 - Custom regex managers detect ArgoCD `targetRevision` and inline image references.
 - Configuration: `.renovaterc.json`. See [`RENOVATE.md`](RENOVATE.md) for usage and how to exclude charts.
 
 ## TODOs & Future Improvements
 
 - [ ] **Restart Pod argocd-server** — automate restart to handle Akeyless secret race conditions
-- [ ] **Per-app namespaces** — migrate apps off the shared `argocd` namespace. *Plumbing complete (May 2026)*: every app can opt in via `apps.<app>.argocd.namespace`; the generic chart auto-emits cross-namespace `ReferenceGrant`s for HTTPRoutes (immich and envoy-gateway are the apps with their own namespaces today). Mass migration of the remaining ~25 apps still outstanding; data-layer apps (postgres/redis/mosquitto) need FQDN connection strings in consumers when moved.
+- [ ] **Per-app namespaces** — migrate apps off the shared `argocd` namespace. *Plumbing complete (May 2026)*: every app can opt in via `apps.<app>.argocd.namespace`; the generic chart auto-emits cross-namespace `ReferenceGrant`s for HTTPRoutes (immich, envoy-gateway, cert-manager, homeassistant, trade-republic and zigbee-light-watcher have their own namespaces today). Mass migration of the remaining ~25 apps still outstanding; data-layer apps (postgres/redis/mosquitto) need FQDN connection strings in consumers when moved.
 - [ ] **Loki** — log aggregation
 - [ ] **Monitoring coverage** — dashboards/alerts for every service
 - [ ] **PV folder bootstrapping** — auto-create missing host paths
@@ -166,48 +170,7 @@ Renovate keeps Helm chart versions, Docker images, and language packages up to d
 - [ ] **radicale only /api without oauth2** — `apps/radicale/values.yaml` has `oauth: false` on its HTTPS route (CalDAV clients use radicale's own auth)
 - [ ] **hess.pm cloudlfare WAF, only german IPs** 
 
-### Envoy migration — refactor follow-ups
-
-Findings from reviewing the Traefik → Envoy Gateway migration. The full
-list was worked through in May 2026 on branch `envoy-migration-followups`.
-
-**Latent bugs (would have bitten the next environment migration):**
-
-- [x] **`base-chart/application.yaml` crashes the whole env on a missing `helm` key** — line 52 did `$appConfig.argocd.helm.releaseName` unguarded; one *enabled* app without an `argocd.helm` block failed the entire bootstrap `helm template`, so every app stopped syncing. Fixed by routing all `argocd.helm` lookups through `{{- $helm := $appConfig.argocd.helm | default dict }}` in `application.yaml`.
-- [x] **`envoy-gateway-application.yaml:5` child-app namespace** — the `envoy-gateway-controller` child Application used `namespace: {{ $.Release.Namespace }}`, which only worked by coincidence (parent app happened to deploy into `argocd`). Same class of bug as the cert-manager child app. Both child Applications now derive `metadata.namespace` from `global.argocd.namespace` (single source of truth).
-
-**Security:**
-
-- [x] **Per-route OIDC is fail-open** — `apps/generic/values.schema.json` now requires `oauth` on every `ingress.https[]` entry. Every existing app's routes were swept and made explicit (`oauth: true` or `oauth: false`); behaviour at runtime is unchanged but the implicit fail-open footgun is gone. Any future HTTPS route added without an explicit `oauth` field fails schema validation at render time.
-
-**Cleanup / drift:**
-
-- [x] **Remove vestigial `global.security.lanCIDRs`** — unreferenced since the listener-split refactor; removed from `base-chart/values.yaml` and `apps/generic/values.schema.json`. Templates that dereference `.Values.global.security.cloudflareOriginCA` were guarded with `(.Values.global.security | default dict)` so LAN-only envs without `cloudflareOriginCA` don't nil-pointer.
-- [x] **Fix `docs/gateway-and-oidc.md` Step 6** — corrected: the `:4443` Cloudflare listener binds directly; `:10443` is the per-pod port for the privileged `:443` LAN listener (privileged ports get a +10000 offset; non-privileged ones bind as-is).
-- [x] **`dns` exposed-port** — verified: `additionalExposedPorts: {dns: null}` propagates correctly. base-chart's `application.yaml` serializes it into the child Application's `valuesObject` as `dns: null`, and Helm's coalesce drops the `dns` listener from the rendered Gateway. No code change needed.
-- [x] **Rename Akeyless path `/oidc/oauth2-proxy/client_secret`** — done, plus consolidated. The path is now `/oidc/client_secret`, driven by `global.oidc.clientSecretAkeylessPath` in base-chart. Three former hardcodes (envoy-gateway, argocd-external-secret, sftpgo) all read the global. The generic chart's `external-secrets.yaml` now `tpl`-renders remote paths so values.yaml entries can reference globals via Helm syntax. Future Akeyless renames are a one-line change.
-- [x] **`whoami` app** — relabelled "Debug Envoy Gateway"; Traefik logo swapped for a neutral icon (dashboard-icons has no Envoy icon).
-
-**Architectural notes (originally tracked):**
-
-- [ ] ~~**cert-manager parent app namespace**~~ — stale item. Originally flagged because cert-manager's parent app destination was `cert-manager` while every other parent pointed at `argocd`. With the per-app-namespace strategy (immich → `app-immich`, envoy-gateway → `envoy-gateway`, etc.), cert-manager being in its own namespace is now the *consistent* choice rather than the odd one out. No action.
-- [x] **LAN listener depends on internal DNS** — addressed. New optional global `global.lanDnsCheck: {dnsServer, queryName}` activates: a `dns_lan_gateway` module in `prometheus-blackbox-exporter`, a `Probe` against the configured DNS server, and a `LanInternalDnsBroken` PrometheusRule that fires if the answer is not `global.gateway.loadBalancerIP` for 5+ minutes. Catches silent LAN→Cloudflare hairpinning. zimmermann.lat opts in; raspi (no setting) renders nothing.
-
-**Additional refactors done in this pass (beyond the original list):**
-
-- **Single sources of truth promoted to `global`:**
-  - `global.argocd.namespace` — where ArgoCD Application objects live (was hardcoded in two places).
-  - `global.gateway.namespace` — derived in base-chart from `apps.envoy-gateway.argocd.namespace` (was a duplicate hand-set value).
-  - `global.gateway.loadBalancerIP` — the Gateway's LB IP (was nested in envoy-gateway's helm values and duplicated in samba's avahi config).
-  - `global.oidc.clientSecretAkeylessPath` — Akeyless path for the OIDC client secret (was hardcoded in three places).
-- **ReferenceGrant naming bug** — `apps/generic/templates/reference-grant.yaml` hardcoded the name `route-to-services`. Latent while the gateway shared a namespace with most apps (the guard kept the grant from rendering). The moment the gateway moved out of `argocd`, every app sharing `argocd` rendered an identically-named grant → ArgoCD shared-resource collision. Fixed: name is now `{{ $appName }}-route-to-services`.
-- **envoy-gateway relocated to its own namespace** — Gateway CR, all envoy-gateway resources, the controller, the certgen Job, the control-plane TLS secrets, and the proxy data plane all now live in `envoy-gateway` (formerly split between `argocd` and `envoy-gateway-system`). The `envoy-gateway-system` namespace has been cleaned up and removed.
-- **samba avahi `publishIP`** — now defaults to `global.gateway.loadBalancerIP` (no env override needed).
-- **`docs/gateway-and-oidc.md`** — full pass to update every namespace reference and `kubectl` example to reflect the post-relocation reality.
-- **Stale `traefik-forward-auth` references** — purged from `doc/Cognito/AWS_Cognito.md`, `doc/Cognito/sftpgo_oidc.md`, and `scripts/helm-tools/create_app.py` (the create_app interactive tool now prompts for `oauth: true|false` per the new schema rather than auto-injecting a Traefik middleware).
-- **Generic chart bumped four times** during the pass (`0.1.51 → 0.1.55`) to propagate schema additions to every dependent app chart.
-
-**Known quirk surfaced (not fixed in iac, recovery known):**
+### Known quirks
 
 - If the `envoy-gateway-controller` ArgoCD Application is freshly created or relocated to a new namespace, ArgoCD's automated sync may not run the upstream chart's `envoy-gateway-certgen` Helm hook. The controller pod then mounts a non-existent `envoy-gateway` Secret and gets stuck `ContainerCreating`. Recovery is one explicit sync:
   ```
