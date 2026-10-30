@@ -7,6 +7,11 @@ kind: Job
 metadata:
   name: immich-cli-upload
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    # A Job's pod template is immutable, so patching it after a change fails the
+    # whole app's sync. ArgoCD deletes and recreates the Job instead, which reruns
+    # it once; the script must therefore stay safe to run again.
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
   labels:
     app: immich
     component: cli-job

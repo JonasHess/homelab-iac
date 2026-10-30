@@ -5,6 +5,11 @@ kind: Job
 metadata:
   name: ecr-registry-helper-immediate-{{ .name }}
   namespace: {{ $.Release.Namespace }}
+  annotations:
+    # A Job's pod template is immutable, so patching it after a change fails the
+    # whole app's sync. ArgoCD deletes and recreates the Job instead, which reruns
+    # it once; the script must therefore stay safe to run again.
+    argocd.argoproj.io/sync-options: Replace=true,Force=true
 spec:
   backoffLimit: {{ $.Values.cronJob.backoffLimit }}
   template:
@@ -25,7 +30,15 @@ spec:
           - /bin/bash
           - -c
           - |-
+            set -euo pipefail
+            # The old secret is deleted before the new one is created, so a
+            # missing token must abort here; otherwise image pulls lose a
+            # still-valid secret and the job would still report success.
             ECR_TOKEN="$(aws ecr get-login-password --region ${AWS_REGION})"
+            if [ -z "${ECR_TOKEN}" ]; then
+              echo "aws ecr get-login-password returned an empty token" >&2
+              exit 1
+            fi
             kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
             kubectl create secret docker-registry $DOCKER_SECRET_NAME \
               --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
