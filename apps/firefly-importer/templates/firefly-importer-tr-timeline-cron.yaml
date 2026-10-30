@@ -1,10 +1,14 @@
 {{- if .Values.trTimeline.enabled }}
+{{- $ns := .Values.trTimeline.namespace | default .Release.Namespace }}
 {{- /*
   Books new Trade Republic transactions from the broker's timeline, fetched with pytr.
 
   It runs on the web session the pytr chart's login job saved and never logs in itself:
-  a login sends a code to the phone and waits for it to be typed in. When the session
-  has expired it mails the login instructions and books nothing.
+  a login sends a code to the phone and waits for it to be typed in. That session lives
+  24 hours from the login and refreshing does not extend it, so the login job starts this
+  job right after a login, and the nightly run only catches up within that day. An
+  expired session is the normal state: it books nothing, and mails the login steps only
+  once no import has succeeded for remindAfterDays.
 
   Movements to and from your own bank accounts are left to the bank import, and
   link-transfers turns them into transfers; booking them here too would count them twice.
@@ -13,16 +17,63 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: firefly-importer-tr-timeline-script
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $ns }}
 data:
   tr_timeline.py: |
 {{ .Files.Get "scripts/tr_timeline.py" | indent 4 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-tr-config
+  namespace: {{ $ns }}
+data:
+  FIREFLY_III_URL: "http://firefly-service.{{ .Release.Namespace }}.svc.cluster.local:8080"
+{{- if .Values.smtp.enabled }}
+  MAIL_HOST: {{ .Values.smtp.host | quote }}
+  MAIL_PORT: {{ .Values.smtp.port | quote }}
+  MAIL_ENCRYPTION: {{ .Values.smtp.encryption | quote }}
+  MAIL_USERNAME: {{ .Values.smtp.username | quote }}
+  MAIL_FROM_ADDRESS: {{ .Values.smtp.from | quote }}
+  MAIL_FROM_NAME: {{ .Values.smtp.fromName | quote }}
+  MAIL_DESTINATION: {{ .Values.smtp.destination | quote }}
+{{- end }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: firefly-importer-tr-secret-external-secret
+  namespace: {{ $ns }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: {{ .Values.global.externalSecrets.refreshInterval | default "1h" }}
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: {{ .Values.global.externalSecrets.clusterSecretStoreRef.name }}
+  target:
+    name: firefly-importer-tr-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: FIREFLY_III_ACCESS_TOKEN
+      remoteRef:
+        key: "{{ .Values.global.akeyless.path }}/firefly/IMPORTER_ACCESS_TOKEN"
+{{- if .Values.smtp.enabled }}
+    - secretKey: MAIL_PASSWORD
+      remoteRef:
+        key: "{{ .Values.global.akeyless.path }}/firefly/MAIL_PASSWORD"
+{{- end }}
+{{- with .Values.trTimeline.aliasPath }}
+    - secretKey: TR_NAME_ALIAS
+      remoteRef:
+        key: "{{ $.Values.global.akeyless.path }}{{ . }}"
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: firefly-importer-tr-timeline
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $ns }}
   labels:
     app: firefly-importer
     component: tr-timeline
@@ -51,15 +102,11 @@ spec:
               image: {{ .Values.trTimeline.image | quote }}
               envFrom:
                 - configMapRef:
-                    name: firefly-importer-config
+                    name: firefly-importer-tr-config
                 - secretRef:
-                    name: firefly-importer-secret
+                    name: firefly-importer-tr-secret
                 - secretRef:
                     name: {{ required "trTimeline.credentialsSecret is required" .Values.trTimeline.credentialsSecret }}
-                {{- with .Values.trTimeline.aliasSecret }}
-                - secretRef:
-                    name: {{ . }}
-                {{- end }}
               env:
                 - name: HOME
                   value: /home/pytr
@@ -71,6 +118,8 @@ spec:
                   value: {{ .Values.trTimeline.assetAccounts | toJson | quote }}
                 - name: TR_WINDOW_DAYS
                   value: {{ .Values.trTimeline.windowDays | quote }}
+                - name: TR_REMIND_AFTER_DAYS
+                  value: {{ .Values.trTimeline.remindAfterDays | quote }}
                 - name: TR_DRY_RUN
                   value: {{ .Values.trTimeline.dryRun | quote }}
                 - name: TR_LOGIN_HINT

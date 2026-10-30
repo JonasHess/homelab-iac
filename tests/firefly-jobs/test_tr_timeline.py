@@ -290,3 +290,34 @@ class TestOwnIbans:
     def test_an_account_number_that_is_no_iban_is_ignored(self, monkeypatch):
         self.accounts(monkeypatch, {"iban": None, "account_number": "12345678"})
         assert tt.own_ibans() == set()
+
+
+class TestReminder:
+    # A web session lives 24 h, so most hourly runs find it expired. Only a long gap
+    # since the last successful import is worth a mail, and at most one a day.
+    NOW = 1_800_000_000.0
+    DAY = 86400
+
+    def test_no_mail_while_the_last_import_is_recent(self):
+        assert not tt.reminder_due(self.NOW, self.NOW - 3 * self.DAY, None, 14)
+
+    def test_mail_once_the_gap_is_long(self):
+        assert tt.reminder_due(self.NOW, self.NOW - 15 * self.DAY, None, 14)
+
+    def test_at_most_one_mail_a_day(self):
+        assert not tt.reminder_due(self.NOW, self.NOW - 15 * self.DAY, self.NOW - 3600, 14)
+        assert tt.reminder_due(self.NOW, self.NOW - 15 * self.DAY, self.NOW - self.DAY - 1, 14)
+
+    def test_never_imported_counts_as_overdue(self):
+        assert tt.reminder_due(self.NOW, None, None, 14)
+
+
+class TestStamps:
+    def test_round_trip(self, tmp_path):
+        tt.write_stamp(str(tmp_path), "last-import", 1234.5)
+        assert tt.read_stamp(str(tmp_path), "last-import") == 1234.5
+
+    def test_missing_or_garbage_reads_as_none(self, tmp_path):
+        assert tt.read_stamp(str(tmp_path), "nothing") is None
+        (tmp_path / "broken").write_text("not a number")
+        assert tt.read_stamp(str(tmp_path), "broken") is None

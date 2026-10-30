@@ -1,4 +1,4 @@
-import collections, datetime, json, os, pathlib, re, smtplib, ssl, subprocess, sys
+import collections, datetime, json, os, pathlib, re, smtplib, ssl, subprocess, sys, time
 import urllib.error, urllib.parse, urllib.request
 from email.message import EmailMessage
 
@@ -323,6 +323,33 @@ def own_ibans():
     return ibans
 
 
+def read_stamp(state_dir, name):
+    """Epoch seconds stored in state_dir/name, or None if missing or unreadable."""
+    try:
+        with open(os.path.join(state_dir, name), encoding="utf-8") as fh:
+            return float(fh.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def write_stamp(state_dir, name, when):
+    with open(os.path.join(state_dir, name), "w", encoding="utf-8") as fh:
+        fh.write(f"{when}\n")
+
+
+def reminder_due(now, last_import, last_reminder, remind_after_days):
+    """Whether an expired session is worth a mail.
+
+    A web session lives 24 hours from the login and refreshing does not extend it, so
+    most runs find it expired and that is the normal state, not a fault. Only a long
+    gap since the last successful import is worth mentioning, and at most once a day.
+    """
+    day = 86400
+    if last_import is not None and now - last_import < remind_after_days * day:
+        return False
+    return last_reminder is None or now - last_reminder >= day
+
+
 def session_alive():
     """Whether the saved Trade Republic web session can be resumed.
 
@@ -371,17 +398,25 @@ def main():
     asset_accounts = {k: str(v) for k, v in json.loads(os.environ.get("TR_ASSET_ACCOUNTS", "{}")).items()}
     name_alias = json.loads(os.environ.get("TR_NAME_ALIAS", "{}"))
     window = int(os.environ.get("TR_WINDOW_DAYS", "90"))
+    remind_days = int(os.environ.get("TR_REMIND_AFTER_DAYS", "14"))
+    state_dir = os.environ.get("TR_STATE_DIR", str(pathlib.Path.home() / ".pytr"))
     dry_run = os.environ.get("TR_DRY_RUN", "false").lower() == "true"
     # 0 looks at the whole history; a re-run of everything books only what is missing.
     since = ((datetime.date.today() - datetime.timedelta(days=window)).isoformat()
              if window else "")
 
     if not session_alive():
-        report("Firefly TR import: Trade Republic login needed",
-               "The saved Trade Republic session has expired, so no TR transactions were "
-               "imported tonight. Log in once; the next night's run picks it up.\n\n"
-               + os.environ.get("TR_LOGIN_HINT", ""))
-        return 1
+        last = read_stamp(state_dir, "last-import")
+        if reminder_due(time.time(), last, read_stamp(state_dir, "last-reminder"), remind_days):
+            since_txt = (datetime.date.fromtimestamp(last).isoformat() if last else "never")
+            report("Firefly TR import: Trade Republic login needed",
+                   f"No Trade Republic transactions have been imported since {since_txt}: "
+                   "the saved session has expired. Log in once; the import runs right "
+                   "after the login.\n\n" + os.environ.get("TR_LOGIN_HINT", ""))
+            write_stamp(state_dir, "last-reminder", time.time())
+        else:
+            print("session expired; no reminder due")
+        return 0
     events = fetch_events(os.environ.get("TR_WORKDIR", "/work"), window)
 
     accounts = {cash, depot, *asset_accounts.values()}
@@ -407,6 +442,8 @@ def main():
             problems.append(f"{p['external_id']} {p['date']} {p['amount']} {p['description']}: "
                             f"HTTP {e.code} {e.read()[:200].decode(errors='replace')}")
     print(f"posted {posted}")
+    if not dry_run:
+        write_stamp(state_dir, "last-import", time.time())
     if problems:
         report(f"Firefly TR import: {len(problems)} needing attention",
                "".join(f"  - {l}\n" for l in problems))
