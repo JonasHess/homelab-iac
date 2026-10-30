@@ -6,6 +6,11 @@ metadata:
 data:
   SAMBA_CONF_WORKGROUP: {{ .Values.samba.workgroup | default "WORKGROUP" | quote }}
   SAMBA_CONF_SERVER_STRING: {{ .Values.samba.serverString | default "Server" | quote }}
+  {{- /* The image writes every SAMBA_GLOBAL_CONFIG_<key> into [global], with
+         _SPACE_ and _COLON_ standing for " " and ":" in the option name. */}}
+  {{- range $option, $value := .Values.samba.globalConfig }}
+  SAMBA_GLOBAL_CONFIG_{{ $option | replace " " "_SPACE_" | replace ":" "_COLON_" }}: {{ $value | quote }}
+  {{- end }}
   {{- range $group := .Values.samba.groups }}
   GROUP_{{ $group.name }}: {{ $group.gid | quote }}
   {{- end }}
