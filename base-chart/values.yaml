@@ -296,7 +296,7 @@ apps:
       targetRevision: ~
       namespace: "argocd"
       project: "default"
-      syncWave: "5"  # Early deployment for secrets access
+      syncWave: "0"  # Installs External Secrets, which waves 0-3 already use
   argocd:
     enabled: true
     homer:

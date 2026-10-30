@@ -103,6 +103,16 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+    {{- /* Automated sync does not retry a failed revision on its own: without this,
+           a sync that fails because a CRD or operator from another app is not ready
+           yet stays failed until the next commit. Sync waves cannot prevent that,
+           because the parent does not wait for a child Application to become healthy. */}}
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
     {{- end }}
   {{- if or $appConfig.argocd.ignoreDifferences $.Values.global.argocd.ignoreDifferences }}
   ignoreDifferences:
