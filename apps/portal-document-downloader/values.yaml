@@ -9,7 +9,6 @@ portalDocumentDownloader:
 
   externalSecret:
     enabled: true
-    secretStoreName: akeyless-secret-store
 
   # Example portal configuration:
   #   treubau:
