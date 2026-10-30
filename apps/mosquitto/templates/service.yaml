@@ -14,12 +14,6 @@ spec:
     {{- if eq $type "NodePort" }}
     nodePort: 31883
     {{- end }}
-  - name: tcp9001
-    port: 9001
-    targetPort: 9001
-    {{- if eq $type "NodePort" }}
-    nodePort: 32001
-    {{- end }}
   selector:
     app: mosquitto
   type: {{ $type }}

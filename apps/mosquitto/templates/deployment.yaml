@@ -54,8 +54,6 @@ spec:
           ports:
             - containerPort: 1883
               name: "tcp1883"
-            - containerPort: 9001
-              name: "tcp9001"
           volumeMounts:
             - mountPath: "/mosquitto/config"
               name: writable-config  # Mount writable directory
