@@ -3,6 +3,9 @@
 # Summary: This script automates the installation and configuration of the ZFS Exporter, a tool
 # used to export ZFS metrics for Prometheus.
 
+# A failed download or extraction must stop here, before the service is
+# (re)enabled with missing or stale files.
+set -euo pipefail
 
 # Variables
 TARGET_DIR="/etc/zfsexporter"
@@ -27,8 +30,10 @@ wget -q --show-progress -O /tmp/zfs_exporter.tar.gz "$FULL_DOWNLOAD_URL"
 
 # Extract the archive
 echo "Extracting the archive to a temporary location"
-TEMP_DIR="/tmp/zfs_exporter_extract"
-mkdir -p "$TEMP_DIR"
+# A fresh directory per run: a reused one would still hold files of an older
+# release, and the glob below would move those as well.
+TEMP_DIR="$(mktemp -d)"
+trap 'rm -rf "$TEMP_DIR"' EXIT
 tar -xvzf /tmp/zfs_exporter.tar.gz -C "$TEMP_DIR"
 
 # Move extracted files to the target directory

@@ -33,11 +33,6 @@ python -m pytest -q tests/restic tests/firefly-jobs   # needs pytest + the scrip
 ```
 Renovate auto-merges only when every check passes, so a red check stops a bad bump from reaching ArgoCD.
 
-### Deploy to Kind Cluster (for testing)
-```bash
-./scripts/kind-setup/deploy_kind_cluster.sh  # Creates local Kind cluster
-./scripts/kind-setup/install_cloud-provider-kind.sh  # Installs cloud provider
-```
 
 ## Architecture
 

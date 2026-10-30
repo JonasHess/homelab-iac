@@ -67,9 +67,12 @@ new_patch=$((patch + 1))
 new_version="${major}.${minor}.${new_patch}"
 echo -e "${YELLOW}New version: ${new_version}${NC}"
 
-# Write the new version back into the generic chart's Chart.yaml.
-# The sed -i.bak / rm pattern ensures compatibility with both macOS (BSD sed) and Linux (GNU sed).
-sed -i.bak "s/^version: ${current_version}/version: ${new_version}/" Chart.yaml && rm -f Chart.yaml.bak
+# Write the new version back into the generic chart's Chart.yaml. awk rather than
+# sed, so the dots in the version are plain text and not regex wildcards. The
+# original is kept until packaging succeeds; a failed run must not leave a bumped
+# version behind, or the next run would skip a version.
+cp Chart.yaml Chart.yaml.orig
+awk -v new="$new_version" '/^version: /{print "version: " new; next} {print}' Chart.yaml.orig > Chart.yaml
 echo -e "${GREEN}✓ Updated generic chart version to ${new_version}${NC}"
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -80,7 +83,12 @@ echo -e "${GREEN}✓ Updated generic chart version to ${new_version}${NC}"
 # .tgz to resolve the dependency during "helm dependency update".
 # ──────────────────────────────────────────────────────────────────────────────
 echo -e "${YELLOW}Building the generic chart...${NC}"
-helm package .
+if ! helm package .; then
+    mv Chart.yaml.orig Chart.yaml
+    echo -e "${RED}Packaging failed, generic chart left at ${current_version}${NC}"
+    exit 1
+fi
+rm -f Chart.yaml.orig
 echo -e "${GREEN}✓ Successfully built generic chart${NC}"
 
 # Remove .tgz files from previous versions to keep the directory clean
@@ -132,13 +140,16 @@ do
 
     cd "$ORIGINAL_DIR/$dir"
 
-    # Update the dependency version reference in this app's Chart.yaml.
-    # The version line is indented (it's inside the dependencies list), so we
-    # match leading whitespace and preserve it during replacement.
+    # Update the version of the generic dependency only: another dependency may
+    # pin the same version string. Works for any list indentation and keeps the
+    # file's formatting (yq would re-indent every Chart.yaml).
     echo -e "${YELLOW}Updating generic dependency version to ${new_version}...${NC}"
-    if grep -qE "^[[:space:]]+version: ${current_version}" Chart.yaml; then
-        sed -i.bak -E "s/^([[:space:]]+)version: ${current_version}/\1version: ${new_version}/" Chart.yaml && rm -f Chart.yaml.bak
-    fi
+    awk -v new="$new_version" '
+        /^[[:space:]]*- /                       { in_generic = ($0 ~ /^[[:space:]]*- name:[[:space:]]*generic[[:space:]]*$/) }
+        /^[A-Za-z]/                             { in_generic = 0 }
+        in_generic && /^[[:space:]]+version:/   { match($0, /^[[:space:]]+/); print substr($0, 1, RLENGTH) "version: " new; next }
+                                                { print }
+    ' Chart.yaml > Chart.yaml.tmp && mv Chart.yaml.tmp Chart.yaml
 
     # Resolve and download the updated dependency, regenerating Chart.lock
     if helm dependency update; then
@@ -160,4 +171,7 @@ echo -e "${GREEN}Successful updates: ${success_count}${NC}"
 echo -e "${RED}Failed updates: ${error_count}${NC}"
 echo -e "${GREEN}Generic chart version bumped from ${current_version} to ${new_version}${NC}"
 
+# Non-zero when any app failed, so a caller (or CI) cannot mistake a partial bump
+# for a complete one.
+[ "$error_count" -eq 0 ] || exit 1
 exit 0

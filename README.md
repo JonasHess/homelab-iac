@@ -22,7 +22,6 @@ bootstrap-chart/         # Initial ArgoCD bootstrap
 scripts/
   setup.sh               # Bootstrap entrypoint
   helm-tools/            # create_app.py — interactive new-app scaffolder
-  kind-setup/            # Local Kind cluster for testing
   microk8s-setup/        # MicroK8s setup helpers
   zfs-exporter/          # Prometheus ZFS exporter installer
 doc/                     # Operational notes (Cognito, Homematic, ZFS, Paperless, ...)
@@ -47,12 +46,6 @@ doc/                     # Operational notes (Cognito, Homematic, ZFS, Paperless
 ### Bootstrap a cluster
 ```bash
 ./scripts/setup.sh        # Installs ArgoCD and registers the base-chart
-```
-
-### Local testing with Kind
-```bash
-./scripts/kind-setup/deploy_kind_cluster.sh
-./scripts/kind-setup/install_cloud-provider-kind.sh
 ```
 
 ### Add a new application

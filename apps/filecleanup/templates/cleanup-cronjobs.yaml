@@ -2,6 +2,8 @@
 {{- if .Values.filecleanup }}
 {{- if .Values.filecleanup.cleanupJobs }}
 {{- range $jobName, $jobConfig := .Values.filecleanup.cleanupJobs }}
+{{- /* Without it, find gets "-ctime +" and the job only fails at runtime. */}}
+{{- $_ := required (printf "filecleanup.cleanupJobs.%s.retentionDays must be set" $jobName) $jobConfig.retentionDays }}
 ---
 apiVersion: batch/v1
 kind: CronJob

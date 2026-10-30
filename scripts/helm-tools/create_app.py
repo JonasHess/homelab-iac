@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import sys
 import shutil
 import yaml
 import re
@@ -39,13 +40,13 @@ def create_directory_if_not_exists(directory):
 def get_generic_chart_version(repo_root):
     """Get the version of the generic chart from Chart.yaml."""
     generic_chart_path = os.path.join(repo_root, 'apps', 'generic', 'Chart.yaml')
+    # No fallback version: a guessed one pins the new app to a generic chart
+    # that may be far behind every other app.
     try:
         with open(generic_chart_path, 'r') as f:
-            chart_data = yaml.safe_load(f)
-            return chart_data.get('version', '0.1.8')  # Default to 0.1.8 if not found
+            return yaml.safe_load(f)['version']
     except Exception as e:
-        print(f"Warning: Could not get generic chart version: {e}")
-        return '0.1.8'  # Default version
+        sys.exit(f"Could not read the generic chart version from {generic_chart_path}: {e}")
 
 def create_chart_yaml(app_name, app_description, output_dir, generic_version):
     """Create Chart.yaml file for the app."""
@@ -116,18 +117,22 @@ def update_dependencies(app_dir):
         subprocess.run(['helm', 'dependency', 'update'], cwd=app_dir, check=True)
         print(f"Successfully updated dependencies in {app_dir}")
     except subprocess.CalledProcessError as e:
-        print(f"Error updating dependencies: {e}")
+        sys.exit(f"Error updating dependencies in {app_dir}: {e}")
 
 def update_base_chart_values(app_name, app_display_name, app_description, app_group, base_chart_values_path):
-    """Add the app entry to the base-chart values.yaml."""
+    """Append the app entry to the base-chart values.yaml.
+
+    The entry is appended as text instead of rewriting the parsed file, so every
+    existing comment and the file's formatting survive. This relies on `apps:`
+    being the last top-level key of the file.
+    """
     with open(base_chart_values_path, 'r') as f:
-        values = yaml.safe_load(f)
+        text = f.read()
+    values = yaml.safe_load(text)
+    if app_name in (values.get('apps') or {}):
+        sys.exit(f"App '{app_name}' is already registered in {base_chart_values_path}; not touching it.")
 
-    if 'apps' not in values:
-        values['apps'] = {}
-
-    # Add the new app entry
-    values['apps'][app_name] = {
+    entry = {
         'enabled': False,
         'homer': {
             'enabled': True,
@@ -143,9 +148,12 @@ def update_base_chart_values(app_name, app_display_name, app_description, app_gr
             'syncWave': "15"  # Default sync wave
         }
     }
+    block = yaml.dump({app_name: entry}, sort_keys=False)
+    indented = ''.join('  ' + line if line.strip() else line for line in block.splitlines(keepends=True))
 
     with open(base_chart_values_path, 'w') as f:
-        yaml.dump(values, f, sort_keys=False)
+        f.write(text if text.endswith('\n') else text + '\n')
+        f.write(indented)
 
 def get_input_with_default(prompt, default=""):
     """Get input from user with a default value if they press enter."""
