@@ -48,6 +48,10 @@ jobs:
         with:
           # Keep this in step with the image the CronJobs actually run, so the tests
           # exercise the same interpreter version as production.
+          # Renovate moves this in the same PR as the python image tags (same
+          # depName), so a version setup-python cannot install yet fails CI and
+          # holds back the image bump too.
+          # renovate: datasource=docker depName=python
           python-version: '3.15'
 
       - name: Install pytest

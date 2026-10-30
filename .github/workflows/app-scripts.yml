@@ -50,6 +50,10 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           # Keep this in step with the images the scripts actually run in.
+          # Renovate moves this in the same PR as the python image tags (same
+          # depName), so a version setup-python cannot install yet fails CI and
+          # holds back the image bump too.
+          # renovate: datasource=docker depName=python
           python-version: '3.15'
 
       - name: Install pytest and the restic script's requirements
