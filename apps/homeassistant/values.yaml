@@ -30,7 +30,15 @@ generic:
       - subdomain: homeassistant
         port: 8123
         oauth: true
-    # Bypass oauth2-proxy for API, auth endpoints, and Android WebView (companion app)
+    # Routes that skip the gateway OIDC login; Home Assistant's own login is
+    # the only protection here, so keep MFA enabled for every HA user.
+    # - pathPrefixes: REST/websocket API, the HA login flow and frontend assets,
+    #   used by the companion apps and API clients that authenticate with HA tokens.
+    # - rawMatch: the Android companion app renders the UI in a WebView, whose
+    #   User-Agent contains "wv". This match has no path, so it applies to EVERY
+    #   path, and it outranks the OIDC route above because header matches win
+    #   ties. The User-Agent is client-controlled, so any client can use it to
+    #   skip OIDC. Removing it makes the Android app's UI hit the OIDC login.
       - subdomain: homeassistant
         port: 8123
         pathPrefixes:
