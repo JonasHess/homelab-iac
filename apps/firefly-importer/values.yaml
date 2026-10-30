@@ -20,6 +20,8 @@ generic:
       import:
         mountPath: /import
         hostPath:
+        backup:
+          enabled: true
       # The wizard's own job files, which hold the only copy of a freshly authorised
       # bank consent. On the container filesystem they are lost on every restart, and
       # a restart between the SCA and the consent being carried over means doing the
@@ -28,6 +30,8 @@ generic:
       import-jobs:
         mountPath: /var/www/html/storage/import-jobs
         hostPath:
+        backup:
+          enabled: true
     envFrom:
       configMapRef: firefly-importer-config
       secretRef: firefly-importer-secret
