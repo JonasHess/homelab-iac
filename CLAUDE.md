@@ -10,7 +10,8 @@ This is a Kubernetes/Helm-based Infrastructure as Code (IaC) repository for mana
 
 ### Initial Setup
 ```bash
-./scripts/setup.sh  # Bootstrap ArgoCD and initial applications
+# Bootstrap ArgoCD and the base chart; kube-context defaults to global.cluster.cluster-name
+./scripts/setup.sh <repoURL> <targetRevision> <path-to-env-values.yaml> [<kube-context>]
 ```
 
 ### Bump Generic Chart & Update Dependencies
@@ -22,6 +23,15 @@ cd apps && ./bump_generic_chart.sh  # Bumps generic chart version and propagates
 ```bash
 python scripts/helm-tools/create_app.py  # Interactive tool to create new app chart
 ```
+
+### Tests (also run in CI on PRs and on main)
+```bash
+./tests/charts/render-all.sh   # renders every app chart, checks Chart.lock vs charts/*.tgz
+kubeconform -strict -summary -ignore-missing-schemas tests/charts/.rendered/*.yaml
+./tests/alert-rules/render-rules.sh && (cd tests/alert-rules && promtool test rules *.test.yaml)
+python -m pytest -q tests/restic tests/firefly-jobs   # needs pytest + the scripts' requirements
+```
+Renovate auto-merges only when every check passes, so a red check stops a bad bump from reaching ArgoCD.
 
 ### Deploy to Kind Cluster (for testing)
 ```bash
@@ -42,7 +52,8 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
 ### Key Components
 - **ArgoCD**: Manages all deployments via GitOps from `apps/argocd/`
 - **Akeyless**: Secrets management, integrated via External Secrets Operator
-- **Traefik**: Gateway API controller handling HTTP/HTTPS/TCP/UDP routing via Gateway API resources
+- **Envoy Gateway**: Gateway API controller (`apps/envoy-gateway/`) handling HTTP/HTTPS/TCP/UDP routing. One `Gateway` in namespace `envoy-gateway`; app HTTPRoutes are created there too. LAN listeners on :443 (`websecure`), Cloudflare-only mTLS listeners on :4443 (`websecure-public`). Details: `docs/gateway-and-oidc.md`
+- **OIDC**: A Gateway-level `SecurityPolicy` (`gateway-oidc`) puts AWS Cognito login in front of every route by default
 - **cert-manager**: TLS certificate management with Let's Encrypt wildcard certificates via DNS-01 challenge
 - **Base Chart**: Located in `base-chart/`, manages overall ArgoCD applications
 - **Bootstrap Chart**: Initial ArgoCD setup in `bootstrap-chart/`
@@ -54,31 +65,43 @@ python scripts/helm-tools/create_app.py  # Interactive tool to create new app ch
    # Example: apps/*/templates/*-external-secret.yaml
    ```
 
-2. **Ingress Configuration**: Apps expose services via Gateway API HTTPRoutes (with Traefik as controller)
+2. **Ingress Configuration**: Apps expose services via Gateway API routes (Envoy Gateway as controller)
    ```yaml
-   # Configured in values.yaml under ingress.https/tcp/udp sections
-   # HTTPRoutes use ExtensionRef filters for Traefik Middleware CRDs (cloudflare, oauth2-proxy)
+   # Configured in values.yaml under generic.ingress.https/tcp/udp
+   # Every https entry must set oauth (schema-required):
+   #   oauth: true   -> route stays behind the Gateway-level Cognito OIDC
+   #   oauth: false  -> a route-level SecurityPolicy opts it out (app's own auth only)
+   #   groups: [...] -> with oauth: true, only these Cognito groups get through
+   #                    (default: global.oidc.defaultGroups)
+   # A second entry with pathPrefixes can carve out paths; the longer prefix wins.
    ```
 
-3. **Persistent Storage**: Apps use PVCs with local-path storage class
+3. **Persistent Storage**: hostPath PersistentVolumes, one per mount
    ```yaml
-   # Configured in values.yaml under persistence section
+   # generic.deployment.pvcMounts (mounted into the app) or generic.persistentVolumeClaims
+   # (standalone claim, e.g. for a CronJob). hostPath stays empty in this repo and is
+   # set per environment in homelab_environments. The PV has type Directory, so the
+   # host directory must be created (mkdir) BEFORE the change is deployed.
    ```
+
+4. **Extra pods in an app chart** (Jobs, CronJobs): never label their pods `app: <appName>`.
+   The generic Service selects on exactly that label, so such a pod joins the Service
+   while it runs and receives the app's traffic. Use e.g. `app: <appName>-dump`.
 
 ## Working with Applications
 
 When modifying or adding applications:
 1. Each app uses the generic chart as a dependency - check `apps/generic/values.yaml` for available options
 2. Application-specific templates go in `apps/<appname>/templates/`
-3. After modifying Chart.yaml, run `cd apps && ./bump_generic_chart.sh`
+3. Only after changing `apps/generic/` run `cd apps && ./bump_generic_chart.sh` (see below)
 4. Changes are automatically deployed by ArgoCD once pushed to the repository
 
 ## Important Configurations
 
-- **Namespace**: Most apps deploy to `services` namespace
-- **Storage**: Uses `local-path` storage class for persistent volumes
+- **Namespace**: Almost all apps deploy to `argocd` (the base-chart default); exceptions are set via `apps.<app>.argocd.namespace` (e.g. `app-immich`, `cert-manager`)
+- **Storage**: hostPath PVs (storageClassName `manual` for pvcMounts, `''` for persistentVolumeClaims), Retain policy
 - **Secrets**: Stored in Akeyless, accessed via External Secrets Operator
-- **Ingress**: HTTPS endpoints via Gateway API HTTPRoutes with Traefik Middleware ExtensionRef filters for authentication
+- **Ingress**: HTTPS endpoints via Gateway API HTTPRoutes; authentication by Envoy Gateway OIDC (`oauth: true|false` per route)
 - **TLS**: Wildcard certificate managed by cert-manager (ClusterIssuer with Cloudflare DNS-01)
 
 ## Helm Dependency Notes — When to Run `bump_generic_chart.sh`
@@ -111,7 +134,7 @@ The `apps/generic/` chart provides comprehensive Kubernetes resource templating 
 - **Security**: Container security contexts and privileged access
 - **Networking**: Multi-port services with named ports and protocols
 - **Storage**: Manual storage class with ReadWriteMany access, backup annotations
-- **Ingress**: Gateway API routing with Traefik Middleware ExtensionRef filters, subdomain/domain routing, pathPrefixes matching
+- **Ingress**: Gateway API routing with per-route OIDC opt-out (`oauth`) and Cognito group checks (`groups`), subdomain/domain routing, pathPrefixes and rawMatch matching
 
 ### Backup System
 - Automatic ResticBackup CRD generation for PVC mounts with backup.enabled=true
@@ -125,9 +148,9 @@ The `base-chart/values.yaml` file serves as the central registry for all applica
 ### Global Configuration
 - **Domain**: `home-server.dev` - Base domain for all applications
 - **External Secrets**: Integration with Akeyless secret store (`akeyless-secret-store`)
-- **Authentication**: Traefik Forward Auth with AWS Cognito OIDC
+- **Authentication**: Envoy Gateway OIDC with AWS Cognito (`global.oidc`, incl. `defaultGroups`)
 - **Email Settings**: Global email configuration for various services
-- **Sync Policies**: Global ArgoCD sync policies and ignore differences
+- **Sync Policies**: Default per app: automated (prune + selfHeal) with retry (10 attempts, backoff up to 5m); global ignoreDifferences
 
 ### Application Registry
 Each application is defined under `apps.<appname>` with:
@@ -137,17 +160,18 @@ Each application is defined under `apps.<appname>` with:
 
 ### Sync Wave Ordering
 Applications are deployed in phases using `syncWave`:
-- **Wave 0**: ArgoCD (core GitOps)
-- **Wave 1**: Traefik, cert-manager, Reloader (ingress, TLS & core services)
+- **Wave 0**: ArgoCD, Akeyless (installs External Secrets, which later waves already use)
+- **Wave 1**: Envoy Gateway, cert-manager, Reloader (ingress, TLS & core services)
 - **Wave 2**: Prometheus, Crossplane (monitoring & infrastructure)
-- **Wave 3-5**: DNS, Auth, Database services
-- **Wave 10-15**: Core applications
-- **Wave 15-20**: Media & productivity apps
-- **Wave 20+**: Backup & monitoring tools
+- **Wave 3-5**: DNS (cloudflareddns), AWS/ECR helper, Postgres, Redis
+- **Wave 10-18**: Applications
+- **Wave 20+**: Media, downloaders, maintenance jobs
+
+Waves only order creation: the parent does not wait for a child Application to be healthy. Apps that sync before a CRD/operator exists rely on the sync retry and on `argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true` on custom resources.
 
 ### Homer Dashboard Groups
 Centralized group definitions for dashboard organization:
-- **Infrastructure**: Core services (ArgoCD, Traefik, monitoring)
+- **Infrastructure**: Core services (ArgoCD, Envoy Gateway, monitoring)
 - **Monitoring**: Grafana, Prometheus dashboards
 - **Productivity**: Document management, passwords
 - **Smart Home**: Home Assistant, Zigbee
@@ -197,7 +221,10 @@ generic:
     https:
     - subdomain: <appname>
       port: <port>
+      oauth: true   # required; false only if the app has its own auth
 ```
+
+Set the real `hostPath` values in `homelab_environments/<env>/values.yaml` and create those directories on the host before deploying.
 
 ### 4. Add to base-chart/values.yaml
 ```yaml
@@ -263,7 +290,7 @@ The `smarthome4-ui` app is a FastAPI + React web UI for managing Zigbee2MQTT sce
 
 - **Image**: Private ECR (`hess.pm/smarthome4-ui`)
 - **Port**: 8000
-- **Ingress**: subdomain `lights`, behind oauth2-proxy
+- **Ingress**: subdomain `lights`, `oauth: true` (Cognito OIDC)
 - **Secrets**: Reuses smarthome4's Akeyless paths (`/smarthome4/HOMEASSISTANT_APITOKEN`, `/smarthome4/MQTT_BROKER_USERNAME`, `/smarthome4/MQTT_BROKER_PASSWORD`) with env var names the app expects (`HA_API_TOKEN`, `MQTT_USERNAME`, `MQTT_PASSWORD`)
 - **ConfigMap**: Non-secret env vars (MQTT_HOST, MQTT_PORT, Z2M_TOPIC, HA_BASE_URL, CORS_ORIGINS)
 - **Homer**: Smart Home group

@@ -40,16 +40,19 @@ generic/
   values.yaml             # Default values and examples
   values.schema.json      # JSON Schema for value validation
   templates/
-    deployment.yaml       # Deployment with init containers, mounts, probes, env
-    service.yaml          # ClusterIP service
-    ingress-https.yaml    # Traefik HTTPS IngressRoute with TLS
-    ingress-tcp.yaml      # Traefik TCP IngressRoute
-    ingress-udp.yaml      # Traefik UDP IngressRoute
+    deployment.yaml       # Deployment with init containers, mounts, probes, env;
+                          # also the PV/PVC behind each pvcMount
+    service.yaml          # ClusterIP service (selector: app: <appName>)
+    httproute.yaml        # Gateway API HTTPRoute per ingress.https entry
+    security-policy.yaml  # Envoy SecurityPolicy: OIDC opt-out (oauth: false) or group check
+    tcproute.yaml         # Gateway API TCPRoute per ingress.tcp entry
+    udproute.yaml         # Gateway API UDPRoute per ingress.udp entry
+    reference-grant.yaml  # Lets routes in the gateway namespace reach this app's Service
     configmap.yaml        # ConfigMaps from values
     external-secrets.yaml # ExternalSecret resources (Akeyless integration)
     pv.yaml               # Standalone PersistentVolumes
-    pvc.yaml              # Standalone PersistentVolumeClaims
-    backup-crd.yaml       # Backup annotations for restic
+    pvc.yaml              # Standalone PersistentVolumeClaims (persistentVolumeClaims)
+    backup-crd.yaml       # ResticBackup resources for volumes with backup.enabled
 ```
 
 ## Key values
