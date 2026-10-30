@@ -1,0 +1,4 @@
+# The skill manifests are passed in per environment; CI only needs any JSON text.
+files:
+  skillJson: "{}"
+  deDE: "{}"

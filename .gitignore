@@ -16,6 +16,7 @@ tests/alert-rules/.rendered/
 tests/firefly-jobs/.rendered/
 tests/paperlessgpt-prompt/.rendered/
 tests/paperlessgpt-report/.rendered/
+tests/charts/.rendered/
 
 # Python bytecode, written whenever a script or test imports a sibling module.
 __pycache__/

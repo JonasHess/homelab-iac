@@ -1,0 +1,4 @@
+# Required per instance so one account's exports can never land in another's history.
+pytr:
+  csvVersions:
+    rootDocumentId: 1

@@ -1,0 +1,3 @@
+# Per-environment OIDC discovery URL; required at render time.
+global:
+  oidcConfigurationUrl: https://issuer.test.example/.well-known/openid-configuration

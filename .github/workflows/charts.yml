@@ -1,0 +1,62 @@
+name: Charts
+
+# ArgoCD deploys straight from main and Renovate auto-merges minor and patch bumps,
+# so nothing else stands between a chart that no longer renders and the cluster.
+# This renders every app chart, checks that the vendored dependency archives match
+# Chart.lock, and validates the result against the Kubernetes API schemas. Renovate
+# only auto-merges a PR whose checks all pass.
+
+on:
+  # Runnable on demand, so a change to this workflow can be verified without a dummy
+  # commit to some chart.
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'tests/charts/**'
+      - 'tests/alert-rules/values.yaml'
+      - '.github/workflows/charts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/**'
+      - 'tests/charts/**'
+      - 'tests/alert-rules/values.yaml'
+      - '.github/workflows/charts.yml'
+
+jobs:
+  render:
+    name: Render and validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          # renovate: datasource=github-releases depName=helm/helm
+          version: v4.3.1
+
+      - name: Install kubeconform
+        env:
+          # renovate: datasource=github-releases depName=yannh/kubeconform
+          KUBECONFORM_VERSION: v0.8.0
+        run: |
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar -xz -C /usr/local/bin kubeconform
+          kubeconform -v
+
+      - name: Install PyYAML
+        env:
+          # renovate: datasource=pypi depName=pyyaml
+          PYYAML_VERSION: 6.0.3
+        run: pip install --quiet "pyyaml==${PYYAML_VERSION}"
+
+      - name: Render every chart and check vendored dependencies
+        run: ./tests/charts/render-all.sh
+
+      # Custom resources (ExternalSecret, HTTPRoute, ResticBackup, ...) have no schema
+      # in the default catalogue and are skipped; built-in kinds are checked strictly,
+      # which catches misspelled or misplaced fields that the API server would drop.
+      - name: Validate against the Kubernetes schemas
+        run: kubeconform -strict -summary -ignore-missing-schemas tests/charts/.rendered/*.yaml
