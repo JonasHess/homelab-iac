@@ -1,0 +1,78 @@
+{{- /*
+  Nightly logical dump of every database on this server. Restic copies the data
+  directory file by file while Postgres keeps writing, so that copy is not
+  guaranteed to be consistent; a pg_dumpall file is. The schedule must stay
+  before the restic-backup CronJob so the dump restic picks up is the fresh one.
+*/ -}}
+{{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $appName }}-dump
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $appName }}
+    component: dump
+spec:
+  schedule: {{ .Values.dump.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app: {{ $appName }}
+            component: dump
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: dump
+              # The server's own image: pg_dumpall must not be older than the server.
+              image: {{ .Values.generic.deployment.image }}
+              envFrom:
+                - secretRef:
+                    name: postgres-secret
+                - configMapRef:
+                    name: postgres-config
+              env:
+                - name: KEEP
+                  value: {{ required "dump.keep must be set" .Values.dump.keep | quote }}
+              command: ["bash", "-c"]
+              args:
+                - |
+                  set -euo pipefail
+                  # The dump holds every role's password hash.
+                  umask 077
+                  export PGPASSWORD="$POSTGRES_PASSWORD"
+                  cd /dumps
+
+                  # A run that died mid-dump leaves its partial file behind. The .tmp
+                  # suffix keeps restic's global excludes from ever backing one up.
+                  rm -f .pg_dumpall-*.tmp
+
+                  name="pg_dumpall-$(date +%Y%m%d-%H%M%S).sql.gz"
+                  pg_dumpall -h postgres-service -U "$POSTGRES_USER" | gzip > ".$name.tmp"
+
+                  # pg_dumpall writes this trailer last, so its presence proves the
+                  # dump ran to the end rather than stopping on a dropped connection.
+                  if ! gzip -dc ".$name.tmp" | tail -n 5 | grep -q 'PostgreSQL database cluster dump complete'; then
+                    echo "dump is incomplete, keeping the previous ones" >&2
+                    exit 1
+                  fi
+                  mv ".$name.tmp" "$name"
+                  echo "wrote /dumps/$name ($(du -h "$name" | cut -f1))"
+
+                  ls -1t pg_dumpall-*.sql.gz | tail -n +"$((KEEP + 1))" | while read -r old; do
+                    echo "removing $old"
+                    rm -f -- "$old"
+                  done
+              volumeMounts:
+                - name: dumps
+                  mountPath: /dumps
+          volumes:
+            - name: dumps
+              persistentVolumeClaim:
+                claimName: {{ $appName }}-dumps-pvc
