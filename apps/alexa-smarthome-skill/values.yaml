@@ -12,7 +12,7 @@ files:
 # Installed by the deploy job before deploy.py runs.
 # Keep the `name==version` form: Renovate's PyPI manager matches exactly that.
 pythonPackages:
-  - boto3==1.43.121
+  - boto3==1.43.122
 
 generic:
   externalSecrets:
