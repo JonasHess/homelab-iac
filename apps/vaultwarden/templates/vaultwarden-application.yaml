@@ -14,8 +14,7 @@ spec:
     helm:
       valuesObject:
         image:
-          # renovate: depName=vaultwarden/server
-          tag: "1.37.4-alpine"
+          tag: {{ .Values.image.tag | quote }}
         domain: "https://vaultwarden.{{ $.Values.global.domain }}"
         signupsAllowed: false
         ingress:

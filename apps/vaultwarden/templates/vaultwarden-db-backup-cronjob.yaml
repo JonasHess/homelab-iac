@@ -1,0 +1,53 @@
+{{- /*
+  Nightly consistent copy of the SQLite database. Restic copies db.sqlite3 and its
+  write-ahead log file by file while the server writes, so that copy can be torn;
+  "vaultwarden backup" takes a consistent snapshot through SQLite instead. The
+  copy lands in the data folder, which restic backs up.
+*/ -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: vaultwarden-db-backup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: vaultwarden-db-backup
+spec:
+  schedule: {{ .Values.dbBackup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          # Not the server's labels, so the pod never joins the vaultwarden Service.
+          labels:
+            app: vaultwarden-db-backup
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: backup
+              image: "vaultwarden/server:{{ .Values.image.tag }}"
+              env:
+                - name: DATA_FOLDER
+                  value: /data
+                - name: KEEP
+                  value: {{ required "dbBackup.keep must be set" .Values.dbBackup.keep | quote }}
+              command: ["sh", "-c"]
+              args:
+                - |
+                  set -eu
+                  /vaultwarden backup
+                  ls -1t /data/db_*.sqlite3 | tail -n +"$((KEEP + 1))" | while read -r old; do
+                    echo "removing $old"
+                    rm -f -- "$old"
+                  done
+                  ls -l /data/db_*.sqlite3
+              volumeMounts:
+                - name: data
+                  mountPath: /data
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: vaultwarden-data-pvc

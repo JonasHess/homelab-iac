@@ -29,3 +29,15 @@ smtp:
   host: smtp.example.com
   from: vaultwarden@example.com
   fromName: Vaultwarden
+
+# Shared by the server (templates/vaultwarden-application.yaml) and the database
+# backup CronJob, so the backup always runs the server's own version.
+image:
+  # renovate: depName=vaultwarden/server
+  tag: "1.37.4-alpine"
+
+dbBackup:
+  # Before restic-backup (02:00); both CronJobs use the cluster's time zone.
+  schedule: "45 1 * * *"
+  # Backups kept in the data folder; restic keeps the older ones.
+  keep: 3
