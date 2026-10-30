@@ -16,9 +16,18 @@ metadata:
   name: {{ $appName }}-bootstrap
   namespace: {{ $.Release.Namespace }}
 rules:
+  # Only the agent Secret: this namespace also holds ArgoCD's and Akeyless's
+  # credentials, which a broader grant would expose to the packages the Job
+  # installs at runtime.
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "create", "patch", "update"]
+    resourceNames: [{{ $agentSecret | quote }}]
+    verbs: ["get", "patch", "update"]
+  # RBAC cannot limit create by name; without it the first run cannot create
+  # the agent Secret. It grants no read, so it exposes no existing Secret.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
