@@ -7,6 +7,14 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
+  # The server migrates the shared database on startup; with a rolling update
+  # the old version would keep running against the migrating schema.
+  # rollingUpdate: null clears the defaults the API server stored while this
+  # Deployment was RollingUpdate; a client-side apply would otherwise keep them
+  # and the API server rejects them for type Recreate.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: immich
