@@ -17,12 +17,15 @@ data:
     current version is the newest export, with the older ones still reachable.
 
     Started right after a download, it waits up to CSV_WAIT_MINUTES for Paperless to
-    ingest the export that download produced: the download and then Paperless's queue,
-    one document every few seconds, can take well over an hour when many documents are
-    new. Every download writes a new export, so waiting for one always ends.
+    finish consuming the export that download produced: the download and then
+    Paperless's queue, one document every few seconds, can take well over an hour when
+    many documents are new. It waits for the consume task, not for a new document,
+    because an export without new bookings is byte-identical to the last one and
+    Paperless rejects it as a duplicate - which means there is simply nothing to merge.
 
-    Exit codes: 0 on success and when there is nothing to merge, 1 on any API error or
-    when a wait ends without a new export.
+    Exit codes: 0 on success and when there is nothing to merge, 1 on any API error,
+    when Paperless rejects the export for another reason, or when no export arrives
+    within the wait.
 
     Env: PAPERLESS_URL, PAPERLESS_API_TOKEN, ROOT_DOCUMENT_ID, CSV_FILENAME,
          CSV_WAIT_MINUTES (0 = look once)
@@ -116,29 +119,50 @@ data:
         return to_merge
 
 
+    def consume_task_since(started):
+        """The newest finished Paperless consume task for FILENAME created after
+        `started`, or None. Another account exporting under the same name can finish
+        first; its export is then skipped below and this one waits for the next run."""
+        # The file name filter of /api/tasks/ is not honoured by every Paperless version,
+        # so the name is checked here; the task type filter is.
+        tasks = api("/api/tasks/?task_type=consume_file")
+        tasks = tasks if isinstance(tasks, list) else tasks.get("results", [])
+        done = [t for t in tasks
+                if (t.get("input_data") or {}).get("filename") == FILENAME
+                and t.get("date_created")
+                and datetime.datetime.fromisoformat(t["date_created"]) >= started
+                and t.get("status", "").lower() in ("success", "failure")]
+        return max(done, key=lambda t: t["date_created"]) if done else None
+
+
     def main():
-        started = datetime.datetime.now(datetime.timezone.utc)
-        deadline = time.time() + WAIT_MINUTES * 60
-        while True:
-            to_merge = exports_to_merge()
-            if to_merge is None:
-                return 1
-            fresh = any(added and datetime.datetime.fromisoformat(added) >= started
-                        for added, _ in to_merge)
-            if fresh or time.time() >= deadline:
-                break
-            print(f"Waiting for Paperless to ingest the new {FILENAME}...", flush=True)
-            time.sleep(POLL_SECONDS)
+        failed = False
+        if WAIT_MINUTES > 0:
+            started = datetime.datetime.now(datetime.timezone.utc)
+            deadline = time.time() + WAIT_MINUTES * 60
+            task = consume_task_since(started)
+            while task is None and time.time() < deadline:
+                print(f"Waiting for Paperless to consume the new {FILENAME}...", flush=True)
+                time.sleep(POLL_SECONDS)
+                task = consume_task_since(started)
+            if task is None:
+                print(f"No {FILENAME} was consumed within {WAIT_MINUTES} minutes.", flush=True)
+                failed = True
+            elif task["status"].lower() == "failure":
+                duplicate = (task.get("result_data") or {}).get("duplicate_of")
+                if duplicate:
+                    print(f"The export is unchanged (duplicate of document {duplicate}).",
+                          flush=True)
+                else:
+                    print(f"Paperless rejected the export: {task.get('result')}", flush=True)
+                    failed = True
 
-        # Waiting that ends without a new export means the download behind it did not
-        # deliver one; that is a failure worth seeing, even if older exports get merged.
-        missed = WAIT_MINUTES > 0 and not fresh
-        if missed:
-            print(f"No new {FILENAME} arrived within {WAIT_MINUTES} minutes.", flush=True)
-
+        to_merge = exports_to_merge()
+        if to_merge is None:
+            return 1
         if not to_merge:
             print(f"Nothing to merge into document {ROOT_ID}.", flush=True)
-            return 1 if missed else 0
+            return 1 if failed else 0
 
         # Oldest first: every merged document gets the next version_index, and the highest
         # index counts as the current version. Feeding them in reverse would make an
@@ -152,7 +176,7 @@ data:
             {"documents": [ROOT_ID, *ids], "root_document_id": ROOT_ID},
         )
         print("Merge accepted.", flush=True)
-        return 1 if missed else 0
+        return 1 if failed else 0
 
 
     if __name__ == "__main__":
