@@ -1,0 +1,76 @@
+name: App Scripts
+
+# Script tests for apps that ship code: the paperless-gpt prompt and quality report,
+# the zigbee-light-watcher, and the restic backup script. Without this they only ran
+# by hand (and restic only inside its image build, after a merge), so a broken script
+# reached the cluster before any test saw it. The firefly-importer jobs have their
+# own workflow (firefly-jobs.yml).
+
+on:
+  # Runnable on demand, so a change to this workflow can be verified without a dummy
+  # commit to one of the apps.
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'apps/paperlessgpt/**'
+      - 'apps/zigbee-light-watcher/**'
+      - 'apps/restic/assets/**'
+      - 'apps/generic/**'
+      - 'tests/paperlessgpt-prompt/**'
+      - 'tests/paperlessgpt-report/**'
+      - 'tests/restic/**'
+      - 'tests/alert-rules/values.yaml'
+      - '.github/workflows/app-scripts.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/paperlessgpt/**'
+      - 'apps/zigbee-light-watcher/**'
+      - 'apps/restic/assets/**'
+      - 'apps/generic/**'
+      - 'tests/paperlessgpt-prompt/**'
+      - 'tests/paperlessgpt-report/**'
+      - 'tests/restic/**'
+      - 'tests/alert-rules/values.yaml'
+      - '.github/workflows/app-scripts.yml'
+
+jobs:
+  scripts:
+    name: Render and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+        with:
+          # renovate: datasource=github-releases depName=helm/helm
+          version: v4.3.1
+
+      - uses: actions/setup-python@v7
+        with:
+          # Keep this in step with the images the scripts actually run in.
+          python-version: '3.15'
+
+      - name: Install pytest and the restic script's requirements
+        env:
+          # renovate: datasource=pypi depName=pytest
+          PYTEST_VERSION: 9.2.0
+        run: pip install --quiet "pytest==${PYTEST_VERSION}" -r apps/restic/assets/requirements.txt
+
+      - name: paperless-gpt prompt survives the render
+        run: ./tests/paperlessgpt-prompt/verify-rendered.sh
+
+      - name: paperless-gpt quality report survives the render
+        run: ./tests/paperlessgpt-report/verify-rendered.sh
+
+      - name: paperless-gpt quality report unit tests
+        working-directory: tests/paperlessgpt-report
+        run: python -m pytest -q
+
+      - name: zigbee-light-watcher unit tests
+        working-directory: apps/zigbee-light-watcher/scripts
+        run: python -m unittest -v
+
+      - name: restic backup script unit tests
+        run: python -m pytest -q tests/restic
