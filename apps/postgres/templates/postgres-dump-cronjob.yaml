@@ -11,7 +11,7 @@ metadata:
   name: {{ $appName }}-dump
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: {{ $appName }}
+    app: {{ $appName }}-dump
     component: dump
 spec:
   schedule: {{ .Values.dump.schedule | quote }}
@@ -24,7 +24,9 @@ spec:
       template:
         metadata:
           labels:
-            app: {{ $appName }}
+            # Not "app: {{ $appName }}": that is the Service's selector, so the dump
+            # pod would join it and receive the database connections, its own included.
+            app: {{ $appName }}-dump
             component: dump
         spec:
           restartPolicy: Never
