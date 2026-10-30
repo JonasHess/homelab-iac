@@ -79,6 +79,32 @@ tests:
         exp_alerts: []
 
   - interval: 1m
+    name: BackupTooOld fires for a database dump that stopped succeeding
+    input_series:
+      # last success 40h before the evaluation window, over the 36h threshold
+      - series: 'kube_cronjob_status_last_successful_time{cronjob="postgres-dump", namespace="argocd"}'
+        values: '-144000x20'
+      # a fresh one next to it must stay silent
+      - series: 'kube_cronjob_status_last_successful_time{cronjob="vaultwarden-db-backup", namespace="argocd"}'
+        values: '-72000x20'
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BackupTooOld
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              cronjob: postgres-dump
+              namespace: argocd
+            exp_annotations:
+              summary: "postgres-dump last succeeded 1d 16h 15m 0s ago"
+              description: |
+                The CronJob postgres-dump in namespace
+                argocd has not completed successfully for over 36
+                hours, against a daily schedule.
+                A CronJob that stops being scheduled produces no failing Job at all, so
+                KubeJobFailed stays silent: this is the only signal that backups have stopped.
+
+  - interval: 1m
     name: BackupNeverSucceeded fires when the CronJob has no successful run on record
     # No input series: the metric is absent, which is exactly when BackupTooOld cannot
     # fire. A placeholder series keeps promtool from rejecting an empty test.
