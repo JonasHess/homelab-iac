@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: n8nio/n8n:2.46.2
+    image: n8nio/n8n:2.46.3
     ports:
       - containerPort: 5678
     pvcMounts:
