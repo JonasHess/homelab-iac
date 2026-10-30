@@ -40,4 +40,6 @@ render restic --set appName=restic --set generic.appName=restic \
   --set generic.persistentVolumeClaims.tank1.hostPath=/tmp/tank1 \
   --set generic.persistentVolumeClaims.restoreddata.hostPath=/tmp/restored
 
-render zigbee-light-watcher
+# appName comes from ArgoCD in a real deploy (base-chart sets it as a parameter), so the
+# chart's values do not carry it; pass it the same way here.
+render zigbee-light-watcher --set appName=zigbee-light-watcher
