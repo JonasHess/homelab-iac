@@ -69,6 +69,9 @@ Renovate auto-merges only when every check passes, so a red check stops a bad bu
    #   groups: [...] -> with oauth: true, only these Cognito groups get through
    #                    (default: global.oidc.defaultGroups)
    # A second entry with pathPrefixes can carve out paths; the longer prefix wins.
+   # generic.ingress.groups: app-wide groups for oauth: true routes without their own.
+   # Environments restrict an app with this instead of copying its https list
+   # (Helm replaces lists whole, so a copy silently pins the routes).
    ```
 
 3. **Persistent Storage**: hostPath PersistentVolumes, one per mount

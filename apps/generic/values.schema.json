@@ -525,6 +525,14 @@
             }
           }
         },
+        "groups": {
+          "type": "array",
+          "description": "Cognito groups allowed to reach every oauth: true route of this app that sets no groups of its own (a route's own groups win; without this, global.oidc.defaultGroups applies). Same rules as a route's groups: a user needs ANY one of them, the groups must exist in the pool with members before this is deployed. oauth: false routes stay open. Lets an environment restrict an app without copying its https list.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
         "tcp": {
           "type": "array",
           "description": "TCP ingress routes via Gateway API TCPRoute",

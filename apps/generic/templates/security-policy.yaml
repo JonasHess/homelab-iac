@@ -16,6 +16,12 @@
   3. `oauth: true` without `groups` — nothing is emitted; the route inherits the
      Gateway-level OIDC and every authenticated user may reach it.
 
+  A route without its own `groups` takes the app-wide `ingress.groups`, then
+  `global.oidc.defaultGroups`, so case 3 only happens when neither is set. The
+  app-wide list exists so an environment can restrict an app without copying
+  its `ingress.https` list: Helm replaces lists whole, and a copied list would
+  silently pin the routes to whatever the copy says.
+
   The schema makes `oauth` required (apps/generic/values.schema.json), so it can
   never be absent — the choice is always explicit per route.
 */ -}}
@@ -26,12 +32,14 @@
     {{- $gatewayNamespace := required "global.gateway.namespace must be set" $.Values.global.gateway.namespace }}
 
     {{- range $index, $ingress := .Values.ingress.https }}
-    {{- /* Route groups; falls back to global.oidc.defaultGroups unless the route
-           opts out via noDefaultGroups (used by apps that ship their own
-           SecurityPolicy, e.g. firefly). */ -}}
+    {{- /* Route groups; falls back to the app-wide ingress.groups, then to
+           global.oidc.defaultGroups, unless the route opts out via
+           noDefaultGroups (used by apps that ship their own SecurityPolicy,
+           e.g. firefly). The fallbacks only matter for oauth: true routes; an
+           oauth: false route stays open whatever they say. */ -}}
     {{- $groups := $ingress.groups }}
     {{- if not $ingress.noDefaultGroups }}
-      {{- $groups = $ingress.groups | default (($.Values.global.oidc | default dict).defaultGroups) }}
+      {{- $groups = $ingress.groups | default $.Values.ingress.groups | default (($.Values.global.oidc | default dict).defaultGroups) }}
     {{- end }}
     {{- if and (not $ingress.oauth) $ingress.groups }}
       {{- fail (printf "ingress.https[%d]: groups need oauth: true; with oauth: false the route is open to everyone and the group check would be dropped" $index) }}
