@@ -16,6 +16,15 @@ generic:
         port: 80
         service: vaultwarden
         oauth: false
+      # The admin panel only needs a browser, so it can sit behind OIDC; the
+      # longer prefix outranks the route above. The Bitwarden clients never call
+      # /admin, so they keep using the OIDC-free route.
+      - subdomain: vaultwarden
+        port: 80
+        service: vaultwarden
+        pathPrefixes:
+          - /admin
+        oauth: true
 smtp:
   host: smtp.example.com
   from: vaultwarden@example.com
