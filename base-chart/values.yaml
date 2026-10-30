@@ -342,14 +342,6 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "21"  # Deploy after Duplicati and Prometheus
-  generic:
-    enabled: false
-    argocd:
-      targetRevision: ~
-      namespace: "argocd"
-      project: "default"
-      syncWave: "25"
-  
   gotenberg:
     enabled: false
     argocd:
@@ -871,6 +863,15 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "16"
+  c24-document-downloader:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'  # Deploy after core apps, like portal-document-downloader
   portal-document-downloader:
     enabled: false
     homer:
