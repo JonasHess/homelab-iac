@@ -88,10 +88,11 @@ if ! command -v yq &> /dev/null; then
 fi
 
 # Extract values from the values.yaml file
-SERVER_IP=$(yq e '.global.cluster.serverip' "$VALUES_FILE")
-USERNAME=$(yq e '.global.cluster.username' "$VALUES_FILE")
-IP_RANGE=$(yq e '.global.cluster.ip-range' "$VALUES_FILE")
-CLUSTER_NAME=$(yq e '.global.cluster.cluster-name' "$VALUES_FILE")
+# '// ""': yq prints the word null for a missing key, which -z below would accept.
+SERVER_IP=$(yq e '.global.cluster.serverip // ""' "$VALUES_FILE")
+USERNAME=$(yq e '.global.cluster.username // ""' "$VALUES_FILE")
+IP_RANGE=$(yq e '.global.cluster.ip-range // ""' "$VALUES_FILE")
+CLUSTER_NAME=$(yq e '.global.cluster.cluster-name // ""' "$VALUES_FILE")
 
 # Verify that all required values were extracted
 if [ -z "$SERVER_IP" ] || [ -z "$USERNAME" ] || [ -z "$IP_RANGE" ] || [ -z "$CLUSTER_NAME" ]; then

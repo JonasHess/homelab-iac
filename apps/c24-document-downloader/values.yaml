@@ -1,5 +1,3 @@
-appName: c24-document-downloader
-
 generic:
   configMaps:
     c24-document-downloader-config:

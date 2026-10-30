@@ -1,5 +1,3 @@
-appName: firefly-sankey
-
 generic:
   # Non-secret runtime config → env vars. FIREFLY_URL points at Firefly core in the
   # same (argocd) namespace; the app reaches it by the short service name.

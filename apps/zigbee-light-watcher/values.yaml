@@ -1,5 +1,3 @@
-appName: zigbee-light-watcher
-
 image: python:3.15.2-slim
 # Installed by the init container at pod start; the script needs nothing else.
 # Keep the `name==version` form: Renovate's PyPI manager matches exactly that.

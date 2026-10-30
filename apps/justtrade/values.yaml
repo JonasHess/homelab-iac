@@ -1,5 +1,3 @@
-appName: justtrade
-
 # PVCs (justtrade-credentials-pvc, justtrade-downloads-pvc), the ExternalSecret
 # (justtrade-credentials) and any hostPaths are supplied by the environment repo
 # via the generic sub-chart — see README.md.

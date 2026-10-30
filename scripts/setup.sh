@@ -71,7 +71,8 @@ if ! command -v yq &> /dev/null; then
 fi
 
 # Extract cluster name from the values.yaml file
-CLUSTER_NAME=$(yq e '.global.cluster.cluster-name' "$VALUES_FILE")
+# '// ""': yq prints the word null for a missing key, which -z below would accept.
+CLUSTER_NAME=$(yq e '.global.cluster.cluster-name // ""' "$VALUES_FILE")
 
 
 # Verify that required values were extracted

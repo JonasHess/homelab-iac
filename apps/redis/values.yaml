@@ -1,6 +1,8 @@
 generic:
   deployment:
-    image: docker.io/library/redis:8
+    # Full version, not "8": a floating tag runs whatever the node last pulled,
+    # and Renovate can only propose updates for a pinned version.
+    image: docker.io/library/redis:8.6.0
     ports:
     - containerPort: 6379
     pvcMounts:

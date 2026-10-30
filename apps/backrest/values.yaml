@@ -1,5 +1,3 @@
-appName: backrest
-
 # Custom deployment configuration (not using generic chart deployment)
 deployment:
   image: garethgeorge/backrest:v1.14.1

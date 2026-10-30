@@ -25,6 +25,8 @@ scripts/
   microk8s-setup/        # MicroK8s setup helpers
   zfs-exporter/          # Prometheus ZFS exporter installer
 doc/                     # Operational notes (Cognito, Homematic, ZFS, Paperless, ...)
+docs/                    # Architecture docs: gateway + OIDC, backup and recovery, Envoy migration
+tests/                   # CI checks: chart render + kubeconform, alert rules, job scripts, restic
 ```
 
 ## Core Technologies
@@ -72,6 +74,8 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 - **Audiobookshelf** — audiobook and podcast server
 - **Immich** — self-hosted photo and video backup
 - **SFTPGo** — SFTP/FTP server
+- **TeddyCloud** - Toniebox cloud replacement
+- **tonie-studio** - builds travel tonies from the audio archive
 
 ### *arr Stack
 - **Radarr** — movies
@@ -92,6 +96,7 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 - **smarthome4** — custom smart-home service
 - **smarthome4-ui** — FastAPI + React UI for Zigbee2MQTT scenes
 - **alexa-custom-skill** / **alexa-smarthome-skill** — Alexa integrations
+- **zigbee-light-watcher** - exports lights whose real on/off state disagrees with Home Assistant as metrics
 
 ### Productivity
 - **Paperless-ngx** + **Paperless-GPT** — document management with LLM classification
@@ -104,7 +109,12 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 - **Nextcloud** — file sync and collaboration
 - **FreshRSS** — RSS aggregator
 - **n8n** — workflow automation
-- **portal-document-downloader** / **pytr** — automated document fetchers
+- **portal-document-downloader** / **pytr** / **justtrade** / **c24-document-downloader** - automated document fetchers
+- **Firefly III** + **firefly-importer** + **firefly-sankey** - personal finance, bank import, Sankey money-flow diagrams
+- **InfCloud** - CalDAV/CardDAV web client
+- **Kalibra** - scale and weight calibration records
+- **facilioo-watch** - report on stalled property-management processes
+- **venice-autobook** - auto-books capacity-limited gym classes
 
 ### AI & ML
 - **Ollama** — local LLM runtime
@@ -128,6 +138,7 @@ Apps are organised by their dashboard group in `base-chart/values.yaml`.
 
 ### Monitoring & Observability
 - **Prometheus** — metrics
+- **Beszel** - lightweight server monitoring
 - **Grafana** — dashboards
 - **Alertmanager** — alert routing
 - **Duplicati Prometheus Exporter** — backup metrics

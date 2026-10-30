@@ -1,5 +1,3 @@
-appName: pytr
-
 generic:
   # The per-instance values supply the entries: the secret names carry appName, so
   # declaring them here would make both chart instances claim the same Secret.

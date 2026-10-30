@@ -1,5 +1,4 @@
 generic:
-  appName: mosquitto
   configMaps:
     mosquitto-config-cm:
       mosquitto.conf: |-

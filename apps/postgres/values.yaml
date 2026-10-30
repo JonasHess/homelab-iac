@@ -3,7 +3,9 @@ generic:
     postgres-secret:
       - POSTGRES_PASSWORD: "/postgres/POSTGRES_PASSWORD"
   deployment:
-    image: postgres:17
+    # Full version, not "17": a floating tag runs whatever the node last pulled,
+    # and Renovate can only propose updates for a pinned version.
+    image: postgres:17.7
     # Requests only, sized from measured usage, so this pod is among the last
     # to be evicted under memory pressure. No limit: a too-tight one kills the app, and the node has ample headroom.
     resources:

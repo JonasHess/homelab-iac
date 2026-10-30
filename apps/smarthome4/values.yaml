@@ -1,5 +1,4 @@
 generic:
-  appName: smarthome4
   configMaps:
     smarthome4-config-map:
       SPRING_PROFILES_ACTIVE: "prod"

@@ -1,5 +1,3 @@
-appName: jellyfin
-
 generic:
   deployment:
     image: lscr.io/linuxserver/jellyfin:10.11.11
