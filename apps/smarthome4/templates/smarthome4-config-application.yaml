@@ -20,3 +20,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    # Policy shared by every Application: global.argocd.retry in base-chart/values.yaml.
+    retry:
+      {{- toYaml (required "global.argocd.retry must be set" $.Values.global.argocd.retry) | nindent 6 }}

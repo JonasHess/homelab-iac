@@ -48,9 +48,6 @@ spec:
     syncOptions:
       - allowEmpty=true
       - CreateNamespace=true
+    # Policy shared by every Application: global.argocd.retry in base-chart/values.yaml.
     retry:
-      limit: 5
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 1m
+      {{- toYaml (required "global.argocd.retry must be set" $.Values.global.argocd.retry) | nindent 6 }}
