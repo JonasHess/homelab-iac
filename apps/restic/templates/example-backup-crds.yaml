@@ -6,7 +6,7 @@ kind: ResticBackup
 metadata:
   name: mealie-data-backup
   labels:
-    backup.homelab.dev/enabled: "true"
+    restic/backup: "true"
 spec:
   pvcName: mealie-data-pvc
   namespace: argocd
@@ -21,7 +21,7 @@ kind: ResticBackup
 metadata:
   name: immich-library-backup
   labels:
-    backup.homelab.dev/enabled: "true"
+    restic/backup: "true"
 spec:
   pvcName: immich-library-pvc
   namespace: app-immich
@@ -46,7 +46,7 @@ kind: ResticBackup
 metadata:
   name: paperless-documents-backup
   labels:
-    backup.homelab.dev/enabled: "true"
+    restic/backup: "true"
 spec:
   pvcName: paperless-data-pvc
   namespace: argocd

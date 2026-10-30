@@ -1,217 +1,60 @@
-# Restic CRD-Based Backup System
+# Restic backups (ResticBackup CRs)
 
-This directory contains a complete rewrite of the restic backup system using Kubernetes Custom Resource Definitions (CRDs) for declarative backup configuration.
+Nightly restic backups of PVC data to S3, configured declaratively with one `ResticBackup` custom resource per volume. The full picture (what runs when, the Immich layout, a tested workstation restore, known gaps) is in `docs/backup-and-recovery.md`; this file covers the chart.
 
-## Architecture Overview
+## How it works
 
-### Components
+1. An app marks a volume for backup in its generic chart values; the generic chart renders a `ResticBackup` CR for it (`apps/generic/templates/backup-crd.yaml`).
+2. The CronJob `restic-backup` (02:00 by default, `cronjob.schedule`) runs `assets/restic-operations.py backup restic/backup=true`.
+3. The script lists every `ResticBackup` with the label `restic/backup=true`, resolves each PVC to its PV's hostPath, and backs that path up from the host mounts of the backup pod.
+4. After the backups it runs `restic check --read-data-subset=5%` and `restic forget --keep-daily 7 --keep-weekly 3 --keep-monthly 6 --prune`.
 
-- **ResticBackup CRD**: Defines backup configurations for PVCs
-- **Python Operations Script**: Unified backup and restore logic
-- **RBAC Resources**: ServiceAccount with minimal required permissions
-- **CronJobs**: Scheduled backup and manual restore operations
+The alerts in `templates/restic-alerts.yaml` fire when the CronJob (or the database copies it relies on) has not succeeded for 36 hours, or has never succeeded.
 
-### Data Flow
+## Marking a volume for backup
 
-1. **Backup**: `ResticBackup` CRDs with `backup.homelab.dev/enabled=true` → Discovery → Individual backup execution
-2. **Restore**: `ResticBackup` CRDs with `backup.homelab.dev/restore=true` → Discovery → Individual restore execution
-
-## Usage
-
-### Creating a Backup Configuration
+In the app's `values.yaml`, on a `pvcMounts` entry or a `persistentVolumeClaims` entry:
 
 ```yaml
-apiVersion: backup.homelab.dev/v1
-kind: ResticBackup
-metadata:
-  name: my-app-backup
-  labels:
-    backup.homelab.dev/enabled: "true"
-spec:
-  pvcName: my-app-data-pvc
-  namespace: default
-  include:
-    - "**/*.jpg"
-    - "**/*.png"
-  exclude:
-    - "**/cache/**"
-    - "**/temp/**"
-  excludeLargerThan: "100M"
-  excludeCaches: true
+generic:
+  deployment:
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~
+        backup:
+          enabled: true            # label restic/backup: "true"
+          exclude: ["**/thumbs/**"] # optional, on top of the global excludes
+          excludeLargerThan: "1G"   # optional
+          excludeCaches: true       # optional, default true
+          excludeIfPresent: .nobackup # optional, default .nobackup
 ```
 
-### Triggering Backups
+Hand-written CRs work too, as long as they carry the label `restic/backup: "true"`; `templates/example-backup-crds.yaml` has three (`examples.enabled: true` renders them).
 
-Backups run automatically via CronJob (daily at 2 AM by default).
+Global excludes (logs, caches, temp, build output) live in `globalBackupRules.exclude` in `values.yaml` and apply to every backup. A real directory named `cache`, `logs`, `tmp`, ... is skipped in every app.
 
-Manual backup:
-```bash
-kubectl create job --from=cronjob/restic-backup backup-manual-$(date +%Y%m%d)
-```
+## Restoring
 
-### Triggering Restores
+For a real disaster, restore on a workstation as described in `docs/backup-and-recovery.md` (section 5). The in-cluster restore below writes into a separate volume and is meant for single apps:
 
-1. Label CRDs for restore:
-```bash
-kubectl label resticbackup my-app-backup backup.homelab.dev/restore=true
-```
+1. Set `backup.restore: true` on the volume (label `restic/restore: "true"`) and `restoreCronjob.date` (`YYYY-MM-DD`) in the restic values, then push.
+2. Start the restore: `kubectl --context <ctx> -n argocd create job --from=cronjob/restic-restore restore-$(date +%Y%m%d)`.
+3. The data lands in the `restoreddata` volume, mounted at `/restored-data` in the restore pod.
+4. Remove `backup.restore` again afterwards.
 
-2. Set restore date (if different from default):
-```bash
-kubectl patch cronjob restic-restore -p '{"spec":{"jobTemplate":{"spec":{"template":{"spec":{"containers":[{"name":"restore","env":[{"name":"RESTORE_DATE","value":"2025-05-30"}]}]}}}}}}'
-```
-
-3. Create restore job:
-```bash
-kubectl create job --from=cronjob/restic-restore restore-$(date +%Y%m%d)
-```
-
-4. Access restored data:
-```bash
-kubectl exec -it <restore-pod> -- ls /restored-data/
-```
-
-5. Clean up labels:
-```bash
-kubectl label resticbackup my-app-backup backup.homelab.dev/restore-
-```
-
-## Configuration
-
-### Global Excludes
-
-Global exclusion patterns are defined in `values.yaml`:
-
-```yaml
-globalBackupRules:
-  exclude:
-    - "**/*.log"
-    - "**/cache/**"
-    - "**/tmp/**"
-    # ... more patterns
-```
-
-These are automatically applied to all backups.
-
-### Per-CRD Configuration
-
-Each `ResticBackup` CRD supports:
-
-- **include**: Include only matching patterns
-- **exclude**: Exclude matching patterns (in addition to global excludes)
-- **excludeLargerThan**: Skip files larger than specified size
-- **excludeCaches**: Skip directories with CACHEDIR.TAG
-- **excludeIfPresent**: Skip directories containing specified file
-
-## Examples
-
-### Photo Library Backup
-
-```yaml
-apiVersion: backup.homelab.dev/v1
-kind: ResticBackup
-metadata:
-  name: immich-photos-backup
-  labels:
-    backup.homelab.dev/enabled: "true"
-spec:
-  pvcName: immich-library-pvc
-  namespace: app-immich
-  include:
-    - "**/*.jpg"
-    - "**/*.jpeg"
-    - "**/*.png"
-    - "**/*.mp4"
-  exclude:
-    - "**/thumbnails/**"
-    - "**/preview/**"
-  excludeLargerThan: "1G"
-```
-
-### Document Backup
-
-```yaml
-apiVersion: backup.homelab.dev/v1
-kind: ResticBackup
-metadata:
-  name: paperless-docs-backup
-  labels:
-    backup.homelab.dev/enabled: "true"
-spec:
-  pvcName: paperless-data-pvc
-  namespace: argocd
-  include:
-    - "**/documents/**"
-    - "**/*.pdf"
-  exclude:
-    - "**/index/**"
-    - "**/search/**"
-  excludeIfPresent: ".nobackup"
-```
-
-### Simple Full Backup
-
-```yaml
-apiVersion: backup.homelab.dev/v1
-kind: ResticBackup
-metadata:
-  name: mealie-simple-backup
-  labels:
-    backup.homelab.dev/enabled: "true"
-spec:
-  pvcName: mealie-data-pvc
-  namespace: argocd
-  excludeLargerThan: "50M"
-```
-
-## Testing
-
-### Enable Examples
-
-Set `examples.enabled: true` in values.yaml to deploy example CRDs for testing.
-
-### Validation Commands
+## Useful commands
 
 ```bash
-# List all backup CRDs
-kubectl get resticbackups
-
-# Check backup CRD details
-kubectl describe resticbackup my-app-backup
-
-# View backup job logs
-kubectl logs job/restic-backup-<timestamp>
-
-# View restore job logs
-kubectl logs job/restic-restore-<timestamp>
-
-# Check repository status
-kubectl exec -it <backup-pod> -- restic snapshots
-
-# List available snapshots for specific date
-kubectl exec -it <backup-pod> -- restic snapshots --tag backup-20250530
+kubectl --context <ctx> get resticbackups                      # every CR (cluster-scoped)
+kubectl --context <ctx> get resticbackups -l restic/backup=true
+kubectl --context <ctx> -n argocd create job --from=cronjob/restic-backup backup-manual-$(date +%Y%m%d)
+kubectl --context <ctx> -n argocd logs job/<job-name>
 ```
 
-### Troubleshooting
+## Troubleshooting
 
-1. **CRD Not Found**: Ensure the CRD has the correct label (`backup.homelab.dev/enabled=true`)
-2. **PVC Resolution Failed**: Check that PVC exists and is bound to a PV with hostPath
-3. **Permission Denied**: Verify ServiceAccount has proper RBAC permissions
-4. **Path Not Found**: Ensure the resolved hostPath exists on the node
-
-## Migration from Legacy System
-
-The legacy ConfigMap-based system is deprecated. To migrate:
-
-1. Create `ResticBackup` CRDs for each application
-2. Remove legacy backup configurations from base-chart values
-3. Test new CRDs with manual backup jobs
-4. Switch to new CronJobs when validated
-
-## Repository Maintenance
-
-The system automatically performs:
-
-- **Integrity checks**: 5% data verification after each backup
-- **Retention policy**: Keep 30 daily, 7 weekly, 12 monthly snapshots
-- **Pruning**: Remove unreferenced data to optimize storage
+- **Volume not backed up**: the CR is missing the `restic/backup: "true"` label, or `backup.enabled` is not set on that volume.
+- **PVC resolution failed**: the PVC does not exist, is not bound, or its PV has no `hostPath`.
+- **Path not found**: the resolved hostPath is not below one of the backup pod's host mounts (`cronjob.pvcMounts`, set per environment).
+- **Permission denied**: check the `restic-backup-scanner` ServiceAccount and its ClusterRole in `templates/restic-backup-rbac.yaml`.
