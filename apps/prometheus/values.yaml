@@ -49,3 +49,7 @@ generic:
   persistentVolumeClaims:
     grafana:
       hostPath: ~ # /mnt/somewhere/unencrypted/apps/prometheus/grafana/data
+      # Dashboards from assets/dashboards are provisioned from git; this keeps
+      # the rest (dashboards made in the UI, users, API keys, preferences).
+      backup:
+        enabled: true
