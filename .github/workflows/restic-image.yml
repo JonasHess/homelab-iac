@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - main
+    # Only what the image is built from. Chart, template and values changes deploy
+    # through ArgoCD; rebuilding for them pushes an identical script and opens a
+    # deploy PR that changes nothing.
     paths:
-      - 'apps/restic/**'
-      - '!apps/restic/values.yaml'
+      - 'apps/restic/Dockerfile'
+      - 'apps/restic/assets/**'
   workflow_dispatch:
 
 jobs:
@@ -75,7 +78,7 @@ jobs:
           echo "  $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG_SHA"
 
       # Renovate cannot see private ECR images, so the deployed tag is bumped here instead.
-      # Merging this PR does not rebuild the image: values.yaml is excluded from the trigger paths.
+      # Merging this PR does not rebuild the image: values.yaml is not in the trigger paths.
       # Needs "Allow GitHub Actions to create and approve pull requests" in the repo settings.
       - name: Open a PR that deploys the new image
         env:
