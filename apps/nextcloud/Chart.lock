@@ -1,9 +1,9 @@
 dependencies:
 - name: generic
   repository: file://../generic
-  version: 0.1.62
+  version: 0.1.63
 - name: nextcloud
   repository: https://nextcloud.github.io/helm/
   version: 9.4.1
-digest: sha256:d2298e98d57ce3a813745b339034e8411b123ce415373826bba24a0159c13730
-generated: "2026-10-30T11:09:57.328469+01:00"
+digest: sha256:11f5160828d9c435104a708629516d58552788a2badb52a585415cc6dc390dd6
+generated: "2026-10-30T16:36:04.433942+01:00"
