@@ -210,7 +210,7 @@ generic:
     pvcMounts:
       config:
         mountPath: /config
-        hostPath: /mnt/storage/<appname>/config
+        hostPath: ~   # set per environment, never here
   service:
     ports:
     - name: http
@@ -228,10 +228,10 @@ Set the real `hostPath` values in `homelab_environments/<env>/values.yaml` and c
 ```yaml
 apps:
   <appname>:
-    enabled: true
+    enabled: false        # switched on per environment (step 6)
     homer:
       enabled: true
-      group: "<group-name>"
+      group: "<group-key>"  # a key under homer.groups in this file, e.g. productivity
       logo: "<icon-url>"
       subtitle: "<description>"
       displayName: "<display-name>"
@@ -242,12 +242,17 @@ apps:
       syncWave: "15"
 ```
 
-### 5. Update Dependencies
+### 5. Vendor the generic chart
 ```bash
-cd apps && ./bump_generic_chart.sh
+helm dependency update apps/<appname>   # writes Chart.lock + charts/generic-X.X.X.tgz
 ```
+Commit both files: CI (`tests/charts/render-all.sh`) fails when they do not match Chart.yaml.
+Not `bump_generic_chart.sh` - that releases a new generic version for every app.
 
-The application will be automatically deployed by ArgoCD once pushed to the repository.
+### 6. Enable it in an environment
+In `homelab_environments/<env>/values.yaml`, set `apps.<appname>.enabled: true` and the
+`hostPath` values under `apps.<appname>.argocd.helm.values`. ArgoCD deploys the app once
+both repos are pushed (iac first, so the chart exists when the env switches it on).
 
 ## File Cleanup Application
 
