@@ -5,6 +5,7 @@
   before the restic-backup CronJob so the dump restic picks up is the fresh one.
 */ -}}
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
+{{- if (.Values.generic.persistentVolumeClaims | default dict).dumps }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -78,3 +79,4 @@ spec:
             - name: dumps
               persistentVolumeClaim:
                 claimName: {{ $appName }}-dumps-pvc
+{{- end }}

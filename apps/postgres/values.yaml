@@ -43,18 +43,20 @@ generic:
       postgresqlconf:
         mountPath: /etc/postgresql
         configMapName: postgres-config-file
-  # Target of the nightly dump CronJob only; not mounted into the server, so adding
-  # or moving it never restarts Postgres. The host directory must exist beforehand.
-  persistentVolumeClaims:
-    dumps:
-      hostPath: ~ # /mnt/somewhere/encrypted/apps/postgres/dumps
-      backup:
-        enabled: true
   service:
     ports:
     - name: postgres
       port: 5432
 
+# Nightly pg_dumpall, opt-in per environment: it runs only where the environment
+# defines its target volume, because that needs a host directory created first.
+# Enable it in the environment values with:
+#   generic:
+#     persistentVolumeClaims:
+#       dumps:                 # not mounted into the server, so it never restarts Postgres
+#         hostPath: /mnt/<pool>/encrypted/apps/postgres/dumps
+#         backup:
+#           enabled: true
 dump:
   # Before restic-backup (02:00); both CronJobs use the cluster's time zone.
   schedule: "30 1 * * *"
