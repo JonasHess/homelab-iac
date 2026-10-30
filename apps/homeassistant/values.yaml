@@ -11,6 +11,12 @@ generic:
       TZ: "Europe/Berlin"
   deployment:
     image: ghcr.io/home-assistant/home-assistant:2026.10.4
+    # Requests only, sized from measured usage, so this pod is among the last
+    # to be evicted under memory pressure. No limit: a too-tight one kills the app, and the node has ample headroom.
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "50m"
     ports:
       - containerPort: 8123
     pvcMounts:

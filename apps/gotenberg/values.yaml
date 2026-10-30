@@ -1,6 +1,12 @@
 generic:
   deployment:
     image: docker.io/gotenberg/gotenberg:8.39
+    # Requests only, sized from measured usage, so this pod is among the last
+    # to be evicted under memory pressure. No limit: a too-tight one kills the app, and the node has ample headroom.
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "10m"
     ports:
     - containerPort: 3000
   service:

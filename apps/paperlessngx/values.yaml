@@ -10,6 +10,12 @@ generic:
       - PAPERLESS_SECRET_KEY: "/paperlessngx/PAPERLESS_SECRET_KEY"
   deployment:
     image: ghcr.io/paperless-ngx/paperless-ngx:3.4.0
+    # Requests only, sized from measured usage, so this pod is among the last
+    # to be evicted under memory pressure. No limit: OCR of a large document peaks at several GiB.
+    resources:
+      requests:
+        memory: "1536Mi"
+        cpu: "100m"
     ports:
       - containerPort: 8000
     pvcMounts:

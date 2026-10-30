@@ -4,6 +4,12 @@ generic:
       - POSTGRES_PASSWORD: "/postgres/POSTGRES_PASSWORD"
   deployment:
     image: postgres:17
+    # Requests only, sized from measured usage, so this pod is among the last
+    # to be evicted under memory pressure. No limit: a too-tight one kills the app, and the node has ample headroom.
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "50m"
     ports:
     - containerPort: 5432
     readinessProbe:
