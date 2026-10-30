@@ -3,9 +3,6 @@ generic:
     image: santiagosayshey/profilarr:v1.1.5
     ports:
       - containerPort: 6868
-    env:
-      - name: TZ
-        value: "UTC"
     envFrom:
       configMapRef: profilarr-config
     pvcMounts:

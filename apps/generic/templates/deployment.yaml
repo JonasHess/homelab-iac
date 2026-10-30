@@ -12,7 +12,7 @@ metadata:
     reloader.stakater.com/auto: "true"
 spec:
   replicas: 1
-  revisionHistoryLimit: {{ $deployment.revisionHistoryLimit | default 3 }}
+  revisionHistoryLimit: {{ if hasKey $deployment "revisionHistoryLimit" }}{{ $deployment.revisionHistoryLimit }}{{ else }}3{{ end }}
   strategy:
     type: Recreate
   selector:

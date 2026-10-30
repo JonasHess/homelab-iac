@@ -8,8 +8,10 @@
     {{- $security := $.Values.global.security | default dict }}
     {{- $publicListeners := and (hasKey $security "cloudflareOriginCA") (ne ($security.cloudflareOriginCA | default "") "") }}
     {{- range $index, $ingress := .Values.ingress.https }}
-    {{- $sectionLan := ternary "websecure" "websecure-apex" (hasKey $ingress "subdomain") }}
-    {{- $sectionPublic := ternary "websecure-public" "websecure-public-apex" (hasKey $ingress "subdomain") }}
+    {{- /* Listener and hostname must agree: an empty subdomain means the apex. */}}
+    {{- $hasSubdomain := not (empty $ingress.subdomain) }}
+    {{- $sectionLan := ternary "websecure" "websecure-apex" $hasSubdomain }}
+    {{- $sectionPublic := ternary "websecure-public" "websecure-public-apex" $hasSubdomain }}
 
 ---
 apiVersion: gateway.networking.k8s.io/v1
@@ -30,7 +32,7 @@ spec:
       sectionName: {{ $sectionPublic }}
     {{- end }}
   hostnames:
-    - {{ if $ingress.subdomain }}{{ $ingress.subdomain }}.{{ $domain }}{{ else }}{{ $domain }}{{ end }}
+    - {{ if $hasSubdomain }}{{ $ingress.subdomain }}.{{ $domain }}{{ else }}{{ $domain }}{{ end }}
   rules:
     {{- if or $ingress.pathPrefixes $ingress.rawMatch }}
     {{- if $ingress.pathPrefixes }}

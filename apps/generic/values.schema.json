@@ -13,7 +13,7 @@
       "type": "object",
       "properties": {
         "domain": {
-          "type": "string",
+          "type": ["string", "null"],
           "description": "Domain name for HTTPS ingress routes (required if ingress.https is defined)."
         },
         "gateway": {

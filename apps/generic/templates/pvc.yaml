@@ -1,7 +1,13 @@
 {{- $appName := required "appName must be set in values.yaml" .Values.appName }}
 
 {{- if .Values.persistentVolumeClaims }}
+  {{- $pvcMounts := (.Values.deployment | default dict).pvcMounts | default dict }}
   {{- range $pvcName, $pvcConfig := .Values.persistentVolumeClaims }}
+  {{- /* Both paths name their PV, PVC and ResticBackup <app>-<key>; a shared key
+         would emit two different objects under one name. */}}
+  {{- if hasKey $pvcMounts $pvcName }}
+    {{- fail (printf "persistentVolumeClaims.%s collides with deployment.pvcMounts.%s; use different keys" $pvcName $pvcName) }}
+  {{- end }}
 ---
 apiVersion: v1
 kind: PersistentVolume

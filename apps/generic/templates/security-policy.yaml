@@ -33,6 +33,9 @@
     {{- if not $ingress.noDefaultGroups }}
       {{- $groups = $ingress.groups | default (($.Values.global.oidc | default dict).defaultGroups) }}
     {{- end }}
+    {{- if and (not $ingress.oauth) $ingress.groups }}
+      {{- fail (printf "ingress.https[%d]: groups need oauth: true; with oauth: false the route is open to everyone and the group check would be dropped" $index) }}
+    {{- end }}
     {{- if not $ingress.oauth }}
 
 ---

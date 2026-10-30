@@ -42,7 +42,9 @@ spec:
   {{- if $backup.excludeLargerThan }}
   excludeLargerThan: {{ $backup.excludeLargerThan | quote }}
   {{- end }}
-  {{- if $backup.excludeCaches }}
+  {{- /* hasKey, not truthiness: the backup job defaults excludeCaches to true,
+         so an explicit false must reach the CR to turn it off. */}}
+  {{- if hasKey $backup "excludeCaches" }}
   excludeCaches: {{ $backup.excludeCaches }}
   {{- end }}
   {{- if $backup.excludeIfPresent }}
