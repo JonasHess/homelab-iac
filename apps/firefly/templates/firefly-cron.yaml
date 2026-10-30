@@ -4,7 +4,7 @@ metadata:
   name: firefly-cron
   namespace: {{ $.Release.Namespace }}
   labels:
-    app: firefly
+    app: firefly-cron
     component: cron
 spec:
   schedule: "0 3 * * *"
@@ -17,8 +17,10 @@ spec:
       activeDeadlineSeconds: 600
       template:
         metadata:
+          # Not "app: firefly": that is the Service's selector, so the cron pod
+          # would join it and receive Firefly's traffic while it runs.
           labels:
-            app: firefly
+            app: firefly-cron
             component: cron
         spec:
           restartPolicy: OnFailure

@@ -1,0 +1,39 @@
+{{- /*
+  Firefly logs in whoever sends the X-Auth-Email header (remote_user_guard,
+  TRUSTED_PROXIES "**"). Envoy overwrites that header with the email from a
+  validated Cognito token, so the gateway path is safe; a pod connecting to the
+  Service directly could set the header itself and get an owner session. This
+  policy limits who can connect at all: the gateway and Firefly's own clients.
+  A new client needs its "app" label added below.
+*/ -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: firefly
+  namespace: {{ $.Release.Namespace }}
+spec:
+  podSelector:
+    matchLabels:
+      app: firefly
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        # Browsers, through the gateway and its Cognito login.
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ required "global.gateway.namespace must be set" .Values.global.gateway.namespace }}
+        # API clients with their own tokens, in any namespace: the TR timeline job
+        # runs next to the pytr jobs, not in this namespace.
+        - namespaceSelector: {}
+          podSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - firefly-importer
+                  - firefly-sankey
+                  - firefly-cron
+      ports:
+        - protocol: TCP
+          port: 8080
