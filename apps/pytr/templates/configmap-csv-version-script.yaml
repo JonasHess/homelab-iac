@@ -16,13 +16,22 @@ data:
     contains the previous one. Merging them as versions keeps one list entry whose
     current version is the newest export, with the older ones still reachable.
 
-    Exit codes: 0 on success and when there is nothing to merge, 1 on any API error.
+    Started right after a download, it waits up to CSV_WAIT_MINUTES for Paperless to
+    ingest the export that download produced: the download and then Paperless's queue,
+    one document every few seconds, can take well over an hour when many documents are
+    new. Every download writes a new export, so waiting for one always ends.
 
-    Env: PAPERLESS_URL, PAPERLESS_API_TOKEN, ROOT_DOCUMENT_ID, CSV_FILENAME
+    Exit codes: 0 on success and when there is nothing to merge, 1 on any API error or
+    when a wait ends without a new export.
+
+    Env: PAPERLESS_URL, PAPERLESS_API_TOKEN, ROOT_DOCUMENT_ID, CSV_FILENAME,
+         CSV_WAIT_MINUTES (0 = look once)
     """
+    import datetime
     import json
     import os
     import sys
+    import time
     import urllib.error
     import urllib.parse
     import urllib.request
@@ -31,6 +40,8 @@ data:
     TOKEN = os.environ["PAPERLESS_API_TOKEN"]
     ROOT_ID = int(os.environ["ROOT_DOCUMENT_ID"])
     FILENAME = os.environ.get("CSV_FILENAME", "account_transactions.csv")
+    WAIT_MINUTES = int(os.environ.get("CSV_WAIT_MINUTES", "0"))
+    POLL_SECONDS = 120
 
 
     def api(path, payload=None):
@@ -62,7 +73,9 @@ data:
         return rows[1] if len(rows) > 1 else None
 
 
-    def main():
+    def exports_to_merge():
+        """(added, id) of every unmerged export of this account, or None when the root
+        document cannot be trusted to merge into."""
         # The document list endpoint only ever returns top-level documents, so versions
         # that were merged in on an earlier run cannot show up here again.
         query = urllib.parse.urlencode(
@@ -76,12 +89,12 @@ data:
                 f"Refusing to merge into it.",
                 flush=True,
             )
-            return 1
+            return None
 
         fingerprint = first_transaction(api(f"/api/documents/{ROOT_ID}/").get("content"))
         if fingerprint is None:
             print(f"Document {ROOT_ID} has no transaction rows to compare against.")
-            return 1
+            return None
 
         # Several accounts export under this one filename, so a candidate is only ours
         # when it starts at the same booking. Skipping on anything else is the safe
@@ -100,10 +113,32 @@ data:
                 )
                 continue
             to_merge.append((detail.get("added") or "", doc["id"]))
+        return to_merge
+
+
+    def main():
+        started = datetime.datetime.now(datetime.timezone.utc)
+        deadline = time.time() + WAIT_MINUTES * 60
+        while True:
+            to_merge = exports_to_merge()
+            if to_merge is None:
+                return 1
+            fresh = any(added and datetime.datetime.fromisoformat(added) >= started
+                        for added, _ in to_merge)
+            if fresh or time.time() >= deadline:
+                break
+            print(f"Waiting for Paperless to ingest the new {FILENAME}...", flush=True)
+            time.sleep(POLL_SECONDS)
+
+        # Waiting that ends without a new export means the download behind it did not
+        # deliver one; that is a failure worth seeing, even if older exports get merged.
+        missed = WAIT_MINUTES > 0 and not fresh
+        if missed:
+            print(f"No new {FILENAME} arrived within {WAIT_MINUTES} minutes.", flush=True)
 
         if not to_merge:
             print(f"Nothing to merge into document {ROOT_ID}.", flush=True)
-            return 0
+            return 1 if missed else 0
 
         # Oldest first: every merged document gets the next version_index, and the highest
         # index counts as the current version. Feeding them in reverse would make an
@@ -117,7 +152,7 @@ data:
             {"documents": [ROOT_ID, *ids], "root_document_id": ROOT_ID},
         )
         print("Merge accepted.", flush=True)
-        return 0
+        return 1 if missed else 0
 
 
     if __name__ == "__main__":

@@ -21,6 +21,11 @@ pytr:
   login:
     schedule: "0 0 1 1 *"
     suspend: true
+    # CronJobs to start right after a successful login: a web session lives 24 hours
+    # from the login and refreshing does not extend it, so anything that needs it runs
+    # then rather than on a schedule. Names as in this namespace, e.g.
+    #   [pytr-download, pytr-csv-versions, firefly-importer-tr-timeline]
+    afterLogin: []
 
   download:
     schedule: "0 2 1 * *"
@@ -41,3 +46,7 @@ pytr:
     # the instance values must set it; rendering fails rather than defaulting, because a
     # wrong id would merge one account's exports into another account's history.
     rootDocumentId: ~
+    # Minutes to wait for Paperless to ingest a new export before giving up. 0 looks
+    # once; set it when this job is started right after a download (afterLogin), since
+    # a large download and Paperless's queue can take well over an hour.
+    waitMinutes: 0

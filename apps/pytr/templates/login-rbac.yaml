@@ -1,0 +1,44 @@
+{{- if .Values.pytr.login.afterLogin }}
+{{- /*
+  Lets the login job start the jobs that need the fresh session (see afterLogin): read
+  exactly those CronJobs and create Jobs, in this namespace only. Kubernetes cannot narrow
+  `create` to particular names, so the job can create any Job here - that is the price of
+  starting work the moment a login succeeds instead of on a schedule.
+*/ -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.appName }}-login
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.appName }}-login
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["get"]
+    resourceNames:
+      {{- range .Values.pytr.login.afterLogin }}
+      - {{ . | quote }}
+      {{- end }}
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.appName }}-login
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.appName }}-login
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Values.appName }}-login
+{{- end }}

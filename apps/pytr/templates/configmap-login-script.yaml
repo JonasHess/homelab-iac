@@ -68,6 +68,53 @@ data:
             print(f"[HTTP] {format % args}", flush=True)
 
 
+    def start_after_login():
+        """Start a job from each CronJob named in AFTER_LOGIN_CRONJOBS, like
+        `kubectl create job --from=cronjob/<name>`.
+
+        A Trade Republic web session lives 24 hours from the login and refreshing does
+        not extend it, so work that needs the session is started here rather than on a
+        schedule that would almost always find it expired. Returns False if any start
+        failed; the login itself has succeeded either way.
+        """
+        import json, ssl, urllib.request
+        names = json.loads(os.environ.get("AFTER_LOGIN_CRONJOBS", "[]"))
+        if not names:
+            return True
+        sa = "/var/run/secrets/kubernetes.io/serviceaccount"
+        token = open(f"{sa}/token").read().strip()
+        ns = open(f"{sa}/namespace").read().strip()
+        ctx = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+        base = f"https://kubernetes.default.svc/apis/batch/v1/namespaces/{ns}"
+
+        def call(method, path, body=None):
+            req = urllib.request.Request(base + path, method=method,
+                                         data=json.dumps(body).encode() if body else None,
+                                         headers={"Authorization": f"Bearer {token}",
+                                                  "Content-Type": "application/json"})
+            with urllib.request.urlopen(req, context=ctx, timeout=30) as r:
+                return json.load(r)
+
+        ok, stamp = True, time.strftime("%y%m%d%H%M")
+        for name in names:
+            try:
+                cj = call("GET", f"/cronjobs/{name}")
+                tmpl = cj["spec"]["jobTemplate"]
+                job = {"apiVersion": "batch/v1", "kind": "Job",
+                       "metadata": {"name": f"{name}-login-{stamp}",
+                                    "labels": tmpl.get("metadata", {}).get("labels", {}),
+                                    "annotations": {"cronjob.kubernetes.io/instantiate": "manual"},
+                                    "ownerReferences": [{"apiVersion": "batch/v1", "kind": "CronJob",
+                                                         "name": name, "uid": cj["metadata"]["uid"],
+                                                         "controller": True}]},
+                       "spec": tmpl["spec"]}
+                call("POST", "/jobs", job)
+                print(f"Started job {job['metadata']['name']}", flush=True)
+            except Exception as e:
+                ok = False
+                print(f"Could not start a job from cronjob {name}: {e}", flush=True)
+        return ok
+
     def main():
         global TR_API, LOGIN_RESULT
 
@@ -120,7 +167,7 @@ data:
         try:
             if TR_API.resume_websession():
                 print("Web session resumed from saved cookies. Already logged in!", flush=True)
-                sys.exit(0)
+                sys.exit(0 if start_after_login() else 1)
         except Exception as e:
             print(f"Session resume failed: {e}", flush=True)
 
@@ -161,7 +208,7 @@ data:
         print(f"Login {LOGIN_RESULT}. Exiting.", flush=True)
 
         if LOGIN_RESULT == "success":
-            sys.exit(0)
+            sys.exit(0 if start_after_login() else 1)
         else:
             sys.exit(1)
 
