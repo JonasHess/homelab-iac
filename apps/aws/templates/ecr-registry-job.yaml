@@ -1,50 +1,52 @@
+{{- define "aws.ecrImmediateJobSpec" }}
+backoffLimit: {{ $.Values.cronJob.backoffLimit }}
+template:
+  spec:
+    serviceAccountName: {{ $.Values.serviceAccount.name }}
+    containers:
+    - name: ecr-registry-helper
+      image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
+      imagePullPolicy: {{ $.Values.image.pullPolicy }}
+      resources:
+        {{- toYaml $.Values.resources | nindent 10 }}
+      envFrom:
+        - secretRef:
+            name: ecr-registry-helper-secrets-{{ .name }}
+        - configMapRef:
+            name: ecr-registry-helper-cm-{{ .name }}
+      command:
+        - /bin/bash
+        - -c
+        - |-
+          set -euo pipefail
+          # The old secret is deleted before the new one is created, so a
+          # missing token must abort here; otherwise image pulls lose a
+          # still-valid secret and the job would still report success.
+          ECR_TOKEN="$(aws ecr get-login-password --region ${AWS_REGION})"
+          if [ -z "${ECR_TOKEN}" ]; then
+            echo "aws ecr get-login-password returned an empty token" >&2
+            exit 1
+          fi
+          kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
+          kubectl create secret docker-registry $DOCKER_SECRET_NAME \
+            --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
+            --docker-username=AWS \
+            --docker-password=${ECR_TOKEN} \
+            --namespace=$NAMESPACE_NAME
+          echo "Secret $DOCKER_SECRET_NAME was successfully updated at $(date)"
+    restartPolicy: Never
+{{- end }}
 {{- range .Values.ecrRegistries }}
 ---
+{{- $spec := include "aws.ecrImmediateJobSpec" (dict "Values" $.Values "Release" $.Release "name" .name) | trim }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ecr-registry-helper-immediate-{{ .name }}
+  # The name ends in a hash of the spec. An unchanged Job keeps its name and does
+  # not run again on later syncs; a changed one gets a new name, runs once, and
+  # ArgoCD prunes the old one. A Job's pod template cannot be changed in place.
+  name: ecr-registry-helper-immediate-{{ .name }}-{{ $spec | sha256sum | trunc 8 }}
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    # A Job's pod template is immutable, so patching it after a change fails the
-    # whole app's sync. ArgoCD deletes and recreates the Job instead, which reruns
-    # it once; the script must therefore stay safe to run again.
-    argocd.argoproj.io/sync-options: Replace=true,Force=true
 spec:
-  backoffLimit: {{ $.Values.cronJob.backoffLimit }}
-  template:
-    spec:
-      serviceAccountName: {{ $.Values.serviceAccount.name }}
-      containers:
-      - name: ecr-registry-helper
-        image: {{ $.Values.image.repository }}:{{ $.Values.image.tag }}
-        imagePullPolicy: {{ $.Values.image.pullPolicy }}
-        resources:
-          {{- toYaml $.Values.resources | nindent 10 }}
-        envFrom:
-          - secretRef:
-              name: ecr-registry-helper-secrets-{{ .name }}
-          - configMapRef:
-              name: ecr-registry-helper-cm-{{ .name }}
-        command:
-          - /bin/bash
-          - -c
-          - |-
-            set -euo pipefail
-            # The old secret is deleted before the new one is created, so a
-            # missing token must abort here; otherwise image pulls lose a
-            # still-valid secret and the job would still report success.
-            ECR_TOKEN="$(aws ecr get-login-password --region ${AWS_REGION})"
-            if [ -z "${ECR_TOKEN}" ]; then
-              echo "aws ecr get-login-password returned an empty token" >&2
-              exit 1
-            fi
-            kubectl delete secret --ignore-not-found $DOCKER_SECRET_NAME -n $NAMESPACE_NAME
-            kubectl create secret docker-registry $DOCKER_SECRET_NAME \
-              --docker-server=https://${AWS_ACCOUNT}.dkr.ecr.${AWS_REGION}.amazonaws.com \
-              --docker-username=AWS \
-              --docker-password=${ECR_TOKEN} \
-              --namespace=$NAMESPACE_NAME
-            echo "Secret $DOCKER_SECRET_NAME was successfully updated at $(date)"
-      restartPolicy: Never
+{{ $spec | indent 2 }}
 {{- end }}

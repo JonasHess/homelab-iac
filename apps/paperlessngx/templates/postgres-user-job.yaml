@@ -1,57 +1,59 @@
+{{- define "paperlessngx.dbInitJobSpec" }}
+template:
+  spec:
+    containers:
+      - name: init-paperless-db
+        image: "postgres:16"
+        envFrom:
+          - secretRef:
+              name: postgres-secret
+          - secretRef:
+              name: paperlessngx-secret
+          - configMapRef:
+              name: postgres-config
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -e
+            echo "Starting database initialization script..."
+            echo "Environment Variables:"
+            echo "POSTGRES_USER: $POSTGRES_USER"
+            echo "POSTGRES_DB: $POSTGRES_DB"
+
+            echo "Checking if user 'paperless' exists..."
+            if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
+              echo "User 'paperless' already exists."
+            else
+              echo "Creating user 'paperless'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASS';"
+            fi
+
+            echo "Checking if database 'paperless' exists..."
+            if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
+              echo "Database 'paperless' already exists."
+            else
+              echo "Creating database 'paperless'..."
+              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE paperless;"
+            fi
+
+            echo "Granting ownership of the database 'paperless' to user 'paperless'..."
+            PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "ALTER DATABASE paperless OWNER TO paperless;"
+
+            echo "Granting ownership and full privileges on schema 'public' to user 'paperless'..."
+            PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "GRANT ALL PRIVILEGES ON SCHEMA public TO paperless;"
+            PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "ALTER SCHEMA public OWNER TO paperless;"
+
+            echo "Database initialization script completed."
+    restartPolicy: OnFailure
+{{- end }}
+{{- $spec := include "paperlessngx.dbInitJobSpec" $ | trim }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: paperless-db-init
+  # The name ends in a hash of the spec. An unchanged Job keeps its name and does
+  # not run again on later syncs; a changed one gets a new name, runs once, and
+  # ArgoCD prunes the old one. A Job's pod template cannot be changed in place.
+  name: paperless-db-init-{{ $spec | sha256sum | trunc 8 }}
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    # A Job's pod template is immutable, so patching it after a change fails the
-    # whole app's sync. ArgoCD deletes and recreates the Job instead, which reruns
-    # it once; the script must therefore stay safe to run again.
-    argocd.argoproj.io/sync-options: Replace=true,Force=true
 spec:
-  template:
-    spec:
-      containers:
-        - name: init-paperless-db
-          image: "postgres:16"
-          envFrom:
-            - secretRef:
-                name: postgres-secret
-            - secretRef:
-                name: paperlessngx-secret
-            - configMapRef:
-                name: postgres-config
-          command: ["sh", "-c"]
-          args:
-            - |
-              set -e
-              echo "Starting database initialization script..."
-              echo "Environment Variables:"
-              echo "POSTGRES_USER: $POSTGRES_USER"
-              echo "POSTGRES_DB: $POSTGRES_DB"
-
-              echo "Checking if user 'paperless' exists..."
-              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_roles WHERE rolname='paperless'" | grep -q 1; then
-                echo "User 'paperless' already exists."
-              else
-                echo "Creating user 'paperless'..."
-                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE USER paperless WITH PASSWORD '$PAPERLESS_DBPASS';"
-              fi
-
-              echo "Checking if database 'paperless' exists..."
-              if PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -tc "SELECT 1 FROM pg_database WHERE datname='paperless'" | grep -q 1; then
-                echo "Database 'paperless' already exists."
-              else
-                echo "Creating database 'paperless'..."
-                PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "CREATE DATABASE paperless;"
-              fi
-
-              echo "Granting ownership of the database 'paperless' to user 'paperless'..."
-              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d $POSTGRES_DB -c "ALTER DATABASE paperless OWNER TO paperless;"
-
-              echo "Granting ownership and full privileges on schema 'public' to user 'paperless'..."
-              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "GRANT ALL PRIVILEGES ON SCHEMA public TO paperless;"
-              PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h postgres-service -d paperless -c "ALTER SCHEMA public OWNER TO paperless;"
-
-              echo "Database initialization script completed."
-      restartPolicy: OnFailure
+{{ $spec | indent 2 }}

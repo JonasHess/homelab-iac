@@ -1,54 +1,56 @@
+{{- define "immich.cliUploadJobSpec" }}
+template:
+  metadata:
+    labels:
+      app: immich
+      component: cli-job
+  spec:
+    containers:
+      - name: cli
+        image: ghcr.io/immich-app/immich-cli:3.3.5
+        imagePullPolicy: IfNotPresent
+        workingDir: /usr/src/app/dist
+        command:
+          - node
+          - index.js
+          - upload
+          - --recursive
+          - "/mnt/import/"
+        env:
+          - name: IMMICH_INSTANCE_URL
+            value: "http://immich-app-server:2283/api"
+          - name: IMMICH_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: immich-cli-credentials
+                key: api_key
+        volumeMounts:
+          - name: library
+            mountPath: /mnt/import
+            readOnly: true
+    volumes:
+      - name: library
+        persistentVolumeClaim:
+          claimName: immich-cli-pvc
+    restartPolicy: Never
+backoffLimit: 0  # No retries
+{{- end }}
 {{- if .Values.importJob.enabled -}}
 {{- if not .Values.generic.persistentVolumeClaims.cli -}}
 {{- fail "Upload path must be defined in .Values.generic.persistentVolumeClaims.cli" -}}
 {{- end -}}
+{{- $spec := include "immich.cliUploadJobSpec" $ | trim }}
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: immich-cli-upload
+  # The name ends in a hash of the spec. An unchanged Job keeps its name and does
+  # not run again on later syncs; a changed one gets a new name, runs once, and
+  # ArgoCD prunes the old one. A Job's pod template cannot be changed in place.
+  name: immich-cli-upload-{{ $spec | sha256sum | trunc 8 }}
   namespace: {{ $.Release.Namespace }}
-  annotations:
-    # A Job's pod template is immutable, so patching it after a change fails the
-    # whole app's sync. ArgoCD deletes and recreates the Job instead, which reruns
-    # it once; the script must therefore stay safe to run again.
-    argocd.argoproj.io/sync-options: Replace=true,Force=true
   labels:
     app: immich
     component: cli-job
 spec:
-  template:
-    metadata:
-      labels:
-        app: immich
-        component: cli-job
-    spec:
-      containers:
-        - name: cli
-          image: ghcr.io/immich-app/immich-cli:3.3.5
-          imagePullPolicy: IfNotPresent
-          workingDir: /usr/src/app/dist
-          command:
-            - node
-            - index.js
-            - upload
-            - --recursive
-            - "/mnt/import/"
-          env:
-            - name: IMMICH_INSTANCE_URL
-              value: "http://immich-app-server:2283/api"
-            - name: IMMICH_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: immich-cli-credentials
-                  key: api_key
-          volumeMounts:
-            - name: library
-              mountPath: /mnt/import
-              readOnly: true
-      volumes:
-        - name: library
-          persistentVolumeClaim:
-            claimName: immich-cli-pvc
-      restartPolicy: Never
-  backoffLimit: 0  # No retries
+{{ $spec | indent 2 }}
 {{- end -}}
