@@ -244,6 +244,13 @@
       "addLabels": [
         "manual-review"
       ]
+    },
+    {
+      "description": "Update all immich images in one PR: server and machine-learning must run the same version, and separate PRs could be merged hours apart",
+      "matchPackageNames": [
+        "ghcr.io/immich-app/immich-*"
+      ],
+      "groupName": "immich"
     }
   ],
   "hostRules": [],
