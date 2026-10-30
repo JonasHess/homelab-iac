@@ -874,6 +874,17 @@ apps:
       namespace: argocd
       project: default
       syncWave: '20'  # Deploy after core apps
+  # Second pytr instance (another account), registered here for its sync wave and
+  # defaults; the environment points it at apps/pytr via argocd.path.
+  pytr-tatjana:
+    enabled: false
+    homer:
+      enabled: false
+    argocd:
+      targetRevision: ~
+      namespace: argocd
+      project: default
+      syncWave: '20'  # Deploy after core apps, like pytr
   pytr:
     enabled: false
     homer:
