@@ -1,3 +1,6 @@
+{{- /* NodePort exposes the broker on the node's LAN address for devices outside
+       the cluster; ClusterIP keeps it cluster-internal. */ -}}
+{{- $type := .Values.service.type | default "NodePort" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,11 +11,15 @@ spec:
   - name: tcp1883
     port: 1883
     targetPort: 1883
+    {{- if eq $type "NodePort" }}
     nodePort: 31883
+    {{- end }}
   - name: tcp9001
     port: 9001
     targetPort: 9001
+    {{- if eq $type "NodePort" }}
     nodePort: 32001
+    {{- end }}
   selector:
     app: mosquitto
-  type: NodePort
+  type: {{ $type }}

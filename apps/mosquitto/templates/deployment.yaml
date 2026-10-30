@@ -8,6 +8,12 @@ metadata:
     name: mosquitto-deployment
 spec:
   replicas: 1
+  # One broker at a time: during a rolling update two would run side by side and
+  # clients would split between them. rollingUpdate: null clears the defaults the
+  # API server stored while this Deployment was RollingUpdate.
+  strategy:
+    type: Recreate
+    rollingUpdate: null
   selector:
     matchLabels:
       app: mosquitto
@@ -15,6 +21,9 @@ spec:
     metadata:
       labels:
         app: mosquitto
+      annotations:
+        # mosquitto.conf is only read at start; restart the broker when it changes.
+        checksum/config: {{ toYaml .Values.generic.configMaps | sha256sum }}
     spec:
       initContainers:
         - name: init-permissions

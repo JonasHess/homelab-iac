@@ -1,6 +1,10 @@
 generic:
   configMaps:
     mosquitto-config-cm:
+      # Anonymous clients may still connect by default, because not every
+      # environment has given all its clients an account yet. An environment
+      # whose clients all log in overrides this with "allow_anonymous false": an
+      # anonymous client could switch any Zigbee device and pair new ones.
       mosquitto.conf: |-
         allow_anonymous true
         listener 1883
@@ -8,3 +12,7 @@ generic:
   externalSecrets:
     mosquitto-secret:
       - auth.txt: "/mosquitto/auth.txt"
+
+service:
+  # NodePort for environments with MQTT devices on the LAN; ClusterIP otherwise.
+  type: NodePort
