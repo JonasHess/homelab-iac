@@ -1,0 +1,55 @@
+{{- /*
+  Group check for the UI route. The generic chart adds this to every app route
+  when global.oidc.defaultGroups is set; this route is written by hand, so it
+  needs its own copy. Without it every user of the Cognito pool gets past the
+  gateway and sees all Applications read-only (argocd-rbac-cm policy.default).
+  Environments without defaultGroups keep plain OIDC.
+
+  Same mechanism as the generic chart's group policy: merged into the
+  Gateway-level OIDC policy, the ID token is read from the session cookie, and
+  only members of the listed groups are allowed.
+*/ -}}
+{{- $oidc := .Values.global.oidc | default dict }}
+{{- if $oidc.defaultGroups }}
+{{- $issuer := required "global.oidc.issuerUrl must be set" $oidc.issuerUrl }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: argocd-securitypolicy-main
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  mergeType: StrategicMerge
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: argocd-https-main
+  # optional: a request without a session still reaches the OAuth2 filter, which
+  # redirects it to Cognito; the deny below only ever reaches a signed-in user.
+  jwt:
+    optional: true
+    providers:
+      - name: cognito
+        issuer: {{ $issuer | quote }}
+        audiences:
+          - {{ required "global.oidc.clientId must be set" $oidc.clientId | quote }}
+        remoteJWKS:
+          uri: "{{ $issuer }}/.well-known/jwks.json"
+        extractFrom:
+          cookies:
+            - {{ required "global.oidc.idTokenCookieName must be set" $oidc.idTokenCookieName }}
+  authorization:
+    defaultAction: Deny
+    rules:
+      - name: allow-groups
+        action: Allow
+        principal:
+          jwt:
+            provider: cognito
+            claims:
+              - name: "cognito:groups"
+                valueType: StringArray
+                values:
+{{- toYaml $oidc.defaultGroups | nindent 18 }}
+{{- end }}
