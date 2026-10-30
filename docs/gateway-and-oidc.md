@@ -389,7 +389,7 @@ Two situations:
 
 ## Akeyless / secrets
 
-- **`/<env>/oidc/oauth2-proxy/client_secret`** — Cognito app client secret. Pulled by `oidc-client-secret-external-secret.yaml` into the `Secret oidc-client-secret` in the Gateway namespace. The OAuth2 filter reads `clientSecret` from that Secret. (Path name is historical — we used to run oauth2-proxy.)
+- **`/<env>/oidc/client_secret`** (`global.oidc.clientSecretAkeylessPath`): Cognito app client secret. Pulled by `oidc-client-secret-external-secret.yaml` into the `Secret oidc-client-secret` in the Gateway namespace. The OAuth2 filter reads `clientSecret` from that Secret.
 - The Cognito **client ID** is non-secret and lives in `global.oidc.clientId`.
 - The AOP **CA certificate** (`cloudflareOriginCA`) is a public cert (no key) — fine to keep in env values plaintext. The **CA key** stays on the operator's machine; only the leaf cert+key is given to Cloudflare. Nothing on the cluster ever holds the CA key.
 

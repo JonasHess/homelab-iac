@@ -25,7 +25,7 @@ scripts/
   microk8s-setup/        # MicroK8s setup helpers
   zfs-exporter/          # Prometheus ZFS exporter installer
 doc/                     # Operational notes (Cognito, Homematic, ZFS, Paperless, ...)
-docs/                    # Architecture docs: gateway + OIDC, backup and recovery, Envoy migration
+docs/                    # Architecture docs: gateway + OIDC, backup and recovery
 tests/                   # CI checks: chart render + kubeconform, alert rules, job scripts, restic
 ```
 

@@ -25,7 +25,9 @@ onto a **separate workstation** when the homelab itself is gone or broken.
 | Backup CronJob | `apps/restic/templates/restic-backup-cronjob.yaml` | `restic-backup` in `argocd` |
 | Restore CronJob | `apps/restic/templates/restic-restore-cronjob.yaml` | `restic-restore`, `suspend: true` |
 | Logic | `apps/restic/assets/restic-operations.py` | ~540 lines, `backup` and `restore` subcommands |
-| Image | `apps/restic/Dockerfile` | `python:3.14-alpine` + `apk add restic`, pushed to private ECR |
+| Image | `apps/restic/Dockerfile` | Python Alpine base (version: see the `FROM` line) + `apk add restic`, pushed to private ECR; `restic-image.yml` opens the deploy PR |
+| Database copies | `apps/postgres/templates/postgres-dump-cronjob.yaml`, `apps/vaultwarden/templates/vaultwarden-db-backup-cronjob.yaml` | `postgres-dump` (01:30, `pg_dumpall`) and `vaultwarden-db-backup` (01:45, SQLite backup) write consistent copies into backed-up volumes before restic runs at 02:00 |
+| Alerts | `apps/restic/templates/restic-alerts.yaml` | `BackupTooOld` (restic-backup, postgres-dump, vaultwarden-db-backup: no success in 36 h), `BackupNeverSucceeded`; failed runs also raise `KubeJobFailed` |
 | Global excludes | `apps/restic/values.yaml` → `globalBackupRules.exclude` | rendered into ConfigMap `restic-global-excludes`, mounted at `/config` |
 | RBAC | `apps/restic/templates/restic-backup-rbac.yaml` | SA `restic-backup-scanner`, cluster-wide read on PVC/PV + resticbackups |
 | Secrets | `apps/restic/values.yaml` → `generic.externalSecrets.restic-secret` | Akeyless paths `/restic/*` |
@@ -460,7 +462,7 @@ Retention is not an immediate threat: `--keep-daily 7` preserves the seven most 
 Ordered roughly by how much they would hurt.
 
 1. **`RESTIC_PASSWORD` lives only in Akeyless.** Lose it and every snapshot is permanently unreadable. Keep an offline copy of the password *and* the S3 credentials — see §5.1.
-2. **No alerting on failure.** The job exits non-zero and that is it — no retry, no notification. Immich silently stopped being backed up for a week and nothing said a word. An alert on `kube_job_status_failed{job_name=~"restic-backup.*"}`, plus one on "no successful run in 48 h", would have caught it on day one.
+2. **Alerting covers runs, not content.** `BackupTooOld`, `BackupNeverSucceeded` and `KubeJobFailed` (§1) catch a backup that fails or stops being scheduled. A run that succeeds but silently skips a volume raises nothing.
 3. **`concurrencyPolicy: Forbid` + a hanging job is a silent outage.** One stuck scan blocked five nights of backups for *every* application. There is no timeout on the restic invocation (`run_restic_command` defaults to a 3600 s timeout, but the streaming path passes it only to `process.wait()` after the read loop, so a stalled read blocks forever). An `activeDeadlineSeconds` on the Job would bound this.
 4. **The Postgres backup is a hot file copy** (§3b). The real safety net is Immich's internal dump inside the library snapshot — which nothing in this repo asserts, configures, or monitors. If Immich stops writing dumps, the backup silently degrades.
 5. **Retention caps recovery at ~6 months**, and only on the dates the weekly/monthly rules kept.
