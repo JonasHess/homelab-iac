@@ -33,10 +33,6 @@ generic:
       archive:
         mountPath: /archive
         hostPath: ~
-        # The original audio files exist only here: teddyCloud keeps converted
-        # copies at best.
-        backup:
-          enabled: true
       # Browser uploads are spooled here until they have been encoded, and the
       # generated sheet PDF passes through on its way to the download. Both are
       # reconstructible, so this is not backed up.
