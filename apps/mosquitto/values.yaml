@@ -12,6 +12,13 @@ generic:
   externalSecrets:
     mosquitto-secret:
       - auth.txt: "/mosquitto/auth.txt"
+  # Without persistence a broker restart drops every retained message and every
+  # persistent session. Zigbee2MQTT's Home Assistant discovery lives in retained
+  # messages, so the next Home Assistant restart then finds no Zigbee entities.
+  # An environment opts in with
+  #   persistentVolumeClaims.data.hostPath: <host dir, must exist before the sync>
+  # and "persistence true" + "persistence_location /mosquitto/data/" in its
+  # mosquitto.conf. The deployment mounts the claim at /mosquitto/data.
 
 service:
   # NodePort for environments with MQTT devices on the LAN; ClusterIP otherwise.

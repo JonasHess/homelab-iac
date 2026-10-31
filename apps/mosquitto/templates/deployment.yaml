@@ -1,3 +1,4 @@
+{{- $data := (.Values.generic.persistentVolumeClaims | default dict).data }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -37,9 +38,16 @@ spec:
               chown mosquitto:mosquitto /mosquitto/config/auth.txt && \
               chmod 0700 /mosquitto/config/auth.txt && \
               chown mosquitto:mosquitto /mosquitto/config/mosquitto.conf
+              {{- if $data }} && \
+              chown mosquitto:mosquitto /mosquitto/data
+              {{- end }}
           volumeMounts:
             - mountPath: "/mosquitto/config"  # Writable volume
               name: writable-config
+            {{- if $data }}
+            - mountPath: "/mosquitto/data"
+              name: data
+            {{- end }}
             - mountPath: "/mosquitto-config/auth.txt"
               subPath: "auth.txt"
               name: mosquitto-secret-volume
@@ -57,7 +65,16 @@ spec:
           volumeMounts:
             - mountPath: "/mosquitto/config"
               name: writable-config  # Mount writable directory
+            {{- if $data }}
+            - mountPath: "/mosquitto/data"
+              name: data
+            {{- end }}
       volumes:
+        {{- if $data }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.generic.appName }}-data-pvc
+        {{- end }}
         - name: mosquitto-config-volume
           configMap:
             name: mosquitto-config-cm
