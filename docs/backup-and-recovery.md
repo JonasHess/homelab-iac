@@ -5,14 +5,14 @@ onto a **separate workstation** when the homelab itself is gone or broken.
 
 ## TL;DR
 
-- A **daily CronJob** (`restic-backup`, namespace `argocd`, 02:00 UTC) runs a custom Python "operator" (`apps/restic/assets/restic-operations.py`) inside a self-built image (`apps/restic/Dockerfile`).
+- A **daily CronJob** (`restic-backup`, namespace `argocd`, 02:00 cluster local time) runs a custom Python "operator" (`apps/restic/assets/restic-operations.py`) inside a self-built image (`apps/restic/Dockerfile`).
 - The job **discovers `ResticBackup` custom resources** labelled `restic/backup="true"`, resolves each one's PVC → PV → **hostPath**, and runs `restic backup <hostPath>` for it.
 - Those CRs are **not hand-written**: the generic chart emits one per PVC that has `backup.enabled: true` (`apps/generic/templates/backup-crd.yaml`). Turning on a backup is a one-line values change.
 - Everything lands in **one shared restic repository** on S3-compatible storage (Backblaze B2), encrypted with `RESTIC_PASSWORD`. Credentials come from Akeyless via External Secrets (`restic-secret`).
 - Each snapshot is tagged `backup-YYYYMMDD` and `crd:<app>-<pvc>`, e.g. `crd:immich-library`. Retention after every run: **7 daily, 3 weekly, 6 monthly**, then `prune`.
 - **A restore does not need the homelab.** The repository lives in the cloud; any machine with `restic`, the repo password and the S3 keys can read it. §5 is a full walkthrough for doing exactly that on a laptop. The in-cluster `restic-restore` CronJob (§4) is the *lesser* option.
 - **Verified working on 2026-07-22** — a real restore of 29 photos came back byte-identical (§6).
-- ⚠️ **Immich has not been backed up since 2026-07-15** — see §6 for what broke.
+- **Restoring one app's data on a running cluster** (Postgres, Vaultwarden, SQLite apps, plain folders): §8.
 
 ---
 
@@ -470,5 +470,105 @@ Ordered roughly by how much they would hurt.
 7. **The in-cluster restore CronJob is the wrong tool for a real disaster** (§4) and its default `RESTORE_DATE` is a stale `2025-05-30`.
 8. **Restores are not byte-identical**: the aggressive global excludes drop derived data, and any real directory named `cache`, `logs`, `build`, `dist`, `target`, or `tmp` is silently skipped for *every* app.
 9. **`--one-file-system`** means nested mounts under a backed-up path are skipped without warning — directly relevant to the `encrypted`/`unencrypted` layout under `/mnt/tank0` and `/mnt/tank1`.
-10. **`apps/restic/README.md` is out of date** (label name, retention numbers). Trust the Python script and this document.
-11. **`backrest` runs in parallel** with its configuration stored in `/mnt/tank1/encrypted/apps/backrest/data`, outside git. Whatever it protects is not reproducible from this repo — and if it points at the same bucket, its retention interacts with the CronJob's `forget --prune`.
+10. **`backrest` runs in parallel** with its configuration stored in `/mnt/tank1/encrypted/apps/backrest/data`, outside git. Whatever it protects is not reproducible from this repo — and if it points at the same bucket, its retention interacts with the CronJob's `forget --prune`.
+
+---
+
+## 8. Restoring one app's data (any environment)
+
+§5 rebuilds Immich on a separate machine. This section puts one app's data back in place on a running cluster. It works for every environment; the paths differ per environment, so look them up instead of copying them from here.
+
+### 8.1 Find the paths and the snapshot
+
+Every backed-up volume is a hostPath PV named `<app>-<mount>-pv`; its restic tag is `crd:<app>-<mount>`, and the snapshot stores the files under the same host path.
+
+```bash
+CTX=<kube-context>             # e.g. home-zimmermann.lat; never rely on the current context
+kubectl --context $CTX get pv vaultwarden-data-pv -o jsonpath='{.spec.hostPath.path}{"\n"}'
+# zimmermann.lat: /mnt/tank1/encrypted/apps/vaultwarden/data   (hess.pm uses /mnt/tank0/...)
+```
+
+Use the `rst.sh` wrapper from §5.2 with `--context=$CTX` instead of `config.d-hess.pm`, then:
+
+```bash
+./rst.sh snapshots --tag crd:vaultwarden-data --no-lock | tail -5      # pick a snapshot id
+./rst.sh restore <id> --target ~/restore --no-lock \
+  --include /mnt/tank1/encrypted/apps/vaultwarden/data                  # the path from above
+```
+
+For the database copies below you only need the newest copy, which usually is still on the host: restic is only needed when the copy on disk is gone or already damaged.
+
+### 8.2 Stop the app so ArgoCD keeps it stopped
+
+A database file must not be replaced while the app has it open. `kubectl scale --replicas=0` alone does not hold: the generic Deployment sets `replicas: 1`, and selfHeal scales it straight back up. Pausing a single Application does not help either: with the `argocd.argoproj.io/skip-reconcile=true` annotation set, ArgoCD v3.5.6 still auto-synced stirlingpdf back to 1 replica within 30 seconds (tested 2026-10-31). What holds is pausing ArgoCD's application controller. It is part of the plain Helm release `argocd`, not managed by ArgoCD itself, so nothing scales it back. While it is at 0, no app in the cluster is synced, so keep the window short.
+
+```bash
+kubectl --context $CTX -n argocd scale statefulset/argocd-application-controller --replicas=0
+kubectl --context $CTX -n argocd scale deploy/<app>-deployment --replicas=0     # or statefulset/<name>
+# ... restore ...
+kubectl --context $CTX -n argocd scale statefulset/argocd-application-controller --replicas=1
+# The controller syncs again and scales the workload back to 1 on its own.
+```
+
+Rehearsed 2026-10-31 on stirlingpdf: with the controller at 0 the Deployment stayed at 0 for over 2 minutes; after scaling the controller back to 1, ArgoCD restored it to 1/1 within a minute and every app was Synced and Healthy.
+
+| App | Workload | Owning Application (for checking its sync afterwards) |
+|---|---|---|
+| Shared Postgres | `deploy/postgres-deployment` | `argocd-app-postgres` |
+| Vaultwarden | `statefulset/vaultwarden` | `vaultwarden` (the child Application, not `argocd-app-vaultwarden`) |
+| Home Assistant | `deploy/homeassistant-deployment` | `argocd-app-homeassistant` |
+| venice-autobook, facilioo-watch | `deploy/<app>-deployment` | `argocd-app-<app>` |
+
+### 8.3 Shared Postgres (paperless, firefly, ...) from `pg_dumpall`
+
+`postgres-dump` (01:30) writes `pg_dumpall-YYYYMMDD-HHMMSS.sql.gz` into the `dumps` volume and keeps the newest 3; restic has the older ones (`crd:postgres-dumps`). A dump holds every database and every role.
+
+**The whole server is lost** (empty data directory, Postgres starts fresh): Postgres does not need to be stopped. The apps fail to connect until the restore is done, which is harmless.
+
+```bash
+DUMP=pg_dumpall-YYYYMMDD-HHMMSS.sql.gz
+kubectl --context $CTX -n argocd cp ./$DUMP postgres-deployment-<pod>:/tmp/$DUMP
+kubectl --context $CTX -n argocd exec deploy/postgres-deployment -- \
+  sh -c "gunzip -c /tmp/$DUMP | psql -U \"\$POSTGRES_USER\" -d postgres -q -o /dev/null; rm /tmp/$DUMP"
+# Expected: exactly one error, 'role "<POSTGRES_USER>" already exists'. Then restart the apps:
+kubectl --context $CTX -n argocd rollout restart deploy/paperlessngx-deployment deploy/firefly-deployment
+```
+
+**One database is damaged, the others are fine** (e.g. paperless): extract that database from the full dump in a throwaway local Postgres of the same major version, then replace only it.
+
+```bash
+docker run -d --name pgtmp -e POSTGRES_PASSWORD=x postgres:17     # same major as the server
+docker cp ./$DUMP pgtmp:/tmp/ && docker exec pgtmp sh -c "gunzip -c /tmp/$DUMP | psql -U postgres -q -o /dev/null"
+docker exec pgtmp pg_dump -U postgres -Fc -d paperless -f /tmp/paperless.dump
+docker cp pgtmp:/tmp/paperless.dump . && docker rm -f pgtmp
+# Stop the app that uses it (8.2), then:
+kubectl --context $CTX -n argocd cp ./paperless.dump postgres-deployment-<pod>:/tmp/paperless.dump
+kubectl --context $CTX -n argocd exec deploy/postgres-deployment -- sh -c '
+  psql -U "$POSTGRES_USER" -d postgres -qc "DROP DATABASE paperless WITH (FORCE)" &&
+  psql -U "$POSTGRES_USER" -d postgres -qc "CREATE DATABASE paperless OWNER paperless" &&
+  pg_restore -U "$POSTGRES_USER" -d paperless --no-owner --role=paperless /tmp/paperless.dump &&
+  rm /tmp/paperless.dump'
+# Resume the app (8.2). Database and role names are in each app's values (POSTGRES_DB / user).
+```
+
+Both paths were rehearsed on 2026-10-31 with a throwaway Postgres 17.11 and test data: the full restore brought back every database and owner, the single-database restore replaced only the damaged one.
+
+### 8.4 Vaultwarden
+
+`vaultwarden-db-backup` (01:45) runs `vaultwarden backup`, which writes `db_YYYYMMDD_HHMMSS.sqlite3` next to `db.sqlite3` in the data folder; the newest 3 are kept, restic has the rest (`crd:vaultwarden-data`). Attachments, sends and the RSA key are plain files in the same folder and come back with the folder restore of 8.1.
+
+1. Stop Vaultwarden (8.2: Application `vaultwarden`, `statefulset/vaultwarden`).
+2. In the data folder on the host: move `db.sqlite3`, `db.sqlite3-wal` and `db.sqlite3-shm` aside, copy the chosen `db_*.sqlite3` to `db.sqlite3`, and keep its owner and mode the same as the original.
+3. Resume (8.2) and log in once to check the vault.
+
+### 8.5 SQLite apps with `sqliteBackup` (Home Assistant, venice-autobook, facilioo-watch)
+
+`<app>-sqlite-backup` (01:50) writes `<file>.backup` next to the database: Home Assistant `home-assistant_v2.db.backup` (history and statistics; the rest of its config is plain files), venice-autobook `autobook.db.backup`, facilioo-watch `watch.db.backup`. Only the newest copy is on disk; restic has older ones (`crd:<app>-<mount>`).
+
+1. Stop the app (8.2).
+2. Move `<file>`, `<file>-wal` and `<file>-shm` aside, copy `<file>.backup` to `<file>`, keep owner and mode (HA: 911, the other two: 10001).
+3. Resume (8.2) and check the app's log.
+
+### 8.6 Plain file data (everything else)
+
+Apps without a database, or whose database is a set of files, come back by copying the restored folder from 8.1 over the app's folder while the app is stopped (8.2). Keep owners and modes (`rsync -a`, or `cp -a`).
