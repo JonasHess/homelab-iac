@@ -251,6 +251,17 @@
         "ghcr.io/immich-app/immich-*"
       ],
       "groupName": "immich"
+    },
+    {
+      "description": "immich postgres tags are <pg-major>-vectorchord<x.y.z>. Docker versioning treats the vectorchord part as a fixed suffix, so only Postgres majors were ever offered. Here the Postgres major is the Renovate major (a separate PR that needs a dump/restore, kept as the reminder) and vectorchord bumps are minor/patch PRs. Never auto-merged: check whether the vchord extension needs updating in the database.",
+      "matchPackageNames": [
+        "ghcr.io/immich-app/postgres"
+      ],
+      "versioning": "regex:^(?<major>\\d+)-vectorchord(?<minor>\\d+)\\.(?<patch>\\d+)\\.(?<build>\\d+)$",
+      "automerge": false,
+      "addLabels": [
+        "manual-review"
+      ]
     }
   ],
   "hostRules": [],

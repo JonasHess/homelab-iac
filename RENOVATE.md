@@ -31,7 +31,7 @@ The same `depName` in several files lands in one PR (e.g. every `python` pin), s
 - **Never auto-merged**, whatever the update type: `envoyproxy/gateway-helm` and `cert-manager` (label `manual-review`). They carry every route and every certificate, so even a minor release can break all apps at once.
 - **Grouped**: all `immich-app/immich-*` images in one PR, because server and machine-learning must run the same version.
 - **Disabled**: private ECR images (`<account>.dkr.ecr.<region>.amazonaws.com/...`). Renovate has no ECR credentials; the app's own image workflow opens the deploy PR (e.g. `.github/workflows/restic-image.yml`).
-- **Custom versioning** for qBittorrent, Jellyfin and OpenCCU, whose tags are not plain semver.
+- **Custom versioning** for qBittorrent, Jellyfin and OpenCCU, whose tags are not plain semver, and for `ghcr.io/immich-app/postgres` (`<pg-major>-vectorchord<x.y.z>`): the Postgres major is a separate, manual PR (dump/restore), vectorchord bumps come as manual minor/patch PRs.
 - **Matching**: rules select by datasource (`docker`, `helm`, `pypi`, `npm`, `go`, `github-releases`), not by category. Categories only exist for Renovate's built-in managers, so a category rule would silently never apply to the regex-found dependencies. GitHub Actions still match category `ci`, which works because the built-in manager finds them.
 - **Rebasing**: `rebaseWhen: conflicted`. With automerge on, Renovate would otherwise rebase every branch that falls behind `main`, which restarts its checks and limits it to one merge per run.
 - **Schedule**: daily between 12:00 and 22:00 (Europe/Berlin).
