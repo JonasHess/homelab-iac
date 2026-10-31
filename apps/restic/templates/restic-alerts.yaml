@@ -32,12 +32,13 @@ spec:
           A CronJob that stops being scheduled produces no failing Job at all, so
           KubeJobFailed stays silent: this is the only signal that backups have stopped.
       # The nightly backup jobs by name: restic itself and the database copies it
-      # picks up (postgres dump, Vaultwarden SQLite backup). Named rather than
-      # matched by prefix, because restic-restore runs yearly and would breach any
-      # freshness threshold permanently. A job that does not exist in an
-      # environment has no series and cannot fire.
+      # picks up (postgres dump, Vaultwarden backup, every app's generic
+      # <app>-sqlite-backup). Named rather than matched by a restic- prefix, because
+      # restic-restore runs yearly and would breach any freshness threshold
+      # permanently. A job that does not exist in an environment has no series and
+      # cannot fire.
       expr: |
-        time() - max by (namespace, cronjob) (kube_cronjob_status_last_successful_time{cronjob=~"restic-backup|postgres-dump|vaultwarden-db-backup"}) > 36 * 3600
+        time() - max by (namespace, cronjob) (kube_cronjob_status_last_successful_time{cronjob=~"restic-backup|postgres-dump|vaultwarden-db-backup|.+-sqlite-backup"}) > 36 * 3600
       for: 10m
       labels:
         severity: critical

@@ -25,6 +25,16 @@ generic:
     envFrom:
       configMapRef: venice-autobook-config
       secretRef: venice-autobook-secret
+  # Consistent nightly copy (autobook.db.backup) for restic at 02:00.
+  # runAsUser must own the data folder (the image runs as 10001).
+  sqliteBackup:
+    schedule: "50 1 * * *"
+    image: python:3.15-slim
+    runAsUser: 10001
+    databases:
+      - pvc: data
+        file: autobook.db
+
   service:
     ports:
       - name: http

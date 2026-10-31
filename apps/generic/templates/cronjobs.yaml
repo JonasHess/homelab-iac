@@ -1,0 +1,3 @@
+{{- range $name, $job := .Values.cronJobs }}
+{{- include "generic.cronjob" (dict "root" $ "name" $name "job" $job) }}
+{{- end }}

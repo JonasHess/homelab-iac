@@ -1,0 +1,34 @@
+{{- /*
+  Nightly consistent copy of the app's SQLite databases. Restic copies a live
+  database file by file while the app writes to it, so that copy can be torn, and a
+  write-ahead log is copied separately from its database. SQLite's online backup API
+  takes a consistent snapshot without stopping the app; the copy lands next to the
+  original as <file>.backup, inside a volume restic already backs up. Schedule it
+  before the restic run (02:00) so restic picks up that night's copy.
+
+  The copy is written to <file>.backup.tmp first and renamed only after an
+  integrity check, so <file>.backup is always the last good copy. restic's global
+  excludes skip *.tmp, so a half-written copy is never backed up.
+
+  Restore: stop the app, copy <file>.backup over <file>, delete <file>-wal and
+  <file>-shm if present, start the app.
+*/ -}}
+{{- with .Values.sqliteBackup }}
+{{- $mounts := dict }}
+{{- $paths := list }}
+{{- range $index, $db := .databases }}
+  {{- $_ := set $mounts $db.pvc (printf "/data/%s" $db.pvc) }}
+  {{- $paths = append $paths (printf "/data/%s/%s" $db.pvc $db.file) }}
+{{- end }}
+{{- $job := dict
+  "schedule" .schedule
+  "image" .image
+  "runAsUser" .runAsUser
+  "runAsGroup" .runAsGroup
+  "pvcMounts" $mounts
+  "env" (dict "DATABASES" (join "\n" $paths))
+  "command" (list "python" "-c")
+  "args" (list ($.Files.Get "files/sqlite-backup.py"))
+}}
+{{- include "generic.cronjob" (dict "root" $ "name" "sqlite-backup" "job" $job) }}
+{{- end }}

@@ -656,6 +656,109 @@
         }
       }
     },
+    "cronJobs": {
+      "type": "object",
+      "description": "Scheduled jobs of this app, keyed by job name; each renders CronJob <appName>-<name> whose pods are labelled app: <appName>-<name> (never the Service's app label).",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "schedule",
+          "image"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "schedule": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA zone; without it the controller's local time applies."
+          },
+          "suspend": {
+            "type": "boolean"
+          },
+          "concurrencyPolicy": {
+            "type": "string",
+            "enum": [
+              "Allow",
+              "Forbid",
+              "Replace"
+            ],
+            "description": "Default Forbid."
+          },
+          "backoffLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Default 2."
+          },
+          "activeDeadlineSeconds": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "image": {
+            "type": "string"
+          },
+          "imagePullSecrets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "env": {
+            "type": "object",
+            "description": "Plain variables, name: value.",
+            "additionalProperties": {
+              "type": [
+                "string",
+                "number",
+                "boolean"
+              ]
+            }
+          },
+          "envFrom": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "configMapRef": {
+                "type": "string"
+              },
+              "secretRef": {
+                "type": "string"
+              }
+            }
+          },
+          "runAsUser": {
+            "type": "integer"
+          },
+          "runAsGroup": {
+            "type": "integer",
+            "description": "Defaults to runAsUser."
+          },
+          "resources": {
+            "type": "object"
+          },
+          "pvcMounts": {
+            "type": "object",
+            "description": "Key of deployment.pvcMounts or persistentVolumeClaims -> mount path in the job container. Mounts the existing claim.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "externalSecrets": {
       "type": "object",
       "description": "External Secrets configuration for integrating with external secret management systems",
@@ -678,6 +781,57 @@
       "additionalProperties": {
         "type": "string",
         "description": "Quantity, e.g. 60Gi"
+      }
+    },
+    "sqliteBackup": {
+      "type": "object",
+      "description": "Nightly consistent copy of SQLite databases on this app's volumes, written as <file>.backup next to each database (SQLite online backup API). Schedule it before the restic run.",
+      "required": [
+        "schedule",
+        "image",
+        "runAsUser",
+        "databases"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "description": "Cron schedule, before restic (02:00)."
+        },
+        "image": {
+          "type": "string",
+          "description": "Image with Python 3 (sqlite3 module), e.g. python:3.15-slim."
+        },
+        "runAsUser": {
+          "type": "integer",
+          "description": "Must own the database folder, so the copy can be written next to the database."
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "description": "Defaults to runAsUser."
+        },
+        "databases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "pvc",
+              "file"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "pvc": {
+                "type": "string",
+                "description": "Key in deployment.pvcMounts or persistentVolumeClaims."
+              },
+              "file": {
+                "type": "string",
+                "description": "Database path relative to that volume."
+              }
+            }
+          }
+        }
       }
     }
   }

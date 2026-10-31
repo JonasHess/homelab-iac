@@ -27,6 +27,17 @@ generic:
           enabled: true
     envFrom:
       configMapRef: homeassistant-config-map
+  # Consistent nightly copy (home-assistant_v2.db.backup) for restic at 02:00.
+  # The recorder database (history, long-term statistics) is written all the time;
+  # restic alone would copy it torn. runAsUser must own the config folder.
+  sqliteBackup:
+    schedule: "50 1 * * *"
+    image: python:3.15-slim
+    runAsUser: 911
+    databases:
+      - pvc: config
+        file: home-assistant_v2.db
+
   service:
     ports:
       - name: http

@@ -1,10 +1,10 @@
 name: App Scripts
 
 # Script tests for apps that ship code: the paperless-gpt prompt and quality report,
-# the zigbee-light-watcher, and the restic backup script. Without this they only ran
-# by hand (and restic only inside its image build, after a merge), so a broken script
-# reached the cluster before any test saw it. The firefly-importer jobs have their
-# own workflow (firefly-jobs.yml).
+# the zigbee-light-watcher, the restic backup script and the generic chart's SQLite
+# backup script. Without this they only ran by hand (and restic only inside its image
+# build, after a merge), so a broken script reached the cluster before any test saw
+# it. The firefly-importer jobs have their own workflow (firefly-jobs.yml).
 
 on:
   # Runnable on demand, so a change to this workflow can be verified without a dummy
@@ -19,6 +19,7 @@ on:
       - 'tests/paperlessgpt-prompt/**'
       - 'tests/paperlessgpt-report/**'
       - 'tests/restic/**'
+      - 'tests/sqlite-backup/**'
       - 'tests/alert-rules/values.yaml'
       - '.github/workflows/app-scripts.yml'
   push:
@@ -31,6 +32,7 @@ on:
       - 'tests/paperlessgpt-prompt/**'
       - 'tests/paperlessgpt-report/**'
       - 'tests/restic/**'
+      - 'tests/sqlite-backup/**'
       - 'tests/alert-rules/values.yaml'
       - '.github/workflows/app-scripts.yml'
 
@@ -78,3 +80,6 @@ jobs:
 
       - name: restic backup script unit tests
         run: python -m pytest -q tests/restic
+
+      - name: generic SQLite backup script unit tests
+        run: python -m pytest -q tests/sqlite-backup

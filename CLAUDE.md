@@ -87,6 +87,7 @@ Renovate auto-merges only when every check passes, so a red check stops a bad bu
 4. **Extra pods in an app chart** (Jobs, CronJobs): never label their pods `app: <appName>`.
    The generic Service selects on exactly that label, so such a pod joins the Service
    while it runs and receives the app's traffic. Use e.g. `app: <appName>-dump`.
+   New scheduled jobs: prefer `generic.cronJobs.<name>` (labels this correctly by itself).
 
 ## Working with Applications
 
@@ -128,6 +129,8 @@ The `apps/generic/` chart provides comprehensive Kubernetes resource templating 
 - **Backup Integration**: Restic backup CRDs with configurable include/exclude patterns and restore capabilities
 - **Volume Mounting**: Support for PVC mounts, device mounts (CharDevice), and ConfigMap mounts
 - **Environment Variables**: ConfigMap and Secret references via envFrom
+- **CronJobs**: `cronJobs.<name>` renders CronJob `<appName>-<name>` (schedule, image, command/args, env, envFrom, runAsUser, `pvcMounts` of existing claims), via the shared helper `templates/_cronjob.tpl`
+- **SQLite copies**: `sqliteBackup` writes a consistent `<file>.backup` next to each listed database before restic runs (script `files/sqlite-backup.py`, tests in `tests/sqlite-backup`); `BackupTooOld` watches every `<app>-sqlite-backup`
 
 ### Configuration Options
 - **Resource Management**: CPU/memory requests and limits
