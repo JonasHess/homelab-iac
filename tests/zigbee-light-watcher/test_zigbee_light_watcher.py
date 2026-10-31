@@ -1,4 +1,9 @@
+import pathlib
+import sys
 import unittest
+
+# The script ships in the chart (ConfigMap), not as a package: import it by path.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "apps" / "zigbee-light-watcher" / "scripts"))
 
 from zigbee_light_watcher import Tracker, apply_mqtt_credentials, lights_from_devices
 
