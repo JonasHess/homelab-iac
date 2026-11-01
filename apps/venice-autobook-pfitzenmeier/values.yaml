@@ -4,6 +4,8 @@ generic:
       # Same image as venice-autobook; VB_TENANT selects the Pfitzenmeier backend
       # (host, client id/secret, app version) at runtime.
       VB_TENANT: "pfitzenmeier"
+      # Studio the web UI opens on (its Bensheim club); the picker lists the rest.
+      VB_DEFAULT_STUDIO: "52"
       # rules.yaml, tokens.json and autobook.db all live on the mounted PVC.
       VB_CONFIG_DIR: "/data"
       VB_DATA_DIR: "/data"
