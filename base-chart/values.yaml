@@ -659,7 +659,7 @@ apps:
     homer:
       enabled: true
       group: "productivity"
-      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/dumbbell.svg"
+      logo: "https://www.pfitzenmeier.de/apple-touch-icon.png"
       subtitle: "Auto-book gym classes (Pfitzenmeier)"
       displayName: "Pfitzenmeier Autobook"
       subdomain: "venice-autobook-pfitzenmeier"
