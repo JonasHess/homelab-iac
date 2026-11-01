@@ -5,6 +5,21 @@ externalConfig:
   path: ""
   configMapName: "homeassistant-app-config"
 
+# Daily copy of one address's waste collection dates (mein-abfallkalender.online) into
+# a CalDAV collection that Home Assistant reads as a calendar (opt-in).
+wasteSync:
+  enabled: false
+  schedule: "30 5 * * *"
+  timeZone: Europe/Berlin
+  image: python:3.15-slim
+  # Created by the job on its first run. The user needs an htpasswd entry in Radicale.
+  caldavUrl: http://radicale-service.argocd.svc.cluster.local:5232/waste-sync/waste-collection/
+  caldavUsername: waste-sync
+  # Akeyless paths below global.akeyless.path. SOURCE_URL is the provider's results page
+  # URL with street and waste type parameters; it identifies the address.
+  sourceUrlPath: /homeassistant/waste-sync/SOURCE_URL
+  caldavPasswordPath: /homeassistant/waste-sync/CALDAV_PASSWORD
+
 generic:
   configMaps:
     homeassistant-config-map:

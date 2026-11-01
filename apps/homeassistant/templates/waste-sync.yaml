@@ -1,0 +1,145 @@
+{{- if .Values.wasteSync.enabled }}
+{{- /*
+  Daily copy of one address's waste collection dates into a CalDAV collection, which
+  Home Assistant reads as a calendar (scripts/waste_sync.py explains the source).
+  The address only exists in the SOURCE_URL secret.
+*/ -}}
+{{- $name := printf "%s-waste-sync" .Values.appName }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-script
+  namespace: {{ .Release.Namespace }}
+data:
+  waste_sync.py: |
+{{ .Files.Get "scripts/waste_sync.py" | indent 4 }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: {{ .Values.global.externalSecrets.clusterSecretStoreRef.name }}
+  target:
+    name: {{ $name }}
+    creationPolicy: Owner
+  data:
+    - secretKey: SOURCE_URL
+      remoteRef:
+        key: "{{ .Values.global.akeyless.path }}{{ .Values.wasteSync.sourceUrlPath }}"
+    - secretKey: CALDAV_PASSWORD
+      remoteRef:
+        key: "{{ .Values.global.akeyless.path }}{{ .Values.wasteSync.caldavPasswordPath }}"
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ $name }}
+spec:
+  schedule: {{ .Values.wasteSync.schedule | quote }}
+  timeZone: {{ .Values.wasteSync.timeZone | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # Retries cover a provider or Radicale hiccup; a broken page fails every attempt.
+      backoffLimit: 2
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: {{ $name }}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+          containers:
+            - name: waste-sync
+              image: {{ .Values.wasteSync.image | quote }}
+              command: ["python", "-u", "/app/waste_sync.py"]
+              env:
+                # "Today" decides which pickups count as upcoming.
+                - name: TZ
+                  value: {{ .Values.wasteSync.timeZone | quote }}
+                - name: CALDAV_URL
+                  value: {{ .Values.wasteSync.caldavUrl | quote }}
+                - name: CALDAV_USERNAME
+                  value: {{ .Values.wasteSync.caldavUsername | quote }}
+                - name: USER_AGENT
+                  value: {{ printf "waste-sync (homelab; %s)" (.Values.global.email | default "no contact") | quote }}
+              envFrom:
+                - secretRef:
+                    name: {{ $name }}
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 32Mi
+                limits:
+                  memory: 128Mi
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                  readOnly: true
+          volumes:
+            - name: script
+              configMap:
+                name: {{ $name }}-script
+{{- if (.Values.global.monitoring | default dict).enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $name }}-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kube-prometheus-stack
+    app.kubernetes.io/instance: kube-prometheus-stack
+    # The label Prometheus' ruleSelector matches on. Without it the rules are created
+    # and silently never loaded.
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: {{ $name }}
+      interval: 5m
+      rules:
+        - alert: WasteSyncStale
+          annotations:
+            summary: "{{ $name }} last succeeded {{ `{{ $value | humanizeDuration }}` }} ago"
+            description: |
+              The waste collection calendar has not been updated for over 36 hours
+              against a daily schedule. Either the provider's page changed and the job
+              refuses to sync (its log says why), or the job no longer runs. Reminders
+              keep working from the dates already in the calendar until those run out.
+          expr: |
+            time() - max(kube_cronjob_status_last_successful_time{cronjob="{{ $name }}"}) > 36 * 3600
+          for: 10m
+          labels:
+            severity: warning
+        - alert: WasteSyncNeverSucceeded
+          annotations:
+            summary: "{{ $name }} has no successful run on record for 36 hours"
+            description: |
+              kube-state-metrics reports no last successful time for {{ $name }}, so
+              WasteSyncStale has nothing to measure. Usually the secret or the CalDAV
+              login is wrong; the job log says which.
+          # The same 36h as WasteSyncStale, held in "for" because an absent series has
+          # no timestamp to subtract.
+          expr: |
+            absent(kube_cronjob_status_last_successful_time{cronjob="{{ $name }}"})
+          for: 36h
+          labels:
+            severity: warning
+{{- end }}
+{{- end }}

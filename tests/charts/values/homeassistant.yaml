@@ -1,0 +1,3 @@
+# The waste sync is opt-in; switched on here so its templates are rendered and checked.
+wasteSync:
+  enabled: true
