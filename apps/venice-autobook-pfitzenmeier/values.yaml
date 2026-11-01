@@ -17,7 +17,7 @@ generic:
     # One image for both tenants. This tag MUST be a release that contains the
     # Pfitzenmeier tenant (tenant.py); v0.3.5 predates it. Bump in lockstep with
     # apps/venice-autobook once the tenant code is released, then enable this app.
-    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.3.5
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.4.0
     imagePullSecrets:
       - regcred-secondary
     ports:
