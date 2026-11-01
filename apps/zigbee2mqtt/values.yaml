@@ -23,7 +23,7 @@ generic:
       - ZIGBEE2MQTT_CONFIG_MQTT_USER: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_USER"
       - ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD: "/zigbee2mqtt/ZIGBEE2MQTT_CONFIG_MQTT_PASSWORD"
   deployment:
-    image: koenkk/zigbee2mqtt:2.14.2
+    image: koenkk/zigbee2mqtt:2.14.3
     ports:
     - containerPort: 8080
     pvcMounts:
