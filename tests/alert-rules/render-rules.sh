@@ -43,3 +43,9 @@ render restic --set appName=restic --set generic.appName=restic \
 # appName comes from ArgoCD in a real deploy (base-chart sets it as a parameter), so the
 # chart's values do not carry it; pass it the same way here.
 render zigbee-light-watcher --set appName=zigbee-light-watcher
+
+render venice-autobook --set generic.appName=venice-autobook \
+  --set generic.deployment.pvcMounts.data.hostPath=/tmp/va
+
+render venice-autobook-pfitzenmeier --set generic.appName=venice-autobook-pfitzenmeier \
+  --set generic.deployment.pvcMounts.data.hostPath=/tmp/vap

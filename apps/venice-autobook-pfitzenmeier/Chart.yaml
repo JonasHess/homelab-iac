@@ -1,0 +1,10 @@
+apiVersion: v2
+appVersion: 1.0.0
+dependencies:
+- name: generic
+  repository: file://../generic
+  version: 0.1.67
+description: Helm chart for venice-autobook on the Pfitzenmeier tenant (auto-book gym classes)
+name: venice-autobook-pfitzenmeier
+type: application
+version: 0.1.0

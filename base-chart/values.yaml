@@ -654,6 +654,20 @@ apps:
       namespace: "argocd"
       project: "default"
       syncWave: "18"
+  venice-autobook-pfitzenmeier:
+    enabled: false
+    homer:
+      enabled: true
+      group: "productivity"
+      logo: "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/svg/dumbbell.svg"
+      subtitle: "Auto-book gym classes (Pfitzenmeier)"
+      displayName: "Pfitzenmeier Autobook"
+      subdomain: "venice-autobook-pfitzenmeier"
+    argocd:
+      targetRevision: ~
+      namespace: "argocd"
+      project: "default"
+      syncWave: "18"
   facilioo-watch:
     enabled: false
     homer:

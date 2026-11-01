@@ -1,0 +1,53 @@
+# Both venice-autobook tenant instances expose the same venice_autobook_* metric
+# names. The regression these tests guard: an unhealthy instance must trip only its
+# own alerts, never the other tenant's. The rules are scoped by the `service` label
+# (the Kubernetes Service name), so a failing series for one service leaves the other
+# tenant's alerts silent.
+rule_files:
+  - .rendered/venice-autobook.yaml
+  - .rendered/venice-autobook-pfitzenmeier.yaml
+
+evaluation_interval: 1m
+
+tests:
+  - interval: 1m
+    name: a broken venice-autobook login fires only the venice-autobook alert
+    input_series:
+      - series: 'venice_autobook_auth_ok{service="venice-autobook-service"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: VeniceAutobookLoginBroken
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: venice-autobook-service
+            exp_annotations:
+              summary: "venice-autobook cannot log in to the studio"
+              description: |
+                venice_autobook_auth_ok has been 0 for 15m: authentication to the studio
+                is failing, so no class will be booked until the credentials are fixed
+                (check /zimmermann.lat/venice-autobook/VB_PASSWORD, or a changed password
+                / new 2FA).
+      - eval_time: 16m
+        alertname: VeniceAutobookPfitzenmeierLoginBroken
+        exp_alerts: []
+
+  - interval: 1m
+    name: a broken Pfitzenmeier login fires only the Pfitzenmeier alert
+    input_series:
+      - series: 'venice_autobook_auth_ok{service="venice-autobook-pfitzenmeier-service"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 16m
+        alertname: VeniceAutobookPfitzenmeierLoginBroken
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: venice-autobook-pfitzenmeier-service
+            exp_annotations:
+              summary: "venice-autobook (Pfitzenmeier) cannot log in to the studio"
+              description: "venice_autobook_auth_ok has been 0 for 15m: authentication to the Pfitzenmeier studio is failing, so no class will be booked until the credentials are fixed (check /zimmermann.lat/venice-autobook-pfitzenmeier/VB_PASSWORD, or a changed password / new 2FA)."
+      - eval_time: 16m
+        alertname: VeniceAutobookLoginBroken
+        exp_alerts: []

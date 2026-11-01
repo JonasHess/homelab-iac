@@ -1,0 +1,52 @@
+generic:
+  configMaps:
+    venice-autobook-pfitzenmeier-config:
+      # Same image as venice-autobook; VB_TENANT selects the Pfitzenmeier backend
+      # (host, client id/secret, app version) at runtime.
+      VB_TENANT: "pfitzenmeier"
+      # rules.yaml, tokens.json and autobook.db all live on the mounted PVC.
+      VB_CONFIG_DIR: "/data"
+      VB_DATA_DIR: "/data"
+  externalSecrets:
+    venice-autobook-pfitzenmeier-secret:
+      - VB_USERNAME: "/venice-autobook-pfitzenmeier/VB_USERNAME"
+      - VB_PASSWORD: "/venice-autobook-pfitzenmeier/VB_PASSWORD"
+      - NTFY_URL: "/venice-autobook-pfitzenmeier/NTFY_URL"
+      - SMTP_PASSWORD: "/venice-autobook-pfitzenmeier/SMTP_PASSWORD"
+  deployment:
+    # One image for both tenants. This tag MUST be a release that contains the
+    # Pfitzenmeier tenant (tenant.py); v0.3.5 predates it. Bump in lockstep with
+    # apps/venice-autobook once the tenant code is released, then enable this app.
+    image: 339712710461.dkr.ecr.eu-central-1.amazonaws.com/venice-autobook:v0.3.5
+    imagePullSecrets:
+      - regcred-secondary
+    ports:
+      - containerPort: 8080
+    pvcMounts:
+      data:
+        mountPath: /data
+        hostPath: ~
+        backup:
+          enabled: true
+    envFrom:
+      configMapRef: venice-autobook-pfitzenmeier-config
+      secretRef: venice-autobook-pfitzenmeier-secret
+  # Consistent nightly copy (autobook.db.backup) for restic at 02:00.
+  # runAsUser must own the data folder (the image runs as 10001).
+  sqliteBackup:
+    schedule: "50 1 * * *"
+    image: python:3.15-slim
+    runAsUser: 10001
+    databases:
+      - pvc: data
+        file: autobook.db
+
+  service:
+    ports:
+      - name: http
+        port: 8080
+  ingress:
+    https:
+      - subdomain: venice-autobook-pfitzenmeier
+        port: 8080
+        oauth: true

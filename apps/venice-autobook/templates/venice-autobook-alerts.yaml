@@ -30,7 +30,7 @@ spec:
           is failing, so no class will be booked until the credentials are fixed
           (check /zimmermann.lat/venice-autobook/VB_PASSWORD, or a changed password
           / new 2FA).
-      expr: venice_autobook_auth_ok == 0
+      expr: venice_autobook_auth_ok{service="venice-autobook-service"} == 0
       for: 15m
       labels:
         severity: critical
@@ -40,8 +40,8 @@ spec:
         description: |
           No successful schedule sync in over an hour. Upcoming classes may not be
           armed - check the pod and the studio API.
-      expr: venice_autobook_last_sync_timestamp_seconds > 0
-        and (time() - venice_autobook_last_sync_timestamp_seconds) > 3600
+      expr: venice_autobook_last_sync_timestamp_seconds{service="venice-autobook-service"} > 0
+        and (time() - venice_autobook_last_sync_timestamp_seconds{service="venice-autobook-service"}) > 3600
       for: 15m
       labels:
         severity: warning
@@ -51,7 +51,7 @@ spec:
         description: |
           A class booking window passed without a booking (the service was likely
           down at the fire moment). The seat was not taken.
-      expr: increase(venice_autobook_outcomes_total{result="missed"}[1h]) > 0
+      expr: increase(venice_autobook_outcomes_total{result="missed",service="venice-autobook-service"}[1h]) > 0
       labels:
         severity: critical
     - alert: VeniceAutobookBookingFailed
@@ -60,7 +60,7 @@ spec:
         description: |
           A booking attempt failed (full without a waitlist, or an API error).
           Check the app's activity log.
-      expr: increase(venice_autobook_outcomes_total{result="failed"}[1h]) > 0
+      expr: increase(venice_autobook_outcomes_total{result="failed",service="venice-autobook-service"}[1h]) > 0
       labels:
         severity: warning
     - alert: VeniceAutobookTargetDown
@@ -69,7 +69,7 @@ spec:
         description: |
           Prometheus has not been able to scrape venice-autobook /metrics for 15m -
           the pod may be down, which means bookings will be missed.
-      expr: absent(venice_autobook_auth_ok)
+      expr: absent(venice_autobook_auth_ok{service="venice-autobook-service"})
       for: 15m
       labels:
         severity: critical
