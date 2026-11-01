@@ -57,11 +57,13 @@ class BulbState:
         self.command_seq = 0
         self.verified_seq = None
         self.actual = None
+        self.actual_at = None
         self.mismatch_since = None
         self.mismatch_kind = None
         self.pending_read_since = None
         self.read_snapshot = None
         self.last_set_at = None
+        self.auto_off_sent = False
 
 
 class Tracker:
@@ -74,13 +76,27 @@ class Tracker:
     # read_timeout_s must exceed Zigbee2MQTT's own request timeout (15 s on the Ember
     # adapter): an answer arriving after it would be taken for a direct command and could
     # hide a ghost light.
+    #
+    # Auto-off (disabled unless both auto_off_s and turn_off are given): a light that is
+    # ON although commanded OFF, for at least auto_off_s, is switched off once via
+    # turn_off(name) when it is a lone ghost, i.e. every other member of its groups was
+    # observed OFF after the mismatch began. A whole group coming on together (a wall
+    # switch restoring power) is therefore left alone, and so is a light without group
+    # siblings, since nothing tells its ghost apart from a deliberate power-on. The cost:
+    # a single light switched on via the Zigbee2MQTT frontend (no MQTT /set) looks like a
+    # lone ghost and is switched off again. The light stays on for the longer of auto_off_s
+    # and the time until all siblings were re-read; an auto_off_s above the poll interval
+    # adds one more read of the light itself, which ends a mismatch caused by a misread
+    # before anything is switched.
     def __init__(self, sink, settle_s=3.0, read_timeout_s=30.0, adjacent_s=ADJACENT_S,
-                 set_window_s=SET_WINDOW_S):
+                 set_window_s=SET_WINDOW_S, auto_off_s=None, turn_off=None):
         self.sink = sink
         self.settle_s = settle_s
         self.read_timeout_s = read_timeout_s
         self.adjacent_s = adjacent_s
         self.set_window_s = set_window_s
+        self.auto_off_s = auto_off_s
+        self.turn_off = turn_off
         self.bulbs = {}
         self.groups = {}
         self.bulb_groups = {}
@@ -164,6 +180,7 @@ class Tracker:
         horizon = now - 3 * self.adjacent_s
         self._items = [i for i in self._items if not i["done"] or i["ts"] >= horizon]
         self._expire_reads(now)
+        self._auto_off(now)
 
     def _expire_reads(self, now):
         for bulb in self.bulbs.values():
@@ -171,6 +188,27 @@ class Tracker:
                 bulb.pending_read_since = None
                 self.sink.read_failed(bulb.name)
                 self.sink.event("read_timeout", bulb=bulb.name)
+
+    def _auto_off(self, now):
+        if self.auto_off_s is None or self.turn_off is None:
+            return
+        for bulb in self.bulbs.values():
+            if (bulb.mismatch_since is None or bulb.auto_off_sent or not bulb.actual
+                    or bulb.commanded or now - bulb.mismatch_since < self.auto_off_s
+                    or not self._is_lone(bulb)):
+                continue
+            bulb.auto_off_sent = True
+            self.turn_off(bulb.name)
+            self.sink.auto_off(bulb.name)
+            self.sink.event("auto_off", bulb=bulb.name, kind=bulb.mismatch_kind,
+                            mismatch_age_s=round(now - bulb.mismatch_since, 1))
+
+    def _is_lone(self, bulb):
+        siblings = {m for g in self.bulb_groups.get(bulb.name, []) for m in self.groups[g]} - {bulb.name}
+        return bool(siblings) and all(
+            self.bulbs[s].actual is False and self.bulbs[s].actual_at is not None
+            and self.bulbs[s].actual_at >= bulb.mismatch_since
+            for s in siblings)
 
     # --- classification -----------------------------------------------------
 
@@ -224,6 +262,7 @@ class Tracker:
         bulb.pending_read_since = None
         actual = payload["state"] == "ON"
         bulb.actual = actual
+        bulb.actual_at = ts
         self.sink.read_ok(bulb.name, actual, payload.get("linkquality"), ts)
 
         if bulb.commanded is None:
@@ -241,6 +280,7 @@ class Tracker:
     def _device_report(self, bulb, payload, ts):
         actual = payload["state"] == "ON"
         bulb.actual = actual
+        bulb.actual_at = ts
         self.sink.reported(bulb.name, actual, payload.get("linkquality"))
 
         if bulb.commanded is None:
@@ -280,6 +320,7 @@ class Tracker:
                         duration_s=round(ts - bulb.mismatch_since, 1))
         bulb.mismatch_since = None
         bulb.mismatch_kind = None
+        bulb.auto_off_sent = False
 
 
 # --- Prometheus / MQTT adapters -------------------------------------------------
@@ -301,6 +342,7 @@ class MetricsSink:
                                    "Light changed state after following its last command, without a new command", ["bulb"])
         self.group_commands = Counter("zigbee_group_commands", "Group commands seen", ["group", "state"])
         self.announces = Counter("zigbee_device_announces", "device_announce events (power loss or rejoin)", ["device"])
+        self.auto_offs = Counter("zigbee_light_auto_offs", "Lone ghost lights the watcher switched off", ["bulb"])
         self._info_labels = {}
 
     def light_info(self, bulb, groups):
@@ -315,7 +357,7 @@ class MetricsSink:
     def light_removed(self, bulb):
         for metric in (self.actual_on, self.commanded_on, self.mismatch_g, self.reachable,
                        self.linkquality, self.last_read, self.info, self.reads,
-                       self.read_failures, self.missed, self.uncommanded):
+                       self.read_failures, self.missed, self.uncommanded, self.auto_offs):
             label_sets = {tuple(s.labels[n] for n in metric._labelnames)
                           for family in metric.collect() for s in family.samples
                           if s.labels.get("bulb") == bulb}
@@ -358,6 +400,9 @@ class MetricsSink:
 
     def announce(self, device):
         self.announces.labels(device).inc()
+
+    def auto_off(self, bulb):
+        self.auto_offs.labels(bulb).inc()
 
     def event(self, event_type, **fields):
         log_event(event_type, **fields)
@@ -420,10 +465,17 @@ def main():
     interval = float(os.environ.get("POLL_INTERVAL_SECONDS", "60"))
     exclude = os.environ.get("EXCLUDE_REGEX", "")
     metrics_port = int(os.environ.get("METRICS_PORT", "9105"))
+    auto_off_s = float(os.environ["AUTO_OFF_SECONDS"]) if os.environ.get("AUTO_OFF_SECONDS") else None
 
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     start_http_server(metrics_port)
-    tracker = Tracker(MetricsSink())
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="zigbee-light-watcher")
+
+    def turn_off(name):
+        client.publish(f"{base}/{name}/set", json.dumps({"state": "OFF"}))
+
+    tracker = Tracker(MetricsSink(), auto_off_s=auto_off_s, turn_off=turn_off)
+    log_event("started", auto_off_s=auto_off_s)
     inbox = queue.Queue()
 
     def on_connect(client, userdata, flags, reason_code, properties):
@@ -434,7 +486,6 @@ def main():
     def on_message(client, userdata, msg):
         inbox.put((msg.topic, msg.payload, time.time()))
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="zigbee-light-watcher")
     client.on_connect = on_connect
     client.on_message = on_message
     apply_mqtt_credentials(client, os.environ)

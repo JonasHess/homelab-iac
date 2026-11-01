@@ -19,6 +19,11 @@ pollIntervalSeconds: 60
 # Lights matching this regex are not polled (e.g. lamps usually switched off at the plug).
 excludeRegex: ""
 metricsPort: 9105
+# Seconds a lone ghost light (ON although commanded OFF, while the rest of its group is
+# OFF) may stay on before the watcher switches it off; empty = never. The watcher also
+# waits until it re-read the group siblings. Above pollIntervalSeconds the light itself is
+# re-read once more first, so a single misread switches nothing.
+autoOffSeconds: ""
 
 alerts:
   # A light that is ON although it was last commanded OFF, for this long.

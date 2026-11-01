@@ -56,6 +56,8 @@ spec:
               value: {{ .Values.excludeRegex | quote }}
             - name: METRICS_PORT
               value: {{ .Values.metricsPort | quote }}
+            - name: AUTO_OFF_SECONDS
+              value: {{ .Values.autoOffSeconds | quote }}
           envFrom:
             - secretRef:
                 name: {{ .Values.appName }}-mqtt

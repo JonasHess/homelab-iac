@@ -20,6 +20,7 @@ class FakeSink:
         self.read_failures = []
         self.group_commands = []
         self.removed = []
+        self.auto_offs = []
 
     def light_info(self, bulb, groups): pass
     def light_removed(self, bulb): self.removed.append(bulb)
@@ -32,6 +33,7 @@ class FakeSink:
     def uncommanded_change(self, bulb): self.uncommanded.append(bulb)
     def group_command(self, group, state): self.group_commands.append((group, state))
     def announce(self, device): pass
+    def auto_off(self, bulb): self.auto_offs.append(bulb)
     def event(self, event_type, **fields): self.events.append((event_type, fields))
 
     def kinds(self):
@@ -268,6 +270,155 @@ class TrackerTest(unittest.TestCase):
         self.t.process(11)
         self.assertEqual(self.sink.read_failures, [])
         self.assertNotIn("bad_decke3", self.sink.commanded_on)
+
+
+class AutoOffTest(unittest.TestCase):
+    def setUp(self):
+        self.sink = FakeSink()
+        self.turned_off = []
+        self.t = Tracker(self.sink, settle_s=3.0, read_timeout_s=10.0,
+                         auto_off_s=60.0, turn_off=self.turned_off.append)
+        self.t.set_lights(BAD + ["flur_decke"])
+        self.t.set_groups({"Bad": BAD, "Flur": ["flur_decke"]})
+
+    def group_command(self, s, ts):
+        self.t.on_message("bad_decke1", state(s), ts)
+        self.t.on_message("Bad", {"state": s}, ts + 0.0002)
+        self.t.on_message("bad_decke2", state(s), ts + 0.0004)
+        self.t.on_message("bad_decke3", state(s), ts + 0.0006)
+        self.t.process(ts + 1)
+
+    def read(self, bulb, answer, ts):
+        self.t.begin_read(bulb, ts)
+        self.t.on_message(bulb, state(answer, 88), ts + 0.2)
+        self.t.process(ts + 1)
+
+    def lone_ghost_on_decke1(self):
+        """decke1 turns on by itself at ~220; its siblings are read OFF afterwards."""
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220)
+        self.read("bad_decke2", "OFF", 230)
+        self.read("bad_decke3", "OFF", 240)
+
+    def test_lone_ghost_is_switched_off_after_the_delay(self):
+        self.lone_ghost_on_decke1()
+        self.t.process(279)
+        self.assertEqual(self.turned_off, [])
+        self.t.process(281)
+        self.assertEqual(self.turned_off, ["bad_decke1"])
+        self.assertEqual(self.sink.auto_offs, ["bad_decke1"])
+        kind, fields = self.sink.events[-1]
+        self.assertEqual((kind, fields["bulb"], fields["kind"]), ("auto_off", "bad_decke1", "uncommanded_change"))
+
+    def test_lone_ghost_is_switched_off_only_once_per_mismatch(self):
+        self.lone_ghost_on_decke1()
+        self.t.process(281)
+        self.t.process(400)
+        self.read("bad_decke1", "ON", 410)
+        self.t.process(500)
+        self.assertEqual(self.turned_off, ["bad_decke1"])
+
+    def test_own_off_command_ends_the_mismatch_and_a_later_ghost_is_handled_again(self):
+        self.lone_ghost_on_decke1()
+        self.t.process(281)
+        # The watcher sees its own /set and Z2M's acknowledged state like any direct command.
+        self.t.on_set("bad_decke1", 281)
+        self.t.on_message("bad_decke1", state("OFF", 84), 281.5)
+        self.t.process(283)
+        self.assertFalse(self.sink.mismatch_on["bad_decke1"])
+        self.read("bad_decke1", "ON", 400)
+        self.read("bad_decke2", "OFF", 410)
+        self.read("bad_decke3", "OFF", 420)
+        self.t.process(461)
+        self.assertEqual(self.turned_off, ["bad_decke1", "bad_decke1"])
+
+    def test_whole_group_on_together_is_left_alone(self):
+        # A wall switch restoring power switches all spots on at once.
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220)
+        self.read("bad_decke2", "ON", 230)
+        self.read("bad_decke3", "ON", 240)
+        self.t.process(400)
+        self.assertEqual(self.turned_off, [])
+
+    def test_waits_until_every_sibling_was_observed_after_the_ghost_appeared(self):
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("OFF", 100)
+        self.read("bad_decke2", "OFF", 150)
+        self.read("bad_decke3", "OFF", 155)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220)
+        self.t.process(281)
+        self.assertEqual(self.turned_off, [])
+        self.read("bad_decke2", "OFF", 290)
+        self.t.process(292)
+        self.assertEqual(self.turned_off, [])
+        self.read("bad_decke3", "OFF", 295)
+        self.t.process(297)
+        self.assertEqual(self.turned_off, ["bad_decke1"])
+
+    def test_short_delay_still_waits_for_the_siblings(self):
+        self.t.auto_off_s = 5.0
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke1", "ON", 220)
+        self.t.process(226)
+        self.assertEqual(self.turned_off, [])
+        self.read("bad_decke2", "OFF", 230)
+        self.assertEqual(self.turned_off, [])
+        self.read("bad_decke3", "OFF", 240)
+        self.assertEqual(self.turned_off, ["bad_decke1"])
+
+    def test_light_that_missed_a_group_off_alone_is_switched_off(self):
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("ON", 100)
+        self.group_command("OFF", 200)
+        self.read("bad_decke2", "ON", 260)
+        self.read("bad_decke1", "OFF", 265)
+        self.read("bad_decke3", "OFF", 270)
+        self.t.process(321)
+        self.assertEqual(self.turned_off, ["bad_decke2"])
+
+    def test_light_that_stayed_off_is_not_touched(self):
+        for i, b in enumerate(BAD):
+            self.read(b, "OFF", i)
+        self.group_command("ON", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.read("bad_decke2", "ON", 170)
+        self.read("bad_decke3", "ON", 180)
+        self.t.process(400)
+        self.assertEqual(self.turned_off, [])
+
+    def test_light_without_group_siblings_is_not_touched(self):
+        self.read("flur_decke", "OFF", 0)
+        self.t.on_message("Flur", {"state": "OFF"}, 100)
+        self.t.on_message("flur_decke", state("OFF"), 100.0003)
+        self.t.process(101)
+        self.read("flur_decke", "OFF", 160)
+        self.read("flur_decke", "ON", 220)
+        self.t.process(400)
+        self.assertEqual(self.turned_off, [])
+
+    def test_disabled_by_default(self):
+        sink = FakeSink()
+        t = Tracker(sink, settle_s=3.0, read_timeout_s=10.0)
+        t.set_lights(BAD)
+        t.set_groups({"Bad": BAD})
+        self.t = t
+        self.sink = sink
+        self.lone_ghost_on_decke1()
+        t.process(400)
+        self.assertEqual(sink.auto_offs, [])
 
 
 class LightsFromDevicesTest(unittest.TestCase):
