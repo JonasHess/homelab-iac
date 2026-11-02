@@ -34,7 +34,7 @@ smtp:
 # backup CronJob, so the backup always runs the server's own version.
 image:
   # renovate: depName=vaultwarden/server
-  tag: "1.37.4-alpine"
+  tag: "1.37.5-alpine"
 
 dbBackup:
   # Before restic-backup (02:00); both CronJobs use the cluster's time zone.
