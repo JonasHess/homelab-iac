@@ -7,7 +7,7 @@ template:
   spec:
     containers:
       - name: cli
-        image: ghcr.io/immich-app/immich-cli:3.3.5
+        image: ghcr.io/immich-app/immich-cli:3.3.6
         imagePullPolicy: IfNotPresent
         workingDir: /usr/src/app/dist
         command:
