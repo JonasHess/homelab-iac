@@ -17,7 +17,7 @@ cd "$(dirname "$0")"
 # argo-cd Helm chart version (https://github.com/argoproj/argo-helm). Raise it to upgrade Argo CD;
 # read the chart's and Argo CD's upgrade notes for every version skipped in between.
 # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
-ARGOCD_CHART_VERSION="10.11.6"
+ARGOCD_CHART_VERSION="10.12.1"
 
 # Exits if the cluster already runs a newer argo-cd chart than ARGOCD_CHART_VERSION:
 # "helm upgrade --version" would install the older chart and its older CRDs over it.
