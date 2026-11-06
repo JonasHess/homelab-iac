@@ -2,7 +2,7 @@ image: python:3.15.2-slim
 # Installed by the init container at pod start; the script needs nothing else.
 # Keep the `name==version` form: Renovate's PyPI manager matches exactly that.
 pythonPackages:
-  - paho-mqtt==2.1.0
+  - paho-mqtt==2.2.0
   - prometheus-client==0.26.0
 
 mqtt:
