@@ -17,7 +17,9 @@ z2mBaseTopic: zigbee2mqtt
 # Every light is read once per interval, spread evenly across it.
 pollIntervalSeconds: 60
 # Lights matching this regex are not polled (e.g. lamps usually switched off at the plug).
-excludeRegex: ""
+# Each read of an unreachable lamp ties up the coordinator for its full timeout and
+# retries; while it is busy, group commands fail with BUSY and are not resent.
+excludeRegex: "^(Stimmungsleuchte|stehlampe_schlafzimmer)$"
 metricsPort: 9105
 # Seconds a lone ghost light (ON although commanded OFF, while the rest of its group is
 # OFF) may stay on before the watcher switches it off; empty = never. The watcher also
