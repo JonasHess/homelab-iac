@@ -8,6 +8,9 @@ generic:
         hostPath: /tmp/firefly-import
       import-jobs:
         hostPath: /tmp/firefly-import-jobs
+  persistentVolumeClaims:
+    fints:
+      hostPath: /tmp/firefly-fints
 digest:
   enabled: true
 loanSplit:
@@ -32,3 +35,13 @@ trTimeline:
   sessionClaim: example-session
   cashAccount: 1
   depotAccount: 2
+fints:
+  enabled: true
+  blz: "50050222"
+  iban: DE00000000000000000000
+  since: "2025-11-17"
+  importName: example-bank
+  importConfig:
+    flow: file
+    default_account: 1
+  pinPath: /firefly/EXAMPLE_PIN

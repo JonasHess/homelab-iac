@@ -1,0 +1,141 @@
+{{- if .Values.fints.enabled }}
+{{- /*
+  Nightly FinTS fetch for a bank Enable Banking does not offer. The job never books
+  anything itself: it writes <importName>.csv into /import in the bank's web-export
+  layout, and the 04:00 auto-import books it with <importName>.json, the configuration
+  the web wizard produced for that export. History and nightly rows therefore pass
+  through one and the same importer configuration.
+
+  The login job is a suspended template, started by hand whenever the bank wants a TAN
+  again (PSD2: at the latest every 90 to 180 days). It waits for someone to attach and
+  type the TAN; see fints.loginHint.
+*/ -}}
+{{- $image := .Values.fints.image | quote }}
+{{- $install := printf "apk add --quiet --no-cache aqbanking=%s python3 || exit 1" .Values.fints.aqbankingVersion }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-fints-script
+  namespace: {{ .Release.Namespace }}
+data:
+  fints_import.py: |
+{{ .Files.Get "scripts/fints_import.py" | indent 4 }}
+  import-config.json: |
+{{ required "fints.importConfig is required" .Values.fints.importConfig | toPrettyJson | indent 4 }}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: firefly-importer-fints-secret-external-secret
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true,SkipDryRunOnMissingResource=true
+spec:
+  refreshInterval: {{ .Values.global.externalSecrets.refreshInterval | default "1h" }}
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: {{ .Values.global.externalSecrets.clusterSecretStoreRef.name }}
+  target:
+    name: firefly-importer-fints-secret
+    creationPolicy: Owner
+  data:
+    - secretKey: FINTS_PIN
+      remoteRef:
+        key: "{{ .Values.global.akeyless.path }}{{ required "fints.pinPath is required" .Values.fints.pinPath }}"
+---
+{{- range $job := list "nightly" "login" }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-fints{{ if eq $job "login" }}-login{{ end }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    # Not app: firefly-importer - that label is the web pod's Service selector.
+    app: firefly-importer-fints
+    component: {{ $job }}
+spec:
+  schedule: {{ $.Values.fints.schedule | quote }}
+  {{- if eq $job "login" }}
+  # Never runs on its own: kubectl create job --from=cronjob/firefly-importer-fints-login
+  suspend: true
+  {{- end }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # No retry, ever: a refused login retried is one more strike toward the bank's
+      # PIN lockout.
+      backoffLimit: 0
+      activeDeadlineSeconds: {{ if eq $job "login" }}1800{{ else }}600{{ end }}
+      template:
+        metadata:
+          labels:
+            app: firefly-importer-fints
+            component: {{ $job }}
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: fints
+              image: {{ $image }}
+              {{- if eq $job "login" }}
+              stdin: true
+              tty: true
+              {{- end }}
+              envFrom:
+                - secretRef:
+                    name: firefly-importer-fints-secret
+              env:
+                - name: FINTS_CONFIG_DIR
+                  value: /aqbanking
+                - name: FINTS_BLZ
+                  value: {{ required "fints.blz is required" $.Values.fints.blz | quote }}
+                - name: FINTS_IBAN
+                  value: {{ required "fints.iban is required" $.Values.fints.iban | quote }}
+                - name: FINTS_FROM_DAYS
+                  value: {{ $.Values.fints.fromDays | quote }}
+                - name: FINTS_SINCE
+                  value: {{ required "fints.since is required" $.Values.fints.since | quote }}
+                - name: FINTS_OUTPUT
+                  value: "/import/{{ required "fints.importName is required" $.Values.fints.importName }}.csv"
+                - name: FINTS_LOGIN_HINT
+                  value: {{ $.Values.fints.loginHint | quote }}
+              command: ["sh", "-c"]
+              args:
+                - |
+                  {{ $install }}
+                  {{- if eq $job "login" }}
+                  echo "Attach and run:  python3 /script/fints_import.py login"
+                  sleep 1500
+                  {{- else }}
+                  # The importer configuration is rewritten every night from this chart,
+                  # so the copy in /import cannot drift from what is in git.
+                  cp /script/import-config.json "${FINTS_OUTPUT%.csv}.json" || exit 1
+                  python3 /script/fints_import.py
+                  {{- end }}
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+                - name: aqbanking
+                  mountPath: /aqbanking
+                - name: import
+                  mountPath: /import
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-fints-script
+            - name: aqbanking
+              persistentVolumeClaim:
+                claimName: {{ $.Values.fints.configClaim }}
+            - name: import
+              persistentVolumeClaim:
+                claimName: firefly-importer-import-pvc
+            # The PIN file lives here, in memory only.
+            - name: tmp
+              emptyDir:
+                medium: Memory
+---
+{{- end }}
+{{- end }}

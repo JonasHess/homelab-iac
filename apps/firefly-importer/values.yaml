@@ -179,6 +179,39 @@ trTimeline:
   # Mailed once a reminder is due: how to log in again on this instance.
   loginHint: ""
 
+# Fetches one bank account over FinTS (AqBanking) for a bank Enable Banking does not
+# offer, and leaves the result in /import as <importName>.csv in that bank's web-export
+# layout, next to <importName>.json, for the 04:00 auto-import. Off by default: it needs
+# an AqBanking configuration set up once by hand on the configClaim volume.
+fints:
+  enabled: false
+  # Ahead of the 04:00 auto-import, which books what this leaves in /import.
+  schedule: "45 3 * * *"
+  image: alpine:3.24
+  # Exact apk package version, so a rebuild of the image cannot change the FinTS client.
+  aqbankingVersion: "6.8.4-r0"
+  # The bank code AqBanking's user was set up with (for its PIN file), and the account.
+  blz: ""
+  iban: ""
+  # Days requested per night. Banks may hand out up to 90 days of history without a TAN;
+  # a longer request makes them demand one, which a night run cannot give.
+  fromDays: 30
+  # First booking day to take from FinTS (YYYY-MM-DD). Everything before came from
+  # another source in another wording, so booking it again would duplicate it.
+  since: ""
+  # File name stem in /import, and the importer configuration written beside it as JSON:
+  # the one the web wizard downloads for the bank's own CSV export.
+  importName: ""
+  importConfig: {}
+  # Akeyless path (below global.akeyless.path) of the online-banking PIN.
+  pinPath: ""
+  # Claim holding the AqBanking configuration (user, system id, TAN method) and the
+  # LOGIN_REFUSED lock file. An environment creates it under
+  # generic.persistentVolumeClaims.fints, which names it firefly-importer-fints-pvc.
+  configClaim: firefly-importer-fints-pvc
+  # Printed when the bank wants a TAN: how to run the login job on this instance.
+  loginHint: ""
+
 digest:
   enabled: false
   # 30 minutes after the auto-import, so it reports on that run.
