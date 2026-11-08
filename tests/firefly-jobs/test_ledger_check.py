@@ -89,6 +89,22 @@ class TestDuplicates:
             [grp("26", split(external_id="")), grp("27", split(external_id=None))])
         assert definite == []
 
+    def test_identical_rows_without_external_ids_are_counted_for_review(self):
+        # Banks imported from CSV or FinTS carry no external_id, so a row booked twice
+        # there has nothing but its content to give it away.
+        _, review = lc.duplicates(
+            [grp("28", split(external_id="")), grp("29", split(external_id=None))])
+        assert review == 1
+
+    def test_same_row_on_two_different_accounts_is_not_a_duplicate(self):
+        # Two people get the same interest from the same broker on the same day.
+        _, review = lc.duplicates(
+            [grp("30", split(type="deposit", source_id="800", source_name="INTEREST_PAYMENT",
+                             destination_id="2", external_id="A")),
+             grp("31", split(type="deposit", source_id="800", source_name="INTEREST_PAYMENT",
+                             destination_id="3", external_id="B"))])
+        assert review == 0
+
 
 class TestUncategorised:
     def test_lists_only_uncategorised_non_transfers(self):

@@ -74,15 +74,17 @@ def duplicates(groups):
     DEFINITE: two transactions sharing a non-empty external_id and otherwise identical -
     the same bank row imported twice, which is always wrong.
 
-    REVIEW: same date/type/amount/counterparty/description but *different* external_ids.
-    Usually legitimate (four identical small card payments in one day really happen), so
-    it is counted rather than listed - listing it would mail noise every night.
+    REVIEW: same account/date/type/amount/counterparty/description but different
+    external_ids, or none at all (CSV and FinTS imports carry none). Usually legitimate
+    (four identical small card payments in one day really happen), so it is counted
+    rather than listed - listing it would mail noise every night.
     """
     byext, bykey = defaultdict(list), defaultdict(list)
     for gid, s in splits(groups):
         ext = (s.get("external_id") or "").strip()
-        cp = s["destination_name"] if s["type"] == "withdrawal" else s["source_name"]
-        ident = (s["date"][:10], s["type"], f'{abs(float(s["amount"])):.2f}',
+        own, cp = ((s["source_id"], s["destination_name"]) if s["type"] == "withdrawal"
+                   else (s["destination_id"], s["source_name"]))
+        ident = (str(own), s["date"][:10], s["type"], f'{abs(float(s["amount"])):.2f}',
                  cp, _norm(s.get("description"))[:40])
         if ext:
             byext[ext].append((gid, ident))
@@ -92,9 +94,9 @@ def duplicates(groups):
     for ext, rows in byext.items():
         if len(rows) > 1 and len({r[1] for r in rows}) == 1:
             definite.append(f"external_id {ext}: groups {sorted(r[0] for r in rows)} "
-                            f"- {rows[0][1][0]} {rows[0][1][2]} {str(rows[0][1][3])[:30]}")
+                            f"- {rows[0][1][1]} {rows[0][1][3]} {str(rows[0][1][4])[:30]}")
     review = sum(1 for rows in bykey.values()
-                 if len(rows) > 1 and len({e for _, e in rows}) > 1)
+                 if len(rows) > 1 and (len({e for _, e in rows}) > 1 or not rows[0][1]))
     return definite, review
 
 
