@@ -104,3 +104,43 @@ class TestWrite:
         target = tmp_path / "out.csv"
         fi.write_csv([], target)
         assert len(target.read_text(encoding="utf-8").splitlines()) == 1
+
+
+class TestSeveralAccounts:
+    GIRO = "DE02500502011244250048"
+    SAVINGS = "DE77500502011244250056"
+
+    def test_movements_with_an_earlier_account_are_skipped(self):
+        # The giro account books the transfer to the savings account; the savings
+        # account's record of the same movement would be a second transfer.
+        rows = [aq_row(remoteIban=self.GIRO, value_value="23000"), aq_row(remoteIban="", value_value="12.34")]
+        out = fi.convert(rows, since="2025-11-17", skip_ibans={self.GIRO})
+        assert [r["Soll/Haben"] for r in out] == ["12,34"]
+
+    def test_skipping_ignores_spacing(self):
+        rows = [aq_row(remoteIban="DE02 5005 0201 1244 2500 48")]
+        assert fi.convert(rows, since="2025-11-17", skip_ibans={self.GIRO}) == []
+
+    def test_accounts_from_configuration(self):
+        accounts = fi.parse_accounts('[{"iban": "DE02 5005 0201 1244 2500 48", "importName": "giro"},'
+                                     ' {"iban": "DE77500502011244250056", "importName": "zins", "defaultAccount": 1174}]')
+        assert [(a["iban"], a["importName"], a.get("defaultAccount")) for a in accounts] == [
+            (self.GIRO, "giro", None), (self.SAVINGS, "zins", 1174)]
+
+    def test_skip_set_holds_only_the_accounts_listed_before(self):
+        accounts = fi.parse_accounts(f'[{{"iban": "{self.GIRO}", "importName": "g"}},'
+                                     f' {{"iban": "{self.SAVINGS}", "importName": "z"}}]')
+        assert fi.skip_for(accounts, 0) == set()
+        assert fi.skip_for(accounts, 1) == {self.GIRO}
+
+    @pytest.mark.parametrize("raw", ["[]", '[{"importName": "x"}]', '[{"iban": "DE02500502011244250048"}]',
+                                     '[{"iban": "X", "importName": "../evil"}]'])
+    def test_broken_configuration_is_refused(self, raw):
+        with pytest.raises(ValueError):
+            fi.parse_accounts(raw)
+
+    def test_import_configuration_takes_the_accounts_default(self):
+        template = {"flow": "file", "default_account": 1050, "roles": ["_ignore"]}
+        assert fi.import_config(template, 1174)["default_account"] == 1174
+        assert fi.import_config(template, None)["default_account"] == 1050
+        assert template["default_account"] == 1050  # template untouched

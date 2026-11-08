@@ -190,8 +190,14 @@ fints:
   image: alpine:3.24
   # Exact apk package version, so a rebuild of the image cannot change the FinTS client.
   aqbankingVersion: "6.8.4-r0"
-  # The bank code AqBanking's user was set up with (for its PIN file), and the account.
+  # The bank code AqBanking's user was set up with (for its PIN file).
   blz: ""
+  # Accounts to fetch, each {iban, importName, defaultAccount}: importName is the file
+  # stem in /import, defaultAccount the Firefly account id its rows are booked to
+  # (empty: the one in importConfig). Order matters - a movement between two listed
+  # accounts is booked from the earlier one only, since each side would otherwise add a
+  # transfer of its own. Empty: the single account given by iban and importName.
+  accounts: []
   iban: ""
   # Days requested per night. Banks may hand out up to 90 days of history without a TAN;
   # a longer request makes them demand one, which a night run cannot give.
@@ -199,8 +205,9 @@ fints:
   # First booking day to take from FinTS (YYYY-MM-DD). Everything before came from
   # another source in another wording, so booking it again would duplicate it.
   since: ""
-  # File name stem in /import, and the importer configuration written beside it as JSON:
-  # the one the web wizard downloads for the bank's own CSV export.
+  # File name stem in /import for that single account, and the importer configuration
+  # written beside each CSV as JSON: the one the web wizard downloads for the bank's own
+  # CSV export.
   importName: ""
   importConfig: {}
   # Akeyless path (below global.akeyless.path) of the online-banking PIN.
