@@ -334,3 +334,117 @@ class TestJoinAndConvertDoNotOverlap:
 
     def test_the_conversion_pass_ignores_a_joinable_pair(self):
         assert lt.sole_source_halves(canonical(), SOLE) == ([], [])
+
+
+# A movement whose receiving side was already booked as a transfer by one import (the
+# importer matched the IBAN to an own account) while the other bank's import booked its
+# own half as a plain deposit or withdrawal. The transfer is complete; the half is a
+# duplicate of it.
+GIRO_T = "DE00100000000000000003"
+OWN3 = dict(OWN, **{GIRO_T: {"id": "1050", "name": "Bank C Giro"}})
+
+
+def tr(amount="550.00", date="2026-12-01", src="1050", dst="99", journal="9900",
+       desc="Haushaltskonto"):
+    return {"transaction_journal_id": journal, "type": "transfer", "date": date + "T00:00:00+01:00",
+            "amount": amount, "source_id": src, "source_name": "Bank C Giro",
+            "destination_id": dst, "destination_name": "Bank B Haushalt",
+            "description": desc, "external_id": ""}
+
+
+def dp_half(amount="550.00", date="2026-12-02", dest="99", journal="9901",
+            desc="Haushaltskonto", payee="Kontoinhaberin"):
+    return {"transaction_journal_id": journal, "type": "deposit", "date": date + "T00:00:00+01:00",
+            "amount": amount, "source_id": "111", "source_name": payee,
+            "destination_id": dest, "destination_name": "Bank B Haushalt",
+            "description": desc, "external_id": "cdh-1"}
+
+
+def wd_half(amount="550.00", date="2026-11-30", src="1050", journal="9902",
+            desc="Haushaltskonto", payee=SELF_PAYEE):
+    return {"transaction_journal_id": journal, "type": "withdrawal", "date": date + "T00:00:00+01:00",
+            "amount": amount, "source_id": src, "source_name": "Bank C Giro",
+            "destination_id": "601", "destination_name": payee,
+            "description": desc, "external_id": "x-1"}
+
+
+class TestTransferredHalves:
+    def test_the_receiving_banks_deposit_is_dropped(self):
+        drops, refusals = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half()])], OWN3)
+        assert refusals == []
+        assert [(d["group"], d["account_id"], d["delta"]) for d in drops] == [("d1", "99", -55000)]
+        assert drops[0]["transfer_group"] == "t1"
+
+    def test_the_paying_banks_withdrawal_is_dropped(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("w1", [wd_half()])], OWN3)
+        assert [(d["group"], d["account_id"], d["delta"]) for d in drops] == [("w1", "1050", 55000)]
+
+    def test_a_few_days_apart_still_match(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(date="2026-12-04")])], OWN3)
+        assert len(drops) == 1
+
+    def test_a_week_apart_does_not_match(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(date="2026-12-09")])], OWN3)
+        assert drops == []
+
+    def test_another_amount_does_not_match(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(amount="551.00")])], OWN3)
+        assert drops == []
+
+    def test_another_purpose_does_not_match(self):
+        # Same amount, same days, but a different payment - rent rather than housekeeping.
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(desc="Miete Dezember")])], OWN3)
+        assert drops == []
+
+    def test_purpose_may_be_extended_by_the_other_bank(self):
+        drops, _ = lt.transferred_halves(
+            [group("t1", [tr()]), group("d1", [dp_half(desc="Haushaltskonto Uebertrag / Ueberweisung")])], OWN3)
+        assert len(drops) == 1
+
+    @pytest.mark.parametrize("theirs", ["Chrodegang Strase", "Chrodegang Strasse", "CHRODEGANG STRASSE"])
+    def test_banks_spell_sharp_s_differently(self, theirs):
+        groups = [group("t1", [tr(desc="Chrodegang Stra\u00dfe")]), group("d1", [dp_half(desc=theirs)])]
+        drops, _ = lt.transferred_halves(groups, OWN3)
+        assert len(drops) == 1
+
+    def test_umlauts_spelled_out_match(self):
+        groups = [group("t1", [tr(desc="Geb\u00fchr K\u00fcche")]), group("d1", [dp_half(desc="Gebuehr Kueche")])]
+        assert len(lt.transferred_halves(groups, OWN3)[0]) == 1
+
+    def test_a_deposit_into_another_account_is_ignored(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(dest="235")])], OWN3)
+        assert drops == []
+
+    def test_a_transfer_to_a_foreign_account_is_ignored(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr(dst="777")]), group("d1", [dp_half(dest="777")])], OWN3)
+        assert drops == []
+
+    def test_each_half_is_used_once(self):
+        groups = [group("t1", [tr()]), group("t2", [tr(journal="9910", date="2026-12-02")]),
+                  group("d1", [dp_half()])]
+        drops, refusals = lt.transferred_halves(groups, OWN3)
+        assert len(drops) == 1
+
+    def test_two_candidates_are_refused(self):
+        groups = [group("t1", [tr()]), group("d1", [dp_half()]), group("d2", [dp_half(journal="9905")])]
+        drops, refusals = lt.transferred_halves(groups, OWN3)
+        assert drops == []
+        assert len(refusals) == 1 and "t1" in refusals[0]
+
+    def test_a_split_transaction_is_never_touched(self):
+        drops, _ = lt.transferred_halves([group("t1", [tr()]), group("d1", [dp_half(), dp_half(journal="9906")])], OWN3)
+        assert drops == []
+
+    def test_a_deposit_with_its_own_paying_half_is_left_to_the_pairing(self):
+        # Both partners pay the same amount into the shared account on the same day. The
+        # other partner's deposit has a self-payee withdrawal of its own and is joined by
+        # the ordinary pairing; only the deposit without one is the duplicate.
+        groups = [group("t1", [tr(date="2026-12-01")]),
+                  group("d1", [dp_half(date="2026-12-01", payee="Kontoinhaberin")]),
+                  group("d2", [dp_half(date="2026-12-01", payee="Kontoinhaber", journal="9907")]),
+                  group("w2", [wd(amount="550.00", date="2026-12-01", journal="9908")])]
+        drops, refusals = lt.transferred_halves(groups, OWN3)
+        assert refusals == []
+        assert [d["group"] for d in drops] == ["d1"]
+        pairs, pair_refusals = lt.plan([g for g in groups if g["id"] != "d1"], OWN3)
+        assert pair_refusals == [] and [(p["keep"], p["drop"]) for p in pairs] == [("d2", "w2")]

@@ -11,6 +11,10 @@ from email.message import EmailMessage
 # This job joins the halves into the single transfer they always were. It writes, so it
 # pairs on stricter grounds than the nightly check that reports them, and it refuses
 # wherever the pairing is not unique.
+#
+# An import that does recognise the counterparty's IBAN books the whole movement as a
+# transfer on its own, and the other bank's half then duplicates it. Those halves are
+# dropped before any joining.
 
 # Amounts compared in integer cents: the pairing guard is "both halves are the same
 # amount", and float equality cannot carry that.
@@ -110,6 +114,136 @@ def plan(groups, own_by_iban):
                       "source_id": str(w["source_id"]), "source_name": w["source_name"],
                       "target_id": target_id, "target_name": d["destination_name"]})
     return pairs, refusals
+
+
+# How far apart the two banks may date one movement. Covers a weekend plus the usual
+# one-day clearing gap; a week is already a different payment.
+HALF_MATCH_DAYS = 5
+
+
+# Banks transliterate differently: one writes "Strasse", another "Strase", a third
+# keeps the original letter. Comparing every spelling a text could have been reduced to
+# lets them meet.
+_SPELLINGS = (str.maketrans({"\u00df": "ss", "\u00e4": "ae", "\u00f6": "oe", "\u00fc": "ue"}),
+              str.maketrans({"\u00df": "s", "\u00e4": "a", "\u00f6": "o", "\u00fc": "u"}))
+
+
+def _spellings(text):
+    low = (text or "").lower()
+    return {re.sub(r"[^a-z0-9]", "", low.translate(t)) for t in _SPELLINGS} - {""}
+
+
+def same_purpose(a, b):
+    """Do two descriptions name the same payment?
+
+    Both banks pass on the payer's remittance text, but the receiving one sometimes
+    appends its own wording ("... / Ueberweisung"), so one containing the other counts.
+    Compared without spacing and case, which the banks do not keep stable, and across
+    the ways a bank may have spelled out an umlaut or sharp s.
+    """
+    return any(x in y or y in x for x in _spellings(a) for y in _spellings(b))
+
+
+def holder_name(payee):
+    """A payee name without the IBAN the importer appends to tell namesakes apart."""
+    name = re.sub(r"\(?\b[A-Z]{2}\d{2}(?: ?[A-Z0-9]){11,30}\b\)?", "", payee or "")
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def transferred_halves(groups, own_by_iban):
+    """Halves of a movement whose other import already booked it as a transfer.
+
+    An import that recognises the counterparty's IBAN as one of your own accounts books
+    the movement as a complete transfer. The other bank's import, which does not, adds
+    its own half as a plain deposit (or withdrawal) on top - the same money counted
+    twice. The transfer is kept; the half is dropped.
+
+    A half matches a transfer on account, amount, a date within HALF_MATCH_DAYS and the
+    same purpose. The purpose is what separates the duplicate from a genuinely separate
+    payment of the same amount, such as two people paying the same monthly sum into a
+    shared account. A half that the ordinary pairing can join with a self-payee
+    counterpart of its own is never a candidate: that half belongs to a different
+    movement. More than one candidate for a transfer is refused, not guessed.
+
+    Returns (drops, refusals). Each drop names the half's group, the account it sits on
+    (account_id) and how that account's balance must change in cents once it is gone
+    (delta); the transfer's other account must not move.
+    """
+    ids = {a["id"] for a in own_by_iban.values()}
+    singles = [(g["id"], g["attributes"]["transactions"][0]) for g in groups
+               if len(g["attributes"]["transactions"]) == 1]
+
+    # Halves that plan() joins with a self-payee counterpart belong to another movement.
+    # On a day with two deposits of one amount but a single such withdrawal, the deposit
+    # it pairs with is the one paid by the person the withdrawal names: the importer
+    # titles the payee after the account holder and appends the IBAN.
+    wd_payees, dp_keys = defaultdict(list), set()
+    for _, s in singles:
+        if s["type"] == "withdrawal":
+            target = own_account_in(s.get("destination_name"), own_by_iban)
+            if target:
+                wd_payees[(s["date"][:10], cents(s["amount"]), target["id"])].append(
+                    holder_name(s.get("destination_name")))
+        elif s["type"] == "deposit" and str(s.get("destination_id")) in ids:
+            dp_keys.add((s["date"][:10], cents(s["amount"]), str(s["destination_id"])))
+    dp_by_key = defaultdict(list)
+    for gid, s in singles:
+        if s["type"] == "deposit" and str(s.get("destination_id")) in ids:
+            dp_by_key[(s["date"][:10], cents(s["amount"]), str(s["destination_id"]))].append((gid, s))
+    claimed = set()
+    for key, payees in wd_payees.items():
+        deposits = dp_by_key.get(key, [])
+        if len(deposits) <= len(payees):
+            claimed.update(gid for gid, _ in deposits)
+            continue
+        for p in payees:
+            claimed.update(gid for gid, s in deposits if holder_name(s.get("source_name")) == p)
+
+    halves = []
+    for gid, s in singles:
+        if s["type"] == "deposit" and str(s.get("destination_id")) in ids:
+            if gid in claimed:
+                continue
+            halves.append((gid, s, "in", str(s["destination_id"])))
+        elif s["type"] == "withdrawal" and str(s.get("source_id")) in ids:
+            target = own_account_in(s.get("destination_name"), own_by_iban)
+            if target and (s["date"][:10], cents(s["amount"]), target["id"]) in dp_keys:
+                continue
+            halves.append((gid, s, "out", str(s["source_id"])))
+
+    transfers = sorted(((gid, s) for gid, s in singles if s["type"] == "transfer"
+                        and str(s.get("source_id")) in ids
+                        and str(s.get("destination_id")) in ids),
+                       key=lambda x: x[1]["date"])
+
+    used, drops, refusals = set(), [], []
+    for tgid, t in transfers:
+        tday = datetime.date.fromisoformat(t["date"][:10])
+        amt = cents(t["amount"])
+        found = []
+        for gid, s, side, acc in halves:
+            if gid in used or cents(s["amount"]) != amt:
+                continue
+            if (side, acc) not in (("in", str(t["destination_id"])), ("out", str(t["source_id"]))):
+                continue
+            gap = abs((datetime.date.fromisoformat(s["date"][:10]) - tday).days)
+            if gap <= HALF_MATCH_DAYS and same_purpose(s.get("description"), t.get("description")):
+                found.append((gid, s, side, acc))
+        if not found:
+            continue
+        label = (f"g{tgid} {t['date'][:10]} {amount(amt)} {t.get('source_name')} -> "
+                 f"{t.get('destination_name')}")
+        if len(found) > 1:
+            refusals.append(f"{label}: {len(found)} matching halves "
+                            f"({', '.join('g' + f[0] for f in found)}), too ambiguous to drop one")
+            continue
+        gid, s, side, acc = found[0]
+        used.add(gid)
+        drops.append({"group": gid, "split": s, "transfer_group": tgid, "date": s["date"][:10],
+                      "cents": amt, "account_id": acc,
+                      "account_name": s.get("destination_name") if side == "in" else s.get("source_name"),
+                      "delta": -amt if side == "in" else amt})
+    return drops, refusals
 
 
 def sole_source_halves(groups, sole_source):
@@ -304,15 +438,42 @@ def main():
         page += 1
     groups = dedupe(groups)
 
-    pairs, refusals = plan(groups, own_by_iban)
-    converts, conv_refusals = sole_source_halves(groups, sole_source)
-    refusals = config_errors + refusals + conv_refusals
+    # Duplicate halves first: left in place, a shared account's second deposit of the
+    # day makes the ordinary pairing refuse the genuine one as ambiguous.
+    drops, drop_refusals = transferred_halves(groups, own_by_iban)
+    dropped = {d["group"] for d in drops}
+    remaining = [g for g in groups if g["id"] not in dropped]
+    pairs, refusals = plan(remaining, own_by_iban)
+    converts, conv_refusals = sole_source_halves(remaining, sole_source)
+    refusals = config_errors + drop_refusals + refusals + conv_refusals
     print(f"window {since} .. {today}  ({len(groups)} groups, {len(own_by_iban)} own IBANs, "
           f"{len(sole_source)} sole-source)")
-    print(f"pairs to join: {len(pairs)}   lone halves to convert: {len(converts)}   "
-          f"refused: {len(refusals)}")
+    print(f"halves already transferred: {len(drops)}   pairs to join: {len(pairs)}   "
+          f"lone halves to convert: {len(converts)}   refused: {len(refusals)}")
 
     done = []
+    for d in drops:
+        label = (f"{d['date']} {amount(d['cents'])} on {d['account_name']} (drop g{d['group']}, "
+                 f"already booked as transfer g{d['transfer_group']})")
+        if dry_run:
+            done.append("would drop " + label)
+            continue
+        before = balance(d["account_id"])
+        try:
+            api(f"/api/v1/transactions/{d['group']}", "DELETE")
+        except urllib.error.HTTPError as e:
+            refusals.append(f"{label}: DELETE failed HTTP {e.code} - the movement is still "
+                            f"counted twice")
+            continue
+        # The transfer already carries the movement, so the half's account must change by
+        # exactly the half's own amount and nothing else.
+        after = balance(d["account_id"])
+        if after - before != d["delta"]:
+            refusals.append(f"{label}: dropped, but the balance moved {amount(before)} -> "
+                            f"{amount(after)} (expected {d['delta'] / 100:+,.2f}) - CHECK THIS")
+        else:
+            done.append("dropped duplicate half " + label)
+
     for p in pairs:
         label = (f"{p['date']} {amount(p['cents'])} {p['source_name']} -> {p['target_name']} "
                  f"(keep g{p['keep']}, drop g{p['drop']})")
