@@ -14,6 +14,12 @@ generic:
 
 pytr:
   pytrVersion: "0.4.10"
+  # When set, the login and download jobs install pytr from this commit of
+  # github.com/pytr-org/pytr instead of pytrVersion from PyPI. Trade Republic's web
+  # login answers 400 MISSING_REQUIRED_HEADER unless the login headers are sent, and
+  # 0.4.10 sends them on the v2 login only; this commit sends them on v1 too. Clear it
+  # once a release newer than 0.4.10 is out and pytrVersion points to it.
+  pytrCommit: "85f76576856f0e97c3461a6b16716d6f93b4e62e"
   image: mcr.microsoft.com/playwright/python:v1.64.1-noble
 
   login:

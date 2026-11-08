@@ -40,7 +40,7 @@ spec:
                 # app.traderepublic.com demands by driving a headless Chromium, and the
                 # playwright Python package ships only in that extra. The base image
                 # provides the browser binaries and system libraries, not the package.
-                pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
+                pip install --quiet '{{ include "pytr.requirement" . }}' && \
                 # Only ever resume the saved session. On an expired one pytr falls back to a
                 # fresh login, which texts a code to the phone in the middle of the night and
                 # then waits for input nobody gives. Logging in is the login job's business.

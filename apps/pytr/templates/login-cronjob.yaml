@@ -36,7 +36,7 @@ spec:
                 # app.traderepublic.com demands by driving a headless Chromium, and the
                 # playwright Python package ships only in that extra. The base image
                 # provides the browser binaries and system libraries, not the package.
-                pip install --quiet 'pytr[playwright]=={{ .Values.pytr.pytrVersion }}' && \
+                pip install --quiet '{{ include "pytr.requirement" . }}' && \
                 python3 /scripts/login.py
             ports:
             - containerPort: 8080
