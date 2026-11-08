@@ -191,6 +191,37 @@ class TestOwnAccounts:
         assert (ps[0]["type"], ps[0]["source_name"]) == ("deposit", "Jemand")
 
 
+class TestDirectDebit:
+    # A deposit the broker pulls by direct debit names no IBAN, but it can only come from
+    # the account holder's own reference account, whose statement owns the movement.
+    def debit(self, et):
+        return ev(et, 150.0, [("\u00dcbersicht", {"Status": "Ausgef\u00fchrt", "Zahlung": "Lastschrift"}),
+                              ("Transaktion", {"Geb\u00fchr": "Gratis", "Betrag": "150,00 \u20ac"})],
+                  title="Einzahlung")
+
+    def test_direct_debit_deposit_is_left_to_the_bank(self):
+        assert run(self.debit("PAYMENT_INBOUND_SEPA_DIRECT_DEBIT")) == []
+
+    def test_direct_debit_type_is_known(self):
+        assert not tt.unhandled(self.debit("PAYMENT_INBOUND_SEPA_DIRECT_DEBIT"))
+
+    def test_older_inbound_type_marked_as_direct_debit_is_left_out_too(self):
+        assert run(self.debit("PAYMENT_INBOUND")) == []
+
+    def test_top_up_naming_an_own_account_by_its_last_digits_is_left_out(self):
+        e = ev("BANK_TRANSACTION_INCOMING", 150.0, [("\u00dcbersicht", {"Status": "Abgeschlossen",
+                                                                       "Zahlung": "\u00b7\u00b7 4455"})])
+        assert run(e, own_accounts={OWN_IBAN}) == []
+
+    def test_top_up_from_an_unknown_account_is_booked(self):
+        e = ev("BANK_TRANSACTION_INCOMING", 150.0, [("\u00dcbersicht", {"Zahlung": "\u00b7\u00b7 9999"})])
+        assert run(e, own_accounts={OWN_IBAN})[0]["type"] == "deposit"
+
+    def test_inbound_transfer_from_someone_else_is_still_booked(self):
+        e = ev("PAYMENT_INBOUND", 500.0, [("\u00dcbersicht", {"Von": "Jemand", "Zahlung": "\u00dcberweisung"})])
+        assert run(e)[0]["type"] == "deposit"
+
+
 class TestNames:
     def test_alias_maps_onto_the_existing_payee(self):
         e = ev("CARD_TRANSACTION", -2.09, [("\u00dcbersicht", {"H\u00e4ndler": "Kurzname"})])

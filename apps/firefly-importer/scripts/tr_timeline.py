@@ -21,6 +21,9 @@ CARD_ATM = {"CARD_ATM_WITHDRAWAL"}
 CARD_FEE = {"CARD_ORDER_FEE"}
 MONEY_IN = {"PAYMENT_INBOUND", "BANK_TRANSACTION_INCOMING"}
 MONEY_OUT = {"PAYMENT_OUTBOUND", "BANK_TRANSACTION_OUTGOING", "JUNIOR_P2P_TRANSFER"}
+# Deposits the broker pulls from the reference account by direct debit (savings plan
+# top-ups). They name no IBAN, but that account is always the holder's own.
+DIRECT_DEBIT_IN = {"PAYMENT_INBOUND_SEPA_DIRECT_DEBIT"}
 INTEREST = {"INTEREST_PAYOUT", "INTEREST_PAYOUT_CREATED"}
 DIVIDEND = {"SSP_CORPORATE_ACTION_CASH", "CREDIT"}
 TAX_ONLY = {"SSP_CORPORATE_ACTION_CASH_NON_DIVIDEND", "SSP_CORPORATE_ACTION_INSTRUMENT",
@@ -32,8 +35,8 @@ SAVEBACK = {"SAVEBACK_AGGREGATE"}
 GIFT_OUT = {"GIFTER_TRANSACTION"}
 GIFT_IN = {"GIFTING_RECIPIENT_ACTIVITY"}
 BONUS = {"REFERRAL_FIRST_TRADE_EXECUTED_INVITER"}
-KNOWN = (CARD_SPEND | CARD_REFUND | CARD_ATM | CARD_FEE | MONEY_IN | MONEY_OUT | INTEREST
-         | DIVIDEND | TAX_ONLY | TRADE | SAVEBACK | GIFT_OUT | GIFT_IN | BONUS)
+KNOWN = (CARD_SPEND | CARD_REFUND | CARD_ATM | CARD_FEE | MONEY_IN | MONEY_OUT | DIRECT_DEBIT_IN
+         | INTEREST | DIVIDEND | TAX_ONLY | TRADE | SAVEBACK | GIFT_OUT | GIFT_IN | BONUS)
 # Every other event type is expected to move no money: reports, document notices, device
 # pairings, corporate actions that only rename a holding. One that does carry an amount is
 # a type this reader has never seen, and is reported rather than silently dropped.
@@ -101,6 +104,26 @@ def counterparty_iban(event):
         if v and not str(v).startswith(".."):
             return re.sub(r"[^A-Z0-9]", "", str(v).upper())
     return None
+
+
+def from_reference_account(event, own_accounts):
+    """Whether a deposit was pulled from the holder's own reference account.
+
+    Savings plan top-ups carry no sender or IBAN. Newer ones say "Lastschrift" (or come
+    as their own event type), older ones name the account only by its last four digits
+    ("\u00b7\u00b7 0048"); those count as own when an own IBAN ends in the same digits.
+    A stranger's account sharing those digits would be dropped too, at odds of 1 in 10,000.
+    """
+    if event.get("eventType") in DIRECT_DEBIT_IN:
+        return True
+    if event.get("eventType") not in MONEY_IN:
+        return False
+    pay = str(field(event, "Zahlung") or "")
+    if pay == "Lastschrift":
+        return True
+    digits = re.sub(r"\D", "", pay)
+    return (pay.startswith("\u00b7") and len(digits) == 4
+            and any(i.endswith(digits) for i in own_accounts))
 
 
 def is_final(event):
@@ -178,6 +201,9 @@ def payloads(event, cash, depot, asset_accounts=None, name_alias=None, own_accou
                       "Bargeld/ATM"))
     elif et in CARD_FEE and amt:
         out.append(wd(amt, "Trade Republic", title, f"tlx-{eid}", CAT_FEES))
+    elif from_reference_account(event, own_accounts):
+        # Like a movement from an own account: the reference account's bank books it.
+        pass
     elif et in MONEY_IN | MONEY_OUT and amt and counterparty_iban(event) not in own_accounts:
         if et in MONEY_IN:
             party = alias(field(event, "Von", "Absender", "Name") or title)
