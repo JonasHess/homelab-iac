@@ -26,7 +26,7 @@ metadata:
   name: firefly-importer-ledger-check
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-ledger-check
     component: ledger-check
 spec:
   schedule: {{ .Values.ledgerCheck.schedule | quote }}
@@ -40,7 +40,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-ledger-check
             component: ledger-check
         spec:
           restartPolicy: OnFailure

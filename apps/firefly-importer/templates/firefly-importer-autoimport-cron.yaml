@@ -18,7 +18,7 @@ metadata:
   name: firefly-importer-autoimport
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-autoimport
     component: autoimport
 spec:
   schedule: "0 4 * * *"
@@ -36,7 +36,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-autoimport
             component: autoimport
         spec:
           restartPolicy: Never

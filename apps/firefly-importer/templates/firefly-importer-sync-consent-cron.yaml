@@ -31,7 +31,7 @@ metadata:
   name: firefly-importer-sync-consent
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-sync-consent
     component: sync-consent
 spec:
   # Must sit before the auto-import: carrying the consent afterwards wastes a night.
@@ -46,7 +46,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-sync-consent
             component: sync-consent
         spec:
           restartPolicy: OnFailure

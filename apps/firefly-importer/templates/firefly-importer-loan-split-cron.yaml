@@ -28,7 +28,7 @@ metadata:
   name: firefly-importer-loan-split
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-loan-split
     component: loan-split
 spec:
   schedule: {{ .Values.loanSplit.schedule | quote }}
@@ -42,7 +42,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-loan-split
             component: loan-split
         spec:
           restartPolicy: OnFailure

@@ -34,7 +34,7 @@ metadata:
   name: firefly-importer-link-transfers
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-link-transfers
     component: link-transfers
 spec:
   # After the auto-import and the loan split, before the digest and the ledger check,
@@ -51,7 +51,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-link-transfers
             component: link-transfers
         spec:
           restartPolicy: OnFailure

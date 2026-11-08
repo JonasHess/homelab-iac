@@ -57,7 +57,7 @@ metadata:
   name: firefly-importer-digest
   namespace: {{ .Release.Namespace }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-digest
     component: digest
 spec:
   schedule: {{ .Values.digest.schedule | quote }}
@@ -73,7 +73,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-digest
             component: digest
         spec:
           restartPolicy: OnFailure

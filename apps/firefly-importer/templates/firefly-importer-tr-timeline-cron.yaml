@@ -90,7 +90,7 @@ metadata:
   name: {{ $name }}
   namespace: {{ $ns }}
   labels:
-    app: firefly-importer
+    app: firefly-importer-tr-timeline
     component: tr-timeline
 spec:
   # Before link-transfers, the digest and the ledger check, so all three see tonight's
@@ -108,7 +108,7 @@ spec:
       template:
         metadata:
           labels:
-            app: firefly-importer
+            app: firefly-importer-tr-timeline
             component: tr-timeline
         spec:
           restartPolicy: Never
