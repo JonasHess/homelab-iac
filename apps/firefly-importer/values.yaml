@@ -178,6 +178,12 @@ trTimeline:
   remindAfterDays: 14
   # Mailed once a reminder is due: how to log in again on this instance.
   loginHint: ""
+  # Further TR accounts, each with its own CronJob firefly-importer-tr-timeline-<name>:
+  # {name, label, credentialsSecret, sessionClaim, cashAccount, depotAccount,
+  # assetAccounts}, plus windowDays, dryRun, remindAfterDays or loginHint where it differs
+  # from the settings above. label goes into its mails' subjects. The account given by the
+  # fields above keeps the job name without a suffix.
+  accounts: []
 
 # Fetches one bank account over FinTS (AqBanking) for a bank Enable Banking does not
 # offer, and leaves the result in /import as <importName>.csv in that bank's web-export

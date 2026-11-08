@@ -1,5 +1,11 @@
 {{- if .Values.trTimeline.enabled }}
 {{- $ns := .Values.trTimeline.namespace | default .Release.Namespace }}
+{{- $tr := .Values.trTimeline }}
+{{- $accounts := list }}
+{{- if $tr.cashAccount }}
+{{- $accounts = append $accounts (pick $tr "credentialsSecret" "sessionClaim" "cashAccount" "depotAccount" "assetAccounts") }}
+{{- end }}
+{{- $accounts = concat $accounts ($tr.accounts | default list) }}
 {{- /*
   Books new Trade Republic transactions from the broker's timeline, fetched with pytr.
 
@@ -12,6 +18,9 @@
 
   Movements to and from your own bank accounts are left to the bank import, and
   link-transfers turns them into transfers; booking them here too would count them twice.
+
+  One CronJob per TR account. Each runs on its own pytr session volume, which also holds
+  its reminder stamps, so the accounts share nothing but the script and the Firefly token.
 */ -}}
 apiVersion: v1
 kind: ConfigMap
@@ -68,11 +77,17 @@ spec:
       remoteRef:
         key: "{{ $.Values.global.akeyless.path }}{{ . }}"
 {{- end }}
+{{- range $a := $accounts }}
+{{- $name := printf "firefly-importer-tr-timeline%s" (ternary (printf "-%s" ($a.name | default "")) "" (not (empty $a.name))) }}
+{{- $set := dict }}
+{{- range $k := list "windowDays" "dryRun" "remindAfterDays" "loginHint" }}
+{{- $_ := set $set $k (ternary (get $a $k) (get $tr $k) (hasKey $a $k)) }}
+{{- end }}
 ---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: firefly-importer-tr-timeline
+  name: {{ $name }}
   namespace: {{ $ns }}
   labels:
     app: firefly-importer
@@ -80,7 +95,7 @@ metadata:
 spec:
   # Before link-transfers, the digest and the ledger check, so all three see tonight's
   # TR rows.
-  schedule: {{ .Values.trTimeline.schedule | quote }}
+  schedule: {{ $tr.schedule | quote }}
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 7
   failedJobsHistoryLimit: 3
@@ -99,35 +114,37 @@ spec:
           restartPolicy: Never
           containers:
             - name: tr-timeline
-              image: {{ .Values.trTimeline.image | quote }}
+              image: {{ $tr.image | quote }}
               envFrom:
                 - configMapRef:
                     name: firefly-importer-tr-config
                 - secretRef:
                     name: firefly-importer-tr-secret
                 - secretRef:
-                    name: {{ required "trTimeline.credentialsSecret is required" .Values.trTimeline.credentialsSecret }}
+                    name: {{ required "trTimeline credentialsSecret is required" $a.credentialsSecret }}
               env:
                 - name: HOME
                   value: /home/pytr
                 - name: TR_CASH_ACCOUNT
-                  value: {{ required "trTimeline.cashAccount is required" .Values.trTimeline.cashAccount | quote }}
+                  value: {{ required "trTimeline cashAccount is required" $a.cashAccount | quote }}
                 - name: TR_DEPOT_ACCOUNT
-                  value: {{ required "trTimeline.depotAccount is required" .Values.trTimeline.depotAccount | quote }}
+                  value: {{ required "trTimeline depotAccount is required" $a.depotAccount | quote }}
                 - name: TR_ASSET_ACCOUNTS
-                  value: {{ .Values.trTimeline.assetAccounts | toJson | quote }}
+                  value: {{ $a.assetAccounts | default dict | toJson | quote }}
                 - name: TR_WINDOW_DAYS
-                  value: {{ .Values.trTimeline.windowDays | quote }}
+                  value: {{ $set.windowDays | quote }}
                 - name: TR_REMIND_AFTER_DAYS
-                  value: {{ .Values.trTimeline.remindAfterDays | quote }}
+                  value: {{ $set.remindAfterDays | quote }}
                 - name: TR_DRY_RUN
-                  value: {{ .Values.trTimeline.dryRun | quote }}
+                  value: {{ $set.dryRun | quote }}
                 - name: TR_LOGIN_HINT
-                  value: {{ .Values.trTimeline.loginHint | quote }}
+                  value: {{ $set.loginHint | quote }}
+                - name: TR_ACCOUNT_LABEL
+                  value: {{ $a.label | default "" | quote }}
               command: ["sh", "-c"]
               args:
                 - |
-                  pip install --quiet --root-user-action=ignore 'pytr=={{ .Values.trTimeline.pytrVersion }}' || exit 1
+                  pip install --quiet --root-user-action=ignore 'pytr=={{ $tr.pytrVersion }}' || exit 1
                   # pytr reads the phone number and PIN from this file and only saves the
                   # session when it exists. Kept in memory and removed afterwards, so the
                   # PIN never rests on the shared session volume.
@@ -154,10 +171,11 @@ spec:
             # and download jobs, which is why logging in there is all a re-login takes.
             - name: session
               persistentVolumeClaim:
-                claimName: {{ required "trTimeline.sessionClaim is required" .Values.trTimeline.sessionClaim }}
+                claimName: {{ required "trTimeline sessionClaim is required" $a.sessionClaim }}
             - name: work
               emptyDir: {}
             - name: tmp
               emptyDir:
                 medium: Memory
+{{- end }}
 {{- end }}

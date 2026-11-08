@@ -384,6 +384,11 @@ def send_mail(subject, body):
         sm.send_message(msg)
 
 
+def subject(text, label=""):
+    """Mail subject; label names the TR account when more than one is imported."""
+    return f"Firefly TR import ({label}): {text}" if label else f"Firefly TR import: {text}"
+
+
 def report(subject, body):
     print(body)
     if os.environ.get("MAIL_HOST"):
@@ -401,6 +406,7 @@ def main():
     remind_days = int(os.environ.get("TR_REMIND_AFTER_DAYS", "14"))
     state_dir = os.environ.get("TR_STATE_DIR", str(pathlib.Path.home() / ".pytr"))
     dry_run = os.environ.get("TR_DRY_RUN", "false").lower() == "true"
+    label = os.environ.get("TR_ACCOUNT_LABEL", "")
     # 0 looks at the whole history; a re-run of everything books only what is missing.
     since = ((datetime.date.today() - datetime.timedelta(days=window)).isoformat()
              if window else "")
@@ -409,7 +415,7 @@ def main():
         last = read_stamp(state_dir, "last-import")
         if reminder_due(time.time(), last, read_stamp(state_dir, "last-reminder"), remind_days):
             since_txt = (datetime.date.fromtimestamp(last).isoformat() if last else "never")
-            report("Firefly TR import: Trade Republic login needed",
+            report(subject("Trade Republic login needed", label),
                    f"No Trade Republic transactions have been imported since {since_txt}: "
                    "the saved session has expired. Log in once; the import runs right "
                    "after the login.\n\n" + os.environ.get("TR_LOGIN_HINT", ""))
@@ -445,7 +451,7 @@ def main():
     if not dry_run:
         write_stamp(state_dir, "last-import", time.time())
     if problems:
-        report(f"Firefly TR import: {len(problems)} needing attention",
+        report(subject(f"{len(problems)} needing attention", label),
                "".join(f"  - {l}\n" for l in problems))
         return 1
     return 0

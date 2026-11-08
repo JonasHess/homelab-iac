@@ -321,3 +321,12 @@ class TestStamps:
         assert tt.read_stamp(str(tmp_path), "nothing") is None
         (tmp_path / "broken").write_text("not a number")
         assert tt.read_stamp(str(tmp_path), "broken") is None
+
+
+class TestSubject:
+    # With several TR accounts imported, a mail must say which one needs the login.
+    def test_unlabelled_keeps_the_plain_subject(self):
+        assert tt.subject("login needed") == "Firefly TR import: login needed"
+
+    def test_label_names_the_account(self):
+        assert tt.subject("login needed", "Second") == "Firefly TR import (Second): login needed"
