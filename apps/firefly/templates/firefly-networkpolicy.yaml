@@ -32,6 +32,13 @@ spec:
                 operator: In
                 values:
                   - firefly-importer
+                  - firefly-importer-autoimport
+                  - firefly-importer-digest
+                  - firefly-importer-ledger-check
+                  - firefly-importer-link-transfers
+                  - firefly-importer-loan-split
+                  - firefly-importer-sync-consent
+                  - firefly-importer-tr-timeline
                   - firefly-sankey
                   - firefly-cron
       ports:

@@ -30,3 +30,28 @@ def test_no_job_pod_joins_the_web_service():
         name = re.search(r"^  name: (\S+)", d, re.M).group(1)
         labels = set(re.findall(r"^\s+app: (\S+)", d, re.M))
         assert not labels & selectors, f"{name} carries the Service label {labels & selectors}"
+
+
+def firefly_policy_apps():
+    out = subprocess.run(
+        ["helm", "template", "firefly", str(REPO / "apps" / "firefly"), "--namespace", "argocd",
+         "--values", str(REPO / "tests" / "alert-rules" / "values.yaml"),
+         "--set", "appName=firefly", "--set", "generic.appName=firefly",
+         "--set", "generic.deployment.pvcMounts.upload.hostPath=/example",
+         "--show-only", "templates/firefly-networkpolicy.yaml"],
+        check=True, capture_output=True, text=True).stdout
+    values = out.split("operator: In", 1)[1].split("ports:", 1)[0]
+    return set(re.findall(r"- (\S+)", values))
+
+
+def test_every_job_that_calls_firefly_may_reach_it():
+    # Firefly's NetworkPolicy admits API clients by their pod "app" label. A job left
+    # out of it times out on its first API call, without an error on Firefly's side.
+    allowed = firefly_policy_apps()
+    assert allowed
+    for d in rendered_docs():
+        if "kind: CronJob" not in d or "firefly-importer-fints" in d:
+            continue
+        name = re.search(r"^  name: (\S+)", d, re.M).group(1)
+        pod_app = re.findall(r"^\s+app: (\S+)", d, re.M)[-1]
+        assert pod_app in allowed, f"{name} (app: {pod_app}) is not admitted by Firefly's NetworkPolicy"
