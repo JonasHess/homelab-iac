@@ -16,6 +16,9 @@ on:
       - 'tests/charts/**'
       - 'tests/alert-rules/values.yaml'
       - '.github/workflows/charts.yml'
+      # The deploy PR from restic-image.yml changes only this image tag, which cannot
+      # affect what renders. It must stay last: later patterns override earlier ones.
+      - '!apps/restic/values.yaml'
   push:
     branches: [main]
     paths:

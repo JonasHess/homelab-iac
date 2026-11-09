@@ -80,7 +80,10 @@ jobs:
       # Renovate cannot see private ECR images, so the deployed tag is bumped here instead.
       # Merging this PR does not rebuild the image: values.yaml is not in the trigger paths.
       # Needs "Allow GitHub Actions to create and approve pull requests" in the repo settings.
-      - name: Open a PR that deploys the new image
+      # Merged without waiting: the script tests above already passed, a tag change gives
+      # the PR checks nothing to find, and major restic or Python bumps get their own
+      # Renovate PR on the Dockerfile. A failed merge fails this step and leaves the PR open.
+      - name: Open and merge a PR that deploys the new image
         env:
           GH_TOKEN: ${{ github.token }}
           IMAGE: ${{ steps.login-ecr.outputs.registry }}/homelab-iac/restic:${{ steps.vars.outputs.sha_short }}
@@ -104,3 +107,4 @@ jobs:
           gh pr create --base main --head "$branch" \
             --title "chore: Update restic image to ${SHA}" \
             --body "Deploys \`${IMAGE}\`, built from ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} by [this run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})."
+          gh pr merge "$branch" --merge

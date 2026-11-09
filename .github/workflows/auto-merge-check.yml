@@ -3,6 +3,9 @@ name: Auto-merge Check
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    # The deploy PR from restic-image.yml merges itself and needs no check.
+    paths-ignore:
+      - 'apps/restic/values.yaml'
 
 jobs:
   auto-merge-check:
