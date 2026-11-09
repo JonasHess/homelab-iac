@@ -97,6 +97,12 @@ def label_loans(loans, account_names):
             for l in loans]
 
 
+# Principal repaid is money leaving the account without being a cost: the debt drops
+# by the same amount. It gets a category of its own so reports can show the outflow
+# and still keep it out of the cost of the property, which the interest leg carries.
+PRINCIPAL_CATEGORY = "Tilgung"
+
+
 def split_payload(a):
     date, loan = a["date"], a["loan"]
     de = f"{date[8:10]}.{date[5:7]}.{date[:4]}"
@@ -109,7 +115,7 @@ def split_payload(a):
             {"type": "withdrawal", "date": date, "amount": amount(a["tilgung"]),
              "source_id": a["source_id"], "destination_id": str(loan["liability"]),
              "description": f"{loan['label']} Tilgung ({de})",
-             "category_name": a["category"], "external_id": a["external_id"]},
+             "category_name": PRINCIPAL_CATEGORY, "external_id": a["external_id"]},
             {"type": "withdrawal", "date": date, "amount": amount(a["zins"]),
              "source_id": a["source_id"], "destination_id": str(loan["interest"]),
              "description": f"{loan['label']} Zins ({de})",

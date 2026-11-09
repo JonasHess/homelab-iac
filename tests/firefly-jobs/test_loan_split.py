@@ -117,6 +117,13 @@ class TestSplitPayload:
         assert tilg["external_id"] == "ext-1"
         assert "external_id" not in zins
 
+    def test_tilgung_leg_is_categorised_apart_from_the_interest(self):
+        # Paying off principal leaves the account but costs nothing, so it must not
+        # land in the same category as the interest, which is a real cost.
+        tilg, zins = self.p["transactions"]
+        assert tilg["category_name"] == ls.PRINCIPAL_CATEGORY
+        assert zins["category_name"] == "Immobilie/Hausgeld"
+
     def test_group_title_is_required_by_the_api(self):
         assert self.p["group_title"] == "Teilzahlung Objekt A 05.11.2026"
 
