@@ -122,6 +122,37 @@ def skip_for(accounts, index):
     return {a["iban"] for a in accounts[:index]}
 
 
+def fill_internal_ibans(statements):
+    """Fill in the counterparty IBAN the bank leaves out between two fetched accounts.
+
+    statements: [(iban, rows)], rows as AqBanking exports them, changed in place. For a
+    transfer between two accounts of the same customer, the bank names the paying account
+    on the receiving side but leaves the IBAN empty on the paying side. Without it the
+    importer cannot see that the money went to an own account and books an expense. A
+    row with no IBAN takes the IBAN of the other account when that account has a row on
+    the same day with the opposite amount that names this account; each such row answers
+    for one row only.
+    """
+    used = set()
+    for iban, rows in statements:
+        for r in rows:
+            if norm_iban(r.get("remoteIban")):
+                continue
+            for other, others in statements:
+                if other == iban:
+                    continue
+                hit = next((k for k, o in enumerate(others)
+                            if (other, k) not in used
+                            and norm_iban(o.get("remoteIban")) == iban
+                            and o.get("date") == r.get("date")
+                            and Decimal(o.get("value_value") or "0")
+                            == -Decimal(r.get("value_value") or "0")), None)
+                if hit is not None:
+                    used.add((other, hit))
+                    r["remoteIban"] = other
+                    break
+
+
 def import_config(template, default_account):
     """The importer configuration for one account: the shared one, its own target account."""
     cfg = copy.deepcopy(template)
@@ -237,6 +268,11 @@ def main():
     days = int(os.environ.get("FINTS_FROM_DAYS", "30"))
     since_day = (datetime.date.today() - datetime.timedelta(days=days)).strftime("%Y%m%d")
 
+    # Every account is fetched before anything is written: a transfer between two of
+    # them can only be recognised with both statements at hand (fill_internal_ibans).
+    # An account that fails stops the fetching, but the ones already fetched are still
+    # written, so one refused account does not hold back the others.
+    statements, rc_out = [], 0
     for i, acc in enumerate(accounts):
         ctx = os.path.join(work, f"ctx{i}")
         rc, log = aq(cfg, "request", "--transactions", "-A", acc["iban"],
@@ -246,23 +282,30 @@ def main():
             with open(lock, "w") as fh:
                 fh.write(datetime.datetime.now().isoformat() + "\n" + log[-4000:])
             print(f"LOGIN REFUSED by the bank. Wrote {lock}; no further attempts until it is removed.")
-            return 4
+            rc_out = 4
+            break
         if outcome == "tan_required":
             print("TAN REQUIRED: the bank wants a fresh strong authentication. Run the login job:\n"
                   + os.environ.get("FINTS_LOGIN_HINT", ""))
-            return 5
+            rc_out = 5
+            break
         if outcome == "error":
             print(f"aqbanking-cli failed for {acc['importName']} (exit {rc}); nothing written.")
-            return 6
+            rc_out = 6
+            break
 
         export = os.path.join(work, f"export{i}.csv")
         rc, _ = aq(cfg, "export", "-c", ctx, "--exporter=csv", f"--profile-file={profile}",
                    "-o", export)
         if rc != 0:
             print(f"export failed for {acc['importName']} (exit {rc}); nothing written.")
-            return 6
+            rc_out = 6
+            break
         with open(export, encoding="utf-8") as fh:
-            rows = list(csv.DictReader(fh, delimiter=";"))
+            statements.append((acc["iban"], list(csv.DictReader(fh, delimiter=";"))))
+
+    fill_internal_ibans(statements)
+    for i, (acc, (_, rows)) in enumerate(zip(accounts, statements)):
         booked = convert(rows, os.environ["FINTS_SINCE"], skip_for(accounts, i))
         target = os.path.join(import_dir, acc["importName"] + ".csv")
         # Configuration first: the auto-import only picks up a CSV with a JSON beside it.
@@ -270,7 +313,7 @@ def main():
         write_csv(booked, target)
         print(f"{acc['importName']}: {len(rows)} rows from the bank, {len(booked)} booked rows "
               f"written to {target}")
-    return 0
+    return rc_out
 
 
 if __name__ == "__main__":

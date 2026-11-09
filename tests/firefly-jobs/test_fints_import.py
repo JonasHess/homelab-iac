@@ -144,3 +144,43 @@ class TestSeveralAccounts:
         assert fi.import_config(template, 1174)["default_account"] == 1174
         assert fi.import_config(template, None)["default_account"] == 1050
         assert template["default_account"] == 1050  # template untouched
+
+
+class TestInternalIbans:
+    # Between two accounts of the same customer the bank leaves the counterparty IBAN
+    # out on one side; the other side still names the first account.
+    GIRO, ZINS = "DE00500502010000000048", "DE00500502010000000056"
+
+    def statements(self, giro_iban="", zins_iban=None, zins_amount="23000"):
+        giro = [aq_row(value_value="-23000", remoteName="KONTOINHABER", remoteIban=giro_iban,
+                       date="2026-11-09", valutaDate="2026-11-07")]
+        zins = [aq_row(value_value=zins_amount, remoteName="KONTOINHABER",
+                       remoteIban=self.GIRO if zins_iban is None else zins_iban,
+                       date="2026-11-09", valutaDate="2026-11-07")]
+        return [(self.GIRO, giro), (self.ZINS, zins)]
+
+    def test_missing_iban_is_taken_from_the_other_side(self):
+        st = self.statements()
+        fi.fill_internal_ibans(st)
+        assert st[0][1][0]["remoteIban"] == self.ZINS
+
+    def test_a_present_iban_is_kept(self):
+        st = self.statements(giro_iban="DE11111111111111111111")
+        fi.fill_internal_ibans(st)
+        assert st[0][1][0]["remoteIban"] == "DE11111111111111111111"
+
+    def test_no_match_without_the_mirror_amount(self):
+        st = self.statements(zins_amount="22000")
+        fi.fill_internal_ibans(st)
+        assert st[0][1][0]["remoteIban"] == ""
+
+    def test_other_side_must_name_this_account(self):
+        st = self.statements(zins_iban="DE99999999999999999999")
+        fi.fill_internal_ibans(st)
+        assert st[0][1][0]["remoteIban"] == ""
+
+    def test_each_mirror_row_is_used_once(self):
+        st = self.statements()
+        st[0][1].append(dict(st[0][1][0]))
+        fi.fill_internal_ibans(st)
+        assert sorted(r["remoteIban"] for r in st[0][1]) == ["", self.ZINS]
