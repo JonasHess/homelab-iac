@@ -115,6 +115,10 @@ spec:
                   value: {{ .Values.syncConsent.enabled | quote }}
                 - name: DIGEST_IGNORE_STALE
                   value: {{ .Values.digest.ignoreStale | toJson | quote }}
+                - name: DIGEST_STALE_LIMITS
+                  value: {{ .Values.digest.staleLimits | toJson | quote }}
+                - name: DIGEST_EXPECT_ZERO
+                  value: {{ .Values.digest.expectZero | toJson | quote }}
                 - name: DIGEST_ALWAYS_SEND
                   value: {{ .Values.digest.alwaysSend | quote }}
               command: ["python3", "/script/digest.py"]

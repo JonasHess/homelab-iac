@@ -15,6 +15,14 @@ CONSENT_SYNCED = os.environ.get("DIGEST_CONSENT_SYNCED", "false").lower() == "tr
 # this they would trip the staleness check every single night, and a warning
 # that fires every night is one nobody reads.
 IGNORE = {str(i) for i in json.loads(os.environ.get("DIGEST_IGNORE_STALE", "[]"))}
+# Accounts refreshed by hand on a known cycle (yearly or quarterly statements): judged
+# against this fixed number of days instead of their own record, so a forgotten
+# refresh is still reported, just not before the next statement is due.
+LIMITS = {str(k): int(v) for k, v in json.loads(os.environ.get("DIGEST_STALE_LIMITS", "{}")).items()}
+# Accounts that must sit at 0.00 once everything is booked, such as a credit card the
+# giro settles every month while its purchases are added by hand. A balance other than
+# zero means the settlement arrived but the purchases it pays for did not.
+EXPECT_ZERO = {str(i) for i in json.loads(os.environ.get("DIGEST_EXPECT_ZERO", "[]"))}
 ALWAYS = os.environ.get("DIGEST_ALWAYS_SEND", "false").lower() == "true"
 WINDOW= int(os.environ.get("DIGEST_WINDOW_HOURS", "24"))
 
@@ -78,7 +86,7 @@ def quiet_record(aid):
     dts  = [datetime.date.fromisoformat(x) for x in ds]
     return max((dts[i+1] - dts[i]).days for i in range(len(dts)-1))
 
-rows, stale = [], []
+rows, stale, unsettled = [], [], []
 # id -> (name, iban), for the re-authorisation warning: a consent is restored by hand
 # and the only thing that identifies a bank account on that form is its IBAN.
 asset_by_id = {}
@@ -87,11 +95,17 @@ for a in api("/api/v1/accounts?type=asset&limit=200")["data"]:
     asset_by_id[a["id"]] = (at["name"], (at.get("iban") or "").replace(" ", ""))
     if not at.get("active"):
         continue
+    if a["id"] in EXPECT_ZERO and abs(float(at.get("current_balance") or 0)) >= 0.005:
+        unsettled.append(at["name"])
     last = (at.get("last_activity") or "")[:10]
     age  = (today - datetime.date.fromisoformat(last)).days if last else None
     n    = fresh.get(at["name"], 0)
     rows.append((at["name"], n, last or "-", age))
     if age is None or a["id"] in IGNORE:
+        continue
+    if a["id"] in LIMITS:
+        if age > LIMITS[a["id"]]:
+            stale.append((at["name"], last, age, None, LIMITS[a["id"]]))
         continue
     rec = quiet_record(a["id"])
     if rec is None:
@@ -398,6 +412,7 @@ if aborted:     bits.append(f"{len(aborted)} import(s) failed")
 if real_errors: bits.append(f"{len(real_errors)} error(s)")
 if stale:       bits.append(f"{len(stale)} stale")
 if expiring:    bits.append(f"{len(expiring)} consent(s) expiring")
+if unsettled:   bits.append(f"{len(unsettled)} to update by hand")
 if bits:
     subject = "[!] " + subject + " - " + ", ".join(bits)
     lines += [""]
@@ -418,8 +433,13 @@ if bits:
     if stale:
         lines += ["", "Silent longer than ever before - check the bank connection:"]
         lines += [f"  - {n}: last {d}, {a} days ago "
-                  f"(longest quiet stretch so far {m}d, flags above {l}d)"
+                  + (f"(longest quiet stretch so far {m}d, flags above {l}d)" if m is not None
+                     else f"(refreshed by hand, due every {l}d - add the latest statement)")
                   for n, d, a, m, l in stale]
+    if unsettled:
+        lines += ["", "Balance not settled - the purchases behind the last settlement "
+                      "still need to be added by hand:"]
+        lines += [f"  - {n}" for n in unsettled]
     if expiring or run_consent_expired:
         lines += ["", "How to re-authorise:"]
         lines += [f"  {s}" for s in

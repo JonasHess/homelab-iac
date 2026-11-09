@@ -259,9 +259,16 @@ digest:
   # Mail only when something needs attention. A daily "all fine" message is the
   # fastest way to train yourself to ignore the one that matters.
   alwaysSend: false
-  # Accounts that are not nightly-imported and would otherwise be flagged forever
-  # (manually refreshed depots, closed cards). Account ids.
+  # Accounts that are not nightly-imported and have no refresh cycle to check, so
+  # they would otherwise be flagged forever. Account ids.
   ignoreStale: []
+  # Accounts refreshed by hand on a known cycle, as {id: days}: flagged once the last
+  # booking is older than that, instead of being judged by their own quiet record.
+  # Prefer this to ignoreStale wherever a refresh is actually due at some point.
+  staleLimits: {}
+  # Accounts that must stand at 0.00 when complete, e.g. a credit card whose
+  # purchases are added by hand while the giro settles it automatically. Account ids.
+  expectZero: []
   # Dead man's switch for this job. Because a healthy night sends no mail at all,
   # a suspended CronJob, a crashed run and a dead mailbox are indistinguishable
   # from "nothing to report"; only a ping that stops arriving tells them apart.
