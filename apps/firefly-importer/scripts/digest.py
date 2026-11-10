@@ -138,6 +138,10 @@ lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}" for r in rows]
 # Lines the importer logs at ERROR level that do not mean anything failed:
 #   a115/a117 - transaction already exists, by external_id and by content. Every
 #               night, because the bank re-offers a rolling window.
+#   "Duplicate of transaction" - the second line of an a117 rejection, logged as
+#               'Submission error: 0 ["Duplicate of transaction #N."]' without the
+#               code. Rows without external_id (the FinTS CSVs) are only ever
+#               rejected this way, so every row in the bank's window shows it.
 #   "Exit code" - logged through the error channel for EVERY outcome, SUCCESS
 #               included. A genuinely fatal exit always writes a readable error
 #               line of its own right before it, so nothing is lost by dropping
@@ -146,7 +150,8 @@ lines += [f"{r[0].ljust(w)}  {r[1]:>4}  {r[2]:>13}" for r in rows]
 #   "tag"     - the import tag is created per run and reused for every following
 #               transaction, so Firefly III rejects the create as a duplicate
 #               name. The tag is attached to the transaction regardless.
-NOT_A_FAILURE = ("[a115]", "[a117]", "Exit code is ", '{"tag":[')
+NOT_A_FAILURE = ("[a115]", "[a117]", '["Duplicate of transaction #', "Exit code is ",
+                 '{"tag":[')
 #
 # An empty download is the other routine non-event, and needs more than a
 # text match. A bank that simply had no new booking makes the importer log
