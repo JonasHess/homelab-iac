@@ -146,6 +146,51 @@ class TestSeveralAccounts:
         assert template["default_account"] == 1050  # template untouched
 
 
+class TestBookingId:
+    # FinTS offers every booked row again on each night of its window. Firefly's content
+    # hash cannot recognise the repeat: it also hashes whether the row was the last one
+    # submitted, so a row that was last one night and not the next is booked twice. The
+    # importer instead looks the row's own ID up as external ID.
+    GIRO = "DE02500502011244250048"
+
+    def ids(self, rows, account=GIRO):
+        return [r["Buchungs-ID"] for r in fi.convert(rows, since="2025-11-17", account=account)]
+
+    def test_every_row_carries_an_id(self):
+        assert all(self.ids([aq_row(), aq_row(value_value="-3")]))
+
+    def test_id_does_not_depend_on_the_rows_around_it(self):
+        old = aq_row(purpose="SPAREN", value_value="-25000")
+        new = aq_row(date="2026-10-09", purpose="PAYPAL", value_value="-30.6")
+        assert self.ids([old])[0] == self.ids([old, new])[0] == self.ids([new, old])[1]
+
+    def test_identical_rows_on_one_day_get_distinct_stable_ids(self):
+        # Two equal card payments on one day are two bookings; numbering them in
+        # order keeps each one's ID the same on every night.
+        twice = [aq_row(), aq_row()]
+        first = self.ids(twice)
+        assert len(set(first)) == 2
+        assert self.ids(twice + [aq_row(date="2026-10-09")])[:2] == first
+
+    def test_id_differs_per_account(self):
+        assert self.ids([aq_row()]) != self.ids([aq_row()], account="DE77500502011244250056")
+
+    def test_id_fits_firefly(self):
+        assert len(self.ids([aq_row(purpose="X" * 400)])[0]) <= 255
+
+    def test_import_configuration_detects_duplicates_by_the_id(self):
+        template = {"roles": ["_ignore"] * (len(fi.HEADER) - 1), "do_mapping": [False] * (len(fi.HEADER) - 1),
+                    "duplicate_detection_method": "classic", "unique_column_index": 0,
+                    "unique_column_type": "note"}
+        cfg = fi.import_config(template, None)
+        col = fi.HEADER.index("Buchungs-ID")
+        assert len(cfg["roles"]) == len(cfg["do_mapping"]) == len(fi.HEADER)
+        assert cfg["roles"][col] == "external-id"
+        assert (cfg["duplicate_detection_method"], cfg["unique_column_index"],
+                cfg["unique_column_type"]) == ("cell", col, "external-id")
+        assert len(template["roles"]) == len(fi.HEADER) - 1  # template untouched
+
+
 class TestInternalIbans:
     # Between two accounts of the same customer the bank leaves the counterparty IBAN
     # out on one side; the other side still names the first account.

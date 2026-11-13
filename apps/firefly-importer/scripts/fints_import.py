@@ -1,4 +1,4 @@
-import copy, csv, datetime, json, os, re, subprocess, sys, tempfile
+import copy, csv, datetime, hashlib, json, os, re, subprocess, sys, tempfile
 from decimal import Decimal, ROUND_HALF_UP
 
 # Fetches the recent transactions of one or more accounts at one bank over FinTS
@@ -16,13 +16,15 @@ from decimal import Decimal, ROUND_HALF_UP
 # locked. So a refusal writes a lock file, and no later run talks to the bank until a
 # person has removed it.
 
-# The 1822direkt web export's columns, in its order. The importer configuration maps
-# them by position, so a reordering here silently books names as amounts.
+# The 1822direkt web export's columns, in its order, plus our own booking ID at the end.
+# The importer configuration maps them by position, so a reordering here silently books
+# names as amounts.
 HEADER = ["Kontonummer", "Datum/Zeit", "Buchungstag", "Wertstellung", "Soll/Haben",
           "Buchungsschl\u00fcssel", "Buchungsart", "Empf\u00e4nger/Auftraggeber Name",
           "Empf\u00e4nger/Auftraggeber IBAN", "Empf\u00e4nger/Auftraggeber BIC",
           "Glaeubiger-ID", "Mandatsreferenz", "Mandatsdatum"] + \
-         [f"Vwz.{i}" for i in range(18)] + ["End-to-End-Identifikation"]
+         [f"Vwz.{i}" for i in range(18)] + ["End-to-End-Identifikation", "Buchungs-ID"]
+ID_COLUMN = HEADER.index("Buchungs-ID")
 
 # Column list of the AqBanking export profile written by profile_text(); convert() reads
 # exactly these names.
@@ -55,14 +57,33 @@ def norm_iban(iban):
     return re.sub(r"[^A-Z0-9]", "", (iban or "").upper())
 
 
-def convert(rows, since, skip_ibans=frozenset()):
+def booking_id(account, row, seen):
+    """A stable ID for one booked row of `account`, to be imported as its external ID.
+
+    FinTS offers each booked row again on every night of its window, and Firefly's own
+    duplicate check cannot recognise the repeat: its content hash also covers whether the
+    row was the last one the importer submitted, so a row that was last one night and is
+    followed by a newer one the next night is booked a second time. The importer looks
+    this ID up instead. It is built from the row's content only, so neighbouring rows do
+    not change it. Truly identical rows (two equal payments on one day) are numbered in
+    the bank's order, which `seen` (content -> count so far) tracks across one statement.
+    Changing what goes into the ID re-imports every row still in the window.
+    """
+    content = "\x1f".join([account] + [row[c] for c in HEADER if c != "Buchungs-ID"])
+    seen[content] = seen.get(content, 0) + 1
+    digest = hashlib.sha256(f"{content}\x1f{seen[content]}".encode()).hexdigest()
+    return f"fints-{digest[:32]}"
+
+
+def convert(rows, since, skip_ibans=frozenset(), account=""):
     """AqBanking export rows -> web-export rows, booked and on or after `since` only.
 
     Pending rows are left out because the bank rewrites or drops them once booked, and
     zero amounts because they are account statements, which Firefly refuses. Rows whose
-    counterparty is in skip_ibans are left out too: see skip_for().
+    counterparty is in skip_ibans are left out too: see skip_for(). Each row gets its
+    booking_id() for `account`.
     """
-    out = []
+    out, seen = [], {}
     for r in rows:
         if r.get("type") != "statement" or not r.get("date") or r["date"] < since:
             continue
@@ -86,6 +107,7 @@ def convert(rows, since, skip_ibans=frozenset()):
         # AqBanking names the exported columns purpose, purpose1, purpose2, ...
         for i in range(PURPOSE_LINES):
             row[f"Vwz.{i}"] = r.get("purpose" if i == 0 else f"purpose{i}", "")
+        row["Buchungs-ID"] = booking_id(account, row, seen)
         out.append(row)
     return out
 
@@ -154,10 +176,20 @@ def fill_internal_ibans(statements):
 
 
 def import_config(template, default_account):
-    """The importer configuration for one account: the shared one, its own target account."""
+    """The importer configuration for one account: the shared one, its own target account.
+
+    The shared configuration describes the web export's columns; the booking ID column
+    is added here, and duplicates are recognised by it alone (see booking_id()).
+    """
     cfg = copy.deepcopy(template)
     if default_account is not None:
         cfg["default_account"] = default_account
+    for key, value in (("roles", "_ignore"), ("do_mapping", False)):
+        cols = cfg.get(key, [])[:ID_COLUMN]
+        cfg[key] = cols + [value] * (ID_COLUMN - len(cols)) + [value]
+    cfg["roles"][ID_COLUMN] = "external-id"
+    cfg.update(duplicate_detection_method="cell", unique_column_index=ID_COLUMN,
+               unique_column_type="external-id")
     return cfg
 
 
@@ -306,7 +338,7 @@ def main():
 
     fill_internal_ibans(statements)
     for i, (acc, (_, rows)) in enumerate(zip(accounts, statements)):
-        booked = convert(rows, os.environ["FINTS_SINCE"], skip_for(accounts, i))
+        booked = convert(rows, os.environ["FINTS_SINCE"], skip_for(accounts, i), acc["iban"])
         target = os.path.join(import_dir, acc["importName"] + ".csv")
         # Configuration first: the auto-import only picks up a CSV with a JSON beside it.
         write_json(import_config(template, acc["defaultAccount"]), target[:-4] + ".json")
