@@ -3,7 +3,7 @@ template:
   spec:
     containers:
       - name: init-firefly-db
-        image: "postgres:16"
+        image: "postgres:18"
         envFrom:
           - secretRef:
               name: postgres-secret
