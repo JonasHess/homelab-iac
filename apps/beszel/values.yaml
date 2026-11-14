@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: henrygd/beszel:0.21.1
+    image: henrygd/beszel:0.21.2
     ports:
     - containerPort: 8090
     pvcMounts:
