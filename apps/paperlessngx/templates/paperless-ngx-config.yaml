@@ -11,6 +11,10 @@ data:
   PAPERLESS_ADMIN_USER: {{ .Values.admin.username | quote }}
   PAPERLESS_ADMIN_MAIL: {{ .Values.admin.email | quote }}
   PAPERLESS_URL: https://paperlessngx.{{ .Values.global.domain }}
+  # With PAPERLESS_URL set, Paperless rejects every other Host header (HTTP 400), so
+  # in-cluster clients (paperless-gpt, pytr, quality report) that call the service
+  # directly need its names here. The URL host and localhost are added by Paperless.
+  PAPERLESS_ALLOWED_HOSTS: "paperlessngx-service,paperlessngx-service.{{ $.Release.Namespace }}.svc.cluster.local"
   PAPERLESS_CONSUMER_ENABLE_BARCODES: "true"
   PAPERLESS_CONSUMER_ENABLE_ASN_BARCODE: "true"
   PAPERLESS_CONSUMER_ASN_BARCODE_PREFIX: "https://asn.{{ .Values.global.domain }}/"

@@ -58,6 +58,9 @@ jobs:
       - name: Render every chart and check vendored dependencies
         run: ./tests/charts/render-all.sh
 
+      - name: Check that Paperless accepts its in-cluster callers
+        run: python3 tests/charts/check-paperless-hosts.py tests/charts/.rendered
+
       # Custom resources (ExternalSecret, HTTPRoute, ResticBackup, ...) have no schema
       # in the default catalogue and are skipped; built-in kinds are checked strictly,
       # which catches misspelled or misplaced fields that the API server would drop.
