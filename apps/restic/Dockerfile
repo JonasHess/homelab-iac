@@ -8,7 +8,7 @@ RUN apk add --no-cache \
 # restic comes from its own releases, not Alpine, so its version is pinned here
 # instead of moving with whatever the base image's package repository ships.
 # renovate: datasource=github-releases depName=restic/restic extractVersion=^v(?<version>.+)$
-ARG RESTIC_VERSION=0.19.1
+ARG RESTIC_VERSION=0.20.0
 ARG TARGETARCH=amd64
 RUN cd /tmp \
     && asset="restic_${RESTIC_VERSION}_linux_${TARGETARCH}.bz2" \
