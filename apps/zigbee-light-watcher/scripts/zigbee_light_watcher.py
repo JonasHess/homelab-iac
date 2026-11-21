@@ -5,7 +5,7 @@ Polls the real on/off state of every Zigbee2MQTT light and compares it with the
 state the light was last commanded to. A difference ("ghost light") is exported
 as a Prometheus metric and logged as a JSON event.
 
-Why polling: the lights neither report their state nor acknowledge group
+Why polling: most lights neither report their state nor acknowledge group
 commands. After a group command Zigbee2MQTT publishes every member's state
 optimistically, so Home Assistant shows what was sent, not what happened. Only an
 explicit read (`<base>/<light>/get`) returns the bulb's real state.
@@ -27,7 +27,11 @@ copy and a direct command on the same topic):
     (e.g. Home Assistant controlling the single bulb). Zigbee2MQTT publishes it once
     the bulb acknowledged, so it can lag the /set by its request timeout.
   * device report: any other light publish, i.e. a message the bulb sent by itself
-    (e.g. a spontaneous attribute report after a reset). Judged like a read answer.
+    (e.g. a spontaneous attribute report after a reset). Judged like a read answer,
+    but only REPORT_WINDOW_S after arrival: a bulb with onOff reporting answers a
+    group command before Zigbee2MQTT publishes the group, and the wait lets that
+    group command be classified first, so the report confirms it instead of
+    contradicting the previous command.
     Commands sent through the Zigbee2MQTT frontend bypass MQTT /set and are
     therefore taken for device reports: they raise a mismatch until the next command.
 Messages are therefore classified only ADJACENT_S after arrival, once their
@@ -50,6 +54,9 @@ ADJACENT_S = 0.3
 # Exceeds Zigbee2MQTT's request timeout (15 s on the Ember adapter), after which a
 # /set publishes nothing.
 SET_WINDOW_S = 20.0
+# Exceeds the gap between a bulb's report and Zigbee2MQTT's publish of the group
+# command it answers (about 0.5 s observed).
+REPORT_WINDOW_S = 2.0
 
 
 class BulbState:
@@ -93,12 +100,14 @@ class Tracker:
     # adds one more read of the light itself, which ends a mismatch caused by a misread
     # before anything is switched.
     def __init__(self, sink, settle_s=3.0, read_timeout_s=30.0, adjacent_s=ADJACENT_S,
-                 set_window_s=SET_WINDOW_S, auto_off_s=None, turn_off=None):
+                 set_window_s=SET_WINDOW_S, report_window_s=REPORT_WINDOW_S,
+                 auto_off_s=None, turn_off=None):
         self.sink = sink
         self.settle_s = settle_s
         self.read_timeout_s = read_timeout_s
         self.adjacent_s = adjacent_s
         self.set_window_s = set_window_s
+        self.report_window_s = report_window_s
         self.auto_off_s = auto_off_s
         self.turn_off = turn_off
         self.bulbs = {}
@@ -147,11 +156,13 @@ class Tracker:
             bulb = self.bulbs[name]
             pending = bulb.pending_read_since is not None
             after_set = bulb.last_set_at is not None and now - bulb.last_set_at <= self.set_window_s
-            self._items.append({"ts": now, "kind": "bulb", "name": name, "payload": payload,
-                                "pending": pending, "after_set": after_set, "done": False})
+            delay = self.adjacent_s if pending or after_set else self.report_window_s
+            self._items.append({"ts": now, "ready_at": now + delay, "kind": "bulb", "name": name,
+                                "payload": payload, "pending": pending, "after_set": after_set,
+                                "done": False})
         elif name in self.groups:
-            self._items.append({"ts": now, "kind": "group", "name": name, "payload": payload,
-                                "pending": False, "done": False})
+            self._items.append({"ts": now, "ready_at": now + self.adjacent_s, "kind": "group",
+                                "name": name, "payload": payload, "pending": False, "done": False})
 
     def on_set(self, name, now):
         """A publish on `<base>/<name>/set`, i.e. someone commanding the light or group."""
@@ -175,16 +186,16 @@ class Tracker:
 
     def process(self, now):
         """Classify buffered messages whose neighbourhood is complete; expire reads."""
-        self._items.sort(key=lambda i: i["ts"])
+        self._items.sort(key=lambda i: (i["ready_at"], i["ts"]))
         for item in self._items:
-            if not item["done"] and now >= item["ts"] + self.adjacent_s:
+            if not item["done"] and now >= item["ready_at"]:
                 if item["kind"] == "group":
                     self._process_group(item)
                 else:
                     self._process_bulb(item)
                 item["done"] = True
         # Done items stay a little longer: later items still look them up as neighbours.
-        horizon = now - 3 * self.adjacent_s
+        horizon = now - self.report_window_s - 3 * self.adjacent_s
         self._items = [i for i in self._items if not i["done"] or i["ts"] >= horizon]
         self._expire_reads(now)
         self._auto_off(now)

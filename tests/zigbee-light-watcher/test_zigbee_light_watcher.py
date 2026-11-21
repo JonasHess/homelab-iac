@@ -168,7 +168,7 @@ class TrackerTest(unittest.TestCase):
         self.t.on_message("bad_decke1", state("OFF"), 170.5)
         self.t.process(171)
         self.t.on_message("bad_decke1", state("ON"), 300)
-        self.t.process(301)
+        self.t.process(303)
         self.assertTrue(self.sink.mismatch_on["bad_decke1"])
         self.assertFalse(self.sink.commanded_on["bad_decke1"])
 
@@ -181,7 +181,7 @@ class TrackerTest(unittest.TestCase):
         self.read("bad_decke1", "OFF", 160)
         self.read("bad_decke1", "ON", 220, lq=52)
         self.t.on_message("bad_decke1", state("ON", 136), 400)
-        self.t.process(401)
+        self.t.process(403)
         self.assertTrue(self.sink.mismatch_on["bad_decke1"])
         self.assertFalse(self.sink.commanded_on["bad_decke1"])
         self.assertNotIn("mismatch_end", self.sink.kinds())
@@ -191,8 +191,21 @@ class TrackerTest(unittest.TestCase):
         self.group_command("OFF", 100)
         self.read("bad_decke1", "OFF", 160)
         self.t.on_message("bad_decke1", state("ON", 132), 200)
-        self.t.process(201)
+        self.t.process(203)
         self.assertEqual(self.sink.uncommanded, ["bad_decke1"])
+        self.assertFalse(self.sink.commanded_on["bad_decke1"])
+
+    def test_report_arriving_just_before_its_group_command_is_not_a_mismatch(self):
+        # A bulb with onOff reporting answers a group OFF before Z2M publishes the group.
+        self.baseline_all_off()
+        self.group_command("ON", 100)
+        self.read("bad_decke1", "ON", 160)
+        self.t.on_message("bad_decke1", state("OFF", 120), 200)
+        for ts in (200.1, 200.2, 200.3, 200.4):
+            self.t.process(ts)
+        self.group_command("OFF", 200.5)
+        self.t.process(203)
+        self.assertNotIn("mismatch_start", self.sink.kinds())
         self.assertFalse(self.sink.commanded_on["bad_decke1"])
 
     def test_unsolicited_report_matching_command_ends_mismatch(self):
@@ -200,7 +213,7 @@ class TrackerTest(unittest.TestCase):
         self.group_command("OFF", 100)
         self.read("bad_decke1", "ON", 160, lq=52)
         self.t.on_message("bad_decke1", state("OFF", 132), 200)
-        self.t.process(201)
+        self.t.process(203)
         self.assertFalse(self.sink.mismatch_on["bad_decke1"])
         self.assertEqual(self.sink.events[-1][1]["reason"], "report")
 
