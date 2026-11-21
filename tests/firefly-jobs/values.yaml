@@ -13,6 +13,8 @@ generic:
       hostPath: /tmp/firefly-fints
 digest:
   enabled: true
+paypalPayee:
+  enabled: true
 loanSplit:
   enabled: true
   loans:
