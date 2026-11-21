@@ -15,7 +15,11 @@ copy and a direct command on the same topic):
   * group command: a group publish accompanied, within ADJACENT_S, by optimistic
     copies of its members (at least two copies, or one copy without a pending read
     for single-member groups). A group publish without those copies is a state
-    Zigbee2MQTT derived from a member's read answer and is ignored.
+    Zigbee2MQTT derived from a member's read answer and is ignored. Zigbee2MQTT also
+    publishes, in the same burst, every other group sharing the commanded members, with
+    the same copies as neighbours; when a group of the burst got a `<base>/<group>/set`
+    within SET_WINDOW_S, the groups without one are taken for such derived states.
+    A burst with no /set at all (Zigbee2MQTT frontend) counts every group in it.
   * optimistic copy: a light publish within ADJACENT_S of a group command it is a
     member of. Ignored; the group command already set the commanded state.
   * read answer: a light publish while a read of that light is pending.
@@ -101,6 +105,7 @@ class Tracker:
         self.groups = {}
         self.bulb_groups = {}
         self._raw_groups = {}
+        self._group_set_at = {}
         self._items = []
 
     # --- topology -----------------------------------------------------------
@@ -149,9 +154,11 @@ class Tracker:
                                 "pending": False, "done": False})
 
     def on_set(self, name, now):
-        """A publish on `<base>/<name>/set`, i.e. someone commanding the light."""
+        """A publish on `<base>/<name>/set`, i.e. someone commanding the light or group."""
         if name in self.bulbs:
             self.bulbs[name].last_set_at = now
+        elif name in self.groups:
+            self._group_set_at[name] = now
 
     def on_announce(self, name, now):
         """Returns True when the announced device is a watched light (caller should read it)."""
@@ -223,8 +230,16 @@ class Tracker:
             return len(copies) >= 2
         return len(copies) >= 1 and not any(c["pending"] for c in copies)
 
+    def _was_set(self, group_item):
+        set_at = self._group_set_at.get(group_item["name"])
+        return set_at is not None and 0 <= group_item["ts"] - set_at <= self.set_window_s
+
+    def _is_derived_from_other_group(self, group_item):
+        return not self._was_set(group_item) and any(
+            self._was_set(g) for g in self._neighbours(group_item, "group"))
+
     def _process_group(self, item):
-        if not self._is_group_command(item):
+        if not self._is_group_command(item) or self._is_derived_from_other_group(item):
             return
         state = item["payload"]["state"] == "ON"
         self.sink.group_command(item["name"], item["payload"]["state"])

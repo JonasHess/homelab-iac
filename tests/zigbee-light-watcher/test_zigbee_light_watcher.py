@@ -213,6 +213,32 @@ class TrackerTest(unittest.TestCase):
         self.read("flur_decke", "OFF", 160)
         self.assertEqual(self.sink.missed, [("flur_decke", "group:Flur")])
 
+    def subset_group_command(self, s, ts, set_superset=False):
+        # Z2M also publishes every group that shares the commanded members, in the same burst.
+        self.t.set_groups({"Bad": BAD, "Bad_Spiegel": BAD[:2]})
+        self.t.on_set("Bad_Spiegel", ts - 0.01)
+        if set_superset:
+            self.t.on_set("Bad", ts - 0.005)
+        self.t.on_message("bad_decke1", state(s), ts)
+        self.t.on_message("Bad_Spiegel", {"state": s}, ts + 0.0002)
+        self.t.on_message("Bad", {"state": s}, ts + 0.0003)
+        self.t.on_message("bad_decke2", state(s), ts + 0.0004)
+        self.t.process(ts + 1)
+
+    def test_superset_published_with_a_subset_command_is_not_a_command(self):
+        self.baseline_all_off()
+        self.subset_group_command("ON", 100)
+        self.assertEqual(self.sink.group_commands, [("Bad_Spiegel", "ON")])
+        self.read("bad_decke3", "OFF", 160)
+        self.assertEqual(self.sink.missed, [])
+
+    def test_overlapping_groups_that_were_both_set_are_both_commands(self):
+        self.baseline_all_off()
+        self.subset_group_command("ON", 100, set_superset=True)
+        self.assertEqual(self.sink.group_commands, [("Bad_Spiegel", "ON"), ("Bad", "ON")])
+        self.read("bad_decke3", "OFF", 160)
+        self.assertEqual(self.sink.missed, [("bad_decke3", "group:Bad")])
+
     def test_slow_read_answer_still_counts_as_read_with_default_timeout(self):
         # Z2M's Ember adapter waits up to 15 s per request, so answers can arrive that late.
         t = Tracker(self.sink)
