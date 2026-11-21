@@ -143,6 +143,13 @@ class TestTrades:
                  asset_accounts={"Neuemission": "1006"})
         assert ps[0]["destination_id"] == "1006" and ps[0]["amount"] == "5819.52"
 
+    def test_an_ipo_allocation_is_a_buy(self):
+        # The allocation is the purchase itself; no separate trade event follows it.
+        ps = run(ev("IPO_SUBSCRIPTION_ALLOCATION", -7339.97, [("\u00dcbersicht", {"Asset": "Neuemission"})]))
+        assert len(ps) == 1
+        assert (ps[0]["type"], ps[0]["source_id"], ps[0]["destination_id"], ps[0]["amount"]) == \
+            ("transfer", CASH, DEPOT, "7339.97")
+
 
 class TestIncome:
     def test_interest_is_booked_gross_with_the_tax_apart(self):
