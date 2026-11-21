@@ -52,7 +52,7 @@ jobs:
       - name: Install PyYAML
         env:
           # renovate: datasource=pypi depName=pyyaml
-          PYYAML_VERSION: 6.0.3
+          PYYAML_VERSION: 6.0.4
         run: pip install --quiet "pyyaml==${PYYAML_VERSION}"
 
       - name: Render every chart and check vendored dependencies
