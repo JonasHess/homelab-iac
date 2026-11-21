@@ -21,6 +21,9 @@
   "reviewers": [],
   "platformAutomerge": true,
   "rebaseWhen": "conflicted",
+  "postUpdateOptions": [
+    "helmUpdateSubChartArchives"
+  ],
   "packageRules": [
     {
       "description": "Auto-merge patch and minor updates for Helm charts",
