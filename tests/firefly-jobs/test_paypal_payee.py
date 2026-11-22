@@ -104,6 +104,21 @@ class TestPlan:
     def test_a_group_listed_twice_is_changed_once(self):
         assert len(pp.plan([split("1"), split("1")])) == 1
 
+    def test_an_existing_payee_spelled_differently_is_reused(self):
+        payees = {"7": "Fahrrad Laden GmbH", "8": "Kino Karten GmbH"}
+        change = pp.plan([split("1", desc=UNWRAPPED)], payees)[0]
+        assert (change["new"], change["payee_id"]) == ("Fahrrad Laden GmbH", "7")
+        assert pp.payload(change)["transactions"][0] == {"transaction_journal_id": "j1",
+                                                         "destination_id": "7"}
+
+    def test_a_row_already_on_the_matching_payee_is_left_alone(self):
+        assert pp.plan([split("1", dest="Fahrrad Laden GmbH")], {"7": "Fahrrad Laden GmbH"}) == []
+
+    def test_of_several_spellings_the_readable_one_wins(self):
+        names = {"3": "fahrrad laden gmbh", "4": "FahrradLadenGmbH", "5": "Fahrrad Laden GmbH",
+                 "6": "FAHRRAD LADEN GMBH"}
+        assert pp.preferred(names) == "5"
+
     def test_the_payload_changes_only_the_payee(self):
         body = pp.payload(pp.plan([split("1")])[0])
         assert body == {"apply_rules": False, "fire_webhooks": False,

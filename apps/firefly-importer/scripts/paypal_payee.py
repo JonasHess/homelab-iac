@@ -98,8 +98,34 @@ def merchant(description):
     return "".join(out).strip() or None
 
 
-def plan(groups):
-    """Payee changes for single-split PayPal withdrawals whose description names a merchant."""
+def same_payee_key(name):
+    """Names that differ only in spacing, punctuation or case belong to one payee.
+
+    Descriptions spell a merchant inconsistently - one bank upper-cases everything, older
+    exports drop every space - so matching on the exact name would open a new payee for
+    each spelling and split one merchant's spending across several.
+    """
+    return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def preferred(payees):
+    """Id of the most readable of several spellings: spaced, then mixed case, then oldest."""
+    def score(item):
+        pid, name = item
+        mixed = any(c.islower() for c in name) and name[:1].isupper()
+        return (name.count(" "), mixed, -int(pid))
+    return max(payees.items(), key=score)[0]
+
+
+def plan(groups, payees=None):
+    """Payee changes for single-split PayPal withdrawals whose description names a merchant.
+
+    payees - existing expense accounts, id -> name. A merchant that already has one, in
+    whatever spelling, is booked onto it rather than onto a new account.
+    """
+    by_key = {}
+    for pid, name in (payees or {}).items():
+        by_key.setdefault(same_payee_key(name), {})[pid] = name
     changes, seen = [], set()
     for g in groups:
         txs = g["attributes"]["transactions"]
@@ -110,17 +136,25 @@ def plan(groups):
         if s["type"] != "withdrawal" or not PAYPAL.search(s.get("destination_name") or ""):
             continue
         name = merchant(s.get("description") or "")
-        if name:
-            changes.append({"group": g["id"], "journal": s["transaction_journal_id"],
-                            "date": s["date"][:10], "amount": s["amount"],
-                            "old": s["destination_name"], "new": name})
+        if not name:
+            continue
+        change = {"group": g["id"], "journal": s["transaction_journal_id"],
+                  "date": s["date"][:10], "amount": s["amount"],
+                  "old": s["destination_name"], "new": name}
+        known = by_key.get(same_payee_key(name))
+        if known:
+            change["payee_id"] = preferred(known)
+            change["new"] = known[change["payee_id"]]
+        if change["new"] != change["old"]:
+            changes.append(change)
     return changes
 
 
 def payload(change):
+    target = ({"destination_id": change["payee_id"]} if "payee_id" in change
+              else {"destination_name": change["new"]})
     return {"apply_rules": False, "fire_webhooks": False,
-            "transactions": [{"transaction_journal_id": change["journal"],
-                              "destination_name": change["new"]}]}
+            "transactions": [{"transaction_journal_id": change["journal"], **target}]}
 
 
 def api(path, method="GET", body=None):
@@ -147,7 +181,14 @@ def main():
         if page >= max(1, d["meta"]["pagination"]["total_pages"]):
             break
         page += 1
-    changes = plan(groups)
+    payees, page = {}, 1
+    while True:
+        d = api(f"/api/v1/accounts?type=expense&limit=500&page={page}")
+        payees.update({a["id"]: a["attributes"]["name"] for a in d["data"]})
+        if page >= max(1, d["meta"]["pagination"]["total_pages"]):
+            break
+        page += 1
+    changes = plan(groups, payees)
     print(f"window {since} .. {today}: {len(groups)} withdrawals, {len(changes)} PayPal payees to name")
     failed = 0
     for c in changes:
