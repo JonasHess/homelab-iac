@@ -68,7 +68,7 @@ Optional per-CR knobs: `include`, `exclude`, `excludeLargerThan`, `excludeCaches
 
 ## 2. What a backup run actually does
 
-`restic-backup` fires at `0 2 * * *` (UTC), `concurrencyPolicy: Forbid`, `backoffLimit: 0` (a failed pod is *not* retried).
+`restic-backup` fires at `0 2 * * *` (UTC), `concurrencyPolicy: Forbid`, `backoffLimit: 0` (a failed pod is *not* retried), `activeDeadlineSeconds: 79200` (a run still going after 22 h is killed and raises `KubeJobFailed`; the next run unlocks the repository and reuses the packs already uploaded).
 
 The pod mounts `/mnt/tank0` and `/mnt/tank1` from the host at **the same paths they have on the host**. That is the crux of the design: paths resolved from the cluster API are directly usable inside the pod.
 
@@ -463,7 +463,7 @@ Ordered roughly by how much they would hurt.
 
 1. **`RESTIC_PASSWORD` lives only in Akeyless.** Lose it and every snapshot is permanently unreadable. Keep an offline copy of the password *and* the S3 credentials — see §5.1.
 2. **Alerting covers runs, not content.** `BackupTooOld`, `BackupNeverSucceeded` and `KubeJobFailed` (§1) catch a backup that fails or stops being scheduled. A run that succeeds but silently skips a volume raises nothing.
-3. **`concurrencyPolicy: Forbid` + a hanging job is a silent outage.** One stuck scan blocked five nights of backups for *every* application. There is no timeout on the restic invocation (`run_restic_command` defaults to a 3600 s timeout, but the streaming path passes it only to `process.wait()` after the read loop, so a stalled read blocks forever). An `activeDeadlineSeconds` on the Job would bound this.
+3. **A hanging run costs up to one night.** There is no timeout on the restic invocation itself (`run_restic_command` defaults to a 3600 s timeout, but the streaming path passes it only to `process.wait()` after the read loop, so a stalled read blocks forever). With `concurrencyPolicy: Forbid` that once blocked five nights of backups for *every* application. `activeDeadlineSeconds: 79200` now kills such a run after 22 h and raises `KubeJobFailed`, so the next night's run starts as usual. A volume that hangs every night still fails every night, and the alert is what surfaces it.
 4. **The Postgres backup is a hot file copy** (§3b). The real safety net is Immich's internal dump inside the library snapshot — which nothing in this repo asserts, configures, or monitors. If Immich stops writing dumps, the backup silently degrades.
 5. **Retention caps recovery at ~6 months**, and only on the dates the weekly/monthly rules kept.
 6. **`restic check --read-data-subset=5%` verifies bytes, not restorability.** Before 2026-07-22 no end-to-end restore had ever been performed. Repeat §5.5 quarterly.

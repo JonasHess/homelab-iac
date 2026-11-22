@@ -4,6 +4,13 @@ cronjob:
   image: 629099703604.dkr.ecr.eu-central-1.amazonaws.com/homelab-iac/restic:7cdf8e4
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 3
+  # Kills a hung run so concurrencyPolicy Forbid cannot block the following nights; the
+  # killed Job raises KubeJobFailed. A normal run takes ~35 min. Must stay below the 24 h
+  # schedule interval, or a hung run still blocks the next night; the 2 h margin leaves
+  # room for a run that starts late. As long as possible otherwise, so a large upload
+  # (e.g. a big photo import) is not cut off. The next run removes the stale restic lock
+  # and reuses the packs already uploaded.
+  activeDeadlineSeconds: 79200  # 22 h
   pvcMounts: {}
 #    tank0:
 #      mountPath: /mnt/tank0
