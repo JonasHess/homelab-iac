@@ -245,6 +245,15 @@ class TrackerTest(unittest.TestCase):
         self.read("bad_decke3", "OFF", 160)
         self.assertEqual(self.sink.missed, [])
 
+    def test_superset_set_to_the_opposite_state_shortly_before_is_not_a_command(self):
+        # "All off" sets the superset OFF; seconds later only the subset is set ON.
+        self.baseline_all_off()
+        self.t.on_set("Bad", 93, "OFF")
+        self.subset_group_command("ON", 100)
+        self.assertEqual(self.sink.group_commands, [("Bad_Spiegel", "ON")])
+        self.read("bad_decke3", "OFF", 160)
+        self.assertEqual(self.sink.missed, [])
+
     def test_overlapping_groups_that_were_both_set_are_both_commands(self):
         self.baseline_all_off()
         self.subset_group_command("ON", 100, set_superset=True)

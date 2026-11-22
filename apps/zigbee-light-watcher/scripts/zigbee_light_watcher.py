@@ -18,7 +18,9 @@ copy and a direct command on the same topic):
     Zigbee2MQTT derived from a member's read answer and is ignored. Zigbee2MQTT also
     publishes, in the same burst, every other group sharing the commanded members, with
     the same copies as neighbours; when a group of the burst got a `<base>/<group>/set`
-    within SET_WINDOW_S, the groups without one are taken for such derived states.
+    within SET_WINDOW_S, the groups without one are taken for such derived states. A
+    /set whose state differs from the group publish (a superset switched OFF seconds
+    before one of its subsets is switched ON) does not count as one.
     A burst with no /set at all (Zigbee2MQTT frontend) counts every group in it.
   * optimistic copy: a light publish within ADJACENT_S of a group command it is a
     member of. Ignored; the group command already set the commanded state.
@@ -164,12 +166,13 @@ class Tracker:
             self._items.append({"ts": now, "ready_at": now + self.adjacent_s, "kind": "group",
                                 "name": name, "payload": payload, "pending": False, "done": False})
 
-    def on_set(self, name, now):
-        """A publish on `<base>/<name>/set`, i.e. someone commanding the light or group."""
+    def on_set(self, name, now, state=None):
+        """A publish on `<base>/<name>/set`, i.e. someone commanding the light or group.
+        state: "ON"/"OFF" from the payload, None when the payload sets no state."""
         if name in self.bulbs:
             self.bulbs[name].last_set_at = now
         elif name in self.groups:
-            self._group_set_at[name] = now
+            self._group_set_at[name] = (now, state)
 
     def on_announce(self, name, now):
         """Returns True when the announced device is a watched light (caller should read it)."""
@@ -242,8 +245,11 @@ class Tracker:
         return len(copies) >= 1 and not any(c["pending"] for c in copies)
 
     def _was_set(self, group_item):
-        set_at = self._group_set_at.get(group_item["name"])
-        return set_at is not None and 0 <= group_item["ts"] - set_at <= self.set_window_s
+        if group_item["name"] not in self._group_set_at:
+            return False
+        set_at, state = self._group_set_at[group_item["name"]]
+        return (0 <= group_item["ts"] - set_at <= self.set_window_s
+                and state in (None, group_item["payload"]["state"]))
 
     def _is_derived_from_other_group(self, group_item):
         return not self._was_set(group_item) and any(
@@ -553,7 +559,9 @@ def main():
             elif topic.count("/") == 1:
                 tracker.on_message(topic.split("/", 1)[1], data, ts)
             elif topic.count("/") == 2 and topic.endswith("/set"):
-                tracker.on_set(topic.split("/")[1], ts)
+                # Z2M accepts any case; TOGGLE says nothing about the resulting state.
+                state = str(data.get("state", "")).upper() if isinstance(data, dict) else ""
+                tracker.on_set(topic.split("/")[1], ts, state if state in ("ON", "OFF") else None)
         except queue.Empty:
             pass
 
