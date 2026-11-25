@@ -13,9 +13,10 @@ explicit read (`<base>/<light>/get`) returns the bulb's real state.
 Message classification (Zigbee2MQTT publishes a read answer, an optimistic group
 copy and a direct command on the same topic):
   * group command: a group publish accompanied, within ADJACENT_S, by optimistic
-    copies of its members (at least two copies, or one copy without a pending read
-    for single-member groups). A group publish without those copies is a state
-    Zigbee2MQTT derived from a member's read answer and is ignored. Zigbee2MQTT also
+    copies of its members: publishes of at least two distinct members (one for
+    single-member groups) that are not read answers. A group publish without those
+    copies is a state Zigbee2MQTT derived from one member's change (a read answer, a
+    report, or a direct command, which Zigbee2MQTT may publish twice) and is ignored. Zigbee2MQTT also
     publishes, in the same burst, every other group sharing the commanded members, with
     the same copies as neighbours; when a group of the burst got a `<base>/<group>/set`
     within SET_WINDOW_S, the groups without one are taken for such derived states. A
@@ -239,10 +240,9 @@ class Tracker:
 
     def _is_group_command(self, group_item):
         members = self.groups.get(group_item["name"], [])
-        copies = [i for i in self._neighbours(group_item, "bulb") if i["name"] in members]
-        if len(members) >= 2:
-            return len(copies) >= 2
-        return len(copies) >= 1 and not any(c["pending"] for c in copies)
+        copies = {i["name"] for i in self._neighbours(group_item, "bulb")
+                  if i["name"] in members and not i["pending"]}
+        return len(copies) >= min(2, len(members))
 
     def _was_set(self, group_item):
         if group_item["name"] not in self._group_set_at:

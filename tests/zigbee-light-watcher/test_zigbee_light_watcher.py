@@ -113,6 +113,34 @@ class TrackerTest(unittest.TestCase):
         self.assertIn(("mismatch_end", {"bulb": "bad_decke1", "kind": "missed_command", "reason": "command",
                                         "duration_s": 139.8}), self.sink.events)
 
+    def test_ghost_report_next_to_a_sibling_read_answer_is_not_a_group_command(self):
+        # Z2M derives the group ON from the ghost's report; a sibling's read answer lands alongside.
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.read("bad_decke1", "OFF", 160)
+        self.t.begin_read("bad_decke2", 199.9)
+        self.t.on_message("bad_decke1", state("ON"), 200)
+        self.t.on_message("Bad", {"state": "ON"}, 200.0002)
+        self.t.on_message("bad_decke2", state("OFF"), 200.0004)
+        self.t.process(203)
+        self.assertEqual(self.sink.group_commands, [("Bad", "OFF")])
+        self.assertEqual(self.sink.uncommanded, ["bad_decke1"])
+        self.assertEqual(self.sink.missed, [])
+
+    def test_repeated_publishes_of_one_directly_set_member_are_not_a_group_command(self):
+        # Z2M derives the group ON from a direct command and publishes that light twice.
+        self.baseline_all_off()
+        self.group_command("OFF", 100)
+        self.t.on_set("bad_decke1", 199.9)
+        self.t.on_message("bad_decke1", state("ON"), 200)
+        self.t.on_message("Bad", {"state": "ON"}, 200.0002)
+        self.t.on_message("bad_decke1", state("ON"), 200.0004)
+        self.t.process(203)
+        self.assertEqual(self.sink.group_commands, [("Bad", "OFF")])
+        self.assertFalse(self.sink.commanded_on["bad_decke2"])
+        self.read("bad_decke2", "OFF", 260)
+        self.assertEqual(self.sink.missed, [])
+
     def test_read_answer_triggering_derived_group_publish_is_not_a_command(self):
         # Z2M publishes the group again when a member's read answer changes the group state.
         self.baseline_all_off()
