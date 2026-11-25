@@ -1,6 +1,6 @@
 generic:
   deployment:
-    image: docker.io/apache/tika:3.3.3.1
+    image: docker.io/apache/tika:3.4.0.0
     # Requests only, sized from measured usage, so this pod is among the last
     # to be evicted under memory pressure. No limit: it is Java, which sizes its heap from the memory limit.
     resources:
