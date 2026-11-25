@@ -1,16 +1,25 @@
 import datetime, json, os, re, sys, urllib.error, urllib.request
 
-# A PayPal payment reaches Firefly as a withdrawal to "PayPal Europe ...", which hides
-# where the money actually went. The bank's description names the merchant, so this job
-# makes that merchant the payee. Categories are left alone: the update runs without the
-# rule engine, so nothing a person or a rule has set is recomputed.
+# Keeps one payee per merchant on withdrawals. Two things split a merchant otherwise:
 #
-# Payments to private people carry no merchant in the description - PayPal leaves the
-# name out - and stay with PayPal.
+# - A PayPal payment reaches Firefly as a withdrawal to "PayPal Europe ...", which hides
+#   where the money actually went. The bank's description names the merchant, so that
+#   merchant becomes the payee. Payments to private people carry no merchant - PayPal
+#   leaves the name out - and stay with PayPal.
+# - Firefly matches payee names exactly, and banks spell one merchant differently (one
+#   upper-cases card payments, another does not), so each spelling opens its own payee.
+#   Payments on a second spelling are moved onto the most readable one.
+#
+# Only the payee changes. The update runs without the rule engine, so categories a person
+# or a rule has set stay as they are. Emptied payee accounts are left in place: removing
+# accounts is not a job for an unattended run, and an empty one does no harm.
 
 PAYPAL = re.compile(r"(?i)paypal")
 MARK = "\x1f"  # stands for a bank line break ("; ") while a description is parsed
 LINE = 35  # width of a SEPA remittance line, at which banks cut the description
+# Umlauts appear as themselves, transcribed (ae) or dropped (a); all three fold to the plain
+# vowel, as in the ledger check, so both jobs agree on what one payee is.
+UMLAUTS = str.maketrans({"\u00e4": "a", "\u00f6": "o", "\u00fc": "u", "\u00df": "ss"})
 
 
 def _phrase(text):
@@ -105,7 +114,8 @@ def same_payee_key(name):
     exports drop every space - so matching on the exact name would open a new payee for
     each spelling and split one merchant's spending across several.
     """
-    return re.sub(r"[^a-z0-9]", "", name.lower())
+    key = re.sub(r"[^a-z0-9]", "", name.lower().translate(UMLAUTS))
+    return key.replace("ae", "a").replace("oe", "o").replace("ue", "u")
 
 
 def preferred(payees):
@@ -117,15 +127,19 @@ def preferred(payees):
     return max(payees.items(), key=score)[0]
 
 
-def plan(groups, payees=None):
-    """Payee changes for single-split PayPal withdrawals whose description names a merchant.
+def plan(groups, payees=None, ignore_ids=()):
+    """Payee changes for single-split withdrawals.
 
-    payees - existing expense accounts, id -> name. A merchant that already has one, in
-    whatever spelling, is booked onto it rather than onto a new account.
+    payees     - existing expense accounts, id -> name. A merchant that already has one,
+                 in whatever spelling, is booked onto it rather than onto a new account.
+    ignore_ids - payee ids kept apart on purpose although their names fold together
+                 (someone holding two accounts at one bank); they are never merged.
     """
+    skip = {str(i) for i in ignore_ids}
     by_key = {}
     for pid, name in (payees or {}).items():
-        by_key.setdefault(same_payee_key(name), {})[pid] = name
+        if str(pid) not in skip:
+            by_key.setdefault(same_payee_key(name), {})[pid] = name
     changes, seen = [], set()
     for g in groups:
         txs = g["attributes"]["transactions"]
@@ -133,19 +147,21 @@ def plan(groups, payees=None):
             continue
         seen.add(g["id"])
         s = txs[0]
-        if s["type"] != "withdrawal" or not PAYPAL.search(s.get("destination_name") or ""):
+        old = s.get("destination_name") or ""
+        if s["type"] != "withdrawal" or str(s.get("destination_id")) in skip:
             continue
-        name = merchant(s.get("description") or "")
+        name = merchant(s.get("description") or "") if PAYPAL.search(old) else old
         if not name:
             continue
         change = {"group": g["id"], "journal": s["transaction_journal_id"],
-                  "date": s["date"][:10], "amount": s["amount"],
-                  "old": s["destination_name"], "new": name}
+                  "date": s["date"][:10], "amount": s["amount"], "old": old, "new": name}
         known = by_key.get(same_payee_key(name))
         if known:
             change["payee_id"] = preferred(known)
             change["new"] = known[change["payee_id"]]
-        if change["new"] != change["old"]:
+            if change["payee_id"] == str(s.get("destination_id")):
+                continue
+        if change["new"] != old:
             changes.append(change)
     return changes
 
@@ -169,8 +185,9 @@ def api(path, method="GET", body=None):
 
 
 def main():
-    window = int(os.environ.get("PAYPAL_PAYEE_WINDOW_DAYS", "90"))
-    dry_run = os.environ.get("PAYPAL_PAYEE_DRY_RUN", "false").lower() == "true"
+    window = int(os.environ.get("PAYEE_TIDY_WINDOW_DAYS", "90"))
+    dry_run = os.environ.get("PAYEE_TIDY_DRY_RUN", "false").lower() == "true"
+    ignore_ids = json.loads(os.environ.get("PAYEE_TIDY_IGNORE_IDS") or "[]")
     today = datetime.date.today()
     since = (today - datetime.timedelta(days=window)).isoformat()
     groups, page = [], 1
@@ -188,8 +205,8 @@ def main():
         if page >= max(1, d["meta"]["pagination"]["total_pages"]):
             break
         page += 1
-    changes = plan(groups, payees)
-    print(f"window {since} .. {today}: {len(groups)} withdrawals, {len(changes)} PayPal payees to name")
+    changes = plan(groups, payees, ignore_ids)
+    print(f"window {since} .. {today}: {len(groups)} withdrawals, {len(changes)} payees to change")
     failed = 0
     for c in changes:
         label = f"g{c['group']} {c['date']} {float(c['amount']):.2f}: {c['old']} -> {c['new']}"

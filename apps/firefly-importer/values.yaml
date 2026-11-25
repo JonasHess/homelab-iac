@@ -107,16 +107,18 @@ loanSplit:
   # label     - optional, for titles and mails; defaults to the liability's name
   loans: []
 
-# Names the merchant behind each PayPal payment as its payee instead of "PayPal Europe".
-# Off by default, like every job that writes to the ledger.
-paypalPayee:
+# Keeps one payee per merchant: names the merchant behind each PayPal payment instead of
+# "PayPal Europe", and moves payments on a second spelling of a merchant onto the most
+# readable one. Payees listed in ledgerCheck.ignorePayeeIds are never merged. Off by
+# default, like every job that writes to the ledger.
+payeeTidy:
   enabled: false
   # After the auto-import, the TR timeline and the loan split, before link-transfers
   # (04:25) and the digest (04:30), so the night's reports already show the merchants.
   schedule: "20 4 * * *"
   image: python:3.15-slim
-  # Covers the importer's own re-fetch window. Rows already named are skipped, so a
-  # longer window only costs time; a one-off run with a long window names old rows.
+  # Covers the importer's own re-fetch window. Rows already right are skipped, so a
+  # longer window only costs time; a one-off run with a long window tidies old rows.
   windowDays: 90
   dryRun: false
 

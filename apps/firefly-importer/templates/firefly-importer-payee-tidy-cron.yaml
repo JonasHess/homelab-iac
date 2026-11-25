@@ -1,0 +1,70 @@
+{{- if .Values.payeeTidy.enabled }}
+{{- /*
+  Keeps one payee per merchant on withdrawals.
+
+  Every PayPal debit is imported as a withdrawal to "PayPal Europe ...", so a fifth of
+  the household's spending would show up under one payee; the bank's description names
+  the merchant, and the job makes it the payee. And because Firefly matches payee names
+  exactly while banks spell one merchant differently, each spelling would open its own
+  payee; the job moves such payments onto the most readable spelling. It changes nothing
+  else - amount, date and category stay as imported and as rules or people set them.
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: firefly-importer-payee-tidy-script
+  namespace: {{ .Release.Namespace }}
+data:
+  payee_tidy.py: |
+{{ .Files.Get "scripts/payee_tidy.py" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: firefly-importer-payee-tidy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: firefly-importer-payee-tidy
+    component: payee-tidy
+spec:
+  schedule: {{ .Values.payeeTidy.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 600
+      template:
+        metadata:
+          labels:
+            app: firefly-importer-payee-tidy
+            component: payee-tidy
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: payee-tidy
+              image: {{ .Values.payeeTidy.image | quote }}
+              envFrom:
+                - configMapRef:
+                    name: firefly-importer-config
+                - secretRef:
+                    name: firefly-importer-secret
+              env:
+                - name: PAYEE_TIDY_WINDOW_DAYS
+                  value: {{ .Values.payeeTidy.windowDays | quote }}
+                - name: PAYEE_TIDY_DRY_RUN
+                  value: {{ .Values.payeeTidy.dryRun | quote }}
+                # The payees the ledger check accepts as legitimately split are the ones
+                # this job must never merge; one list serves both.
+                - name: PAYEE_TIDY_IGNORE_IDS
+                  value: {{ .Values.ledgerCheck.ignorePayeeIds | toJson | quote }}
+              command: ["python3", "/script/payee_tidy.py"]
+              volumeMounts:
+                - name: script
+                  mountPath: /script
+          volumes:
+            - name: script
+              configMap:
+                name: firefly-importer-payee-tidy-script
+{{- end }}
