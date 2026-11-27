@@ -31,7 +31,13 @@ def splits(groups):
             yield g["id"], s
 
 
-def unlinked_transfers(groups, own_ibans, loan_payees):
+# Days a half-booked own-account transfer may wait for its other half before it is
+# reported: banks book their side up to a day or two late, and the transfer join pairs
+# the halves the night after both have arrived.
+UNLINKED_GRACE_DAYS = 2
+
+
+def unlinked_transfers(groups, own_ibans, loan_payees, settled_by=None):
     """Transfers between two of your own accounts, imported as two unrelated halves.
 
     Neither bank knows about the other, so one side arrives as a withdrawal to a payee
@@ -41,10 +47,14 @@ def unlinked_transfers(groups, own_ibans, loan_payees):
     Two signatures, because one alone is not enough: the payee's name carries one of
     your own IBANs, or the payee is a known self-payee whose own account has no IBAN in
     Firefly (which is the case for all three loan accounts).
+
+    settled_by - ISO date; halves booked after it are left out. The other bank often books
+    its side a day or two later and the nightly transfer join pairs them then, so a fresh
+    half is not yet a problem.
     """
     hits = []
     for gid, s in splits(groups):
-        if s["type"] == "transfer":
+        if s["type"] == "transfer" or (settled_by and s["date"][:10] > settled_by):
             continue
         for role in ("source", "destination"):
             pid = str(s[f"{role}_id"])
@@ -229,7 +239,8 @@ def main():
         page += 1
     groups = dedupe(groups)
 
-    unlinked = unlinked_transfers(groups, own_ibans, loan_payees)
+    settled_by = (today - datetime.timedelta(days=UNLINKED_GRACE_DAYS)).isoformat()
+    unlinked = unlinked_transfers(groups, own_ibans, loan_payees, settled_by)
     definite, review = duplicates(groups)
     uncat = uncategorised(groups)
     # Loan self-payees are self-payees too; their accounts just carry no IBAN to know

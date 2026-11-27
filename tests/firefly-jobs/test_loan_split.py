@@ -137,3 +137,15 @@ class TestLabels:
         # So the configuration needs no name for the property or the lender.
         loans = [{"payee": 50, "liability": 987, "interest": 994}]
         assert ls.label_loans(loans, {"987": "Darlehen X"})[0]["label"] == "Darlehen X"
+
+
+class TestMailSubject:
+    def test_a_night_of_successful_splits_sends_nothing(self):
+        assert ls.mail_subject(done=["Kredit A: ..."], problems=[], skipped=[]) is None
+
+    def test_a_problem_is_mailed(self):
+        assert ls.mail_subject(["a"], ["b"], []) == "Firefly loan splits: 1 split, 1 needing attention"
+
+    def test_a_dry_run_is_mailed(self):
+        assert ls.mail_subject([], [], ["c"]) == "Firefly loan splits: 1 dry-run"
+

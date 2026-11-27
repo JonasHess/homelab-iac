@@ -448,3 +448,21 @@ class TestTransferredHalves:
         assert [d["group"] for d in drops] == ["d1"]
         pairs, pair_refusals = lt.plan([g for g in groups if g["id"] != "d1"], OWN3)
         assert pair_refusals == [] and [(p["keep"], p["drop"]) for p in pairs] == [("d2", "w2")]
+
+
+class TestMailSubject:
+    # A fix that worked needs no one; only what is left to do, or a dry run someone
+    # asked to see, is worth a mail.
+    def test_a_night_of_successful_fixes_sends_nothing(self):
+        assert lt.mail_subject(done=["joined x"], refusals=[], dry_run=False) is None
+
+    def test_a_refusal_is_mailed(self):
+        assert lt.mail_subject(["joined x"], ["y"], False) == \
+            "Firefly transfer join: 1 fixed, 1 needing attention"
+
+    def test_a_dry_run_is_mailed(self):
+        assert lt.mail_subject(["joined x"], [], True) == "Firefly transfer join: 1 dry-run"
+
+    def test_nothing_to_do_sends_nothing(self):
+        assert lt.mail_subject([], [], False) is None
+

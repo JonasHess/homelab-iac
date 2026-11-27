@@ -377,6 +377,20 @@ def balance(account_id):
     return cents(a["current_balance"])
 
 
+def mail_subject(done, refusals, dry_run):
+    """Subject of the night's mail, or None when there is nothing to tell.
+
+    Fixes that went through are only printed to the job log: a mail should mean someone
+    has something to do. Refusals are mailed, and so is a dry run, which exists to be read.
+    """
+    if not refusals and not (done and dry_run):
+        return None
+    bits = []
+    if done:     bits.append(f"{len(done)} dry-run" if dry_run else f"{len(done)} fixed")
+    if refusals: bits.append(f"{len(refusals)} needing attention")
+    return "Firefly transfer join: " + ", ".join(bits)
+
+
 def send_mail(subject, body):
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -538,13 +552,11 @@ def main():
     for line in done:     print("fix     :", line)
     for line in refusals: print("PROBLEM :", line)
 
-    if not (done or refusals):
-        print("no half-booked own-account transfers to join or convert")
+    subject = mail_subject(done, refusals, dry_run)
+    if not subject:
+        print("nothing needing attention - no mail sent")
         return 0
 
-    bits = []
-    if done:     bits.append(f"{len(done)} dry-run" if dry_run else f"{len(done)} fixed")
-    if refusals: bits.append(f"{len(refusals)} needing attention")
     body = ""
     if done and dry_run:
         body += "Dry run, nothing written:\n" + "".join(f"  - {l}\n" for l in done) + "\n"
@@ -556,7 +568,7 @@ def main():
     if not os.environ.get("MAIL_HOST"):
         print("no MAIL_HOST configured - not mailing")
     else:
-        send_mail("Firefly transfer join: " + ", ".join(bits), body)
+        send_mail(subject, body)
         print("mail sent")
     return 1 if refusals else 0
 

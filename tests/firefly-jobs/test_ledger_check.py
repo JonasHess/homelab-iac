@@ -52,6 +52,14 @@ class TestUnlinkedTransfers:
                              destination_name="Bank B Haushalt"))], OWN, LOAN_PAYEES)
         assert hits == []
 
+    def test_a_half_too_young_to_have_been_joined_is_not_reported_yet(self):
+        # The other bank often books its side a day later; the nightly transfer join
+        # pairs the halves then, so a fresh half is no news yet.
+        rows = [grp("15", split(destination_name="Kontoinhaber (DE00100000000000000001)",
+                                date="2026-10-05T00:00:00+02:00"))]
+        assert lc.unlinked_transfers(rows, OWN, LOAN_PAYEES, settled_by="2026-10-04") == []
+        assert len(lc.unlinked_transfers(rows, OWN, LOAN_PAYEES, settled_by="2026-10-05")) == 1
+
     def test_ordinary_expense_is_not_flagged(self):
         assert lc.unlinked_transfers([grp("13", split())], OWN, LOAN_PAYEES) == []
 

@@ -125,6 +125,21 @@ def split_payload(a):
 def liability_balance(account_id):
     return float(api(f"/api/v1/accounts/{account_id}")["data"]["attributes"]["current_balance"])
 
+def mail_subject(done, problems, skipped):
+    """Subject of the night's mail, or None when there is nothing to tell.
+
+    Splits that went through are only printed to the job log: a mail should mean someone
+    has something to do. Problems are mailed, and so is a dry run, which exists to be read.
+    """
+    if not (problems or skipped):
+        return None
+    bits = []
+    if done:     bits.append(f"{len(done)} split")
+    if problems: bits.append(f"{len(problems)} needing attention")
+    if skipped:  bits.append(f"{len(skipped)} dry-run")
+    return "Firefly loan splits: " + ", ".join(bits)
+
+
 def send_mail(subject, body):
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -187,14 +202,11 @@ def main():
     for line in skipped:  print("dry-run :", line)
     for line in problems: print("PROBLEM :", line)
 
-    if not (done or problems or skipped):
-        print("nothing to split - no mail sent")
+    subject = mail_subject(done, problems, skipped)
+    if not subject:
+        print("nothing needing attention - no mail sent")
         return 0
 
-    bits = []
-    if done:     bits.append(f"{len(done)} split")
-    if problems: bits.append(f"{len(problems)} needing attention")
-    if skipped:  bits.append(f"{len(skipped)} dry-run")
     body = ""
     if done:     body += "Split:\n"                + "".join(f"  - {l}\n" for l in done) + "\n"
     if skipped:  body += "Dry run, not written:\n" + "".join(f"  - {l}\n" for l in skipped) + "\n"
@@ -203,7 +215,7 @@ def main():
     if not os.environ.get("MAIL_HOST"):
         print("no MAIL_HOST configured - not mailing")
     else:
-        send_mail("Firefly loan splits: " + ", ".join(bits), body)
+        send_mail(subject, body)
         print("mail sent")
     return 1 if problems else 0
 
